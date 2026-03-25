@@ -1,0 +1,25 @@
+{
+  "name": "one-comunicacao-platform",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:backend": "npm ci --prefix backend",
+    "install:backend:prod": "npm ci --prefix backend --omit=dev",
+    "dev": "npm run dev --prefix backend",
+    "start": "npm run start --prefix backend",
+    "db:init": "npm run db:migrate --prefix backend",
+    "db:migrate": "npm run db:migrate --prefix backend",
+    "db:migrate:down": "npm run db:migrate:down --prefix backend",
+    "db:seed": "npm run db:seed --prefix backend",
+    "bootstrap:admin": "npm run bootstrap:admin --prefix backend",
+    "test": "npm test --prefix backend",
+    "lint": "npm run lint --prefix backend",
+    "format": "npm run format --prefix backend",
+    "check:frontend": "node scripts/check-frontend.js",
+    "smoke": "npm run smoke --prefix backend",
+    "prepare": "npm exec --prefix backend husky"
+  },
+  "dependencies": {
+    "sharp": "^0.34.5"
+  }
+}

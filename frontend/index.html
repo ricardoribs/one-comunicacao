@@ -1,0 +1,1641 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="icon" type="image/svg+xml" href="assets/svg/one-favicon.svg"/>
+<title>ONE | Comunicação Integrada</title>
+<meta name="description" content="ONE Comunicação Integrada. Assessoria de comunicação, social media, tráfego pago, design gráfico, cobertura de eventos, branding e soluções integradas para posicionar marcas com estratégia."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+/* Studio pass: keeps the same content, but removes the template feel. */
+:root{
+  --font-d:'Fraunces',serif;
+  --font-b:'Inter',sans-serif;
+  --surface:#f4efe8;
+  --surface-soft:#fbf7f2;
+  --surface-warm:#efe7dd;
+  --panel:rgba(255,255,255,.72);
+  --panel-strong:rgba(255,255,255,.84);
+  --ink:#17171b;
+  --ink-soft:#2b2d33;
+  --muted:#666a72;
+  --line:rgba(23,23,27,.1);
+  --accent:#e83469;
+  --accent-soft:rgba(232,52,105,.08);
+  --content:1240px;
+  --radius-lg:20px;
+  --radius-md:16px;
+  --radius-sm:12px;
+  --shadow-soft:0 16px 40px rgba(33,24,20,.05);
+  --ease:cubic-bezier(.22,1,.36,1);
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:20px;
+  --space-6:24px;
+  --space-7:32px;
+  --space-8:40px;
+  --space-9:48px;
+  --space-10:56px;
+  --space-11:72px;
+  --space-12:88px;
+  --focus-ring:0 0 0 4px rgba(232,52,105,.12);
+}
+html{background:var(--surface);overflow-x:hidden;scroll-behavior:smooth}
+body{
+  background:linear-gradient(180deg,#f7f3ed 0%,#f2ece5 100%);
+  color:var(--ink);
+  font-family:var(--font-b);
+  overflow-x:hidden;
+}
+ul{list-style:none}
+body::before{display:none}
+img{border:0}
+a,button,input,textarea,select{transition:color .22s var(--ease),background-color .22s var(--ease),border-color .22s var(--ease),transform .22s var(--ease),box-shadow .22s var(--ease)}
+.btn:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible{
+  outline:none;
+  box-shadow:var(--focus-ring);
+}
+a:focus-visible{
+  outline:2px solid rgba(232,52,105,.34);
+  outline-offset:4px;
+}
+.container{max-width:var(--content);margin:0 auto;padding:0 24px}
+section{position:relative}
+section::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:24px;
+  right:24px;
+  height:1px;
+  background:rgba(23,23,27,.08);
+}
+.page-hero::before{display:none}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.site-nav,
+.site-nav.scrolled{
+  background:rgba(247,243,237,.88);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.site-nav{position:fixed;top:0;left:0;width:100%;z-index:80;padding:18px 0}
+.site-nav.scrolled{padding:13px 0}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.logo{display:flex;align-items:center;color:inherit;text-decoration:none}
+.logo:hover,
+.logo:visited{color:inherit;text-decoration:none}
+.brand-lockup{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.brand-emblem{display:block;width:148px;height:auto}
+.brand-subtitle{
+  display:block;
+  font-family:var(--font-b);
+  font-size:8px;
+  line-height:1;
+  letter-spacing:.28em;
+  text-transform:uppercase;
+  color:rgba(23,23,27,.72);
+  text-align:center;
+  text-decoration:none;
+  white-space:nowrap;
+}
+.nav-links{display:flex;align-items:center;gap:24px}
+.nav-links a{font-size:14px;font-weight:600;color:var(--muted);letter-spacing:.02em}
+.nav-links a:hover{color:var(--ink)}
+.nav-cta{display:flex;align-items:center;gap:12px}
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  border-radius:999px;
+  min-height:46px;
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  line-height:1;
+  padding:13px 22px;
+  text-decoration:none;
+  cursor:pointer;
+}
+.btn-primary{background:var(--ink);color:#fff}
+.btn-primary:hover{background:var(--ink-soft);transform:translateY(-1px)}
+.btn-outline{background:transparent;border:1px solid rgba(23,23,27,.16);color:var(--ink)}
+.btn-outline:hover{background:rgba(255,255,255,.65);border-color:rgba(23,23,27,.24)}
+.btn-white{background:#fff;color:var(--ink)}
+.btn-white:hover{background:#f6f3ef}
+.btn-ghost{border:1px solid rgba(255,255,255,.18);color:#fff}
+.btn-ghost:hover{background:rgba(255,255,255,.06)}
+.hamburger{display:none;align-items:center;justify-content:center;flex-direction:column;gap:4px;min-width:44px;min-height:44px;padding:0;border:none;background:transparent;color:var(--ink)}
+.hamburger span{display:block;width:22px;height:2px;border-radius:999px;background:currentColor}
+.mobile-menu{
+  display:none;
+  position:fixed;
+  top:84px;
+  left:0;
+  right:0;
+  z-index:79;
+  padding:28px 24px 32px;
+  border-bottom:1px solid var(--line);
+  background:rgba(247,243,237,.98);
+  backdrop-filter:blur(12px);
+}
+.mobile-menu.open{display:flex;flex-direction:column;gap:18px}
+.mobile-menu a{font-family:var(--font-b);font-size:1.45rem;font-weight:600}
+.mobile-brand-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:20px}
+.mobile-brand{display:block;width:124px;height:auto}
+.mobile-brand-subtitle{
+  display:block;
+  font-family:var(--font-b);
+  font-size:7px;
+  line-height:1;
+  letter-spacing:.24em;
+  text-transform:uppercase;
+  color:rgba(23,23,27,.72);
+  text-align:center;
+  text-decoration:none;
+  white-space:nowrap;
+}
+.page-hero{padding:132px 0 56px}
+.hero-layout{display:grid;grid-template-columns:minmax(0,1.34fr) minmax(310px,.66fr);gap:24px;align-items:stretch}
+.hero-copy,
+.hero-panel,
+.why-left,
+.why-right,
+.about-left,
+.about-right,
+.contact-layout>.reveal,
+.cta-inner,
+.service-item,
+.case-card,
+.portal,
+.process-step,
+.testi-card,
+.why-stat,
+.contact-form,
+.kpi,
+.proj-row,
+.modal{
+  border:1px solid var(--line);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-soft);
+}
+.hero-copy,
+.about-left,
+.about-right,
+.contact-layout>.reveal,
+.service-item,
+.process-step,
+.portal,
+.contact-form,
+.kpi,
+  .proj-row{background:var(--panel)}
+.hero-copy{padding:40px 40px 32px;display:flex;flex-direction:column;justify-content:flex-start;gap:24px;min-height:100%}
+.hero-panel{padding:26px;background:#18191d;color:#fff;border-color:rgba(255,255,255,.08);display:flex;flex-direction:column;justify-content:flex-start;min-height:100%}
+.hero-panel::before{display:none}
+.hero-label,
+.section-label{
+  display:inline-block;
+  padding:0;
+  margin-bottom:18px;
+  background:none;
+  border:none;
+  color:#8b3552;
+  font-size:11px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+}
+.hero-heading,
+.section-heading,
+.why-left h2,
+.about-left h2,
+.cta-inner h2,
+.contact-left h2{
+  font-family:var(--font-d);
+  font-weight:500;
+  letter-spacing:-.03em;
+}
+.hero-heading{font-size:clamp(3.05rem,6vw,5rem);line-height:1.01;max-width:8.7ch;margin-bottom:22px}
+.hero-heading em{color:inherit;font-style:italic}
+.hero-sub,
+.section-sub,
+.service-desc,
+.case-desc,
+.why-left p,
+.portal-desc,
+.process-desc,
+.contact-left p,
+.hero-panel-note{color:var(--muted)}
+.hero-sub{max-width:39rem;font-size:1rem;line-height:1.75}
+.hero-actions{display:flex;align-items:center;gap:12px;margin-bottom:0}
+.hero-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:26px;padding-top:0;border-top:none;background:#17171b;color:#fff;border-radius:14px;overflow:hidden}
+.metric{padding:18px 16px;border-right:1px solid rgba(255,255,255,.12)}
+.metric:last-child{border-right:none}
+.metric h3{font-family:var(--font-d);font-size:1.85rem;font-weight:500;color:#fff}
+.metric p{margin-top:4px;font-size:12px;color:rgba(255,255,255,.66);letter-spacing:.02em;text-transform:none}
+.hero-panel-top{display:flex;justify-content:center;margin-bottom:20px;text-align:center}
+.eyebrow{font-size:10px;letter-spacing:.18em;color:rgba(255,255,255,.5);text-transform:uppercase}
+.hero-panel-title{font-size:clamp(1.08rem,1.55vw,1.48rem);line-height:1.1;max-width:none;margin:0 auto;white-space:nowrap}
+.hero-stack{display:grid;gap:12px;flex:1}
+.hero-stack-card{padding:20px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);border-radius:14px;min-height:120px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
+.hero-stack-card strong{display:block;margin-bottom:8px;font-size:11px;letter-spacing:.14em;color:rgba(255,255,255,.48);text-transform:uppercase}
+.hero-stack-card span{display:block;font-family:var(--font-d);font-size:1.12rem;line-height:1.18;max-width:16ch}
+.hero-panel-note{display:none}
+.brand-strip{padding:12px 0 24px}
+.clients-label{margin-bottom:16px;font-size:11px;letter-spacing:.12em}
+.clients-marquee{
+  overflow:hidden;
+  mask-image:linear-gradient(90deg,transparent 0%,#000 10%,#000 90%,transparent 100%);
+}
+.clients-strip{
+  display:flex;
+  align-items:center;
+  gap:28px;
+  width:max-content;
+  animation:client-marquee 28s linear infinite;
+  will-change:transform;
+}
+.clients-marquee:hover .clients-strip{animation-play-state:paused}
+.client-logo{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:72px;
+  padding:0;
+  color:var(--ink);
+  transition:transform .22s var(--ease),opacity .22s var(--ease);
+}
+.client-logo:hover{
+  transform:translateY(-1px);
+  opacity:.9;
+}
+.client-mark{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+  overflow:hidden;
+  width:auto;
+  height:58px;
+}
+.client-logo-svg{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.client-logo-aprimore .client-mark,
+.client-logo-borsoi .client-mark,
+.client-logo-carbeni .client-mark,
+.client-logo-shopcar .client-mark,
+.client-logo-cdlmulher .client-mark,
+.client-logo-uniaodobrasil .client-mark,
+.client-logo-sorrisofacil .client-mark,
+.client-logo-ruralpecas .client-mark,
+.client-logo-radical .client-mark{
+  width:auto;
+  height:58px;
+  font-size:.72rem;
+  font-weight:700;
+  text-transform:uppercase;
+}
+.client-logo-aprimore .client-mark{
+  border:none;
+  background:none;
+}
+.client-logo-borsoi .client-mark{
+  border:none;
+  background:none;
+  color:inherit;
+  padding:0;
+}
+.client-logo-carbeni .client-mark{
+  border:none;
+  background:none;
+  color:inherit;
+  padding:0;
+}
+.client-logo-shopcar .client-mark{
+  aspect-ratio:221 / 74;
+  border:none;
+  background:none;
+  color:inherit;
+  padding:0;
+}
+.client-logo-cdlmulher .client-mark{
+  aspect-ratio:1377 / 494;
+  border:none;
+  background:none;
+}
+.client-logo-uniaodobrasil .client-mark{
+  border:none;
+  background:none;
+}
+.client-logo-sorrisofacil .client-mark{
+  aspect-ratio:911 / 149;
+  border:none;
+  background:none;
+}
+.client-logo-ruralpecas .client-mark{
+  aspect-ratio:2280 / 1080;
+  border:none;
+  background:none;
+}
+.client-logo-radical .client-mark{
+  border:none;
+  background:none;
+}
+@keyframes client-marquee{
+  from{transform:translateX(0)}
+  to{transform:translateX(-50%)}
+}
+.section-heading{font-size:clamp(2rem,4.1vw,3.35rem);line-height:1.05;max-width:11.8ch}
+.section-sub{max-width:38rem;font-size:1rem;line-height:1.72}
+.service-overview,
+.case-studies,
+.positioning-proof,
+.client-voices,
+.delivery-process,
+.studio-profile,
+.contact-entry,
+.access-portals,
+.client-dashboard{padding:var(--space-12) 0}
+.service-overview{padding:56px 0 var(--space-12);background:linear-gradient(180deg,rgba(255,255,255,.12) 0%, transparent 100%)}
+.services-intro{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(360px,.98fr);
+  gap:24px;
+  align-items:start;
+  margin-bottom:48px;
+}
+.services-copy{
+  max-width:40rem;
+}
+.services-copy .section-label{margin-bottom:18px}
+.services-copy .section-heading{margin-bottom:22px}
+.services-copy .section-sub{margin-bottom:0}
+.services-summary{
+  padding:24px;
+  border:1px solid rgba(23,23,27,.1);
+  border-radius:var(--radius-md);
+  background:rgba(255,255,255,.72);
+  box-shadow:0 18px 34px rgba(23,23,27,.08);
+}
+.services-summary-label{
+  display:block;
+  margin-bottom:18px;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:rgba(23,23,27,.78);
+}
+.services-summary-list{
+  display:grid;
+  gap:12px;
+}
+.services-summary-item{
+  padding:16px;
+  border-radius:var(--radius-sm);
+  background:rgba(239,234,225,.86);
+}
+.services-summary-title{
+  position:relative;
+  display:block;
+  margin:0 0 4px;
+  padding-left:18px;
+  font-size:1rem;
+  font-weight:700;
+  line-height:1.4;
+  color:rgba(23,23,27,.94);
+}
+.services-summary-title::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:.58em;
+  width:8px;
+  height:8px;
+  border-radius:999px;
+  background:var(--pink);
+}
+.services-summary-text{
+  margin:0;
+  padding-left:18px;
+  font-size:14px;
+  line-height:1.5;
+  color:rgba(23,23,27,.82);
+}
+.service-catalog,
+.case-layout,
+.voices-layout,
+.portal-layout,
+.process-layout{gap:16px}
+.service-catalog{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
+.service-item{display:grid;grid-template-columns:48px 1fr auto;gap:16px;padding:24px 24px 26px;min-height:176px;height:100%;align-content:start;transition:transform .22s var(--ease),border-color .22s var(--ease),background-color .22s var(--ease)}
+.service-item:hover{transform:translateY(-2px);background:var(--panel-strong);border-color:rgba(23,23,27,.14)}
+.service-num{font-family:var(--font-b);font-size:.85rem;font-weight:700;color:#9c8d85;padding-top:4px}
+.service-name{font-family:var(--font-d);font-size:1.28rem;font-weight:500;line-height:1.06;margin-bottom:10px}
+.service-desc{line-height:1.68}
+.service-arrow{display:grid;place-items:center;width:40px;height:40px;border-radius:999px;border:1px solid rgba(23,23,27,.12);font-size:14px;line-height:1;color:var(--muted);align-self:start;justify-self:end}
+.service-item:hover .service-arrow{background:var(--accent-soft);border-color:rgba(232,52,105,.16);color:var(--ink)}
+.case-studies{background:#18191d;color:#fff}
+.case-studies::before,
+.client-voices::before,
+.closing-cta::before,
+footer::before{background:rgba(255,255,255,.08)}
+.case-studies .section-label,
+.client-voices .section-label{color:rgba(255,255,255,.74)}
+.case-studies .section-heading,
+.client-voices .section-heading,
+.closing-cta h2{color:#fff}
+.cases-header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:48px}
+.case-layout{display:grid;grid-template-columns:1fr 1fr}
+.case-card{display:flex;flex-direction:column;min-width:0;height:100%;padding:24px;background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08)}
+.case-card:hover{background:rgba(255,255,255,.06)}
+.case-img{width:100%;height:248px;object-fit:cover;border-radius:14px;margin-bottom:20px;filter:none}
+.case-cat{font-size:10px;letter-spacing:.12em;color:rgba(255,255,255,.54)}
+.case-result{font-family:var(--font-d);font-size:clamp(2.1rem,4vw,3.15rem);font-weight:500}
+.case-title{font-size:1.02rem;font-weight:600}
+.case-desc{line-height:1.68;color:rgba(255,255,255,.68)}
+.positioning-proof{background:linear-gradient(180deg,var(--surface-warm) 0%,var(--surface) 100%)}
+.proof-layout,
+.profile-layout,
+.contact-layout{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.proof-layout{align-items:stretch}
+.profile-layout{align-items:stretch}
+.why-left,
+.about-left,
+.about-right,
+.contact-layout>.reveal{padding:32px}
+.why-left,
+.why-right{height:100%}
+.about-left,
+.about-right{display:flex;flex-direction:column;height:100%}
+.about-left{justify-content:center;gap:16px}
+.about-left h2{max-width:11ch}
+.about-left p{max-width:35ch;font-size:1rem;line-height:1.72;color:var(--muted)}
+.why-right{display:flex;flex-direction:column;justify-content:space-between;gap:14px;padding:14px;background:#18191d;border-color:rgba(255,255,255,.08)}
+.why-panel-tail{display:grid;gap:14px}
+.why-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.why-left p{margin-bottom:28px}
+.why-items{border-top:1px solid rgba(23,23,27,.08)}
+.why-item{display:grid;grid-template-columns:36px 1fr;align-items:start;gap:16px;padding:18px 0;border-bottom:1px solid rgba(23,23,27,.08)}
+.why-num{font-family:var(--font-b);font-size:.78rem;color:#9c8d85;padding-top:3px}
+.why-item h3{font-size:.98rem;font-weight:600}
+.why-item p{line-height:1.68}
+.why-stat{padding:30px 24px;background:transparent;border-color:rgba(255,255,255,.08);box-shadow:none}
+.why-stat-num{font-family:var(--font-d);font-size:2.2rem;font-weight:500;color:#fff}
+.why-stat-label{font-size:12px;color:rgba(255,255,255,.6)}
+.why-mid{
+  display:grid;
+  gap:10px;
+  padding:18px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;
+  background:linear-gradient(180deg,rgba(255,255,255,.04) 0%,rgba(255,255,255,.02) 100%);
+}
+.why-mid-label{
+  font-size:10px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.42);
+}
+.why-mid p{
+  margin:0;
+  font-family:var(--font-d);
+  font-size:1.2rem;
+  line-height:1.28;
+  color:#fff;
+  max-width:24ch;
+}
+.why-mid p em{
+  font-style:normal;
+  color:var(--pink);
+}
+.why-mid-sub{
+  font-size:13px;
+  line-height:1.65;
+  color:rgba(255,255,255,.68);
+  max-width:36ch;
+}
+.why-proof{
+  display:grid;
+  gap:0;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;
+  overflow:hidden;
+  background:rgba(255,255,255,.02);
+}
+.why-proof-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:14px 18px;
+  border-top:1px solid rgba(255,255,255,.08);
+  font-size:13px;
+  line-height:1.55;
+  color:rgba(255,255,255,.74);
+}
+.why-proof-item:first-child{border-top:none}
+.why-proof-item::after{
+  content:"↗";
+  flex:0 0 auto;
+  color:rgba(255,255,255,.34);
+  transition:transform .22s var(--ease),color .22s var(--ease);
+}
+.why-proof-item:hover::after{
+  transform:translate(2px,-2px);
+  color:var(--pink);
+}
+.why-proof-cta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:18px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;
+  background:rgba(255,255,255,.02);
+}
+.why-proof-cta p{
+  margin:0;
+  font-size:13px;
+  line-height:1.65;
+  color:rgba(255,255,255,.72);
+}
+.why-proof-cta .btn-ghost{
+  flex:0 0 auto;
+  min-width:156px;
+  justify-content:center;
+}
+.client-voices{background:#18191d}
+.voices-layout{display:grid;grid-template-columns:repeat(3,1fr)}
+.testi-card{padding:30px;background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:#fff}
+.testi-card.featured{grid-column:span 2;background:linear-gradient(135deg,#9f294d 0%,#72203a 100%)}
+.testi-text{font-size:1rem;line-height:1.72;font-style:italic}
+.testi-author-role{color:rgba(255,255,255,.58)}
+.formats-copy,
+.faq-copy{max-width:40rem}
+.faq-copy{margin-bottom:28px}
+.faq-list{
+  display:grid;
+  gap:14px;
+}
+.faq-item{
+  padding:24px;
+  background:var(--panel);
+  border:1px solid rgba(23,23,27,.08);
+  border-radius:var(--radius-md);
+}
+.faq-item h3{
+  margin:0 0 10px;
+  font-family:var(--font-d);
+  font-size:1.05rem;
+  font-weight:500;
+}
+.faq-item p{margin:0;color:var(--muted);line-height:1.72;}
+.process-intro{
+  display:grid;
+  grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);
+  gap:18px;
+  align-items:stretch;
+  margin-bottom:48px;
+}
+.process-copy{
+  display:grid;
+  align-content:start;
+}
+.delivery-process .section-heading{max-width:11.5ch;margin-bottom:0}
+.process-highlight{
+  display:grid;
+  align-content:start;
+  gap:16px;
+  padding:24px 26px;
+  border:1px solid rgba(23,23,27,.1);
+  border-radius:var(--radius-md);
+  background:linear-gradient(180deg, rgba(255,255,255,.82) 0%, rgba(247,241,234,.98) 100%);
+  box-shadow:0 18px 34px rgba(23,23,27,.08);
+}
+.process-highlight-label{
+  max-width:18ch;
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:rgba(23,23,27,.88);
+}
+.process-highlight-list{
+  display:grid;
+  gap:14px;
+  margin:0;
+  padding:0;
+  list-style:none;
+}
+.process-highlight-list li{
+  position:relative;
+  padding-left:18px;
+  font-size:.97rem;
+  font-weight:500;
+  line-height:1.36;
+  color:rgba(23,23,27,.96);
+}
+.process-highlight-list li::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:.56em;
+  width:6px;
+  height:6px;
+  border-radius:999px;
+  background:var(--pink);
+}
+.process-highlight-footer{
+  margin:0;
+  padding-top:14px;
+  border-top:1px solid rgba(23,23,27,.1);
+  font-size:.97rem;
+  line-height:1.58;
+  color:rgba(23,23,27,.86);
+}
+.process-highlight-footer strong{
+  color:var(--ink);
+  font-weight:700;
+}
+.process-layout{display:grid;grid-template-columns:repeat(4,1fr);margin-top:0;border-left:none}
+.process-step{padding:28px 26px;background:var(--panel);border-right:none;border-bottom:none;min-height:214px}
+.process-step:nth-child(2),
+.process-step:nth-child(4){background:rgba(255,255,255,.58)}
+.process-num{font-size:2.2rem;font-weight:400;margin-bottom:18px}
+.process-title{font-family:var(--font-d);font-size:1.05rem;font-weight:500}
+.process-desc{line-height:1.68}
+#process{padding:80px 0 48px}
+.studio-profile .about-right{position:sticky;top:110px}
+#about{padding:48px 0 56px}
+.about-visual{display:grid;place-items:center;height:220px;min-height:220px;border-radius:16px;background:linear-gradient(135deg,rgba(232,52,105,.12),rgba(23,23,27,.08)),url('assets/svg/one-logo-soft.svg');background-repeat:no-repeat,no-repeat;background-position:center,28px 28px;background-size:cover,120px auto;border:1px solid rgba(23,23,27,.08);border-bottom:none;overflow:hidden;position:relative;padding:0}
+.about-video{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover}
+.about-video-fallback{position:absolute;left:24px;bottom:24px;display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:999px;background:rgba(255,255,255,.92);box-shadow:0 10px 24px rgba(23,23,27,.14);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);z-index:1}
+.about-contact{display:grid;align-content:start;gap:12px;min-height:132px;padding:24px 0 0;margin-top:auto}
+.about-contact p{font-size:14px;line-height:1.68;color:rgba(23,23,27,.76)}
+.mvv{border-top:1px solid rgba(23,23,27,.08)}
+.mvv-item{border-bottom:1px solid rgba(23,23,27,.08)}
+.mvv-item h4{font-size:11px;letter-spacing:.15em;color:#8b3552}
+.closing-cta{background:transparent;color:#fff;padding:28px 0 24px}
+.closing-cta::before{display:none}
+.cta-inner{display:grid;grid-template-columns:1.08fr auto;gap:36px;align-items:center;padding:38px 36px;background:#1f2024;border-color:rgba(255,255,255,.08);border-radius:26px;box-shadow:0 22px 44px rgba(18,18,24,.12)}
+.cta-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap;min-width:200px}
+.contact-entry{background:linear-gradient(180deg,#f7f3ed 0%,#eee7de 100%)}
+#contact{padding:96px 0 56px}
+.contact-layout{grid-template-columns:.92fr 1.08fr;align-items:stretch}
+.contact-layout>.reveal{display:flex;flex-direction:column;height:100%;justify-content:flex-start;gap:24px}
+.contact-copy{display:flex;flex-direction:column;gap:16px}
+.contact-copy .section-label{margin-bottom:0}
+.contact-copy h2{margin:0;font-family:var(--font-d);font-size:clamp(2rem,4vw,3.2rem);font-weight:500;line-height:1.05;letter-spacing:-.03em}
+.contact-copy p{margin:0;max-width:40ch;font-size:1rem;line-height:1.72}
+.contact-note{margin-top:16px;max-width:34ch}
+.contact-note p{margin:0;max-width:none;font-family:var(--font-d);font-size:1.1rem;line-height:1.62;color:rgba(23,23,27,.8)}
+.contact-note strong{font-weight:500;color:var(--ink)}
+.contact-note em{font-style:normal;color:var(--pink);font-weight:500}
+.contact-points{display:grid;gap:10px;max-width:36ch}
+.contact-point{display:grid;grid-template-columns:18px 1fr;gap:12px;align-items:start;padding:12px 0;border-top:1px solid rgba(23,23,27,.08)}
+.contact-point:first-child{border-top:none;padding-top:0}
+.contact-point-mark{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--pink);line-height:1.6}
+.contact-point-text{font-size:14px;line-height:1.65;color:var(--muted)}
+.contact-info{display:grid;gap:0;margin-top:auto;border-top:1px solid rgba(23,23,27,.1)}
+.contact-left p{margin-bottom:28px}
+.contact-info,.proj-list{border-top-color:rgba(23,23,27,.1)}
+.ci,.proj-row,.mvv-item{border-bottom-color:rgba(23,23,27,.1)}
+.ci{display:grid;grid-template-columns:112px 1fr;gap:14px;align-items:start;padding:14px 0;border-bottom:1px solid rgba(23,23,27,.1)}
+.ci:last-child{border-bottom:none}
+.ci-label{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#8b3552}
+.ci-val{font-size:14px;line-height:1.65;color:rgba(23,23,27,.82)}
+.contact-form{display:grid;align-content:start;padding:24px;background:#fff;height:100%;gap:18px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.form-group{display:grid;align-content:start;gap:8px}
+.form-group label{font-size:11px;letter-spacing:.12em}
+.form-group input,
+.form-group textarea,
+.form-group select{width:100%;min-height:48px;border:1px solid rgba(23,23,27,.12);border-radius:14px;padding:14px 16px}
+.form-group select{
+  appearance:none;
+  -webkit-appearance:none;
+  -moz-appearance:none;
+  background-color:#fff;
+  background-image:
+    linear-gradient(45deg,transparent 50%,rgba(23,23,27,.76) 50%),
+    linear-gradient(135deg,rgba(23,23,27,.76) 50%,transparent 50%),
+    linear-gradient(rgba(23,23,27,.08),rgba(23,23,27,.08));
+  background-position:
+    calc(100% - 24px) calc(50% - 2px),
+    calc(100% - 18px) calc(50% - 2px),
+    calc(100% - 42px) 50%;
+  background-size:6px 6px,6px 6px,1px 46%;
+  background-repeat:no-repeat;
+  padding-right:50px;
+}
+.form-group select::-ms-expand{display:none}
+.form-group textarea{min-height:154px}
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus{border-color:rgba(232,52,105,.42);box-shadow:var(--focus-ring)}
+.consent-row{
+  display:grid;
+  grid-template-columns:14px 1fr;
+  gap:10px;
+  align-items:start;
+  padding:0;
+  border:none;
+  border-radius:0;
+  background:transparent;
+  font-size:12px;
+  line-height:1.55;
+  color:rgba(23,23,27,.82);
+  text-transform:none;
+  letter-spacing:0;
+}
+.consent-row input[type="checkbox"]{
+  appearance:auto;
+  -webkit-appearance:checkbox;
+  accent-color:var(--accent);
+  width:14px;
+  height:14px;
+  margin:2px 0 0;
+  border:none;
+  border-radius:0;
+  background:transparent;
+  display:block;
+  cursor:pointer;
+}
+.consent-row input[type="checkbox"]::after{content:none}
+.consent-row input[type="checkbox"]:focus-visible{outline:2px solid rgba(232,52,105,.22);outline-offset:2px;box-shadow:none}
+.consent-row span{display:block;flex:1;min-width:0}
+.consent-row a{color:#7a3456}
+.access-portals{background:linear-gradient(180deg,#ede4d8 0%,#f7f3ee 100%)}
+#formats{padding:56px 0 var(--space-12)}
+.formats-intro{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(360px,.98fr);
+  gap:24px;
+  align-items:start;
+  margin-bottom:48px;
+}
+.formats-copy{max-width:40rem}
+.formats-copy .section-label{margin-bottom:18px}
+.formats-copy .section-heading{margin-bottom:22px}
+.formats-copy .section-sub{margin-bottom:0}
+.formats-summary{
+  padding:24px;
+  border:1px solid rgba(23,23,27,.1);
+  border-radius:var(--radius-md);
+  background:rgba(255,255,255,.72);
+  box-shadow:0 18px 34px rgba(23,23,27,.08);
+}
+.formats-summary-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:22px;
+}
+.formats-summary-card{
+  padding:16px 16px 18px;
+  border-radius:var(--radius-sm);
+  background:rgba(239,234,225,.86);
+}
+.formats-summary-value{
+  display:block;
+  margin-bottom:6px;
+  font-family:var(--font-d);
+  font-size:clamp(2rem,3vw,3rem);
+  font-weight:500;
+  line-height:.95;
+  color:var(--pink);
+}
+.formats-summary-text{
+  margin:0;
+  font-size:14px;
+  line-height:1.45;
+  color:rgba(23,23,27,.86);
+}
+.formats-summary-flow{
+  padding-top:18px;
+  border-top:1px solid rgba(23,23,27,.1);
+}
+.formats-summary-label{
+  display:block;
+  margin-bottom:14px;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:rgba(23,23,27,.78);
+}
+.formats-summary-steps{
+  display:grid;
+  gap:12px;
+}
+.formats-summary-step{
+  display:grid;
+  grid-template-columns:22px 1fr;
+  gap:12px;
+  align-items:start;
+}
+.formats-summary-step-num{
+  font-size:12px;
+  font-weight:700;
+  color:var(--pink);
+  letter-spacing:.04em;
+  line-height:1.6;
+}
+.formats-summary-step-text{
+  margin:0;
+  font-size:14px;
+  line-height:1.5;
+  color:rgba(23,23,27,.9);
+}
+#client-area{padding:56px 0 var(--space-12)}
+.portal-layout{display:grid;grid-template-columns:1fr 1fr;margin-top:42px}
+.portal{display:flex;flex-direction:column;justify-content:space-between;gap:12px;padding:32px;background:var(--panel);cursor:pointer}
+.portal:hover{background:var(--panel-strong);transform:translateY(-2px)}
+.portal-num{margin-bottom:14px;font-family:var(--font-b);font-size:.8rem;color:#9c8d85}
+.portal-title{margin-bottom:8px;font-family:var(--font-d);font-size:1.1rem;font-weight:500}
+.portal-desc{line-height:1.72}
+.client-dashboard{display:none;padding:78px 0 112px}
+.client-dashboard.visible{display:block}
+.dash-top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:40px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;background:none;margin-bottom:32px}
+.kpi{padding:28px}
+.kpi-label{font-size:10px;letter-spacing:.12em}
+.kpi-val{font-size:1.8rem;font-weight:500}
+.proj-list{border-top:1px solid rgba(23,23,27,.1)}
+.proj-row{display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:16px;padding:18px 0;background:transparent;box-shadow:none;border:none;border-bottom:1px solid rgba(23,23,27,.1);border-radius:0}
+.proj-row:last-child{border-bottom:none}
+.badge{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:5px 10px}
+.progress-wrap{width:92px}.progress-bg{height:4px;border-radius:999px;overflow:hidden}
+.modal-bg{
+  position:fixed;
+  inset:0;
+  z-index:120;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:rgba(14,14,16,.42);
+}
+.modal-bg.open{display:flex}
+.modal{position:relative;width:min(100%,420px);max-width:420px;padding:40px;background:#fff;border-radius:20px;transform:translateY(12px);transition:transform .22s var(--ease)}
+.modal-bg.open .modal{transform:translateY(0)}
+.modal-close{position:absolute;top:18px;right:18px;border:none;background:transparent;font-size:24px;line-height:1;color:var(--ink);cursor:pointer}
+.modal-logo{display:block;width:160px;height:auto;margin:0 auto 18px}
+.modal-form{display:grid;gap:14px}
+footer{position:relative;background:#111215;color:#fff;padding:72px 0 36px}
+.footer-layout{display:grid;grid-template-columns:1.7fr 1fr 1fr 1fr;gap:36px}
+.footer-brand{display:grid;align-content:start;gap:18px}
+.footer-logo{display:block;width:176px;height:auto}
+.footer-brand p,
+.footer-col ul li a,
+.footer-bottom{color:rgba(255,255,255,.6)}
+.footer-brand p{max-width:30ch;line-height:1.72}
+.footer-col h4{margin-bottom:16px}
+.footer-col ul{display:grid;gap:10px;list-style:none;padding:0}
+.footer-col ul li a:hover{color:#fff}
+.footer-bottom{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:40px;padding-top:22px;border-top:1px solid rgba(255,255,255,.08)}
+.social-links{display:flex;align-items:center;gap:10px}
+.social-link{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:999px;border:1px solid rgba(255,255,255,.16);color:#fff}
+.social-link svg{display:block;width:18px;height:18px}
+.social-link:hover{background:rgba(255,255,255,.06);transform:translateY(-1px)}
+.wa-float{background:#17171b;border:2px solid rgba(255,255,255,.14);box-shadow:0 10px 28px rgba(18,18,24,.16)}
+.wa-float:hover{background:#23242a;transform:translateY(-2px)}
+.toast{position:fixed;right:24px;bottom:24px;z-index:140;max-width:340px;padding:14px 18px;background:#17171b;color:#fff;opacity:0;transform:translateY(12px);transition:opacity .25s var(--ease),transform .25s var(--ease);border-left:0;border-radius:14px;box-shadow:0 18px 34px rgba(23,23,27,.14)}
+.toast.show{opacity:1;transform:translateY(0)}
+@media(max-width:1024px){
+  .service-overview,
+  .case-studies,
+  .positioning-proof,
+  .client-voices,
+  .delivery-process,
+  .studio-profile,
+  .contact-entry,
+  .access-portals,
+  .client-dashboard{padding:var(--space-11) 0}
+  #process{padding:72px 0 40px}
+  #about{padding:40px 0 48px}
+  #formats{padding:48px 0 var(--space-11)}
+  #contact{padding:80px 0 48px}
+  #client-area{padding:48px 0 var(--space-11)}
+  .hero-layout,
+  .proof-layout,
+  .profile-layout,
+  .contact-layout,
+  .cta-inner{grid-template-columns:1fr}
+  .services-intro{grid-template-columns:1fr}
+  .process-intro{grid-template-columns:1fr}
+  .formats-intro{grid-template-columns:1fr}
+  .why-stats-grid{grid-template-columns:1fr 1fr}
+  .service-catalog,
+  .case-layout,
+  .voices-layout,
+  .portal-layout{grid-template-columns:1fr}
+  .process-layout{grid-template-columns:1fr 1fr}
+  .kpis{grid-template-columns:1fr 1fr}
+  .studio-profile .about-right{position:static}
+  .testi-card.featured{grid-column:span 1}
+  .footer-layout{grid-template-columns:1fr 1fr}
+}
+@media(max-width:768px){
+  .container{padding:0 18px}
+  section::before{left:18px;right:18px}
+  .page-hero{padding-top:110px;padding-bottom:44px}
+  .nav-links,.nav-cta{display:none}
+  .hamburger{display:flex}
+  .brand-emblem{width:124px}
+  .brand-subtitle{font-size:7px;letter-spacing:.22em}
+  .hero-copy,
+  .hero-panel,
+  .why-left,
+  .why-right,
+  .about-left,
+  .about-right,
+  .contact-layout>.reveal,
+  .cta-inner,
+  .contact-form,
+  .portal{padding:22px}
+  .hero-heading{font-size:clamp(3rem,13vw,4.6rem)}
+  .hero-panel-top{text-align:left;justify-content:flex-start}
+  .hero-panel-title{margin:0;white-space:normal}
+  .hero-metrics{grid-template-columns:1fr 1fr}
+  .metric{border-right:none;border-bottom:1px solid rgba(255,255,255,.12)}
+  .metric:nth-last-child(-n+2){border-bottom:none}
+  .process-layout,
+  .footer-layout,
+  .portal-layout,
+  .case-layout,
+  .voices-layout,
+  .service-catalog{grid-template-columns:1fr}
+  .why-stats-grid{grid-template-columns:1fr}
+  .why-mid p{max-width:none}
+  .why-proof-cta{flex-direction:column;align-items:flex-start}
+  .why-proof-cta .btn-ghost{width:100%;justify-content:center}
+  .process-highlight{padding:24px}
+  .services-summary{padding:20px}
+  .formats-summary-grid{grid-template-columns:1fr}
+  .form-row{grid-template-columns:1fr}
+  .footer-bottom{flex-direction:column;text-align:center}
+  .cases-header{flex-direction:column;align-items:flex-start}
+  .cases-header{margin-bottom:28px}
+  .services-intro,
+  .formats-intro,
+  .process-intro{gap:20px}
+  .clients-strip{gap:24px}
+  .client-logo{min-height:66px}
+  .client-mark,
+  .client-logo-aprimore .client-mark,
+  .client-logo-borsoi .client-mark,
+  .client-logo-carbeni .client-mark,
+  .client-logo-shopcar .client-mark,
+  .client-logo-cdlmulher .client-mark,
+  .client-logo-uniaodobrasil .client-mark,
+  .client-logo-sorrisofacil .client-mark,
+  .client-logo-ruralpecas .client-mark,
+  .client-logo-radical .client-mark{height:52px}
+  .proj-row{grid-template-columns:1fr auto}
+  .service-item{grid-template-columns:40px 1fr}
+  .service-arrow{display:none}
+}
+@media(max-width:560px){
+  .container{padding:0 16px}
+  .page-hero{padding-top:104px;padding-bottom:52px}
+  .hero-copy,
+  .hero-panel,
+  .why-left,
+  .why-right,
+  .about-left,
+  .about-right,
+  .contact-layout>.reveal,
+  .cta-inner,
+  .contact-form,
+  .portal,
+  .section,
+  .case-card,
+  .testi-card{padding:18px}
+  .hero-heading{font-size:clamp(2.6rem,12vw,3.8rem);line-height:1.02}
+  .brand-lockup{align-items:flex-start}
+  .brand-subtitle,
+  .mobile-brand-subtitle{text-align:left}
+  .hero-sub{font-size:15px;line-height:1.65}
+  .hero-metrics{grid-template-columns:1fr}
+  .metric{border-right:none;border-bottom:1px solid rgba(255,255,255,.12)}
+  .metric:last-child{border-bottom:none}
+  .section-heading{font-size:clamp(1.8rem,10vw,2.5rem)}
+  .cta-inner h2{font-size:clamp(1.9rem,10vw,2.8rem)}
+  .service-item{gap:16px;padding:22px 0}
+  .clients-strip{gap:18px}
+  .client-logo{min-height:52px}
+  .client-mark,
+  .client-logo-aprimore .client-mark,
+  .client-logo-borsoi .client-mark,
+  .client-logo-carbeni .client-mark,
+  .client-logo-shopcar .client-mark,
+  .client-logo-cdlmulher .client-mark,
+  .client-logo-uniaodobrasil .client-mark,
+  .client-logo-sorrisofacil .client-mark,
+  .client-logo-ruralpecas .client-mark,
+  .client-logo-radical .client-mark{
+    height:44px;
+  }
+  .toast{right:16px;left:16px;bottom:16px;max-width:none}
+  .modal{padding:24px;border-radius:16px}
+  .modal-form{gap:12px}
+}
+@media(max-width:375px){
+  .container{padding:0 14px}
+  .btn{min-height:44px;padding:12px 18px}
+  .hero-actions{flex-direction:column;align-items:stretch}
+  .hero-actions .btn{width:100%;justify-content:center}
+  .clients-strip{gap:24px}
+  .footer-bottom{gap:12px}
+  .social-links{flex-wrap:wrap;justify-content:center}
+}
+</style>
+</head>
+<body>
+<!-- NAV -->
+<nav id="navbar" class="site-nav">
+  <div class="container nav-inner">
+    <a href="#hero" class="logo">
+      <span class="brand-lockup">
+        <img class="brand-emblem" src="assets/svg/one-logo-soft.svg" alt="ONE Comunicação"/>
+        <span class="brand-subtitle">Comunicação Integrada</span>
+      </span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#services">Serviços</a></li>
+      <li><a href="#cases">Cases</a></li>
+      <li><a href="#about">Sobre</a></li>
+      <li><a href="#contact">Contato</a></li>
+    </ul>
+    <div class="nav-cta">
+      <button type="button" class="btn btn-outline" onclick="goToClientLogin()">Área do Cliente</button>
+      <button type="button" class="btn btn-primary" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Fale com a gente</button>
+    </div>
+    <button type="button" class="hamburger" aria-label="Abrir menu" aria-expanded="false" aria-controls="mobile-menu" onclick="toggleMobile()"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobile-menu">
+  <span class="mobile-brand-wrap">
+    <img class="mobile-brand" src="assets/svg/one-logo-soft.svg" alt="ONE Comunicação"/>
+    <span class="mobile-brand-subtitle">Comunicação Integrada</span>
+  </span>
+  <a href="#services" onclick="toggleMobile()">Serviços</a>
+  <a href="#cases" onclick="toggleMobile()">Cases</a>
+  <a href="#about" onclick="toggleMobile()">Sobre</a>
+  <a href="#contact" onclick="toggleMobile()">Contato</a>
+  <button type="button" class="btn btn-primary" onclick="goToClientLogin();toggleMobile()">Área do Cliente</button>
+</div>
+
+<!-- HERO -->
+<!-- Main introduction: keep the copy intact, just give it more breathing room. -->
+<section id="hero" class="page-hero">
+  <div class="container">
+    <div class="hero-grid hero-layout">
+      <div class="hero-copy reveal">
+        <div>
+          <p class="hero-label">Comunicação Integrada</p>
+          <h1 class="hero-heading">Conteúdo, campanha e imagem no mesmo ritmo da sua empresa.</h1>
+          <p class="hero-sub">Nossos clientes nos procuram quando percebem que a comunicação da marca está vivendo de improvisos, urgências e fornecedores desconectados. Na ONE, transformamos esse cenário. Sua empresa passa a contar com um calendário definido, produção alinhada e acompanhamento de perto. Entregamos uma rotina de trabalho estável, reduzindo o retrabalho e garantindo clareza em cada material que vai ao ar.</p>
+        </div>
+      </div>
+      <aside class="hero-panel reveal">
+        <div class="hero-panel-top">
+          <div>
+            <div class="eyebrow">O que muda na prática?</div>
+            <h2 class="hero-panel-title">Menos improviso. Mais rotina.</h2>
+          </div>
+        </div>
+        <div class="hero-stack">
+          <div class="hero-stack-card">
+            <strong>Calendário mensal</strong>
+            <span>Temas, campanhas e datas organizados com antecedência para a marca não depender da urgência da semana.</span>
+          </div>
+          <div class="hero-stack-card">
+            <strong>Captação recorrente</strong>
+            <span>Gravações e materiais produzidos com frequência para manter presença sem correria de última hora.</span>
+          </div>
+          <div class="hero-stack-card">
+            <strong>Aprovação organizada</strong>
+            <span>Conteúdo e materiais passam por validação antes de publicar, com histórico claro do que foi aprovado.</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- CLIENTS -->
+<section id="clients" class="brand-strip">
+  <div class="container">
+    <p class="clients-label">Empresas de Imperatriz e região</p>
+    <div class="clients-marquee">
+      <div class="clients-strip">
+        <span class="client-logo client-logo-shopcar">
+          <span class="client-mark"><img class="client-logo-svg" src="assets/svg/shopcar.png" alt="Shop Car Auto Posto"/></span>
+        </span>
+        <span class="client-logo client-logo-uniaodobrasil">
+          <span class="client-mark"><img class="client-logo-svg" src="assets/svg/uniao-do-brasil.svg" alt="União do Brasil Laticínios"/></span>
+        </span>
+        <span class="client-logo client-logo-cdlmulher">
+          <span class="client-mark"><img class="client-logo-svg" src="assets/svg/cdl-mulher.svg" alt="CDL Mulher"/></span>
+        </span>
+        <span class="client-logo client-logo-sorrisofacil">
+          <span class="client-mark"><img class="client-logo-svg" src="assets/svg/sorriso-facil.svg" alt="Sorriso Fácil"/></span>
+        </span>
+        <span class="client-logo client-logo-ruralpecas">
+          <span class="client-mark"><img class="client-logo-svg" src="assets/svg/rural-pecas.svg" alt="Rural Peças"/></span>
+        </span>
+        <span class="client-logo client-logo-radical">
+          <span class="client-mark"><img class="client-logo-svg" src="assets/svg/radical-fitness-clean.png" alt="Radical Fitness"/></span>
+        </span>
+        <span class="client-logo client-logo-shopcar" aria-hidden="true">
+          <span class="client-mark"><img class="client-logo-svg" src="assets/svg/shopcar.png" alt=""/></span>
+        </span>
+        <span class="client-logo client-logo-uniaodobrasil" aria-hidden="true">
+          <span class="client-mark"><img class="client-logo-svg" src="assets/svg/uniao-do-brasil.svg" alt=""/></span>
+        </span>
+        <span class="client-logo client-logo-cdlmulher" aria-hidden="true">
+          <span class="client-mark"><img class="client-logo-svg" src="assets/svg/cdl-mulher.svg" alt=""/></span>
+        </span>
+        <span class="client-logo client-logo-sorrisofacil" aria-hidden="true">
+          <span class="client-mark"><img class="client-logo-svg" src="assets/svg/sorriso-facil.svg" alt=""/></span>
+        </span>
+        <span class="client-logo client-logo-ruralpecas" aria-hidden="true">
+          <span class="client-mark"><img class="client-logo-svg" src="assets/svg/rural-pecas.svg" alt=""/></span>
+        </span>
+        <span class="client-logo client-logo-radical" aria-hidden="true">
+          <span class="client-mark"><img class="client-logo-svg" src="assets/svg/radical-fitness-clean.png" alt=""/></span>
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services" class="service-overview">
+  <div class="container">
+    <div class="services-intro">
+      <div class="services-copy reveal">
+        <p class="section-label">Frentes de atuação</p>
+        <h2 class="section-heading">Cada frente resolve<br/>uma parte da sua rotina.</h2>
+        <p class="section-sub">Você pode contratar uma demanda específica ou montar uma operação contínua. As frentes funcionam sozinhas ou em conjunto.</p>
+      </div>
+      <aside class="services-summary reveal" aria-label="Sugestões de combinação por momento">
+        <span class="services-summary-label">Qual frente faz sentido para o seu momento?</span>
+        <div class="services-summary-list">
+          <div class="services-summary-item">
+            <strong class="services-summary-title">Começando do zero</strong>
+            <p class="services-summary-text">Calendário mensal + Conteúdo para redes</p>
+          </div>
+          <div class="services-summary-item">
+            <strong class="services-summary-title">Querendo crescer o alcance</strong>
+            <p class="services-summary-text">Tráfego pago + Design e materiais</p>
+          </div>
+          <div class="services-summary-item">
+            <strong class="services-summary-title">Com evento ou lançamento</strong>
+            <p class="services-summary-text">Foto, vídeo e cobertura + Conteúdo para redes</p>
+          </div>
+          <div class="services-summary-item">
+            <strong class="services-summary-title">Reorganizando a marca</strong>
+            <p class="services-summary-text">Identidade e discurso + Site e presença digital</p>
+          </div>
+        </div>
+      </aside>
+    </div>
+    <div class="services-list service-catalog">
+      <div class="service-item reveal"><span class="service-num">01</span><div><div class="service-name">Conteúdo para redes</div><p class="service-desc">Captação, criação, legenda e publicação para manter a marca ativa sem depender de correria ou improvisação de última hora.</p></div><div class="service-arrow">&rarr;</div></div>
+      <div class="service-item reveal"><span class="service-num">02</span><div><div class="service-name">Calendário mensal</div><p class="service-desc">Temas, campanhas e datas organizados com antecedência. Você sabe o que vai sair, quando e com qual objetivo, antes de começar a produção.</p></div><div class="service-arrow">&rarr;</div></div>
+      <div class="service-item reveal"><span class="service-num">03</span><div><div class="service-name">Design e materiais</div><p class="service-desc">Peças para redes, catálogos, apresentações, impressos e materiais de apoio ao time comercial - com padrão visual definido.</p></div><div class="service-arrow">&rarr;</div></div>
+      <div class="service-item reveal"><span class="service-num">04</span><div><div class="service-name">Tráfego pago</div><p class="service-desc">Apoio na definição de verba, público e criativos. Acompanhamento das campanhas para ajustar o que não está performando.</p></div><div class="service-arrow">&rarr;</div></div>
+      <div class="service-item reveal"><span class="service-num">05</span><div><div class="service-name">Foto, vídeo e cobertura</div><p class="service-desc">Captação para campanhas, bastidores, eventos e lançamentos. Material entregue pronto para uso nas redes e canais da marca.</p></div><div class="service-arrow">&rarr;</div></div>
+      <div class="service-item reveal"><span class="service-num">06</span><div><div class="service-name">Texto e presença institucional</div><p class="service-desc">Roteiros, copy, releases e newsletters que ajudam a empresa a se apresentar melhor em qualquer canal.</p></div><div class="service-arrow">&rarr;</div></div>
+      <div class="service-item reveal"><span class="service-num">07</span><div><div class="service-name">Identidade e discurso de marca</div><p class="service-desc">Para empresas que precisam deixar mais claro quem são e o que fazem - antes de ampliar o alcance.</p></div><div class="service-arrow">&rarr;</div></div>
+      <div class="service-item reveal"><span class="service-num">08</span><div><div class="service-name">Site e presença digital</div><p class="service-desc">Sites que apresentam bem o negócio, carregam rápido e facilitam o contato - sem exigir manutenção técnica constante.</p></div><div class="service-arrow">&rarr;</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CASES -->
+<!-- This block works better when the cards do not feel too evenly spaced. -->
+<section id="cases" class="case-studies">
+  <div class="container">
+    <div class="cases-header reveal">
+      <div><p class="section-label">Mudanças na prática</p><h2 class="section-heading" style="margin-bottom:0">O ganho aparece quando<br/>a rotina muda de verdade.</h2></div>
+      <button class="btn btn-outline" onclick="document.getElementById('cases').scrollIntoView({behavior:'smooth'})">Ver todos os cases</button>
+    </div>
+    <div class="cases-grid case-layout">
+      <div class="case-card reveal"><img class="case-img" src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80" alt="Conteúdo e tráfego pago para clínica"/><p class="case-cat">Saúde - Conteúdo + Tráfego Pago</p><div class="case-result"><span>+340%</span></div><p class="case-title">em agendamentos online</p><p class="case-desc">Com calendário, gravações recorrentes e peças de apoio, a comunicação ficou mais previsível. A marca passou a falar com mais unidade em campanhas, redes e atendimento.</p></div>
+      <div class="case-card reveal"><img class="case-img" src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80" alt="Social media e mídia para varejo"/><p class="case-cat">Varejo - Social Media + Meta Ads</p><div class="case-result"><span>+180%</span></div><p class="case-title">em vendas pelo digital</p><p class="case-desc">A operação saiu de postagens ocasionais para uma rotina de conteúdo, cobertura e materiais comerciais acompanhando o ritmo real do negócio.</p></div>
+      <div class="case-card reveal"><img class="case-img" src="https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&q=80" alt="Apresentação de serviços e presença institucional"/><p class="case-cat">Construção - Site + Conteúdo</p><div class="case-result"><span>90+</span></div><p class="case-title">leads qualificados por mês</p><p class="case-desc">Ajustes de linguagem, peças e direção visual ajudaram a empresa a apresentar melhor seus serviços em reuniões, redes e pontos de contato com clientes.</p></div>
+      <div class="case-card reveal"><img class="case-img" src="https://images.unsplash.com/photo-1521791136064-7986c2920216?w=800&q=80" alt="Lançamento com funil e mídia paga"/><p class="case-cat">Educação - Funil + Tráfego Pago</p><div class="case-result"><span>R$200k</span></div><p class="case-title">em matrículas no lançamento</p><p class="case-desc">Lançamento com funil, campanha e conteúdo coordenados. O resultado veio da execução organizada, não de um único canal funcionando isolado.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY -->
+<section id="why" class="positioning-proof">
+  <div class="container">
+    <div class="why-grid proof-layout">
+      <div class="why-left reveal">
+        <p class="section-label">Por que escolher</p>
+        <h2>O diferencial não está<br/>no discurso. Está no jeito de operar.</h2>
+        <p>Nem toda agência consegue entrar na rotina da empresa sem travar o time. O que muda aqui é a proximidade da operação.</p>
+        <div class="why-items">
+          <div class="why-item"><span class="why-num">01</span><div><h3>Leitura do contexto local</h3><p>Decisões de campanha e conteúdo consideram a realidade de Imperatriz e da região, não só referência de internet.</p></div></div>
+          <div class="why-item"><span class="why-num">02</span><div><h3>Produção próxima da operação</h3><p>Captação, ajustes e aprovações acontecem com contato frequente, reduzindo ruído e acelerando a execução.</p></div></div>
+          <div class="why-item"><span class="why-num">03</span><div><h3>Uma equipe para várias frentes</h3><p>Conteúdo, materiais e campanha no mesmo fluxo - sem dividir a comunicação entre fornecedores desconectados.</p></div></div>
+          <div class="why-item"><span class="why-num">04</span><div><h3>Você aprova antes de publicar</h3><p>Nada vai ao ar sem passar por você. O histórico de aprovações fica registrado no portal do cliente.</p></div></div>
+        </div>
+      </div>
+      <div class="why-right reveal">
+        <div class="why-stats-grid">
+          <div class="why-stat"><div class="why-stat-num">2x</div><div class="why-stat-label">visitas semanais de criação em rotinas de social media</div></div>
+          <div class="why-stat"><div class="why-stat-num">80+</div><div class="why-stat-label">empresas atendidas em Imperatriz e região</div></div>
+          <div class="why-stat"><div class="why-stat-num">3x</div><div class="why-stat-label">retorno médio sobre o valor investido em tráfego pago</div></div>
+          <div class="why-stat"><div class="why-stat-num">5.0</div><div class="why-stat-label">avaliação média pelos clientes que passaram pela operação</div></div>
+        </div>
+        <div class="why-panel-tail">
+          <div class="why-proof" aria-label="Sinais de maturidade da operação">
+            <div class="why-proof-item">Diagnóstico antes da execução</div>
+            <div class="why-proof-item">Aprovação clara de entregas</div>
+            <div class="why-proof-item">Acompanhamento próximo da equipe</div>
+            <div class="why-proof-item">Leitura estratégica do momento da marca</div>
+          </div>
+          <div class="why-proof-cta">
+            <p>Para marcas que precisam organizar presença, discurso e rotina com mais clareza.</p>
+            <button class="btn btn-ghost" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Solicitar proposta</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials" class="client-voices">
+  <div class="container">
+    <p class="section-label reveal">Quem já sentiu a diferença</p>
+    <h2 class="section-heading reveal" style="margin-bottom:64px">Quem contratou percebeu<br/>mudança na rotina.</h2>
+    <div class="testi-grid voices-layout">
+      <div class="testi-card featured reveal"><p class="testi-text">"Antes, cada postagem saía em cima da hora. Hoje temos calendário, gravação marcada e muito menos retrabalho. A comunicação parou de depender da urgência do dia."</p><div><div class="testi-author-name">Clínica de saúde</div><div class="testi-author-role">Imperatriz, MA</div></div></div>
+      <div class="testi-card reveal"><p class="testi-text">"A comunicação deixou de depender só da inspiração do momento. Ficou mais fácil lançar campanha, divulgar ação e manter padrão entre os canais."</p><div><div class="testi-author-name">Empresa do varejo</div><div class="testi-author-role">Imperatriz, MA</div></div></div>
+      <div class="testi-card reveal"><p class="testi-text">"O tráfego ficou mais previsível e melhor acompanhado. Hoje eu sei o que cada campanha está gerando - não fico só esperando resultado aparecer."</p><div><div class="testi-author-name">Negócio regional</div><div class="testi-author-role">Maranhão</div></div></div>
+      <div class="testi-card reveal"><p class="testi-text">"Nos eventos, a cobertura acompanhou o ritmo da operação. Enquanto a ação acontecia, a marca já aparecia nas redes do jeito certo - sem precisar improvisar depois."</p><div><div class="testi-author-name">Empresa de eventos</div><div class="testi-author-role">Imperatriz, MA</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section id="process" class="delivery-process">
+  <div class="container">
+    <div class="process-intro">
+      <div class="process-copy reveal">
+        <p class="section-label">Como é na prática</p>
+        <h2 class="section-heading">O trabalho começa entendendo o momento antes de qualquer produção.</h2>
+      </div>
+      <aside class="process-highlight reveal" aria-label="O que está incluído em qualquer contratação">
+        <span class="process-highlight-label">O que está incluído em qualquer contratação</span>
+        <ul class="process-highlight-list">
+          <li>Calendário com antecedência - sem urgência para produzir</li>
+          <li>Portal de aprovação - você vê antes de publicar</li>
+          <li>Relatório periódico com o que foi feito e o que ajustou</li>
+          <li>Visitas de captação com frequência definida</li>
+          <li>2 rodadas de revisão incluídas em cada entrega</li>
+        </ul>
+        <p class="process-highlight-footer">Do briefing ao início da produção: <strong>5 a 10 dias</strong></p>
+      </aside>
+    </div>
+    <div class="process-grid process-layout">
+      <div class="process-step reveal"><div class="process-num">01</div><div class="process-title">Diagnóstico</div><p class="process-desc">Entendemos negócio, público, concorrência e objetivo antes de propor qualquer frente.</p></div>
+      <div class="process-step reveal"><div class="process-num">02</div><div class="process-title">Proposta com escopo fechado</div><p class="process-desc">Apresentamos quais frentes fazem sentido, em qual ordem e com qual investimento. Você aprova o plano antes de qualquer produção começar.</p></div>
+      <div class="process-step reveal"><div class="process-num">03</div><div class="process-title">Produção e entrega</div><p class="process-desc">Produzimos, publicamos e acompanhamos as entregas com rotina clara.</p></div>
+      <div class="process-step reveal"><div class="process-num">04</div><div class="process-title">Leitura e ajuste de rota</div><p class="process-desc">Revisamos o que performa, corrigimos rota e consolidamos aprendizados.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about" class="studio-profile">
+  <div class="container">
+    <div class="about-grid profile-layout">
+      <div class="about-left reveal">
+        <p class="section-label">Quem está por trás</p>
+        <h2>Mentalidade de crescimento para marcas em movimento.</h2>
+        <p>A ONE trabalha próxima da operação do cliente para organizar conteúdo, campanhas, gravações, materiais e presença institucional com mais clareza.</p>
+        <p>Em vez de depender de improviso, a marca passa a contar com rotina, direção criativa e acompanhamento constante, sustentando uma comunicação mais estável, alinhada e profissional.</p>
+      </div>
+      <div class="about-right reveal">
+        <div class="about-visual">
+          <video class="about-video" muted loop playsinline autoplay preload="none" data-src="/assets/media/vem-ser-nosso-cliente.mov" aria-label="Bastidores da equipe ONE"></video>
+          <span class="about-video-fallback">Bastidores da ONE</span>
+        </div>
+        <div class="about-contact">
+          <p>Av. Pedro Neiva de Santana, 4414 · Aprimore Hub de Negócios</p>
+          <p>Imperatriz · MA</p>
+          <p>@onecomunicintegrada</p>
+          <p>(99) 98548-0961</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FORMATS -->
+<section id="formats" class="access-portals">
+  <div class="container">
+    <div class="formats-intro">
+      <div class="formats-copy reveal">
+        <p class="section-label">Formatos de contratação</p>
+        <h2 class="section-heading">Você pode começar por uma demanda pontual ou por uma rotina mensal.</h2>
+        <p class="section-sub">Se você já sabe a demanda, montamos a proposta em cima dela. Se ainda está definindo o escopo, a primeira conversa serve para organizar essa decisão.</p>
+      </div>
+      <aside class="formats-summary reveal" aria-label="Resumo da contratação">
+        <div class="formats-summary-grid">
+          <div class="formats-summary-card">
+            <span class="formats-summary-value">48h</span>
+            <p class="formats-summary-text">para receber proposta com escopo e investimento</p>
+          </div>
+          <div class="formats-summary-card">
+            <span class="formats-summary-value">5–10</span>
+            <p class="formats-summary-text">dias do briefing ao início da produção</p>
+          </div>
+          <div class="formats-summary-card">
+            <span class="formats-summary-value">2x</span>
+            <p class="formats-summary-text">rodadas de revisão incluídas em cada entrega</p>
+          </div>
+          <div class="formats-summary-card">
+            <span class="formats-summary-value">100%</span>
+            <p class="formats-summary-text">das entregas passam por aprovação antes de publicar</p>
+          </div>
+        </div>
+        <div class="formats-summary-flow">
+          <span class="formats-summary-label">Como funciona o primeiro contato</span>
+          <div class="formats-summary-steps">
+            <div class="formats-summary-step"><span class="formats-summary-step-num">01</span><p class="formats-summary-step-text">Você entra em contato pelo formulário ou WhatsApp</p></div>
+            <div class="formats-summary-step"><span class="formats-summary-step-num">02</span><p class="formats-summary-step-text">A equipe retorna para entender o momento e a demanda</p></div>
+            <div class="formats-summary-step"><span class="formats-summary-step-num">03</span><p class="formats-summary-step-text">Proposta com escopo, prazo e investimento em até 48h</p></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+    <div class="portals portal-layout">
+      <div class="portal reveal">
+        <div class="portal-num">01</div>
+        <div class="portal-title">Projeto pontual</div>
+        <p class="portal-desc">Para campanha, cobertura, catálogo, vídeo, lançamento ou qualquer demanda com começo, meio e fim definidos. Orçamento fechado por entrega, sem compromisso de continuidade.</p>
+        <p class="portal-desc"><strong>Ideal para:</strong> campanhas, coberturas, vídeos, catálogos e demandas fechadas.</p>
+      </div>
+      <div class="portal reveal">
+        <div class="portal-num">02</div>
+        <div class="portal-title">Rotina mensal</div>
+        <p class="portal-desc">Para empresas que precisam de calendário, produção de conteúdo e acompanhamento contínuo. A equipe opera como extensão da comunicação da empresa.</p>
+        <p class="portal-desc"><strong>Ideal para:</strong> social media, assessoria contínua, marcas que precisam de constância.</p>
+      </div>
+      <div class="portal reveal">
+        <div class="portal-num">03</div>
+        <div class="portal-title">Composição sob medida</div>
+        <p class="portal-desc">Para combinar social media, tráfego, design, cobertura e materiais conforme a fase da empresa. As frentes funcionam juntas, no mesmo fluxo de aprovação.</p>
+        <p class="portal-desc"><strong>Ideal para:</strong> lançamentos, rebranding, empresas em expansão com múltiplas demandas.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="service-overview">
+  <div class="container">
+    <p class="section-label reveal">Antes de contratar</p>
+    <h2 class="section-heading reveal">As dúvidas que costumam aparecer antes da decisão.</h2>
+    <p class="section-sub reveal faq-copy">Se a sua empresa ainda está avaliando formato, prazo ou forma de acompanhamento, estas respostas ajudam a decidir com mais clareza.</p>
+    <div class="faq-list">
+      <div class="faq-item reveal"><h3>Atendem só empresas de Imperatriz?</h3><p>Não. Imperatriz é a base de operação, mas o atendimento também alcança negócios de outras cidades da região. Diagnóstico, calendário, copy e design são remotos. Visitas de captação e coberturas são presenciais.</p></div>
+      <div class="faq-item reveal"><h3>Preciso contratar tudo de uma vez?</h3><p>Não. É possível começar por uma demanda específica e ampliar depois. Muitas empresas entram com um projeto pontual e passam para rotina mensal quando percebem que faz sentido continuar.</p></div>
+      <div class="faq-item reveal"><h3>Vocês fazem só redes sociais?</h3><p>Não. A atuação cobre tráfego pago, design, materiais comerciais, cobertura de eventos, foto, vídeo, texto institucional e site. As frentes funcionam sozinhas ou em conjunto.</p></div>
+      <div class="faq-item reveal"><h3>Como funciona o primeiro contato?</h3><p>A conversa inicial serve para entender o momento da empresa, a urgência da demanda e o formato mais adequado. Após esse alinhamento, a proposta é apresentada com escopo, prazo e investimento.</p></div>
+      <div class="faq-item reveal"><h3>Como acompanho o que está sendo feito?</h3><p>Você acessa os materiais pelo portal do cliente, aprova ou solicita ajustes diretamente - sem depender de WhatsApp ou e-mail para rastrear entregas. Tudo fica registrado com histórico.</p></div>
+      <div class="faq-item reveal"><h3>Vocês trabalham com contrato?</h3><p>Sim. Projetos pontuais e rotinas mensais são formalizados com escopo, prazo, investimento e condições de entrega definidos antes do início.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta" class="closing-cta">
+  <div class="container">
+    <div class="cta-inner reveal">
+      <h2>Se a sua empresa precisa organizar a comunicação, o próximo passo é simples.</h2>
+      <div class="cta-actions">
+        <button class="btn btn-white" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Solicitar proposta</button>
+        <a href="https://wa.me/5599985480961" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">Falar no WhatsApp</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" class="contact-entry">
+  <div class="container">
+    <div class="contact-grid contact-layout">
+      <div class="reveal">
+        <div class="contact-copy">
+          <p class="section-label">Fale sobre sua empresa</p>
+          <h2>Conta o momento do negócio e a gente retorna com o melhor formato.</h2>
+          <p>Preencha com a demanda principal e o que precisa sair do papel agora. Com essas informações, a equipe consegue responder com mais objetividade.</p>
+          <div class="contact-note">
+            <p><strong>Quanto mais claro o cenário atual, mais objetiva fica a proposta.</strong> O primeiro retorno já considera escopo, prazo e combinação de frentes que fazem sentido para o momento da empresa.</p>
+          </div>
+        </div>
+        <div class="contact-info">
+          <div class="ci"><span class="ci-label">WhatsApp</span><span class="ci-val">(99) 98548-0961</span></div>
+          <div class="ci"><span class="ci-label">Instagram</span><span class="ci-val">@onecomunicintegrada</span></div>
+          <div class="ci"><span class="ci-label">Endereço</span><span class="ci-val">Av. Pedro Neiva de Santana, 4414 · Aprimore Hub de Negócios</span></div>
+        </div>
+      </div>
+      <div class="reveal">
+        <form class="contact-form" onsubmit="handleForm(event)" novalidate>
+          <div class="form-row">
+            <div class="form-group"><label for="f-name">Nome</label><input type="text" id="f-name" placeholder="Nome e sobrenome" required/></div>
+            <div class="form-group"><label for="f-phone">WhatsApp</label><input type="tel" id="f-phone" placeholder="(99) 98548-0961" required/></div>
+          </div>
+          <div class="form-group"><label for="f-email">E-mail</label><input type="email" id="f-email" placeholder="seu@email.com" required/></div>
+          <div class="form-group"><label for="f-company">Empresa</label><input type="text" id="f-company" placeholder="Nome da sua empresa"/></div>
+          <div class="form-group"><label for="f-service">Serviço de interesse</label>
+            <select id="f-service">
+              <option value="">Selecione...</option>
+              <option>Conteúdo para redes</option><option>Calendário mensal</option>
+              <option>Design e materiais</option><option>Tráfego pago</option>
+              <option>Foto, vídeo e cobertura</option><option>Texto e presença institucional</option>
+              <option>Identidade e discurso de marca</option><option>Site e presença digital</option>
+            </select>
+          </div>
+          <div class="form-group"><label for="f-msg">Mensagem</label><textarea id="f-msg" placeholder="Qual é a demanda principal agora? O que precisa sair do papel?" maxlength="1000" aria-describedby="f-msg-count"></textarea><div id="f-msg-count" style="margin-top:8px;font-size:12px;color:var(--muted)">0/1000 caracteres</div></div>
+          <div class="form-group">
+            <label class="consent-row">
+              <input type="checkbox" id="f-consent" required/>
+              <span>Concordo com a coleta e o tratamento dos meus dados para contato comercial, conforme a <a href="/politica-de-privacidade.html" target="_blank" rel="noopener noreferrer">Política de Privacidade</a> e os <a href="/termos-de-uso.html" target="_blank" rel="noopener noreferrer">Termos de Uso</a>.</span>
+            </label>
+          </div>
+          <button type="submit" id="contact-submit" class="btn btn-primary" style="width:100%;justify-content:center">Enviar mensagem</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CLIENT AREA -->
+<section id="client-area" class="access-portals">
+  <div class="container">
+    <p class="section-label reveal">Portais de acesso</p>
+    <h2 class="section-heading reveal">Acessos exclusivos.</h2>
+    <div class="portals portal-layout">
+      <div class="portal reveal" onclick="goToClientLogin()">
+        <div class="portal-num">Cliente</div>
+        <div class="portal-title">Área do Cliente</div>
+        <p class="portal-desc">Acompanhe o status dos projetos, aprove materiais e acesse relatórios em tempo real.</p>
+        <button type="button" class="btn btn-outline" style="width:100%;justify-content:center">Entrar</button>
+      </div>
+      <div class="portal reveal" onclick="goToInternalLogin()">
+        <div class="portal-num">Equipe</div>
+        <div class="portal-title">Painel Administrativo</div>
+        <p class="portal-desc">Gestão interna de clientes, projetos, leads e arquivos. Acesso restrito à equipe ONE.</p>
+        <button type="button" class="btn btn-primary" style="width:100%;justify-content:center">Acesso interno</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<section id="dashboard" class="client-dashboard">
+  <div class="container">
+    <div class="dash-top">
+      <div><h2 id="dash-title">Painel do Cliente</h2><p class="dash-welcome" id="dash-welcome">Bem-vindo de volta.</p></div>
+      <div style="display:flex;gap:12px;align-items:center"><span id="dash-badge" class="badge badge-pink">Cliente</span><button type="button" class="btn btn-outline" onclick="logout()">Sair</button></div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <h3 style="font-family:var(--font-d);font-weight:700;margin-bottom:20px">Projetos em andamento</h3>
+    <div class="proj-list" id="proj-list"></div>
+    <h3 style="font-family:var(--font-d);font-weight:700;margin:42px 0 20px">Relatórios</h3>
+    <div class="proj-list" id="reports-list"></div>
+    <h3 style="font-family:var(--font-d);font-weight:700;margin:42px 0 20px">Materiais para aprovação</h3>
+    <div class="proj-list" id="materials-list"></div>
+    <h3 style="font-family:var(--font-d);font-weight:700;margin:42px 0 20px">Faturas</h3>
+    <div class="proj-list" id="invoices-list"></div>
+    <h3 style="font-family:var(--font-d);font-weight:700;margin:42px 0 20px">Mensagens</h3>
+    <div class="proj-list" id="messages-list"></div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-grid footer-layout">
+      <div class="footer-brand">
+        <img class="footer-logo" src="assets/svg/one-logo-dark.svg" alt="ONE Comunicação"/>
+        <p>Conteúdo, campanha e materiais para empresas de Imperatriz e região que precisam de rotina, padrão e presença.</p>
+      </div>
+      <div class="footer-col"><h4>Serviços</h4><ul><li><a href="#services">Conteúdo para redes</a></li><li><a href="#services">Calendário mensal</a></li><li><a href="#services">Tráfego pago</a></li><li><a href="#services">Site e presença digital</a></li></ul></div>
+      <div class="footer-col"><h4>Empresa</h4><ul><li><a href="#about">Quem está por trás</a></li><li><a href="#cases">Mudanças na prática</a></li><li><a href="#formats">Formatos de contratação</a></li><li><a href="#contact">Contato</a></li></ul></div>
+      <div class="footer-col"><h4>Contato</h4><ul><li><a href="https://wa.me/5599985480961" target="_blank" rel="noopener noreferrer">(99) 98548-0961</a></li><li><a href="https://instagram.com/onecomunicintegrada" target="_blank" rel="noopener noreferrer">@onecomunicintegrada</a></li><li><a href="#about">Imperatriz, MA</a></li></ul></div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 ONE Comunicação Integrada. Todos os direitos reservados.</span>
+      <div class="social-links">
+        <a href="https://instagram.com/onecomunicintegrada" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Instagram">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3.25" y="3.25" width="17.5" height="17.5" rx="5.25" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="12" cy="12" r="4.1" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="17.35" cy="6.65" r="1.15" fill="currentColor"/>
+          </svg>
+        </a>
+        <a href="https://wa.me/5599985480961" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="WhatsApp">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12.05 4C7.74 4 4.25 7.39 4.25 11.58c0 1.66.55 3.19 1.49 4.43L4.8 20l4.14-.9a8 8 0 0 0 3.11.62c4.31 0 7.8-3.39 7.8-7.58S16.36 4 12.05 4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M9.36 8.86c.18-.4.37-.41.54-.42h.46c.15 0 .36.05.55.44.18.39.63 1.52.68 1.63.05.1.08.23.02.36-.06.13-.1.21-.2.32-.1.11-.2.24-.29.32-.1.09-.2.18-.08.36.11.19.5.8 1.08 1.29.74.63 1.36.83 1.55.92.18.08.29.07.4-.05.1-.12.45-.51.57-.68.12-.18.24-.15.4-.09.17.06 1.06.49 1.24.58.18.09.3.13.34.2.04.07.04.43-.1.84-.15.41-.86.8-1.17.85-.3.05-.69.07-1.11-.07-.26-.08-.59-.2-1.02-.39-1.8-.78-2.98-2.61-3.08-2.74-.1-.14-.73-.96-.73-1.83 0-.87.46-1.3.62-1.47Z" fill="currentColor"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="closeModalBg(event)" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-sub">
+    <button type="button" class="modal-close" onclick="closeModal()" aria-label="Fechar">×</button>
+    <img class="modal-logo" src="assets/svg/one-logo-soft.svg" alt="ONE Comunicação"/>
+    <h3 id="modal-title">Área do Cliente</h3>
+    <p id="modal-sub">Acesse sua conta para acompanhar projetos</p>
+    <div class="modal-form">
+      <div class="form-group"><label for="login-email">E-mail</label><input type="email" id="login-email" placeholder="seu@email.com" autocomplete="username"/></div>
+      <div class="form-group"><label for="login-pass">Senha</label><input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"/></div>
+      <button type="button" id="login-submit" class="btn btn-primary" style="width:100%;justify-content:center" onclick="doLogin()">Entrar</button>
+      <a id="modal-whatsapp-link" href="https://wa.me/5599985480961" target="_blank" rel="noopener noreferrer" class="btn btn-outline" style="width:100%;justify-content:center">Solicitar acesso via WhatsApp</a>
+    </div>
+  </div>
+</div>
+
+<script src="/assets/js/config.js"></script>
+<script src="/assets/js/app-core.js"></script>
+<script src="/assets/js/utils/form.js"></script>
+<script src="/assets/js/index-app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const mediaEls = document.querySelectorAll('video[data-src]');
+  if (!mediaEls.length) return;
+
+  const loadVideo = (video) => {
+    if (!video || video.dataset.loaded === 'true') return;
+    const src = video.getAttribute('data-src');
+    if (!src) return;
+    video.src = src;
+    video.dataset.loaded = 'true';
+    video.load();
+    const playAttempt = video.play();
+    if (playAttempt && typeof playAttempt.catch === 'function') {
+      playAttempt.catch(() => {});
+    }
+  };
+
+  if (!('IntersectionObserver' in window)) {
+    mediaEls.forEach(loadVideo);
+    return;
+  }
+
+  const observer = new IntersectionObserver((entries, obs) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      loadVideo(entry.target);
+      obs.unobserve(entry.target);
+    });
+  }, { rootMargin: '180px 0px' });
+
+  mediaEls.forEach((video) => observer.observe(video));
+});
+</script>
+</body>
+</html>
+
+
+
+
+
+
