@@ -1,0 +1,61 @@
+{
+  "name": "one-comunicacao-backend",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "audit:tenant": "node ../scripts/audit-tenant.js",
+    "prestart": "npm run audit:tenant",
+    "start": "node src/server.js",
+    "db:init": "npm run db:migrate",
+    "db:migrate": "node src/db/migrate.js up",
+    "db:migrate:down": "node src/db/migrate.js down 1",
+    "db:seed": "node src/db/seed.js",
+    "bootstrap:admin": "node src/db/bootstrap-admin.js",
+    "test": "cross-env NODE_ENV=test node --test \"test/**/*.test.js\"",
+    "lint": "eslint \"src/**/*.js\" \"test/**/*.js\"",
+    "format": "prettier --write \"src/**/*.js\" \"test/**/*.js\"",
+    "format:check": "prettier --check \"src/**/*.js\" \"test/**/*.js\"",
+    "audit:deps": "npm audit --omit=dev",
+    "smoke": "node scripts/smoke-test.js",
+    "verify:rls": "node scripts/verify-rls.js"
+  },
+  "lint-staged": {
+    "*.{js,json,md,html,yml,yaml}": "prettier --write",
+    "src/**/*.js": "eslint"
+  },
+  "dependencies": {
+    "@sentry/node": "^10.45.0",
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.5.1",
+    "compression": "^1.8.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.4.1",
+    "file-type": "^21.3.3",
+    "helmet": "^8.0.0",
+    "hpp": "^0.2.3",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.2",
+    "pg": "^8.16.3",
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
+    "validator": "^13.15.26",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0",
+    "eslint": "^10.1.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "node-pg-migrate": "^8.0.4",
+    "nodemon": "^3.1.10",
+    "pg-mem": "^3.0.14",
+    "prettier": "^3.8.1",
+    "supertest": "^7.2.2"
+  }
+}
