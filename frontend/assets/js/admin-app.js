@@ -2414,6 +2414,38 @@ function setAddressFieldValue(field, value, force = false) {
   return true;
 }
 
+async function fetchCepSuggestion(cep) {
+  try {
+    return await apiFetch(`/address/cep/${cep}`, { method: "GET" });
+  } catch (backendError) {
+    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`, {
+      method: "GET",
+      headers: {
+        Accept: "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      throw backendError;
+    }
+
+    const data = await response.json().catch(() => ({}));
+    if (data?.erro) {
+      throw backendError;
+    }
+
+    return {
+      zip_code: formatZipCodeInput(cep),
+      address_line1: data.logradouro || "",
+      address_line2: data.complemento || "",
+      neighborhood: data.bairro || "",
+      city: data.localidade || "",
+      state: data.uf || "",
+      country: "Brasil",
+    };
+  }
+}
+
 function bindManualAddressField(field) {
   if (!field || field.dataset.boundManualAddress === "1") {
     return;
@@ -2452,6 +2484,7 @@ function initClientAddressAssist(form) {
 
   let lastResolvedCep = "";
   let lookupTimer = null;
+  let lookupInFlightCep = "";
 
   const applyAddressLookup = async (force = false) => {
     const cep = normalizeZipCode(zipField.value);
@@ -2466,13 +2499,18 @@ function initClientAddressAssist(form) {
       return;
     }
 
+    if (lookupInFlightCep === cep) {
+      return;
+    }
+
     if (lookupButton) {
       lookupButton.disabled = true;
     }
+    lookupInFlightCep = cep;
     setCepFeedback(feedbackNode, "Buscando endereco pelo CEP...");
 
     try {
-      const address = await apiFetch(`/address/cep/${cep}`, { method: "GET" });
+      const address = await fetchCepSuggestion(cep);
       zipField.dataset.settingValue = "1";
       zipField.value = address.zip_code || formatZipCodeInput(cep);
       zipField.dataset.autofilled = "1";
@@ -2498,6 +2536,7 @@ function initClientAddressAssist(form) {
     } catch (error) {
       setCepFeedback(feedbackNode, error.message, "error");
     } finally {
+      lookupInFlightCep = "";
       if (lookupButton) {
         lookupButton.disabled = false;
       }
@@ -2518,6 +2557,22 @@ function initClientAddressAssist(form) {
         applyAddressLookup(false);
       }, 350);
     }
+  });
+
+  zipField.addEventListener("change", () => {
+    if (normalizeZipCode(zipField.value).length === 8) {
+      clearTimeout(lookupTimer);
+      applyAddressLookup(false);
+    }
+  });
+
+  zipField.addEventListener("paste", () => {
+    window.setTimeout(() => {
+      if (normalizeZipCode(zipField.value).length === 8) {
+        clearTimeout(lookupTimer);
+        applyAddressLookup(false);
+      }
+    }, 0);
   });
 
   zipField.addEventListener("blur", () => {
