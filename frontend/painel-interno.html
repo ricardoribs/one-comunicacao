@@ -66,7 +66,7 @@ button,input,textarea,select{font-family:var(--font-b)}
 ::-webkit-scrollbar-thumb:hover{background:var(--pink)}
 
 /* LOGIN */
-#login-screen{position:fixed;inset:0;background:linear-gradient(180deg,#1a1c22 0%,#111216 100%);display:flex;align-items:stretch;justify-content:center;z-index:9999;transition:opacity .5s ease}
+#login-screen{position:fixed;inset:0;background:linear-gradient(180deg,#1a1c22 0%,#111216 100%);display:flex;align-items:stretch;justify-content:center;z-index:9999;transition:opacity .5s ease;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 #login-screen.hidden{opacity:0;pointer-events:none}
 .login-shell{width:100%;min-height:100vh;display:grid;grid-template-rows:auto 1fr auto auto}
 .login-topbar{height:84px;display:flex;align-items:center;justify-content:flex-start;padding:0 56px;background:rgba(13,13,15,.34);border-bottom:1px solid rgba(255,255,255,.08);font-family:var(--font-login)}
@@ -76,7 +76,7 @@ button,input,textarea,select{font-family:var(--font-b)}
 .login-brand-title span{color:var(--pink)}
 .login-brand-sub{width:100%;font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.72);text-align:center}
 .login-brand-image{display:block;width:146px;height:auto}
-.login-stage{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(388px,420px);gap:64px;align-items:start;padding:48px 72px 88px;min-height:620px;overflow:hidden}
+.login-stage{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(388px,420px);gap:64px;align-items:start;padding:48px 72px 88px;min-height:620px;overflow:visible}
 .login-stage::before{content:"";position:absolute;inset:0;background:
   radial-gradient(circle at 22% 24%, rgba(232,52,105,.14), transparent 22%),
   radial-gradient(circle at 82% 50%, rgba(255,255,255,.04), transparent 28%);
@@ -147,6 +147,14 @@ nav.sb-nav{flex:1;padding:var(--space-4) 0}
 #app-main{margin-left:var(--sidebar);flex:1;min-width:0;display:flex;flex-direction:column;min-height:100vh}
 .app-screen{display:none}
 .app-screen.active{display:flex;flex-direction:column;min-height:100vh}
+#mobile-nav-toggle{display:none;position:fixed;top:calc(12px + env(safe-area-inset-top));left:12px;width:44px;height:44px;align-items:center;justify-content:center;border:none;background:var(--ink);color:#fff;box-shadow:0 10px 24px rgba(13,13,15,.24);z-index:220;border-radius:4px;cursor:pointer}
+#mobile-nav-toggle span{display:block;width:18px;height:2px;background:currentColor;border-radius:999px;position:relative}
+#mobile-nav-toggle span::before,#mobile-nav-toggle span::after{content:"";position:absolute;left:0;width:18px;height:2px;background:currentColor;border-radius:999px}
+#mobile-nav-toggle span::before{top:-6px}
+#mobile-nav-toggle span::after{top:6px}
+#sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(13,13,15,.48);z-index:90;opacity:0;transition:opacity var(--tr)}
+body.sidebar-open{overflow:hidden}
+body.sidebar-open #sidebar-backdrop{display:block;opacity:1}
 .topbar{min-height:72px;background:var(--white);padding:0 var(--space-8);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;flex-shrink:0}
 .topbar-title{font-family:var(--font-d);font-size:var(--text-xl);font-weight:700;letter-spacing:-.04em;line-height:1.08}
 .topbar-sub{font-size:var(--text-sm);line-height:1.4;color:var(--muted);margin-top:var(--space-1)}
@@ -261,8 +269,9 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 .bar-val{font-size:var(--text-xs);font-weight:600;color:var(--muted)}
 
 /* TABS */
-.tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:var(--space-6)}
-.tab{padding:var(--space-3) var(--space-4);font-size:var(--text-sm);font-weight:500;color:var(--muted);cursor:pointer;transition:all var(--tr);border-bottom:2px solid transparent;margin-bottom:-2px}
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:var(--space-6);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:var(--space-3) var(--space-4);font-size:var(--text-sm);font-weight:500;color:var(--muted);cursor:pointer;transition:all var(--tr);border-bottom:2px solid transparent;margin-bottom:-2px;flex:0 0 auto;white-space:nowrap}
 .tab:hover{color:var(--text)}
 .tab.active{color:var(--pink);border-bottom-color:var(--pink)}
 
@@ -461,9 +470,10 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   :root{--sidebar:0px}
   #sidebar{transform:translateX(-100%)}
   #sidebar.open{transform:none;width:240px}
+  #mobile-nav-toggle{display:inline-flex}
   #app-main{margin-left:0}
   .page-body{padding:var(--space-4)}
-  .topbar{min-height:auto;padding:var(--space-4);align-items:flex-start}
+  .topbar{min-height:auto;padding:var(--space-4) var(--space-4) var(--space-4) 64px;align-items:flex-start}
   .topbar-title{font-size:var(--text-lg)}
   .topbar-actions{width:100%;justify-content:flex-start}
   .kpi-grid{grid-template-columns:1fr 1fr}
@@ -473,6 +483,15 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .table-wrap{overflow-x:auto}
   .table-wrap table{min-width:720px}
   .modal-box{padding:var(--space-5)}
+  .inline-metrics{grid-template-columns:1fr;row-gap:var(--space-2)}
+  .inline-metrics-meta{justify-content:flex-start;min-width:0}
+  .team-list .item-row{grid-template-columns:1fr;row-gap:var(--space-2)}
+  .team-list .item-row .badge{justify-self:start}
+  .team-member-row,.charge-head,.invoice-head,.historic-card-head,.progress-item-head,.urgent-item,.item-row{flex-direction:column;align-items:flex-start}
+  .team-member-row .badge{margin-left:0}
+  .finance-header-grid,.fin-row{grid-template-columns:1fr}
+  .fin-row{gap:var(--space-2)}
+  .table-actions,.item-actions,.modal-actions{flex-wrap:wrap}
 }
 @media(max-width:650px){
   :root{--sidebar:0px}
@@ -480,41 +499,55 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   #sidebar.open{transform:none;width:240px}
   #app-main{margin-left:0}
   .page-body{padding:var(--space-4)}
-  .topbar{padding:0 var(--space-4)}
+  .topbar{padding:0 var(--space-4) 0 64px}
   .kpi-grid{grid-template-columns:1fr 1fr}
   .three-col{grid-template-columns:1fr}
   .access-grid{grid-template-columns:1fr}
   .fin-grid{grid-template-columns:1fr}
   .modal-box{padding:var(--space-5)}
-  .login-topbar{height:auto;padding:var(--space-4) var(--space-5);flex-direction:column;align-items:flex-start;gap:var(--space-4)}
+  .login-shell{display:block;min-height:100%}
+  .login-topbar{height:auto;padding:calc(var(--space-4) + env(safe-area-inset-top)) var(--space-5) var(--space-4);flex-direction:column;align-items:flex-start;gap:var(--space-4)}
   .login-topnav{gap:var(--space-4);flex-wrap:wrap}
-  .login-stage{grid-template-columns:1fr;padding:var(--space-8) var(--space-5);gap:var(--space-6)}
-  .login-hero{min-height:auto;padding:0}
-  .login-hero-frame{padding:var(--space-8) 0}
+  .login-stage{grid-template-columns:1fr;padding:var(--space-6) var(--space-5) calc(var(--space-8) + env(safe-area-inset-bottom));gap:var(--space-5);min-height:auto;overflow:visible}
+  .login-hero{min-height:auto;padding:0;order:2}
+  .login-hero-frame{padding:var(--space-5) 0 0;min-height:auto;border-bottom:none}
   .login-hero-frame::before{display:none}
-  .login-hero-title{font-size:42px;max-width:620px}
-  .login-feature-row{grid-template-columns:1fr;max-width:none;gap:var(--space-4);margin-top:var(--space-8)}
-  .login-box{max-width:520px}
+  .login-hero-title{font-size:36px;max-width:620px}
+  .login-feature-row{grid-template-columns:1fr;max-width:none;gap:var(--space-4);margin-top:var(--space-6)}
+  .login-feature{align-items:flex-start}
+  .login-box{order:1;max-width:none;width:100%;padding:var(--space-5);margin-top:0}
   .login-benefits{padding:var(--space-8) var(--space-5)}
   .login-benefit-grid{grid-template-columns:1fr}
+  .login-benefit-card{height:auto;min-height:136px}
   .login-footer{padding:var(--space-5);flex-direction:column;align-items:flex-start;gap:var(--space-4)}
 }
 @media(max-width:560px){
   .kpi-grid{grid-template-columns:1fr}
-  .topbar{align-items:flex-start;padding-top:var(--space-4);padding-bottom:var(--space-4)}
+  .topbar{align-items:flex-start;padding:var(--space-4) var(--space-4) var(--space-4) 64px}
   .topbar-actions{width:100%;justify-content:flex-start}
+  .topbar-actions > .btn,
+  .topbar-actions > .btn-select,
+  .topbar-actions > select{width:100%;justify-content:center}
+  .topbar-actions > .text-meta{width:100%}
+  .table-actions > .btn,
+  .item-actions > .btn,
+  .modal-actions > .btn{flex:1 1 100%;justify-content:center}
   .login-stage{padding:var(--space-5) var(--space-4)}
   .login-hero-title{font-size:34px}
-  .login-hero-copy{font-size:16px}
+  .login-hero-copy{font-size:15px}
   .login-feature-row{grid-template-columns:1fr;max-width:none;gap:var(--space-4)}
-  .login-box{padding:var(--space-6)}
+  .login-feature-icon{width:36px;height:36px}
+  .login-feature-icon svg{width:36px;height:36px}
+  .login-box{padding:var(--space-5)}
+  .login-logo{margin-bottom:var(--space-6)}
+  .login-logo-image,.login-brand-image{width:120px}
   .login-benefits{padding:var(--space-6) var(--space-4)}
   .login-footer{padding:var(--space-4)}
   .login-footer-links{flex-wrap:wrap;gap:var(--space-4)}
 }
 @media(max-width:375px){
   .page-body{padding:var(--space-3)}
-  .topbar{padding:var(--space-3)}
+  .topbar{padding:var(--space-3) var(--space-3) var(--space-3) 56px}
   .topbar-title{font-size:var(--text-base)}
   .topbar-sub{font-size:var(--text-xs)}
   .btn,.btn-sm{min-height:44px}
@@ -523,7 +556,11 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .kanban{grid-auto-columns:minmax(88vw,88vw)}
   .table-wrap table{min-width:680px}
   .toast{right:var(--space-3);left:var(--space-3);bottom:var(--space-3);max-width:none}
+  #mobile-nav-toggle{top:calc(8px + env(safe-area-inset-top));left:8px;width:40px;height:40px}
+  #mobile-nav-toggle span,#mobile-nav-toggle span::before,#mobile-nav-toggle span::after{width:16px}
 }
+#login-screen:not(.hidden) ~ #mobile-nav-toggle,
+#login-screen:not(.hidden) ~ #sidebar-backdrop{display:none !important}
 </style>
 </head>
 <body>
@@ -622,6 +659,11 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
     </footer>
   </div>
 </div>
+
+<button id="mobile-nav-toggle" type="button" onclick="toggleSidebar()" aria-label="Abrir navegação">
+  <span aria-hidden="true"></span>
+</button>
+<div id="sidebar-backdrop" onclick="closeSidebar()" aria-hidden="true"></div>
 
 <!-- APP -->
 <div id="sidebar">
