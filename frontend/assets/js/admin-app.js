@@ -1492,6 +1492,26 @@ function renderAnalytics() {
       .join("");
   }
 
+  const integrationsContainer = document.getElementById("analytics-integrations");
+  if (integrationsContainer) {
+    const integrations = Array.isArray(state.dashboard?.integrations) ? state.dashboard.integrations : [];
+    integrationsContainer.innerHTML = integrations.length
+      ? integrations
+          .map(
+            (integration) => `
+              <div class="analytics-side-item">
+                <span>${integration.name}</span>
+                <span class="badge ${integration.connected ? "badge-green" : "badge-gray"}">${integration.connected ? "Conectado" : "Não configurado"}</span>
+              </div>
+            `
+          )
+          .join("")
+      : UI.empty(
+          "Nenhuma integração configurada",
+          "As integrações aparecerão aqui somente quando forem conectadas de verdade."
+        );
+  }
+
   renderBarChart("ga-chart", topMetrics.map((metric) => Number(metric.revenue || 0)), topMetrics.map((metric) => metric.campaign_name), (value) => `${Math.round(value / 1000)}k`);
 
   document.getElementById("analytics-tbody").innerHTML = filteredMetrics
