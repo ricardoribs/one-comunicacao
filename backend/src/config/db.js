@@ -1,3 +1,4 @@
+const fs = require('fs');
 const { Pool } = require('pg');
 const env = require('./env');
 
@@ -276,13 +277,30 @@ function createPgMemPool() {
 
 const shouldUsePgMem = env.nodeEnv === 'test' && !process.env.DATABASE_URL;
 
+function buildPoolConfig() {
+  const config = {
+    connectionString: env.databaseUrl,
+    max: env.dbPoolMax,
+    connectionTimeoutMillis: env.dbConnectionTimeoutMs,
+    idleTimeoutMillis: env.dbIdleTimeoutMs,
+    query_timeout: env.dbQueryTimeoutMs,
+    statement_timeout: env.dbStatementTimeoutMs,
+  };
+
+  if (env.databaseSslCaFile) {
+    if (!fs.existsSync(env.databaseSslCaFile)) {
+      throw new Error(`DATABASE_SSL_CA_FILE nao encontrado: ${env.databaseSslCaFile}`);
+    }
+
+    config.ssl = {
+      ca: fs.readFileSync(env.databaseSslCaFile, 'utf8'),
+      rejectUnauthorized: true,
+    };
+  }
+
+  return config;
+}
+
 module.exports = shouldUsePgMem
   ? createPgMemPool()
-  : new Pool({
-      connectionString: env.databaseUrl,
-      max: env.dbPoolMax,
-      connectionTimeoutMillis: env.dbConnectionTimeoutMs,
-      idleTimeoutMillis: env.dbIdleTimeoutMs,
-      query_timeout: env.dbQueryTimeoutMs,
-      statement_timeout: env.dbStatementTimeoutMs,
-    });
+  : new Pool(buildPoolConfig());
