@@ -1103,9 +1103,9 @@ function renderHome() {
 
   if (lowerCards[1]) {
     if (hasRoleDataAccess("homeTeam")) {
-      const teamMembers = (state.team.length ? state.team : state.users.filter((user) => user.role !== "client")).filter(
-        (user) => user.role !== "client"
-      );
+      const teamMembers = (Array.isArray(state.team) ? state.team : [])
+        .filter((user) => user && user.role !== "client")
+        .sort((left, right) => String(left.name || "").localeCompare(String(right.name || ""), "pt-BR"));
 
       lowerCards[1].innerHTML = `
         <div class="section-header"><div class="section-title">Equipe habilitada</div></div>
@@ -1120,7 +1120,7 @@ function renderHome() {
                     <div class="team-member-role">${ROLE_LABELS[user.role]}</div>
                   </div>
                 </div>
-                <span class="badge ${user.is_active ? "badge-green" : "badge-gray"}">${user.is_active ? "Ativo" : "Inativo"}</span>
+                <span class="badge ${user.is_active === false ? "badge-gray" : "badge-green"}">${user.is_active === false ? "Desabilitado" : "Habilitado"}</span>
               </div>
             `
           )
@@ -2378,6 +2378,7 @@ function initClientAddressAssist(form) {
   [stateField, cityField, neighborhoodField, addressField, complementField, countryField].forEach(bindManualAddressField);
 
   let lastResolvedCep = "";
+  let lookupTimer = null;
 
   const applyAddressLookup = async (force = false) => {
     const cep = normalizeZipCode(zipField.value);
@@ -2435,8 +2436,14 @@ function initClientAddressAssist(form) {
     zipField.dataset.settingValue = "1";
     zipField.value = formatted;
     delete zipField.dataset.settingValue;
+    clearTimeout(lookupTimer);
     if (normalizeZipCode(formatted) !== lastResolvedCep) {
       setCepFeedback(feedbackNode, "Informe o CEP para sugerir estado, cidade, bairro e rua. Todos os campos continuam editáveis manualmente.");
+    }
+    if (normalizeZipCode(formatted).length === 8) {
+      lookupTimer = window.setTimeout(() => {
+        applyAddressLookup(false);
+      }, 350);
     }
   });
 
