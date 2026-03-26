@@ -32,11 +32,7 @@ function captureException(error) {
 }
 
 function requestHandler() {
-  if (!enabled) {
-    return (_req, _res, next) => next();
-  }
-
-  return Sentry.Handlers.requestHandler();
+  return (_req, _res, next) => next();
 }
 
 function errorHandler() {
@@ -44,7 +40,14 @@ function errorHandler() {
     return (err, _req, _res, next) => next(err);
   }
 
-  return Sentry.Handlers.errorHandler();
+  if (typeof Sentry.expressErrorHandler === 'function') {
+    return Sentry.expressErrorHandler();
+  }
+
+  return (err, _req, _res, next) => {
+    captureException(err);
+    next(err);
+  };
 }
 
 module.exports = {
