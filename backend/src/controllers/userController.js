@@ -16,6 +16,7 @@ exports.list = asyncHandler(async (req, res) => {
 
 exports.listInternalTeam = asyncHandler(async (_req, res) => {
   const users = await userModel.listActiveInternalTeam();
+  res.setHeader('Cache-Control', 'no-store');
   res.json(users);
 });
 
