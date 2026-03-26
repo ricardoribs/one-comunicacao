@@ -362,6 +362,10 @@ function getScopedClientOptions() {
   return Array.from(seen.values()).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 }
 
+function hasScopedClients() {
+  return getScopedClientOptions().length > 0;
+}
+
 function canManageIntegrations() {
   return ["admin", "gestor"].includes(state.session?.user?.role);
 }
@@ -1575,7 +1579,13 @@ function renderAnalytics() {
 
   const integrationsContainer = document.getElementById("analytics-integrations");
   if (integrationsContainer) {
-    integrationsContainer.innerHTML = INTEGRATION_PROVIDERS.map((provider) => {
+    if (!hasScopedClients()) {
+      integrationsContainer.innerHTML = UI.empty(
+        "Cadastre um cliente primeiro",
+        "As integrações do analytics são vinculadas por cliente. Quando houver clientes, você poderá registrar conexões reais aqui."
+      );
+    } else {
+      integrationsContainer.innerHTML = INTEGRATION_PROVIDERS.map((provider) => {
       if (state.filters.analyticsClient) {
         const integration = filteredIntegrations.find((item) => item.provider_key === provider.key);
         const subtitle = integration
@@ -1630,6 +1640,7 @@ function renderAnalytics() {
         </div>
       `;
     }).join("");
+    }
   }
 
   renderBarChart("ga-chart", topMetrics.map((metric) => Number(metric.revenue || 0)), topMetrics.map((metric) => metric.campaign_name), (value) => `${Math.round(value / 1000)}k`);
@@ -1681,10 +1692,12 @@ function renderAnalytics() {
       .join("")
       || UI.tableEmpty(
         7,
-        "Nenhuma integração registrada",
-        state.filters.analyticsClient
-          ? "Cadastre a primeira integração para o cliente selecionado."
-          : "Cadastre integrações por cliente para consolidar os conectores do analytics."
+        hasScopedClients() ? "Nenhuma integração registrada" : "Nenhum cliente cadastrado",
+        hasScopedClients()
+          ? state.filters.analyticsClient
+            ? "Cadastre a primeira integração para o cliente selecionado."
+            : "Cadastre integrações por cliente para consolidar os conectores do analytics."
+          : "Cadastre o primeiro cliente para começar a registrar integrações reais."
       );
   }
 }
@@ -2007,7 +2020,7 @@ async function refreshData() {
 
   const analyticsActions = document.querySelector("#page-analytics .topbar-actions");
   const integrationsButton = document.getElementById("btn-manage-integrations");
-  if (analyticsActions && canManageIntegrations() && !integrationsButton) {
+  if (analyticsActions && canManageIntegrations() && hasScopedClients() && !integrationsButton) {
     const button = document.createElement("button");
     button.id = "btn-manage-integrations";
     button.className = "btn btn-pink btn-sm";
@@ -2015,7 +2028,7 @@ async function refreshData() {
     button.onclick = () => openModal("nova-integracao");
     analyticsActions.append(button);
   }
-  if (integrationsButton && !canManageIntegrations()) {
+  if (integrationsButton && (!canManageIntegrations() || !hasScopedClients())) {
     integrationsButton.remove();
   }
 
@@ -2345,6 +2358,18 @@ function openModal(type, id = null) {
   if (type === "nova-integracao") {
     const integration = state.integrations.find((item) => item.id === id) || {};
     const scopedClients = getScopedClientOptions();
+    if (!scopedClients.length) {
+      html = `
+        <div class="modal-title" id="modal-dialog-title">Integrações do analytics</div>
+        <p class="metric-note">Cadastre pelo menos um cliente antes de registrar integrações. As conexões deste módulo sempre pertencem a um cliente específico.</p>
+        <div class="modal-actions"><button type="button" class="btn btn-outline" onclick="closeModal()">Fechar</button></div>
+      `;
+      modal.innerHTML = html;
+      document.getElementById("modal-overlay").classList.add("open");
+      document.getElementById("modal-overlay").setAttribute("aria-hidden", "false");
+      bindLegacyInlineHandlers(document.getElementById("modal-overlay"));
+      return;
+    }
     const defaultClientId = integration.client_id || state.filters.analyticsClient || scopedClients[0]?.id || "";
     html = modalFormWrapper(
       integration.id ? "Editar integração" : "Nova integração",
