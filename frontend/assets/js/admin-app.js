@@ -12,6 +12,21 @@ const ROLE_LABELS = {
   client: "Cliente"
 };
 
+const INTEGRATION_PROVIDERS = [
+  { key: "ga4", name: "Google Analytics 4" },
+  { key: "meta_business", name: "Meta Business Suite" },
+  { key: "search_console", name: "Google Search Console" },
+  { key: "power_bi", name: "Power BI" },
+  { key: "looker_studio", name: "Looker Studio" }
+];
+
+const INTEGRATION_STATUS_LABELS = {
+  connected: "Conectado",
+  configuring: "Configurando",
+  error: "Erro",
+  disconnected: "Desconectado"
+};
+
 const PIPELINE_STAGE_LABELS = {
   "Prospeccao": "Prospecção",
   "Prospecção": "Prospecção",
@@ -45,7 +60,8 @@ const ROLE_DATA_ACCESS = {
     metrics: true,
     reports: true,
     materials: true,
-    files: true
+    files: true,
+    integrations: true
   },
   gestor: {
     manageTasks: true,
@@ -61,7 +77,8 @@ const ROLE_DATA_ACCESS = {
     metrics: true,
     reports: true,
     materials: true,
-    files: true
+    files: true,
+    integrations: true
   },
   designer: {
     manageTasks: true,
@@ -77,7 +94,8 @@ const ROLE_DATA_ACCESS = {
     metrics: false,
     reports: true,
     materials: true,
-    files: true
+    files: true,
+    integrations: false
   },
   comercial: {
     manageTasks: false,
@@ -93,7 +111,8 @@ const ROLE_DATA_ACCESS = {
     metrics: false,
     reports: true,
     materials: true,
-    files: false
+    files: false,
+    integrations: false
   },
   dev: {
     manageTasks: true,
@@ -109,7 +128,8 @@ const ROLE_DATA_ACCESS = {
     metrics: true,
     reports: false,
     materials: false,
-    files: false
+    files: false,
+    integrations: true
   }
 };
 
@@ -117,6 +137,7 @@ const state = {
   session: null,
   dashboard: null,
   team: [],
+  integrations: [],
   clients: [],
   campaigns: [],
   tasks: [],
@@ -339,6 +360,65 @@ function getScopedClientOptions() {
   });
 
   return Array.from(seen.values()).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+}
+
+function canManageIntegrations() {
+  return ["admin", "gestor"].includes(state.session?.user?.role);
+}
+
+function getIntegrationProviderLabel(providerKey) {
+  return INTEGRATION_PROVIDERS.find((provider) => provider.key === providerKey)?.name || providerKey || "-";
+}
+
+function integrationProviderOptions(selectedKey) {
+  return INTEGRATION_PROVIDERS.map(
+    (provider) => `<option value="${provider.key}" ${provider.key === selectedKey ? "selected" : ""}>${provider.name}</option>`
+  ).join("");
+}
+
+function getIntegrationStatusBadgeClass(status) {
+  if (status === "connected") {
+    return "badge-green";
+  }
+  if (status === "configuring") {
+    return "badge-yellow";
+  }
+  if (status === "error") {
+    return "badge-pink";
+  }
+  return "badge-gray";
+}
+
+function formatDateTime(value) {
+  if (!value) {
+    return "-";
+  }
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
+function formatDateTimeLocalValue(value) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+  const offset = date.getTimezoneOffset();
+  const normalized = new Date(date.getTime() - offset * 60000);
+  return normalized.toISOString().slice(0, 16);
+}
+
+function getFilteredIntegrations() {
+  return state.integrations.filter((integration) => {
+    if (!state.filters.analyticsClient) {
+      return true;
+    }
+
+    return String(integration.client_id) === String(state.filters.analyticsClient);
+  });
 }
 
 function saveSession(session) {
@@ -1464,6 +1544,7 @@ function getFilteredMetrics() {
 
 function renderAnalytics() {
   const filteredMetrics = getFilteredMetrics();
+  const filteredIntegrations = getFilteredIntegrations();
   const topMetrics = filteredMetrics.slice(0, 6);
   const revenue = filteredMetrics.reduce((acc, metric) => acc + Number(metric.revenue || 0), 0);
   const impressions = filteredMetrics.reduce((acc, metric) => acc + Number(metric.impressions || 0), 0);
@@ -1494,22 +1575,61 @@ function renderAnalytics() {
 
   const integrationsContainer = document.getElementById("analytics-integrations");
   if (integrationsContainer) {
-    const integrations = Array.isArray(state.dashboard?.integrations) ? state.dashboard.integrations : [];
-    integrationsContainer.innerHTML = integrations.length
-      ? integrations
-          .map(
-            (integration) => `
-              <div class="analytics-side-item">
-                <span>${integration.name}</span>
-                <span class="badge ${integration.connected ? "badge-green" : "badge-gray"}">${integration.connected ? "Conectado" : "Não configurado"}</span>
-              </div>
-            `
-          )
-          .join("")
-      : UI.empty(
-          "Nenhuma integração configurada",
-          "As integrações aparecerão aqui somente quando forem conectadas de verdade."
-        );
+    integrationsContainer.innerHTML = INTEGRATION_PROVIDERS.map((provider) => {
+      if (state.filters.analyticsClient) {
+        const integration = filteredIntegrations.find((item) => item.provider_key === provider.key);
+        const subtitle = integration
+          ? [integration.external_account_id, integration.external_property_id].filter(Boolean).join(" · ") || "Conexão registrada para este cliente"
+          : "Nenhuma conexão registrada para este cliente";
+
+        return `
+          <div class="analytics-side-item">
+            <div class="cell-stack">
+              <span class="cell-title">${provider.name}</span>
+              <span class="cell-sub">${escapeHtml(subtitle)}</span>
+            </div>
+            <span class="badge ${getIntegrationStatusBadgeClass(integration?.status || "disconnected")}">${integration ? INTEGRATION_STATUS_LABELS[integration.status] || integration.status : "Não configurado"}</span>
+          </div>
+        `;
+      }
+
+      const providerIntegrations = filteredIntegrations.filter((item) => item.provider_key === provider.key);
+      const connectedCount = providerIntegrations.filter((item) => item.status === "connected").length;
+      const configuringCount = providerIntegrations.filter((item) => item.status === "configuring").length;
+      const errorCount = providerIntegrations.filter((item) => item.status === "error").length;
+      const totalCount = providerIntegrations.length;
+
+      let status = "disconnected";
+      let subtitle = "Nenhum cliente configurado";
+      let badgeLabel = "Não configurado";
+
+      if (connectedCount > 0) {
+        status = "connected";
+        subtitle = `${connectedCount} ${connectedCount === 1 ? "cliente conectado" : "clientes conectados"}`;
+        badgeLabel = INTEGRATION_STATUS_LABELS.connected;
+      } else if (configuringCount > 0) {
+        status = "configuring";
+        subtitle = `${configuringCount} ${configuringCount === 1 ? "cliente em configuração" : "clientes em configuração"}`;
+        badgeLabel = INTEGRATION_STATUS_LABELS.configuring;
+      } else if (errorCount > 0) {
+        status = "error";
+        subtitle = `${errorCount} ${errorCount === 1 ? "cliente com falha" : "clientes com falha"}`;
+        badgeLabel = INTEGRATION_STATUS_LABELS.error;
+      } else if (totalCount > 0) {
+        subtitle = `${totalCount} ${totalCount === 1 ? "cliente desconectado" : "clientes desconectados"}`;
+        badgeLabel = INTEGRATION_STATUS_LABELS.disconnected;
+      }
+
+      return `
+        <div class="analytics-side-item">
+          <div class="cell-stack">
+            <span class="cell-title">${provider.name}</span>
+            <span class="cell-sub">${subtitle}</span>
+          </div>
+          <span class="badge ${getIntegrationStatusBadgeClass(status)}">${badgeLabel}</span>
+        </div>
+      `;
+    }).join("");
   }
 
   renderBarChart("ga-chart", topMetrics.map((metric) => Number(metric.revenue || 0)), topMetrics.map((metric) => metric.campaign_name), (value) => `${Math.round(value / 1000)}k`);
@@ -1529,6 +1649,44 @@ function renderAnalytics() {
       `
     )
     .join("") || UI.tableEmpty(7, "Nenhuma métrica encontrada", "Ajuste os filtros ou aguarde a consolidação dos dados das campanhas.");
+
+  const integrationsBody = document.getElementById("integrations-tbody");
+  if (integrationsBody) {
+    integrationsBody.innerHTML = filteredIntegrations
+      .map(
+        (integration) => `
+          <tr>
+            <td class="cell-stack"><span class="cell-title" title="${escapeHtml(integration.client_name)}">${integration.client_name}</span></td>
+            <td class="cell-stack"><span class="cell-title">${getIntegrationProviderLabel(integration.provider_key)}</span></td>
+            <td><span class="badge ${getIntegrationStatusBadgeClass(integration.status)}">${INTEGRATION_STATUS_LABELS[integration.status] || integration.status}</span></td>
+            <td class="cell-stack">
+              <span class="cell-title" title="${escapeHtml(integration.external_account_id || "-")}">${integration.external_account_id || "-"}</span>
+              <span class="cell-sub" title="${escapeHtml(integration.external_property_id || "-")}">${integration.external_property_id || "Sem propriedade vinculada"}</span>
+            </td>
+            <td>${formatDateTime(integration.last_sync_at)}</td>
+            <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(integration.updated_by_name || integration.created_by_name || "-")}">${integration.updated_by_name || integration.created_by_name || "-"}</span></td>
+            <td class="cell-actions">
+              ${
+                canManageIntegrations()
+                  ? `<div class="table-actions">
+                      <button class="btn btn-ghost btn-sm" onclick="openModal('nova-integracao', ${integration.id})">Editar</button>
+                      <button class="btn btn-danger btn-sm" onclick="deleteIntegration(${integration.id})">Excluir</button>
+                    </div>`
+                  : '<span class="cell-sub">Somente leitura</span>'
+              }
+            </td>
+          </tr>
+        `
+      )
+      .join("")
+      || UI.tableEmpty(
+        7,
+        "Nenhuma integração registrada",
+        state.filters.analyticsClient
+          ? "Cadastre a primeira integração para o cliente selecionado."
+          : "Cadastre integrações por cliente para consolidar os conectores do analytics."
+      );
+  }
 }
 
 function renderFinance() {
@@ -1751,6 +1909,11 @@ async function refreshData() {
     analyticsBody.innerHTML = UI.skeletonRows(7, 4);
   }
 
+  const integrationsBody = document.getElementById("integrations-tbody");
+  if (integrationsBody) {
+    integrationsBody.innerHTML = UI.skeletonRows(7, 3);
+  }
+
   const clientsBody = document.getElementById("clientes-tbody");
   if (clientsBody) {
     clientsBody.innerHTML = UI.skeletonRows(7, 4);
@@ -1786,7 +1949,7 @@ async function refreshData() {
     platformBreakdown.innerHTML = UI.empty("Carregando tráfego...", "Buscando métricas e campanhas.");
   }
 
-  const [dashboard, clients, campaigns, tasks, users, contacts, invoices, metrics, reports, materials, files, charges] = await Promise.all([
+  const [dashboard, clients, campaigns, tasks, users, contacts, invoices, metrics, reports, materials, files, charges, integrations] = await Promise.all([
     apiFetch("/dashboard"),
     roleDataAccess.clients ? apiFetch("/clients") : Promise.resolve([]),
     roleDataAccess.campaigns ? apiFetch("/campaigns") : Promise.resolve([]),
@@ -1798,7 +1961,8 @@ async function refreshData() {
     roleDataAccess.reports ? apiFetch("/reports") : Promise.resolve([]),
     roleDataAccess.materials ? apiFetch("/materials") : Promise.resolve([]),
     roleDataAccess.files ? apiFetch("/files") : Promise.resolve([]),
-    roleDataAccess.charges ? apiFetch("/charges") : Promise.resolve([])
+    roleDataAccess.charges ? apiFetch("/charges") : Promise.resolve([]),
+    roleDataAccess.integrations ? apiFetch("/integrations") : Promise.resolve([])
   ]);
 
   state.dashboard = dashboard;
@@ -1814,6 +1978,7 @@ async function refreshData() {
   state.materials = materials;
   state.files = files;
   state.charges = charges;
+  state.integrations = integrations;
 
   const kanbanFilter = document.querySelector("#page-kanban select");
   if (kanbanFilter) {
@@ -1838,6 +2003,20 @@ async function refreshData() {
       .map((period) => `<option value="${period}">${formatDate(period)}</option>`)
       .join("")}`;
     analyticsPeriodFilter.value = state.filters.analyticsPeriod;
+  }
+
+  const analyticsActions = document.querySelector("#page-analytics .topbar-actions");
+  const integrationsButton = document.getElementById("btn-manage-integrations");
+  if (analyticsActions && canManageIntegrations() && !integrationsButton) {
+    const button = document.createElement("button");
+    button.id = "btn-manage-integrations";
+    button.className = "btn btn-pink btn-sm";
+    button.textContent = "+ Nova integração";
+    button.onclick = () => openModal("nova-integracao");
+    analyticsActions.append(button);
+  }
+  if (integrationsButton && !canManageIntegrations()) {
+    integrationsButton.remove();
   }
 
   const crmActions = document.querySelector("#page-crm .topbar-actions");
@@ -2163,6 +2342,27 @@ function openModal(type, id = null) {
     );
   }
 
+  if (type === "nova-integracao") {
+    const integration = state.integrations.find((item) => item.id === id) || {};
+    const scopedClients = getScopedClientOptions();
+    const defaultClientId = integration.client_id || state.filters.analyticsClient || scopedClients[0]?.id || "";
+    html = modalFormWrapper(
+      integration.id ? "Editar integração" : "Nova integração",
+      `
+        <div class="field"><label>Cliente</label><select name="client_id" required><option value="">Selecione</option>${scopedClients
+          .map((client) => `<option value="${client.id}" ${String(defaultClientId) === String(client.id) ? "selected" : ""}>${client.name}</option>`)
+          .join("")}</select></div>
+        <div class="field"><label>Integração</label><select name="provider_key" required>${integrationProviderOptions(integration.provider_key || "ga4")}</select></div>
+        <div class="field"><label>Status</label><select name="status"><option value="connected" ${integration.status === "connected" ? "selected" : ""}>Conectado</option><option value="configuring" ${(!integration.status || integration.status === "configuring") ? "selected" : ""}>Configurando</option><option value="error" ${integration.status === "error" ? "selected" : ""}>Erro</option><option value="disconnected" ${integration.status === "disconnected" ? "selected" : ""}>Desconectado</option></select></div>
+        <div class="field"><label>Conta externa</label><input name="external_account_id" value="${integration.external_account_id || ""}" placeholder="Ex.: conta, workspace ou business id"></div>
+        <div class="field"><label>Propriedade / recurso</label><input name="external_property_id" value="${integration.external_property_id || ""}" placeholder="Ex.: property id, dataset ou view"></div>
+        <div class="field"><label>Última sincronização</label><input type="datetime-local" name="last_sync_at" value="${formatDateTimeLocalValue(integration.last_sync_at)}"></div>
+        <div class="field form-full"><label>Último erro / observação</label><textarea name="last_error" placeholder="Descreva o erro atual ou uma observação de configuração.">${integration.last_error || ""}</textarea><div class="field-help">Este MVP registra o estado real no sistema por cliente. A conexão OAuth automática pode ser acoplada depois.</div></div>
+      `,
+      integration.id ? "Atualizar" : "Salvar"
+    );
+  }
+
   if (type === "nova-fatura") {
     html = modalFormWrapper(
       "Nova fatura",
@@ -2294,6 +2494,14 @@ async function submitModal(event, type, id) {
       });
     }
 
+    if (type === "nova-integracao") {
+      const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["last_sync_at", "external_account_id", "external_property_id", "last_error"]);
+      await apiFetch(id ? `/integrations/${id}` : "/integrations", {
+        method: id ? "PUT" : "POST",
+        body: JSON.stringify(payload)
+      });
+    }
+
     if (type === "nova-fatura") {
       const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["due_date"]);
       await apiFetch("/invoices", {
@@ -2357,6 +2565,16 @@ async function deleteTask(id) {
     await apiFetch(`/tasks/${id}`, { method: "DELETE" });
     await refreshData();
     showToast("Tarefa removida com sucesso.");
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function deleteIntegration(id) {
+  try {
+    await apiFetch(`/integrations/${id}`, { method: "DELETE" });
+    await refreshData();
+    showToast("Integração removida com sucesso.");
   } catch (error) {
     showToast(error.message);
   }
@@ -2511,6 +2729,7 @@ window.setTab = setTab;
 window.openModal = openModal;
 window.closeModal = closeModal;
 window.closeModalIfBg = closeModalIfBg;
+window.deleteIntegration = deleteIntegration;
 window.updateInvoiceStatus = updateInvoiceStatus;
 window.updateChargeStatus = updateChargeStatus;
 window.openChargeResource = openChargeResource;

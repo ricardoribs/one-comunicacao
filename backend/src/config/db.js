@@ -266,6 +266,25 @@ function createPgMemPool() {
       created_at TIMESTAMP NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMP NOT NULL DEFAULT NOW()
     );
+
+    CREATE TABLE client_integrations (
+      id SERIAL PRIMARY KEY,
+      client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+      provider_key VARCHAR(50) NOT NULL,
+      status VARCHAR(30) NOT NULL DEFAULT 'configuring',
+      external_account_id VARCHAR(160),
+      external_property_id VARCHAR(160),
+      connected_at TIMESTAMP,
+      last_sync_at TIMESTAMP,
+      last_success_at TIMESTAMP,
+      last_error TEXT,
+      metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+      created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      UNIQUE (client_id, provider_key)
+    );
   `);
 
   const adapter = memoryDb.adapters.createPg();
