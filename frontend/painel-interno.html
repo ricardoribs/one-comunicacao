@@ -641,12 +641,12 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
     <div class="sb-link active" data-page="home" onclick="goTo('home')"><span class="icon"></span> Visão Geral</div>
 
     <div class="sb-section">Operações</div>
-    <div class="sb-link" data-page="kanban" onclick="goTo('kanban')"><span class="icon"></span> Kanban <span class="count">34</span></div>
+    <div class="sb-link" data-page="kanban" onclick="goTo('kanban')"><span class="icon"></span> Kanban <span class="count" data-count-for="kanban" style="display:none">0</span></div>
     <div class="sb-link" data-page="crm" onclick="goTo('crm')"><span class="icon"></span> CRM / Leads</div>
     <div class="sb-link" data-page="campanhas" onclick="goTo('campanhas')"><span class="icon"></span> Campanhas</div>
 
     <div class="sb-section">Produção</div>
-    <div class="sb-link" data-page="producao" onclick="goTo('producao')"><span class="icon"></span> Produção <span class="count">8</span></div>
+    <div class="sb-link" data-page="producao" onclick="goTo('producao')"><span class="icon"></span> Produção <span class="count" data-count-for="producao" style="display:none">0</span></div>
     <div class="sb-link" data-page="trafego" onclick="goTo('trafego')"><span class="icon"></span> Tráfego Pago</div>
 
     <div class="sb-section">Inteligência</div>
@@ -769,12 +769,12 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
       <div class="tab" id="crm-tab-historico" onclick="setTab('crm','historico')">Histórico</div>
     </div>
     <div id="crm-pipeline">
-      <div class="kpi-grid crm-kpi-grid mt-5">
-        <div class="kpi-card"><div class="kpi-label">Total no Funil</div><div class="kpi-val">26</div><div class="kpi-sub">leads ativos</div></div>
-        <div class="kpi-card"><div class="kpi-label">Valor Potencial</div><div class="kpi-val">R$162k</div><div class="kpi-sub">no pipeline</div></div>
-        <div class="kpi-card"><div class="kpi-label">Taxa de Conversão</div><div class="kpi-val">18%</div><div class="kpi-sub kpi-trend-up">↑ +3% este mês</div></div>
-        <div class="kpi-card"><div class="kpi-label">Ticket Médio</div><div class="kpi-val">R$6,2k</div><div class="kpi-sub">por cliente</div></div>
-        <div class="kpi-card"><div class="kpi-label">Ciclo de Venda</div><div class="kpi-val">18d</div><div class="kpi-sub">em média</div></div>
+      <div class="kpi-grid crm-kpi-grid mt-5" id="crm-kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">Total no Funil</div><div class="kpi-val">0</div><div class="kpi-sub">leads ativos</div></div>
+        <div class="kpi-card"><div class="kpi-label">Valor Potencial</div><div class="kpi-val">R$0,00</div><div class="kpi-sub">no pipeline</div></div>
+        <div class="kpi-card"><div class="kpi-label">Taxa de Conversão</div><div class="kpi-val">0%</div><div class="kpi-sub">sem conversões ainda</div></div>
+        <div class="kpi-card"><div class="kpi-label">Ticket Médio</div><div class="kpi-val">R$0,00</div><div class="kpi-sub">por cliente</div></div>
+        <div class="kpi-card"><div class="kpi-label">Ciclo de Venda</div><div class="kpi-val">0d</div><div class="kpi-sub">em média</div></div>
       </div>
       <div class="pipeline" id="pipeline-board"></div>
     </div>
@@ -801,11 +801,11 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
     </div>
   </div>
   <div class="page-body">
-    <div class="kpi-grid">
-      <div class="kpi-card"><div class="kpi-label">Campanhas Ativas</div><div class="kpi-val">12</div><div class="kpi-sub">3 clientes</div></div>
-      <div class="kpi-card"><div class="kpi-label">Orçamento Total</div><div class="kpi-val">R$38k</div><div class="kpi-sub">em tráfego pago</div></div>
-      <div class="kpi-card"><div class="kpi-label">Leads Gerados</div><div class="kpi-val">384</div><div class="kpi-sub kpi-trend-up">↑ +19% este mês</div></div>
-      <div class="kpi-card"><div class="kpi-label">CPL Médio</div><div class="kpi-val">R$99</div><div class="kpi-sub kpi-trend-up">↓ Meta: R$120</div></div>
+    <div class="kpi-grid" id="campaigns-kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">Campanhas Ativas</div><div class="kpi-val">0</div><div class="kpi-sub">0 clientes</div></div>
+      <div class="kpi-card"><div class="kpi-label">Orçamento Total</div><div class="kpi-val">R$0,00</div><div class="kpi-sub">em tráfego pago</div></div>
+      <div class="kpi-card"><div class="kpi-label">Leads Gerados</div><div class="kpi-val">0</div><div class="kpi-sub">sem dados consolidados</div></div>
+      <div class="kpi-card"><div class="kpi-label">CPL Médio</div><div class="kpi-val">R$0,00</div><div class="kpi-sub">sem campanhas ativas</div></div>
     </div>
     <div class="table-wrap">
       <table>
@@ -862,19 +862,21 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
     </div>
   </div>
   <div class="page-body">
-    <div class="kpi-grid">
-      <div class="kpi-card"><div class="kpi-label">Investimento Total</div><div class="kpi-val">R$38k</div><div class="kpi-sub">mês atual</div></div>
-      <div class="kpi-card"><div class="kpi-label">ROAS Médio</div><div class="kpi-val">4.2x</div><div class="kpi-sub kpi-trend-up">↑ Acima da meta</div></div>
-      <div class="kpi-card"><div class="kpi-label">CTR Médio</div><div class="kpi-val">3.8%</div><div class="kpi-sub">todas as plataformas</div></div>
-      <div class="kpi-card"><div class="kpi-label">Impressões</div><div class="kpi-val">2.4M</div><div class="kpi-sub">este mês</div></div>
+    <div class="kpi-grid" id="traffic-kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">Investimento Total</div><div class="kpi-val">R$0,00</div><div class="kpi-sub">mês atual</div></div>
+      <div class="kpi-card"><div class="kpi-label">ROAS Médio</div><div class="kpi-val">0.0x</div><div class="kpi-sub">sem campanhas ativas</div></div>
+      <div class="kpi-card"><div class="kpi-label">CTR Médio</div><div class="kpi-val">0.0%</div><div class="kpi-sub">todas as plataformas</div></div>
+      <div class="kpi-card"><div class="kpi-label">Impressões</div><div class="kpi-val">0</div><div class="kpi-sub">este mês</div></div>
     </div>
     <div class="two-col mt-5">
       <div class="card">
         <div class="section-title card-title-spacing">Campanhas por Plataforma</div>
-        <div class="progress-stack">
-          <div><div class="progress-item-head"><span>Meta Ads</span><span class="text-strong">R$22.400 · ROAS 4.8x</span></div><div class="progress-bar"><div class="progress-fill" style="width:59%"></div></div></div>
-          <div><div class="progress-item-head"><span>Google Ads</span><span class="text-strong">R$11.200 · ROAS 3.9x</span></div><div class="progress-bar"><div class="progress-fill" style="width:30%"></div></div></div>
-          <div><div class="progress-item-head"><span>TikTok Ads</span><span class="text-strong">R$4.400 · ROAS 2.6x</span></div><div class="progress-bar"><div class="progress-fill" style="width:11%"></div></div></div>
+        <div class="progress-stack" id="traffic-platform-breakdown">
+          <div class="empty-state">
+            <div class="empty-state-icon">○</div>
+            <div class="empty-state-title">Nenhuma campanha ativa</div>
+            <div class="empty-state-sub">As plataformas aparecerão aqui quando houver investimento real em mídia.</div>
+          </div>
         </div>
       </div>
       <div class="card">

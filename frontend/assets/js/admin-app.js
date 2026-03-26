@@ -380,6 +380,13 @@ function formatNumber(value) {
   return new Intl.NumberFormat("pt-BR").format(Number(value || 0));
 }
 
+function formatCompactNumber(value) {
+  return new Intl.NumberFormat("pt-BR", {
+    notation: "compact",
+    maximumFractionDigits: 1
+  }).format(Number(value || 0));
+}
+
 function formatDate(value) {
   if (!value) {
     return "-";
@@ -398,6 +405,91 @@ function normalizePipelineStage(stage) {
 
 function formatCurrencyValue(value) {
   return formatCurrency(Number(value || 0));
+}
+
+function sumBy(records, getter) {
+  return records.reduce((total, record) => total + Number(getter(record) || 0), 0);
+}
+
+function averageBy(records, getter) {
+  if (!records.length) {
+    return 0;
+  }
+
+  return sumBy(records, getter) / records.length;
+}
+
+function getActiveCampaigns() {
+  return state.campaigns.filter((campaign) => String(campaign.status || "").toLowerCase() === "ativa");
+}
+
+function getTrafficMetricsForCampaigns(campaigns) {
+  if (!campaigns.length) {
+    return [];
+  }
+
+  const campaignIds = new Set(campaigns.map((campaign) => Number(campaign.id)));
+  return state.metrics.filter((metric) => campaignIds.has(Number(metric.campaign_id)));
+}
+
+function renderKpiCards(container, cards) {
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = cards
+    .map(
+      (item) => `
+        <div class="kpi-card">
+          <div class="kpi-label">${item.label}</div>
+          <div class="kpi-val">${item.value}</div>
+          <div class="kpi-sub${item.subClass ? ` ${item.subClass}` : ""}">${item.sub}</div>
+        </div>
+      `
+    )
+    .join("");
+}
+
+function setSidebarCount(page, value) {
+  const countNode = document.querySelector(`.sb-link[data-page="${page}"] .count`);
+  if (!countNode) {
+    return;
+  }
+
+  const total = Number(value || 0);
+  if (total <= 0) {
+    countNode.textContent = "0";
+    countNode.style.display = "none";
+    return;
+  }
+
+  countNode.textContent = formatNumber(total);
+  countNode.style.display = "inline-flex";
+}
+
+function renderSidebarCounts() {
+  const openTasks = state.tasks.filter((task) => task.status !== "Concluido").length;
+  const productionItems = state.materials.length + state.files.length + state.reports.length;
+
+  setSidebarCount("kanban", openTasks);
+  setSidebarCount("producao", productionItems);
+}
+
+function getAverageSalesCycleDays(contacts) {
+  const cycleDurations = contacts
+    .map((contact) => {
+      const createdAt = contact.created_at ? new Date(contact.created_at) : null;
+      const updatedAt = contact.updated_at ? new Date(contact.updated_at) : null;
+      if (!createdAt || !updatedAt || Number.isNaN(createdAt.getTime()) || Number.isNaN(updatedAt.getTime())) {
+        return null;
+      }
+
+      const diff = updatedAt.getTime() - createdAt.getTime();
+      return diff >= 0 ? Math.round(diff / 86400000) : null;
+    })
+    .filter((value) => Number.isFinite(value));
+
+  return cycleDurations.length ? Math.round(averageBy(cycleDurations, (value) => value)) : 0;
 }
 
 function getValueToneClass(value) {
@@ -934,6 +1026,43 @@ function renderKanban() {
 }
 
 function renderCRM() {
+  const crmKpiGrid = document.getElementById("crm-kpi-grid");
+  const closedContacts = state.contacts.filter((contact) => normalizePipelineStage(contact.lead_stage) === "Fechado");
+  const activeContacts = state.contacts.filter((contact) => normalizePipelineStage(contact.lead_stage) !== "Fechado");
+  const activePipelineValue = sumBy(activeContacts, (contact) => contact.estimated_value);
+  const closedPipelineValue = sumBy(closedContacts, (contact) => contact.estimated_value);
+  const conversionRate = state.contacts.length ? (closedContacts.length / state.contacts.length) * 100 : 0;
+  const averageTicket = closedContacts.length ? closedPipelineValue / closedContacts.length : 0;
+  const averageCycle = getAverageSalesCycleDays(closedContacts);
+
+  renderKpiCards(crmKpiGrid, [
+    {
+      label: "Total no Funil",
+      value: formatNumber(activeContacts.length),
+      sub: `${formatLeadCount(activeContacts.length)}`
+    },
+    {
+      label: "Valor Potencial",
+      value: formatCurrency(activePipelineValue),
+      sub: activeContacts.length ? "no pipeline" : "sem oportunidades abertas"
+    },
+    {
+      label: "Taxa de Conversão",
+      value: `${conversionRate.toFixed(0)}%`,
+      sub: closedContacts.length ? `${formatNumber(closedContacts.length)} conversões` : "sem conversões ainda"
+    },
+    {
+      label: "Ticket Médio",
+      value: formatCurrency(averageTicket),
+      sub: closedContacts.length ? "por lead convertido" : "sem vendas fechadas"
+    },
+    {
+      label: "Ciclo de Venda",
+      value: `${formatNumber(averageCycle)}d`,
+      sub: closedContacts.length ? "em média" : "sem histórico suficiente"
+    }
+  ]);
+
   const pipelineStages = ["Prospecção", "Contato feito", "Proposta", "Negociação", "Fechado"];
   document.getElementById("pipeline-board").innerHTML = pipelineStages
     .map((stage) => {
@@ -1003,6 +1132,37 @@ function renderCRM() {
 }
 
 function renderCampaigns() {
+  const campaignsKpiGrid = document.getElementById("campaigns-kpi-grid");
+  const activeCampaigns = getActiveCampaigns();
+  const campaignsForSummary = activeCampaigns;
+  const totalBudget = sumBy(campaignsForSummary, (campaign) => campaign.budget);
+  const totalLeads = sumBy(campaignsForSummary, (campaign) => campaign.leads);
+  const clientsCount = new Set(campaignsForSummary.map((campaign) => campaign.client_id).filter(Boolean)).size;
+  const averageCpl = totalLeads ? totalBudget / totalLeads : 0;
+
+  renderKpiCards(campaignsKpiGrid, [
+    {
+      label: "Campanhas Ativas",
+      value: formatNumber(activeCampaigns.length),
+      sub: `${formatNumber(clientsCount)} ${clientsCount === 1 ? "cliente" : "clientes"}`
+    },
+    {
+      label: "Orçamento Total",
+      value: formatCurrency(totalBudget),
+      sub: campaignsForSummary.length ? "em tráfego pago" : "sem orçamento alocado"
+    },
+    {
+      label: "Leads Gerados",
+      value: formatNumber(totalLeads),
+      sub: campaignsForSummary.length ? "dados consolidados" : "sem dados consolidados"
+    },
+    {
+      label: "CPL Médio",
+      value: formatCurrency(averageCpl),
+      sub: totalLeads ? `${formatNumber(totalLeads)} leads no período` : "sem leads registrados"
+    }
+  ]);
+
   document.getElementById("campanhas-tbody").innerHTML = state.campaigns
     .map(
       (campaign) => `
@@ -1085,8 +1245,83 @@ function renderProduction() {
 }
 
 function renderTraffic() {
-  const activeCampaigns = state.campaigns.slice(0, 3);
+  const trafficKpiGrid = document.getElementById("traffic-kpi-grid");
+  const platformBreakdown = document.getElementById("traffic-platform-breakdown");
+  const activeCampaigns = getActiveCampaigns();
+  const trafficMetrics = getTrafficMetricsForCampaigns(activeCampaigns);
+  const totalBudget = sumBy(activeCampaigns, (campaign) => campaign.budget);
+  const totalRevenue = trafficMetrics.length
+    ? sumBy(trafficMetrics, (metric) => metric.revenue)
+    : sumBy(activeCampaigns, (campaign) => campaign.revenue);
+  const totalImpressions = sumBy(trafficMetrics, (metric) => metric.impressions);
+  const totalClicks = sumBy(trafficMetrics, (metric) => metric.clicks);
+  const roas = totalBudget ? totalRevenue / totalBudget : 0;
+  const ctr = totalImpressions ? (totalClicks / totalImpressions) * 100 : 0;
+  const activeClients = new Set(activeCampaigns.map((campaign) => campaign.client_id).filter(Boolean)).size;
+
+  renderKpiCards(trafficKpiGrid, [
+    {
+      label: "Investimento Total",
+      value: formatCurrency(totalBudget),
+      sub: activeCampaigns.length ? `${formatNumber(activeCampaigns.length)} campanhas ativas` : "mês atual"
+    },
+    {
+      label: "ROAS Médio",
+      value: `${roas.toFixed(1)}x`,
+      sub: activeCampaigns.length ? `${formatNumber(activeClients)} contas acompanhadas` : "sem campanhas ativas"
+    },
+    {
+      label: "CTR Médio",
+      value: `${ctr.toFixed(1)}%`,
+      sub: totalClicks ? `${formatNumber(totalClicks)} cliques` : "todas as plataformas"
+    },
+    {
+      label: "Impressões",
+      value: formatCompactNumber(totalImpressions),
+      sub: trafficMetrics.length ? "este mês" : "sem mídia publicada"
+    }
+  ]);
+
+  if (platformBreakdown) {
+    const channelGroups = activeCampaigns.reduce((accumulator, campaign) => {
+      const channel = campaign.channel || "Outros";
+      if (!accumulator.has(channel)) {
+        accumulator.set(channel, {
+          label: channel,
+          budget: 0,
+          revenue: 0
+        });
+      }
+
+      const bucket = accumulator.get(channel);
+      bucket.budget += Number(campaign.budget || 0);
+      bucket.revenue += Number(campaign.revenue || 0);
+      return accumulator;
+    }, new Map());
+
+    const platformRows = Array.from(channelGroups.values()).sort((left, right) => right.budget - left.budget);
+    const maxBudget = Math.max(...platformRows.map((row) => row.budget), 1);
+
+    platformBreakdown.innerHTML = platformRows.length
+      ? platformRows
+          .map((platform) => {
+            const platformRoas = platform.budget ? platform.revenue / platform.budget : 0;
+            return `
+              <div>
+                <div class="progress-item-head">
+                  <span>${platform.label}</span>
+                  <span class="text-strong">${formatCurrency(platform.budget)} · ROAS ${platformRoas.toFixed(1)}x</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width:${((platform.budget / maxBudget) * 100).toFixed(1)}%"></div></div>
+              </div>
+            `;
+          })
+          .join("")
+      : UI.empty("Nenhuma campanha ativa", "As plataformas aparecerão aqui quando houver investimento real em mídia.");
+  }
+
   document.getElementById("ab-list").innerHTML = activeCampaigns
+    .slice(0, 3)
     .map(
       (campaign) => `
         <div class="item-row">
@@ -1312,6 +1547,7 @@ function renderFinance() {
 }
 
 function renderAll() {
+  renderSidebarCounts();
   renderHome();
   renderKanban();
   renderCRM();
@@ -1352,6 +1588,21 @@ async function refreshData() {
   const homeKpis = document.querySelector("#page-home .kpi-grid");
   if (homeKpis) {
     homeKpis.innerHTML = UI.skeletonKpis(4);
+  }
+
+  const crmKpis = document.getElementById("crm-kpi-grid");
+  if (crmKpis) {
+    crmKpis.innerHTML = UI.skeletonKpis(5);
+  }
+
+  const campaignsKpis = document.getElementById("campaigns-kpi-grid");
+  if (campaignsKpis) {
+    campaignsKpis.innerHTML = UI.skeletonKpis(4);
+  }
+
+  const trafficKpis = document.getElementById("traffic-kpi-grid");
+  if (trafficKpis) {
+    trafficKpis.innerHTML = UI.skeletonKpis(4);
   }
 
   const financeKpis = document.querySelector("#page-financeiro .kpi-grid");
@@ -1407,6 +1658,11 @@ async function refreshData() {
   const designGrid = document.getElementById("design-grid");
   if (designGrid) {
     designGrid.innerHTML = UI.empty("Carregando entregas...", "Buscando materiais e arquivos.");
+  }
+
+  const platformBreakdown = document.getElementById("traffic-platform-breakdown");
+  if (platformBreakdown) {
+    platformBreakdown.innerHTML = UI.empty("Carregando tráfego...", "Buscando métricas e campanhas.");
   }
 
   const [dashboard, clients, campaigns, tasks, users, contacts, invoices, metrics, reports, materials, files, charges] = await Promise.all([
