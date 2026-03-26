@@ -899,6 +899,21 @@ function syncNavigation() {
     link.classList.toggle("active", page === state.activePage);
   });
 
+  document.querySelectorAll(".sb-section").forEach((section) => {
+    let next = section.nextElementSibling;
+    let hasVisibleLinks = false;
+
+    while (next && !next.classList.contains("sb-section") && !next.classList.contains("sb-footer")) {
+      if (next.classList.contains("sb-link") && next.style.display !== "none") {
+        hasVisibleLinks = true;
+        break;
+      }
+      next = next.nextElementSibling;
+    }
+
+    section.style.display = hasVisibleLinks ? "" : "none";
+  });
+
   document.querySelectorAll(".app-screen").forEach((screen) => {
     screen.classList.toggle("active", screen.id === `page-${state.activePage}`);
   });
@@ -908,12 +923,25 @@ function goTo(page) {
   const allowed = PAGE_ACCESS[state.session.user.role] || [];
   if (!allowed.includes(page)) {
     showToast("Acesso não permitido para este perfil.");
-    return;
+    return false;
   }
 
   state.activePage = page;
   syncNavigation();
   closeSidebar();
+  return true;
+}
+
+function goToTab(page, group, tab) {
+  if (!goTo(page)) {
+    return false;
+  }
+
+  if (group && tab) {
+    setTab(group, tab);
+  }
+
+  return true;
 }
 
 function renderBarChart(containerId, values, labels, formatter) {
@@ -955,22 +983,61 @@ function renderHome() {
   if (grid && state.dashboard) {
     const openTasks = state.tasks.filter((task) => task.status !== "Concluido").length;
     const homeCards = [
-      { label: "Clientes Ativos", value: state.dashboard.summary.clients_count, sub: hasRoleDataAccess("clients") ? `${state.clients.length} cadastrados` : "escopo atual do perfil" },
-      { label: "Campanhas", value: state.dashboard.summary.campaigns_count, sub: `${state.campaigns.length} registradas` }
+      {
+        label: "Clientes Ativos",
+        value: state.dashboard.summary.clients_count,
+        sub: hasRoleDataAccess("clients") ? `${state.clients.length} cadastrados` : "escopo atual do perfil",
+        page: "crm",
+        tabGroup: "crm",
+        tab: "clientes"
+      },
+      {
+        label: "Campanhas",
+        value: state.dashboard.summary.campaigns_count,
+        sub: `${state.campaigns.length} registradas`,
+        page: "campanhas"
+      }
     ];
 
     if (hasRoleDataAccess("contacts")) {
-      homeCards.push({ label: "Leads", value: state.dashboard.summary.leads, sub: `${state.contacts.length} contatos capturados` });
+      homeCards.push({
+        label: "Leads",
+        value: state.dashboard.summary.leads,
+        sub: `${state.contacts.length} contatos capturados`,
+        page: "crm",
+        tabGroup: "crm",
+        tab: "pipeline"
+      });
     } else {
-      homeCards.push({ label: "Tarefas abertas", value: state.dashboard.summary.open_tasks || openTasks, sub: `${openTasks} em acompanhamento` });
+      homeCards.push({
+        label: "Tarefas abertas",
+        value: state.dashboard.summary.open_tasks || openTasks,
+        sub: `${openTasks} em acompanhamento`,
+        page: "kanban"
+      });
     }
 
     if (hasRoleDataAccess("homeFinancial")) {
-      homeCards.push({ label: "Faturamento", value: formatCurrency(state.dashboard.summary.revenue), sub: `${state.invoices.length} faturas no sistema` });
+      homeCards.push({
+        label: "Faturamento",
+        value: formatCurrency(state.dashboard.summary.revenue),
+        sub: `${state.invoices.length} faturas no sistema`,
+        page: "financeiro"
+      });
     } else if (hasRoleDataAccess("materials")) {
-      homeCards.push({ label: "Entregas", value: state.materials.length, sub: `${state.reports.length} relatórios disponíveis` });
+      homeCards.push({
+        label: "Entregas",
+        value: state.materials.length,
+        sub: `${state.reports.length} relatórios disponíveis`,
+        page: "producao"
+      });
     } else if (hasRoleDataAccess("metrics")) {
-      homeCards.push({ label: "Métricas", value: state.metrics.length, sub: `${state.metrics.filter((metric) => Number(metric.leads || 0) > 0).length} com leads` });
+      homeCards.push({
+        label: "Métricas",
+        value: state.metrics.length,
+        sub: `${state.metrics.filter((metric) => Number(metric.leads || 0) > 0).length} com leads`,
+        page: "analytics"
+      });
     } else {
       homeCards.push({ label: "Arquivos", value: state.files.length, sub: "base operacional do perfil" });
     }
@@ -978,11 +1045,16 @@ function renderHome() {
     grid.innerHTML = homeCards
       .map(
         (item) => `
-          <div class="kpi-card">
+          <button
+            type="button"
+            class="kpi-card${item.page ? " kpi-card-link" : ""}"
+            ${item.page ? `onclick="${item.tabGroup && item.tab ? `goToTab('${item.page}','${item.tabGroup}','${item.tab}')` : `goTo('${item.page}')`}"` : "disabled"}
+            ${item.page ? `aria-label="Abrir ${item.label}"` : `aria-disabled="true" tabindex="-1"`}
+          >
             <div class="kpi-label">${item.label}</div>
             <div class="kpi-val">${item.label === "Faturamento" ? item.value : formatNumber(item.value)}</div>
             <div class="kpi-sub">${item.sub}</div>
-          </div>
+          </button>
         `
       )
       .join("");
@@ -1992,8 +2064,9 @@ async function refreshData() {
     platformBreakdown.innerHTML = UI.empty("Carregando tráfego...", "Buscando métricas e campanhas.");
   }
 
-  const [dashboard, clients, campaigns, tasks, users, contacts, invoices, metrics, reports, materials, files, charges, integrations] = await Promise.all([
+  const [dashboard, team, clients, campaigns, tasks, users, contacts, invoices, metrics, reports, materials, files, charges, integrations] = await Promise.all([
     apiFetch("/dashboard"),
+    roleDataAccess.homeTeam ? apiFetch("/users/team") : Promise.resolve([]),
     roleDataAccess.clients ? apiFetch("/clients") : Promise.resolve([]),
     roleDataAccess.campaigns ? apiFetch("/campaigns") : Promise.resolve([]),
     roleDataAccess.tasks ? apiFetch("/tasks") : Promise.resolve([]),
@@ -2009,7 +2082,7 @@ async function refreshData() {
   ]);
 
   state.dashboard = dashboard;
-  state.team = Array.isArray(dashboard.team) ? dashboard.team : [];
+  state.team = Array.isArray(team) ? team : Array.isArray(dashboard.team) ? dashboard.team : [];
   state.clients = clients;
   state.campaigns = campaigns;
   state.tasks = tasks;
