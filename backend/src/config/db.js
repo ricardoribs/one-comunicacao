@@ -298,7 +298,20 @@ function buildPoolConfig() {
 
   if (env.databaseSslCaFile) {
     if (!fs.existsSync(env.databaseSslCaFile)) {
-      throw new Error(`DATABASE_SSL_CA_FILE nao encontrado: ${env.databaseSslCaFile}`);
+      let availableSecretFiles = '(nenhum)';
+
+      try {
+        const secretFiles = fs.readdirSync('/etc/secrets');
+        if (secretFiles.length > 0) {
+          availableSecretFiles = secretFiles.join(', ');
+        }
+      } catch (_error) {
+        availableSecretFiles = '(nao foi possivel listar /etc/secrets)';
+      }
+
+      throw new Error(
+        `DATABASE_SSL_CA_FILE nao encontrado: ${env.databaseSslCaFile}. Arquivos visiveis em /etc/secrets: ${availableSecretFiles}`
+      );
     }
 
     config.ssl = {
