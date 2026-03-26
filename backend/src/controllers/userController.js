@@ -14,6 +14,11 @@ exports.list = asyncHandler(async (req, res) => {
   );
 });
 
+exports.listInternalTeam = asyncHandler(async (_req, res) => {
+  const users = await userModel.listActiveInternalTeam();
+  res.json(users);
+});
+
 exports.create = asyncHandler(async (req, res) => {
   await authService.register(req.body);
   const user = await userModel.findByEmail(req.body.email);
