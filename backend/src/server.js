@@ -4,8 +4,8 @@ const db = require('./config/db');
 const logger = require('./config/logger');
 const sentry = require('./config/sentry');
 
-const server = app.listen(env.port, () => {
-  logger.info({ port: env.port, environment: env.nodeEnv }, 'Servidor iniciado');
+const server = app.listen(env.port, '0.0.0.0', () => {
+  logger.info({ port: env.port, host: '0.0.0.0', environment: env.nodeEnv }, 'Servidor iniciado');
 });
 
 let shuttingDown = false;
