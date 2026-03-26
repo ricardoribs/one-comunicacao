@@ -180,6 +180,7 @@ const UI = {
 };
 let lastFocusedElement = null;
 const MOBILE_BREAKPOINT = 768;
+let lastSidebarTouchAt = 0;
 
 function trapModalFocus(event) {
   const overlay = document.getElementById("modal-overlay");
@@ -685,6 +686,50 @@ function setRoleUI(user) {
 
 function isMobileViewport() {
   return window.innerWidth <= MOBILE_BREAKPOINT;
+}
+
+function bindSidebarInteractions() {
+  const toggle = document.getElementById("mobile-nav-toggle");
+  const backdrop = document.getElementById("sidebar-backdrop");
+  if (!toggle || !backdrop) {
+    return;
+  }
+
+  if (toggle.dataset.boundSidebar !== "1") {
+    const handleToggle = (event) => {
+      if (event.type === "click" && Date.now() - lastSidebarTouchAt < 500) {
+        return;
+      }
+      if (event.type === "touchend") {
+        lastSidebarTouchAt = Date.now();
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      toggleSidebar();
+    };
+
+    toggle.addEventListener("click", handleToggle);
+    toggle.addEventListener("touchend", handleToggle, { passive: false });
+    toggle.dataset.boundSidebar = "1";
+  }
+
+  if (backdrop.dataset.boundSidebar !== "1") {
+    const handleClose = (event) => {
+      if (event.type === "click" && Date.now() - lastSidebarTouchAt < 500) {
+        return;
+      }
+      if (event.type === "touchend") {
+        lastSidebarTouchAt = Date.now();
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      closeSidebar();
+    };
+
+    backdrop.addEventListener("click", handleClose);
+    backdrop.addEventListener("touchend", handleClose, { passive: false });
+    backdrop.dataset.boundSidebar = "1";
+  }
 }
 
 function syncSidebarShell() {
@@ -1828,6 +1873,7 @@ async function initializeApp() {
   }).format(new Date());
   document.getElementById("login-screen").classList.add("hidden");
   syncNavigation();
+  bindSidebarInteractions();
   bindLegacyInlineHandlers();
   await refreshData();
 }
@@ -2382,6 +2428,7 @@ async function deleteUser(id) {
 }
 
 async function boot() {
+  bindSidebarInteractions();
   bindLegacyInlineHandlers();
   syncSidebarShell();
   APP.registerActivityTracking();
