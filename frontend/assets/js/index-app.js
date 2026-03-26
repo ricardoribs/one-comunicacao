@@ -10,6 +10,7 @@ let currentRole = "client";
 let currentSession = null;
 let currentDashboard = null;
 let lastFocusedElement = null;
+const MOBILE_BREAKPOINT = 768;
 
 function trapModalFocus(event) {
   const modalBg = document.getElementById("modal-bg");
@@ -286,16 +287,45 @@ function showToast(message) {
   setTimeout(() => toast.classList.remove("show"), 3500);
 }
 
-function toggleMobile() {
+function isMobileViewport() {
+  return window.innerWidth <= MOBILE_BREAKPOINT;
+}
+
+function syncPublicShell() {
+  if (!isMobileViewport()) {
+    closeMobile();
+  }
+}
+
+function closeMobile() {
   const menu = document.getElementById("mobile-menu");
   const trigger = document.querySelector(".hamburger");
-  const isOpen = menu.classList.toggle("open");
+  menu?.classList.remove("open");
+  menu?.setAttribute("aria-hidden", "true");
+  trigger?.setAttribute("aria-expanded", "false");
+  document.body.classList.remove("nav-open");
+}
+
+function toggleMobile(forceState) {
+  const menu = document.getElementById("mobile-menu");
+  const trigger = document.querySelector(".hamburger");
+  if (!menu) {
+    return;
+  }
+
+  const shouldOpen = typeof forceState === "boolean" ? forceState : !menu.classList.contains("open");
+  const isOpen = shouldOpen;
+
+  menu.classList.toggle("open", shouldOpen);
+  menu.setAttribute("aria-hidden", String(!shouldOpen));
   trigger?.setAttribute("aria-expanded", String(isOpen));
+  document.body.classList.toggle("nav-open", shouldOpen);
 }
 
 function openModal(type) {
   currentRole = type;
   lastFocusedElement = document.activeElement;
+  closeMobile();
   document.getElementById("modal-title").textContent =
     type === "admin" ? "Painel Administrativo" : "Área do Cliente";
   document.getElementById("modal-sub").textContent =
@@ -310,6 +340,7 @@ function openModal(type) {
   }
   document.getElementById("modal-bg").classList.add("open");
   document.getElementById("modal-bg").setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
   bindLegacyInlineHandlers(document.getElementById("modal-bg"));
   window.setTimeout(() => document.getElementById("login-email")?.focus(), 0);
 }
@@ -317,6 +348,7 @@ function openModal(type) {
 function closeModal() {
   document.getElementById("modal-bg").classList.remove("open");
   document.getElementById("modal-bg").setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
   lastFocusedElement?.focus?.();
 }
 
@@ -686,17 +718,27 @@ async function boot() {
   );
 
   document.querySelectorAll(".reveal").forEach((element) => observer.observe(element));
+  syncPublicShell();
 
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && document.getElementById("modal-bg").classList.contains("open")) {
-      closeModal();
-      return;
+    if (event.key === "Escape") {
+      if (document.getElementById("modal-bg").classList.contains("open")) {
+        closeModal();
+        return;
+      }
+
+      if (document.getElementById("mobile-menu").classList.contains("open")) {
+        closeMobile();
+        return;
+      }
     }
 
-    trapModalFocus(event);
+    if (document.getElementById("modal-bg").classList.contains("open")) {
+      trapModalFocus(event);
 
-    if (event.key === "Enter" && document.getElementById("modal-bg").classList.contains("open")) {
-      doLogin();
+      if (event.key === "Enter") {
+        doLogin();
+      }
     }
   });
 
@@ -715,6 +757,8 @@ async function boot() {
   window.addEventListener("online", () => {
     showToast("Conexão restabelecida.");
   });
+  window.addEventListener("resize", syncPublicShell);
+  window.addEventListener("orientationchange", syncPublicShell);
 
   clearClientHandoff();
   clearSession();

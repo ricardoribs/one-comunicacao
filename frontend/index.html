@@ -53,6 +53,10 @@ body{
   font-family:var(--font-b);
   overflow-x:hidden;
 }
+body.nav-open,
+body.modal-open{
+  overflow:hidden;
+}
 ul{list-style:none}
 body::before{display:none}
 img{border:0}
@@ -142,14 +146,17 @@ section::before{
 .mobile-menu{
   display:none;
   position:fixed;
-  top:84px;
+  top:calc(84px + env(safe-area-inset-top));
   left:0;
   right:0;
+  bottom:0;
   z-index:79;
-  padding:28px 24px 32px;
+  padding:28px 24px calc(32px + env(safe-area-inset-bottom));
   border-bottom:1px solid var(--line);
   background:rgba(247,243,237,.98);
   backdrop-filter:blur(12px);
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
 }
 .mobile-menu.open{display:flex;flex-direction:column;gap:18px}
 .mobile-menu a{font-family:var(--font-b);font-size:1.45rem;font-weight:600}
@@ -890,8 +897,10 @@ footer::before{background:rgba(255,255,255,.08)}
   display:none;
   align-items:center;
   justify-content:center;
-  padding:24px;
+  padding:calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
   background:rgba(14,14,16,.42);
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
 }
 .modal-bg.open{display:flex}
 .modal{position:relative;width:min(100%,420px);max-width:420px;padding:40px;background:#fff;border-radius:20px;transform:translateY(12px);transition:transform .22s var(--ease)}
@@ -959,6 +968,7 @@ footer{position:relative;background:#111215;color:#fff;padding:72px 0 36px}
   .page-hero{padding-top:110px;padding-bottom:44px}
   .nav-links,.nav-cta{display:none}
   .hamburger{display:flex}
+  .mobile-menu{padding:24px 18px calc(28px + env(safe-area-inset-bottom))}
   .brand-emblem{width:124px}
   .brand-subtitle{font-size:7px;letter-spacing:.22em}
   .hero-copy,
@@ -1055,6 +1065,9 @@ footer{position:relative;background:#111215;color:#fff;padding:72px 0 36px}
     height:44px;
   }
   .toast{right:16px;left:16px;bottom:16px;max-width:none}
+  .mobile-menu{padding:20px 16px calc(24px + env(safe-area-inset-bottom));gap:16px}
+  .mobile-menu a{font-size:1.18rem}
+  .mobile-menu .btn{width:100%;justify-content:center}
   .modal{padding:24px;border-radius:16px}
   .modal-form{gap:12px}
 }
@@ -1092,7 +1105,7 @@ footer{position:relative;background:#111215;color:#fff;padding:72px 0 36px}
     <button type="button" class="hamburger" aria-label="Abrir menu" aria-expanded="false" aria-controls="mobile-menu" onclick="toggleMobile()"><span></span><span></span><span></span></button>
   </div>
 </nav>
-<div class="mobile-menu" id="mobile-menu">
+<div class="mobile-menu" id="mobile-menu" aria-hidden="true">
   <span class="mobile-brand-wrap">
     <img class="mobile-brand" src="assets/svg/one-logo-soft.svg" alt="ONE Comunicação"/>
     <span class="mobile-brand-subtitle">Comunicação Integrada</span>
