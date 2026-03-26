@@ -26,10 +26,11 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      padding:24px;
+      padding:calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
       background:linear-gradient(180deg,#faf7f2 0%,#f2ede6 100%);
       color:var(--ink);
       font-family:var(--font-b);
+      overflow-x:hidden;
     }
     .card{
       width:min(100%,640px);
@@ -82,14 +83,14 @@
     }
     a:hover{background:var(--pink-dark)}
     @media (max-width:560px){
-      body{padding:16px}
+      body{padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom))}
       .card{padding:34px 22px}
       h1{font-size:44px}
       h2{font-size:24px}
       p{font-size:15px;line-height:1.65}
     }
     @media (max-width:375px){
-      body{padding:12px}
+      body{padding:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom))}
       .card{padding:28px 18px}
       h1{font-size:38px}
       h2{font-size:22px}
