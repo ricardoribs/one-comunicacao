@@ -15,6 +15,8 @@ function buildUserPayload(user) {
     name: user.name,
     email: user.email,
     role: user.role,
+    is_active: user.is_active,
+    last_login_at: user.last_login_at,
     client_name: user.client_name,
     client_company: user.client_company,
   };
@@ -135,7 +137,22 @@ async function register(payload) {
     email_verified_at: null,
   });
 
-  await issueEmailVerification(user);
+  try {
+    await issueEmailVerification(user);
+  } catch (error) {
+    if (user?.id) {
+      try {
+        await userModel.remove(user.id);
+      } catch (_cleanupError) {
+        // noop: preserve original delivery error to the caller
+      }
+    }
+
+    throw new AppError(
+      `Nao foi possivel enviar o e-mail de verificacao. ${error.message || 'Confira a configuracao do Resend e tente novamente.'}`,
+      502
+    );
+  }
 
   return {
     message: 'Cadastro realizado. Verifique seu e-mail para ativar o acesso.',

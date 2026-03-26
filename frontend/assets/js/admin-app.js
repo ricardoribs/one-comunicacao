@@ -116,6 +116,7 @@ const ROLE_DATA_ACCESS = {
 const state = {
   session: null,
   dashboard: null,
+  team: [],
   clients: [],
   campaigns: [],
   tasks: [],
@@ -943,10 +944,13 @@ function renderHome() {
 
   if (lowerCards[1]) {
     if (hasRoleDataAccess("homeTeam")) {
+      const teamMembers = (state.team.length ? state.team : state.users.filter((user) => user.role !== "client")).filter(
+        (user) => user.role !== "client"
+      );
+
       lowerCards[1].innerHTML = `
         <div class="section-header"><div class="section-title">Equipe habilitada</div></div>
-        ${state.users
-          .filter((user) => user.role !== "client")
+        ${teamMembers
           .map(
             (user) => `
               <div class="team-member-row">
@@ -1733,6 +1737,7 @@ async function refreshData() {
   ]);
 
   state.dashboard = dashboard;
+  state.team = Array.isArray(dashboard.team) ? dashboard.team : [];
   state.clients = clients;
   state.campaigns = campaigns;
   state.tasks = tasks;

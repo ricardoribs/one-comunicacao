@@ -98,7 +98,7 @@ async function getClientDashboard(user) {
 }
 
 async function getInternalDashboard(user) {
-  const [clientsCountResult, campaignsCountResult, openTasksResult, leadsResult, revenueResult] = await Promise.all([
+  const [clientsCountResult, campaignsCountResult, openTasksResult, leadsResult, revenueResult, teamResult] = await Promise.all([
     tenantDb.query(user, {
       table: 'clients',
       scopeConfig: {
@@ -164,6 +164,7 @@ async function getInternalDashboard(user) {
             INNER JOIN clients c ON c.id = cam.client_id
             __TENANT_SCOPE__`,
     }),
+    hasCapability(user, 'view_dashboard_team') ? userModel.listActiveInternalTeam() : Promise.resolve([]),
   ]);
 
   return {
@@ -182,6 +183,7 @@ async function getInternalDashboard(user) {
       financial: hasCapability(user, 'view_dashboard_financial'),
       team: hasCapability(user, 'view_dashboard_team'),
     },
+    team: teamResult,
   };
 }
 

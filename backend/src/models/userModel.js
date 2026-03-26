@@ -57,9 +57,9 @@ async function list(query = {}) {
 
 async function listActiveInternalTeam() {
   const { rows } = await pool.query(
-    `SELECT id, name, role
+    `SELECT id, name, role, is_active, last_login_at
      FROM users
-     WHERE role IN ('admin', 'gestor', 'comercial') AND is_active = true
+     WHERE role <> 'client' AND is_active = true
      ORDER BY role, name`
   );
   return rows;
