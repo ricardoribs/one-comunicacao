@@ -98,44 +98,67 @@ async function findById(id, user = null) {
   return rows[0] || null;
 }
 
+function buildClientParams(data) {
+  return [
+    data.name,
+    data.company,
+    data.plan,
+    data.mrr,
+    data.segment || null,
+    data.manager_id || null,
+    data.started_at || null,
+    data.legal_document || null,
+    data.contact_name || null,
+    data.contact_email || null,
+    data.contact_phone || null,
+    data.billing_email || null,
+    data.address_line1 || null,
+    data.address_line2 || null,
+    data.neighborhood || null,
+    data.city || null,
+    data.state || null,
+    data.zip_code || null,
+    data.country || null,
+    data.notes || null,
+  ];
+}
+
+const insertClientSql = `INSERT INTO clients (
+  name, company, plan, mrr, segment, manager_id, started_at, legal_document, contact_name, contact_email,
+  contact_phone, billing_email, address_line1, address_line2, neighborhood, city, state, zip_code, country, notes
+)
+VALUES (
+  $1, $2, COALESCE($3, 'growth'), COALESCE($4, 0), $5, $6, $7, $8, $9, $10,
+  $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
+)
+RETURNING id`;
+
 async function create(data, user = null) {
-  const { rows } = await tenantDb.query(user || { role: 'admin' }, {
-    table: 'clients',
-    scopeConfig: { internal: '1 = 1' },
-    sql: `INSERT INTO clients (
-      name, company, plan, mrr, segment, manager_id, started_at, legal_document, contact_name, contact_email,
-      contact_phone, billing_email, address_line1, address_line2, neighborhood, city, state, zip_code, country, notes
-    )
-    VALUES (
-      $1, $2, COALESCE($3, 'growth'), COALESCE($4, 0), $5, $6, $7, $8, $9, $10,
-      $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
-    )
-    RETURNING id`,
-    params: [
-      data.name,
-      data.company,
-      data.plan,
-      data.mrr,
-      data.segment || null,
-      data.manager_id || null,
-      data.started_at || null,
-      data.legal_document || null,
-      data.contact_name || null,
-      data.contact_email || null,
-      data.contact_phone || null,
-      data.billing_email || null,
-      data.address_line1 || null,
-      data.address_line2 || null,
-      data.neighborhood || null,
-      data.city || null,
-      data.state || null,
-      data.zip_code || null,
-      data.country || null,
-      data.notes || null,
-    ],
+  const actor = user || { role: 'admin' };
+
+  if (actor.role === 'admin') {
+    const { rows } = await tenantDb.query(actor, {
+      table: 'clients',
+      scopeConfig: { internal: '1 = 1' },
+      sql: insertClientSql,
+      params: buildClientParams(data),
+    });
+
+    return findById(rows[0].id, user);
+  }
+
+  const id = await tenantDb.runWithTenantContext(actor, async (client) => {
+    const { rows } = await tenantDb.queryWithClient(actor, client, {
+      table: 'clients',
+      bypassScope: true,
+      sql: insertClientSql,
+      params: buildClientParams(data),
+    });
+
+    return rows[0].id;
   });
 
-  return findById(rows[0].id, user);
+  return findById(id, user);
 }
 
 async function createWithClient(client, data, user) {
@@ -152,26 +175,7 @@ async function createWithClient(client, data, user) {
     )
     RETURNING id`,
     params: [
-      data.name,
-      data.company,
-      data.plan,
-      data.mrr,
-      data.segment || null,
-      data.manager_id || null,
-      data.started_at || null,
-      data.legal_document || null,
-      data.contact_name || null,
-      data.contact_email || null,
-      data.contact_phone || null,
-      data.billing_email || null,
-      data.address_line1 || null,
-      data.address_line2 || null,
-      data.neighborhood || null,
-      data.city || null,
-      data.state || null,
-      data.zip_code || null,
-      data.country || null,
-      data.notes || null,
+      ...buildClientParams(data),
     ],
   });
 
