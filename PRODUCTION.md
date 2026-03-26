@@ -18,6 +18,11 @@ Configure no provedor:
 NODE_ENV=production
 PORT=10000
 DATABASE_URL=postgresql://...
+DATABASE_HOST=aws-1-us-east-1.pooler.supabase.com
+DATABASE_PORT=5432
+DATABASE_NAME=postgres
+DATABASE_USER=postgres.<project_ref>
+DATABASE_PASSWORD=<senha do banco>
 DATABASE_SSL_CA_FILE=/etc/secrets/prod-ca-2021.crt
 JWT_SECRET=<resultado do openssl rand -hex 64>
 JWT_EXPIRES_IN=15m
@@ -74,6 +79,7 @@ Configuracao esperada:
 - Auto deploy: `true`
 - `JWT_SECRET`, `DATABASE_URL`, `RESEND_API_KEY`, `EMAIL_FROM`, `SENTRY_DSN` e `CLOUDINARY_*` como segredos
 - certificado CA do Supabase adicionado como Secret File no Render e `DATABASE_SSL_CA_FILE=/etc/secrets/prod-ca-2021.crt`
+- para o Supabase pooler, prefira `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USER` e `DATABASE_PASSWORD` separados para evitar problemas de parse da URL
 
 ## 4. E-mail transacional
 

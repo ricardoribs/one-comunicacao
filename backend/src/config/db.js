@@ -279,13 +279,22 @@ const shouldUsePgMem = env.nodeEnv === 'test' && !process.env.DATABASE_URL;
 
 function buildPoolConfig() {
   const config = {
-    connectionString: env.databaseUrl,
     max: env.dbPoolMax,
     connectionTimeoutMillis: env.dbConnectionTimeoutMs,
     idleTimeoutMillis: env.dbIdleTimeoutMs,
     query_timeout: env.dbQueryTimeoutMs,
     statement_timeout: env.dbStatementTimeoutMs,
   };
+
+  if (env.databaseHost && env.databaseUser && env.databaseName) {
+    config.host = env.databaseHost;
+    config.port = env.databasePort;
+    config.database = env.databaseName;
+    config.user = env.databaseUser;
+    config.password = env.databasePassword;
+  } else {
+    config.connectionString = env.databaseUrl;
+  }
 
   if (env.databaseSslCaFile) {
     if (!fs.existsSync(env.databaseSslCaFile)) {
