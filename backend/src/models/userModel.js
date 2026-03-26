@@ -59,7 +59,8 @@ async function listActiveInternalTeam() {
   const { rows } = await pool.query(
     `SELECT id, name, role, is_active, last_login_at
      FROM users
-     WHERE role <> 'client' AND is_active = true
+     WHERE LOWER(role) IN ('admin', 'gestor', 'designer', 'comercial', 'dev')
+       AND COALESCE(is_active, true) = true
      ORDER BY role, name`
   );
   return rows;

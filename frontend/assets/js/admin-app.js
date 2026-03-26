@@ -305,6 +305,7 @@ function executeInlineAction(action, event, element) {
     doLogin,
     doLogout,
     goTo,
+    goToTab,
     openModal,
     setTab,
     filterKanban,
@@ -325,8 +326,10 @@ function executeInlineAction(action, event, element) {
     deleteCampaign,
     deleteTask,
     deleteMaterial,
+    deleteIntegration,
     deleteUser,
-    showToast
+    showToast,
+    openProtectedResource
   };
 
   const handler = handlers[fnName];
@@ -522,6 +525,26 @@ function normalizePipelineStage(stage) {
 
 function formatCurrencyValue(value) {
   return formatCurrency(Number(value || 0));
+}
+
+function mergeInternalUsers(...sources) {
+  const merged = new Map();
+
+  sources
+    .filter(Array.isArray)
+    .flat()
+    .filter((user) => user && user.role && user.role !== "client")
+    .forEach((user) => {
+      const key = String(user.id || user.email || user.name || Math.random());
+      const current = merged.get(key) || {};
+      merged.set(key, {
+        ...current,
+        ...user,
+        is_active: user.is_active !== false && current.is_active !== false
+      });
+    });
+
+  return [...merged.values()].sort((left, right) => String(left.name || "").localeCompare(String(right.name || ""), "pt-BR"));
 }
 
 function sumBy(records, getter) {
@@ -944,6 +967,37 @@ function goToTab(page, group, tab) {
   return true;
 }
 
+function bindHomeCardInteractions(container) {
+  if (!container) {
+    return;
+  }
+
+  container.querySelectorAll("[data-home-page]").forEach((card) => {
+    if (card.dataset.boundHomeNav === "1") {
+      return;
+    }
+
+    card.addEventListener("click", () => {
+      const page = card.dataset.homePage;
+      const group = card.dataset.homeGroup;
+      const tab = card.dataset.homeTab;
+
+      if (!page) {
+        return;
+      }
+
+      if (group && tab) {
+        goToTab(page, group, tab);
+        return;
+      }
+
+      goTo(page);
+    });
+
+    card.dataset.boundHomeNav = "1";
+  });
+}
+
 function renderBarChart(containerId, values, labels, formatter) {
   const container = document.getElementById(containerId);
   if (!container) {
@@ -1048,7 +1102,9 @@ function renderHome() {
           <button
             type="button"
             class="kpi-card${item.page ? " kpi-card-link" : ""}"
-            ${item.page ? `onclick="${item.tabGroup && item.tab ? `goToTab('${item.page}','${item.tabGroup}','${item.tab}')` : `goTo('${item.page}')`}"` : "disabled"}
+            ${item.page ? `data-home-page="${item.page}"` : "disabled"}
+            ${item.tabGroup ? `data-home-group="${item.tabGroup}"` : ""}
+            ${item.tab ? `data-home-tab="${item.tab}"` : ""}
             ${item.page ? `aria-label="Abrir ${item.label}"` : `aria-disabled="true" tabindex="-1"`}
           >
             <div class="kpi-label">${item.label}</div>
@@ -1058,6 +1114,7 @@ function renderHome() {
         `
       )
       .join("");
+    bindHomeCardInteractions(grid);
   }
 
   const topCards = document.querySelectorAll("#page-home .two-col .card");
@@ -2066,7 +2123,7 @@ async function refreshData() {
 
   const [dashboard, team, clients, campaigns, tasks, users, contacts, invoices, metrics, reports, materials, files, charges, integrations] = await Promise.all([
     apiFetch("/dashboard"),
-    roleDataAccess.homeTeam ? apiFetch("/users/team") : Promise.resolve([]),
+    roleDataAccess.homeTeam ? apiFetch("/users/team", { cache: "no-store" }).catch(() => []) : Promise.resolve([]),
     roleDataAccess.clients ? apiFetch("/clients") : Promise.resolve([]),
     roleDataAccess.campaigns ? apiFetch("/campaigns") : Promise.resolve([]),
     roleDataAccess.tasks ? apiFetch("/tasks") : Promise.resolve([]),
@@ -2082,7 +2139,7 @@ async function refreshData() {
   ]);
 
   state.dashboard = dashboard;
-  state.team = Array.isArray(team) ? team : Array.isArray(dashboard.team) ? dashboard.team : [];
+  state.team = mergeInternalUsers(team, dashboard?.team, users);
   state.clients = clients;
   state.campaigns = campaigns;
   state.tasks = tasks;
@@ -2367,16 +2424,16 @@ function buildClientAddressFields(client) {
     </div>
     <div class="field">
       <label>Estado</label>
-      <select name="state" autocomplete="address-level1">
+      <select name="state" autocomplete="off">
         <option value="">Selecione</option>
         ${stateOptions(client.state || "")}
       </select>
     </div>
-    <div class="field"><label>Cidade</label><input name="city" autocomplete="address-level2" value="${escapeHtml(client.city || "")}"></div>
-    <div class="field"><label>Bairro</label><input name="neighborhood" autocomplete="address-level3" value="${escapeHtml(client.neighborhood || "")}"></div>
-    <div class="field form-full"><label>Endereço</label><input name="address_line1" autocomplete="street-address" value="${escapeHtml(client.address_line1 || "")}"></div>
-    <div class="field"><label>Complemento</label><input name="address_line2" autocomplete="address-line2" value="${escapeHtml(client.address_line2 || "")}"></div>
-    <div class="field"><label>País</label><input name="country" autocomplete="country-name" value="${escapeHtml(client.country || "Brasil")}"></div>
+    <div class="field"><label>Cidade</label><input name="city" autocomplete="off" value="${escapeHtml(client.city || "")}"></div>
+    <div class="field"><label>Bairro</label><input name="neighborhood" autocomplete="off" value="${escapeHtml(client.neighborhood || "")}"></div>
+    <div class="field form-full"><label>Endereço</label><input name="address_line1" autocomplete="off" value="${escapeHtml(client.address_line1 || "")}"></div>
+    <div class="field"><label>Complemento</label><input name="address_line2" autocomplete="off" value="${escapeHtml(client.address_line2 || "")}"></div>
+    <div class="field"><label>País</label><input name="country" autocomplete="off" value="${escapeHtml(client.country || "Brasil")}"></div>
   `;
 }
 
@@ -2401,7 +2458,7 @@ function setAddressFieldValue(field, value, force = false) {
   }
 
   const currentValue = String(field.value || "").trim();
-  const canReplace = force || !currentValue || field.dataset.autofilled === "1";
+  const canReplace = force || !currentValue || field.dataset.autofilled === "1" || field.dataset.userEdited !== "1";
 
   if (!canReplace) {
     return false;
@@ -2451,12 +2508,17 @@ function bindManualAddressField(field) {
     return;
   }
 
-  field.addEventListener("input", () => {
+  const markManualEdit = () => {
     if (field.dataset.settingValue === "1") {
       return;
     }
     field.dataset.autofilled = "0";
-  });
+    field.dataset.userEdited = "1";
+  };
+
+  field.dataset.userEdited = field.dataset.userEdited || "0";
+  field.addEventListener("input", markManualEdit);
+  field.addEventListener("change", markManualEdit);
 
   field.dataset.boundManualAddress = "1";
 }
