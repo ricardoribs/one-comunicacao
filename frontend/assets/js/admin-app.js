@@ -27,6 +27,36 @@ const INTEGRATION_STATUS_LABELS = {
   disconnected: "Desconectado"
 };
 
+const BRAZIL_STATES = [
+  "AC",
+  "AL",
+  "AP",
+  "AM",
+  "BA",
+  "CE",
+  "DF",
+  "ES",
+  "GO",
+  "MA",
+  "MT",
+  "MS",
+  "MG",
+  "PA",
+  "PB",
+  "PR",
+  "PE",
+  "PI",
+  "RJ",
+  "RN",
+  "RS",
+  "RO",
+  "RR",
+  "SC",
+  "SP",
+  "SE",
+  "TO"
+];
+
 const PIPELINE_STAGE_LABELS = {
   "Prospeccao": "Prospecção",
   "Prospecção": "Prospecção",
@@ -2227,6 +2257,201 @@ function campaignOptions(clientId, selectedId) {
     .join("");
 }
 
+function stateOptions(selected = "") {
+  return BRAZIL_STATES.map((stateCode) => `<option value="${stateCode}" ${String(selected).toUpperCase() === stateCode ? "selected" : ""}>${stateCode}</option>`).join("");
+}
+
+function normalizeZipCode(value) {
+  return String(value || "").replace(/\D/g, "").slice(0, 8);
+}
+
+function formatZipCodeInput(value) {
+  const digits = normalizeZipCode(value);
+  if (digits.length <= 5) {
+    return digits;
+  }
+  return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+}
+
+function normalizeStateCode(value) {
+  return String(value || "").trim().toUpperCase().slice(0, 2);
+}
+
+function normalizeCountry(value) {
+  const trimmed = String(value || "").trim();
+  return trimmed || "Brasil";
+}
+
+function buildClientAddressFields(client) {
+  return `
+    <div class="field">
+      <label>CEP</label>
+      <div class="field-inline">
+        <input name="zip_code" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000" value="${escapeHtml(formatZipCodeInput(client.zip_code || ""))}">
+        <button type="button" class="btn btn-outline btn-sm" data-action="lookup-cep">Buscar CEP</button>
+      </div>
+      <div class="field-help" data-cep-feedback>Informe o CEP para sugerir estado, cidade, bairro e rua. Todos os campos continuam editáveis manualmente.</div>
+    </div>
+    <div class="field">
+      <label>Estado</label>
+      <select name="state" autocomplete="address-level1">
+        <option value="">Selecione</option>
+        ${stateOptions(client.state || "")}
+      </select>
+    </div>
+    <div class="field"><label>Cidade</label><input name="city" autocomplete="address-level2" value="${escapeHtml(client.city || "")}"></div>
+    <div class="field"><label>Bairro</label><input name="neighborhood" autocomplete="address-level3" value="${escapeHtml(client.neighborhood || "")}"></div>
+    <div class="field form-full"><label>Endereço</label><input name="address_line1" autocomplete="street-address" value="${escapeHtml(client.address_line1 || "")}"></div>
+    <div class="field"><label>Complemento</label><input name="address_line2" autocomplete="address-line2" value="${escapeHtml(client.address_line2 || "")}"></div>
+    <div class="field"><label>País</label><input name="country" autocomplete="country-name" value="${escapeHtml(client.country || "Brasil")}"></div>
+  `;
+}
+
+function setCepFeedback(target, message, tone = "") {
+  if (!target) {
+    return;
+  }
+
+  target.textContent = message;
+  target.classList.toggle("is-error", tone === "error");
+  target.classList.toggle("is-success", tone === "success");
+}
+
+function setAddressFieldValue(field, value, force = false) {
+  if (!field) {
+    return false;
+  }
+
+  const nextValue = String(value || "").trim();
+  if (!nextValue) {
+    return false;
+  }
+
+  const currentValue = String(field.value || "").trim();
+  const canReplace = force || !currentValue || field.dataset.autofilled === "1";
+
+  if (!canReplace) {
+    return false;
+  }
+
+  field.dataset.settingValue = "1";
+  field.value = nextValue;
+  field.dataset.autofilled = "1";
+  delete field.dataset.settingValue;
+  return true;
+}
+
+function bindManualAddressField(field) {
+  if (!field || field.dataset.boundManualAddress === "1") {
+    return;
+  }
+
+  field.addEventListener("input", () => {
+    if (field.dataset.settingValue === "1") {
+      return;
+    }
+    field.dataset.autofilled = "0";
+  });
+
+  field.dataset.boundManualAddress = "1";
+}
+
+function initClientAddressAssist(form) {
+  if (!form || form.dataset.boundClientAddressAssist === "1") {
+    return;
+  }
+
+  const zipField = form.querySelector('[name="zip_code"]');
+  const lookupButton = form.querySelector('[data-action="lookup-cep"]');
+  const feedbackNode = form.querySelector('[data-cep-feedback]');
+  const stateField = form.querySelector('[name="state"]');
+  const cityField = form.querySelector('[name="city"]');
+  const neighborhoodField = form.querySelector('[name="neighborhood"]');
+  const addressField = form.querySelector('[name="address_line1"]');
+  const complementField = form.querySelector('[name="address_line2"]');
+  const countryField = form.querySelector('[name="country"]');
+
+  if (!zipField) {
+    return;
+  }
+
+  [stateField, cityField, neighborhoodField, addressField, complementField, countryField].forEach(bindManualAddressField);
+
+  let lastResolvedCep = "";
+
+  const applyAddressLookup = async (force = false) => {
+    const cep = normalizeZipCode(zipField.value);
+
+    if (cep.length !== 8) {
+      setCepFeedback(feedbackNode, "Informe um CEP valido com 8 digitos para buscar o endereco.", "error");
+      return;
+    }
+
+    if (!force && cep === lastResolvedCep) {
+      setCepFeedback(feedbackNode, "CEP ja localizado. Voce pode ajustar os campos manualmente se necessario.");
+      return;
+    }
+
+    if (lookupButton) {
+      lookupButton.disabled = true;
+    }
+    setCepFeedback(feedbackNode, "Buscando endereco pelo CEP...");
+
+    try {
+      const address = await apiFetch(`/address/cep/${cep}`, { method: "GET" });
+      zipField.dataset.settingValue = "1";
+      zipField.value = address.zip_code || formatZipCodeInput(cep);
+      zipField.dataset.autofilled = "1";
+      delete zipField.dataset.settingValue;
+
+      const appliedFields = [
+        setAddressFieldValue(stateField, normalizeStateCode(address.state), force),
+        setAddressFieldValue(cityField, address.city, force),
+        setAddressFieldValue(neighborhoodField, address.neighborhood, force),
+        setAddressFieldValue(addressField, address.address_line1, force),
+        setAddressFieldValue(complementField, address.address_line2, force),
+        setAddressFieldValue(countryField, normalizeCountry(address.country), force),
+      ].filter(Boolean).length;
+
+      lastResolvedCep = cep;
+      setCepFeedback(
+        feedbackNode,
+        appliedFields
+          ? "CEP localizado. Confira e ajuste os campos se necessario."
+          : "CEP localizado. Os campos ja tinham dados preenchidos manualmente.",
+        "success"
+      );
+    } catch (error) {
+      setCepFeedback(feedbackNode, error.message, "error");
+    } finally {
+      if (lookupButton) {
+        lookupButton.disabled = false;
+      }
+    }
+  };
+
+  zipField.addEventListener("input", () => {
+    const formatted = formatZipCodeInput(zipField.value);
+    zipField.dataset.settingValue = "1";
+    zipField.value = formatted;
+    delete zipField.dataset.settingValue;
+    if (normalizeZipCode(formatted) !== lastResolvedCep) {
+      setCepFeedback(feedbackNode, "Informe o CEP para sugerir estado, cidade, bairro e rua. Todos os campos continuam editáveis manualmente.");
+    }
+  });
+
+  zipField.addEventListener("blur", () => {
+    const cep = normalizeZipCode(zipField.value);
+    if (cep.length === 8 && ![stateField, cityField, neighborhoodField, addressField].some((field) => String(field?.value || "").trim())) {
+      applyAddressLookup(false);
+    }
+  });
+
+  lookupButton?.addEventListener("click", () => applyAddressLookup(true));
+
+  form.dataset.boundClientAddressAssist = "1";
+}
+
 function openModal(type, id = null) {
   const modal = document.getElementById("modal-content");
   lastFocusedElement = document.activeElement;
@@ -2249,11 +2474,7 @@ function openModal(type, id = null) {
         <div class="field"><label>Email contato</label><input type="email" name="contact_email" value="${client.contact_email || ""}"></div>
         <div class="field"><label>Telefone contato</label><input name="contact_phone" value="${client.contact_phone || ""}"></div>
         <div class="field"><label>Email financeiro</label><input type="email" name="billing_email" value="${client.billing_email || ""}"></div>
-        <div class="field"><label>Cidade</label><input name="city" value="${client.city || ""}"></div>
-        <div class="field"><label>Estado</label><input name="state" value="${client.state || ""}"></div>
-        <div class="field form-full"><label>Endereço</label><input name="address_line1" value="${client.address_line1 || ""}"></div>
-        <div class="field"><label>Bairro</label><input name="neighborhood" value="${client.neighborhood || ""}"></div>
-        <div class="field"><label>CEP</label><input name="zip_code" value="${client.zip_code || ""}"></div>
+        ${buildClientAddressFields(client)}
         <div class="field form-full"><label>Observações</label><textarea name="notes">${client.notes || ""}</textarea></div>
       `
     );
@@ -2431,6 +2652,9 @@ function openModal(type, id = null) {
   const form = document.getElementById("modal-form");
   if (form) {
     form.onsubmit = (event) => submitModal(event, type, id);
+    if (type === "novo-cliente") {
+      initClientAddressAssist(form);
+    }
     window.setTimeout(() => {
       form.querySelector("input, select, textarea, button")?.focus();
     }, 0);
@@ -2449,6 +2673,9 @@ async function submitModal(event, type, id) {
     async () => {
     if (type === "novo-cliente") {
       const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["manager_id", "started_at"]);
+      payload.zip_code = formatZipCodeInput(payload.zip_code);
+      payload.state = normalizeStateCode(payload.state);
+      payload.country = normalizeCountry(payload.country);
       await apiFetch(id ? `/clients/${id}` : "/clients", {
         method: id ? "PUT" : "POST",
         body: JSON.stringify(payload)
