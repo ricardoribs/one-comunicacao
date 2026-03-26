@@ -20,6 +20,16 @@ services:
         sync: false
       - key: DATABASE_URL
         sync: false
+      - key: DATABASE_HOST
+        sync: false
+      - key: DATABASE_PORT
+        value: 5432
+      - key: DATABASE_NAME
+        value: postgres
+      - key: DATABASE_USER
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
       - key: DATABASE_SSL_CA_FILE
         sync: false
       - key: JWT_SECRET
