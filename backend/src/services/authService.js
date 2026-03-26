@@ -6,6 +6,7 @@ const AppError = require('../utils/AppError');
 const userModel = require('../models/userModel');
 const { withTransaction } = require('../utils/db');
 const { sendMail } = require('./mailService');
+const { buildVerificationEmail, buildPasswordResetEmail } = require('./emailTemplates');
 
 function buildUserPayload(user) {
   return {
@@ -81,7 +82,11 @@ async function sendVerificationEmail(user, rawToken) {
   await sendMail({
     to: user.email,
     subject: 'Confirme seu cadastro na ONE Comunicacao',
-    html: `<p>Ola, ${user.name}.</p><p>Confirme seu cadastro clicando no link abaixo:</p><p><a href="${verifyUrl}">${verifyUrl}</a></p>`,
+    html: buildVerificationEmail({
+      appBaseUrl: env.appBaseUrl,
+      userName: user.name,
+      verifyUrl,
+    }),
   });
 }
 
@@ -90,7 +95,12 @@ async function sendPasswordResetEmail(user, rawToken) {
   await sendMail({
     to: user.email,
     subject: 'Redefinicao de senha - ONE Comunicacao',
-    html: `<p>Ola, ${user.name}.</p><p>Use o link abaixo para redefinir sua senha com seguranca:</p><p><a href="${resetUrl}">${resetUrl}</a></p><p>Este link expira em ${env.passwordResetExpiresMinutes} minutos.</p>`,
+    html: buildPasswordResetEmail({
+      appBaseUrl: env.appBaseUrl,
+      userName: user.name,
+      resetUrl,
+      expiresMinutes: env.passwordResetExpiresMinutes,
+    }),
   });
 }
 
