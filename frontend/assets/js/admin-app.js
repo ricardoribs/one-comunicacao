@@ -630,12 +630,13 @@ function renderResourceAction(
 }
 
 function renderMemberRow(user, currentUserId) {
+  const lastAccess = user.last_login_at ? formatDate(user.last_login_at) : "Nunca";
   return `
     <tr>
       <td class="cell-stack"><div class="row"><div class="avatar av-pink">${getInitials(user.name)}</div><strong class="cell-title" title="${escapeHtml(user.name)}">${user.name}</strong></div></td>
       <td><span class="sb-role-badge ${getRoleBadgeClass(user.role)}">${ROLE_LABELS[user.role] || user.role}</span></td>
       <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(user.email)}">${user.email}</span></td>
-      <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(user.client_name || "-")}">${user.client_name || "-"}</span></td>
+      <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(lastAccess)}">${lastAccess}</span></td>
       <td><span class="badge ${user.is_active ? "badge-green" : "badge-gray"}">${user.is_active ? "Ativo" : "Inativo"}</span></td>
       <td class="cell-actions">
         <div class="table-actions">
@@ -2083,7 +2084,7 @@ function openModal(type, id = null) {
         <div class="field"><label>E-mail</label><input type="email" name="email" value="${user.email || ""}" required></div>
         <div class="field"><label>Perfil</label><select name="role"><option value="admin" ${user.role === "admin" ? "selected" : ""}>Admin</option><option value="gestor" ${user.role === "gestor" ? "selected" : ""}>Gestor</option><option value="designer" ${user.role === "designer" ? "selected" : ""}>Designer</option><option value="comercial" ${user.role === "comercial" ? "selected" : ""}>Comercial</option><option value="dev" ${user.role === "dev" ? "selected" : ""}>Dev</option><option value="client" ${user.role === "client" ? "selected" : ""}>Cliente</option></select></div>
         <div class="field"><label>Cliente vinculado</label><select name="client_id"><option value="">Nenhum</option>${clientOptions(user.client_id)}</select></div>
-        <div class="field form-full"><label>Senha ${user.id ? "(opcional)" : ""}</label><input type="password" name="password" ${user.id ? "" : "required"}></div>
+        <div class="field form-full"><label>Senha ${user.id ? "(opcional)" : ""}</label><input type="password" name="password" ${user.id ? "" : "required"}>${user.id ? '<div class="field-help">Deixe em branco para manter a senha atual. Preencha apenas se quiser redefinir o acesso deste membro.</div>' : ""}</div>
       `
     );
   }
