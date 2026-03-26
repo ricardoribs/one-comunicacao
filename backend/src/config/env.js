@@ -36,6 +36,7 @@ module.exports = {
   dbQueryTimeoutMs: Number(process.env.DB_QUERY_TIMEOUT_MS || 10000),
   dbStatementTimeoutMs: Number(process.env.DB_STATEMENT_TIMEOUT_MS || 10000),
   databaseUrl: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/one_comunicacao',
+  databaseSslCaFile: process.env.DATABASE_SSL_CA_FILE || '',
   uploadProvider: process.env.UPLOAD_PROVIDER || 'local',
   paymentProvider: process.env.PAYMENT_PROVIDER || 'manual',
   asaasApiUrl: process.env.ASAAS_API_URL || 'https://api-sandbox.asaas.com/v3',
