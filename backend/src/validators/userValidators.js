@@ -9,16 +9,16 @@ const emptyToNullNumber = () =>
 
 const strongPassword = z
   .string()
-  .min(12)
-  .regex(/[A-Z]/)
-  .regex(/[a-z]/)
-  .regex(/[0-9]/)
-  .regex(/[^A-Za-z0-9]/);
+  .min(12, 'Senha deve ter no minimo 12 caracteres')
+  .regex(/[A-Z]/, 'Senha deve conter ao menos uma letra maiuscula')
+  .regex(/[a-z]/, 'Senha deve conter ao menos uma letra minuscula')
+  .regex(/[0-9]/, 'Senha deve conter ao menos um numero')
+  .regex(/[^A-Za-z0-9]/, 'Senha deve conter ao menos um simbolo');
 
 exports.userSchema = z.object({
   client_id: emptyToNullNumber().optional(),
-  name: z.string().min(2),
-  email: z.string().email(),
+  name: z.string().min(2, 'Nome obrigatorio'),
+  email: z.string().email('Informe um e-mail valido'),
   password: strongPassword,
   role: roleEnum,
   is_active: z.boolean().optional(),
@@ -26,8 +26,8 @@ exports.userSchema = z.object({
 
 exports.userUpdateSchema = z.object({
   client_id: emptyToNullNumber().optional(),
-  name: z.string().min(2).optional(),
-  email: z.string().email().optional(),
+  name: z.string().min(2, 'Nome obrigatorio').optional(),
+  email: z.string().email('Informe um e-mail valido').optional(),
   password: strongPassword.optional(),
   role: roleEnum.optional(),
   is_active: z.boolean().optional(),

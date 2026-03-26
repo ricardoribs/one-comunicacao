@@ -2077,6 +2077,9 @@ function openModal(type, id = null) {
 
   if (type === "novo-membro") {
     const user = state.users.find((item) => item.id === id) || {};
+    const passwordHelp = user.id
+      ? "Deixe em branco para manter a senha atual. Se preencher, use no minimo 12 caracteres com maiuscula, minuscula, numero e simbolo."
+      : "Use no minimo 12 caracteres com maiuscula, minuscula, numero e simbolo.";
     html = modalFormWrapper(
       user.id ? "Editar membro" : "Novo membro",
       `
@@ -2084,7 +2087,7 @@ function openModal(type, id = null) {
         <div class="field"><label>E-mail</label><input type="email" name="email" value="${user.email || ""}" required></div>
         <div class="field"><label>Perfil</label><select name="role"><option value="admin" ${user.role === "admin" ? "selected" : ""}>Admin</option><option value="gestor" ${user.role === "gestor" ? "selected" : ""}>Gestor</option><option value="designer" ${user.role === "designer" ? "selected" : ""}>Designer</option><option value="comercial" ${user.role === "comercial" ? "selected" : ""}>Comercial</option><option value="dev" ${user.role === "dev" ? "selected" : ""}>Dev</option><option value="client" ${user.role === "client" ? "selected" : ""}>Cliente</option></select></div>
         <div class="field"><label>Cliente vinculado</label><select name="client_id"><option value="">Nenhum</option>${clientOptions(user.client_id)}</select></div>
-        <div class="field form-full"><label>Senha ${user.id ? "(opcional)" : ""}</label><input type="password" name="password" ${user.id ? "" : "required"}>${user.id ? '<div class="field-help">Deixe em branco para manter a senha atual. Preencha apenas se quiser redefinir o acesso deste membro.</div>' : ""}</div>
+        <div class="field form-full"><label>Senha ${user.id ? "(opcional)" : ""}</label><input type="password" name="password" ${user.id ? "" : "required"}><div class="field-help">${passwordHelp}</div></div>
       `
     );
   }
