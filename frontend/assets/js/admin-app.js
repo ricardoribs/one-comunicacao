@@ -178,6 +178,7 @@ const UI = {
     ).join("")
 };
 let lastFocusedElement = null;
+const MOBILE_BREAKPOINT = 768;
 
 function trapModalFocus(event) {
   const overlay = document.getElementById("modal-overlay");
@@ -680,6 +681,55 @@ function setRoleUI(user) {
   document.getElementById("home-welcome").textContent = `Olá, ${user.name}.`;
 }
 
+function isMobileViewport() {
+  return window.innerWidth <= MOBILE_BREAKPOINT;
+}
+
+function syncSidebarShell() {
+  const sidebar = document.getElementById("sidebar");
+  const toggle = document.getElementById("mobile-nav-toggle");
+  const backdrop = document.getElementById("sidebar-backdrop");
+  if (!sidebar || !toggle || !backdrop) {
+    return;
+  }
+
+  if (!isMobileViewport()) {
+    sidebar.classList.remove("open");
+    document.body.classList.remove("sidebar-open");
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.setAttribute("aria-label", "Abrir navegação");
+    backdrop.setAttribute("aria-hidden", "true");
+    return;
+  }
+
+  const isOpen = sidebar.classList.contains("open");
+  document.body.classList.toggle("sidebar-open", isOpen);
+  toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  toggle.setAttribute("aria-label", isOpen ? "Fechar navegação" : "Abrir navegação");
+  backdrop.setAttribute("aria-hidden", isOpen ? "false" : "true");
+}
+
+function toggleSidebar(forceState) {
+  const sidebar = document.getElementById("sidebar");
+  if (!sidebar || !isMobileViewport()) {
+    return;
+  }
+
+  const shouldOpen = typeof forceState === "boolean" ? forceState : !sidebar.classList.contains("open");
+  sidebar.classList.toggle("open", shouldOpen);
+  syncSidebarShell();
+}
+
+function closeSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  if (!sidebar) {
+    return;
+  }
+
+  sidebar.classList.remove("open");
+  syncSidebarShell();
+}
+
 function syncNavigation() {
   const allowed = PAGE_ACCESS[state.session.user.role] || [];
   document.querySelectorAll(".sb-link").forEach((link) => {
@@ -702,6 +752,7 @@ function goTo(page) {
 
   state.activePage = page;
   syncNavigation();
+  closeSidebar();
 }
 
 function renderBarChart(containerId, values, labels, formatter) {
@@ -1776,6 +1827,7 @@ async function initializeApp() {
 }
 
 function doLogout() {
+  closeSidebar();
   APP.logout({ reason: "manual" }).finally(() => {
     clearSession();
     window.location.href = "/";
@@ -2322,6 +2374,7 @@ async function deleteUser(id) {
 
 async function boot() {
   bindLegacyInlineHandlers();
+  syncSidebarShell();
   APP.registerActivityTracking();
   APP.onLogout((reason) => {
     clearSession();
@@ -2350,12 +2403,18 @@ async function boot() {
   document.getElementById("login-screen").classList.remove("hidden");
 
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && document.getElementById("modal-overlay").classList.contains("open")) {
-      closeModal();
-      return;
+    if (event.key === "Escape") {
+      if (document.getElementById("modal-overlay").classList.contains("open")) {
+        closeModal();
+        return;
+      }
+      closeSidebar();
     }
     trapModalFocus(event);
   });
+
+  window.addEventListener("resize", syncSidebarShell);
+  window.addEventListener("orientationchange", syncSidebarShell);
 
   window.addEventListener("offline", () => {
     showToast("Você está sem conexão. Verifique sua internet.");
@@ -2392,6 +2451,8 @@ window.deleteMaterial = deleteMaterial;
 window.deleteUser = deleteUser;
 window.openProtectedResource = openProtectedResource;
 window.showToast = showToast;
+window.toggleSidebar = toggleSidebar;
+window.closeSidebar = closeSidebar;
 
 boot();
 
