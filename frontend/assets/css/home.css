@@ -733,8 +733,20 @@ section[id] {
   background: linear-gradient(180deg, rgba(253, 250, 247, 0.96) 0%, rgba(246, 236, 240, 0.9) 100%);
 }
 
-.about-panel img {
-  width: min(220px, 72%);
+.about-panel-brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  padding: 14px 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  background: linear-gradient(135deg, rgba(44, 18, 29, 0.94) 0%, rgba(93, 33, 52, 0.92) 100%);
+  box-shadow: 0 18px 42px rgba(40, 18, 28, 0.14);
+}
+
+.about-panel-brand img {
+  width: min(196px, 68%);
   filter: drop-shadow(0 16px 36px rgba(12, 8, 11, 0.12));
 }
 
@@ -1092,8 +1104,8 @@ section[id] {
 .plan-stats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: 16px;
+  gap: 24px;
+  margin-top: 24px;
 }
 
 .plan-stat {
@@ -1102,7 +1114,11 @@ section[id] {
   border-radius: 24px;
   background: linear-gradient(135deg, #140c11 0%, #23161c 100%);
   color: #ffffff;
-  box-shadow: var(--shadow-heavy);
+  box-shadow: 0 24px 58px rgba(26, 15, 21, 0.18);
+}
+
+.plan-stat:last-child {
+  background: linear-gradient(135deg, #1a0f15 0%, #2b1720 100%);
 }
 
 .plan-stat strong {
