@@ -2472,35 +2472,32 @@ function setAddressFieldValue(field, value, force = false) {
 }
 
 async function fetchCepSuggestion(cep) {
-  try {
-    return await apiFetch(`/address/cep/${cep}`, { method: "GET" });
-  } catch (backendError) {
-    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`, {
-      method: "GET",
-      headers: {
-        Accept: "application/json"
-      }
-    });
-
-    if (!response.ok) {
-      throw backendError;
+  const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`, {
+    method: "GET",
+    cache: "no-store",
+    headers: {
+      Accept: "application/json"
     }
+  });
 
-    const data = await response.json().catch(() => ({}));
-    if (data?.erro) {
-      throw backendError;
-    }
-
-    return {
-      zip_code: formatZipCodeInput(cep),
-      address_line1: data.logradouro || "",
-      address_line2: data.complemento || "",
-      neighborhood: data.bairro || "",
-      city: data.localidade || "",
-      state: data.uf || "",
-      country: "Brasil",
-    };
+  if (!response.ok) {
+    throw new Error("Nao foi possivel consultar o CEP no momento.");
   }
+
+  const data = await response.json().catch(() => ({}));
+  if (data?.erro) {
+    throw new Error("CEP nao encontrado.");
+  }
+
+  return {
+    zip_code: formatZipCodeInput(cep),
+    address_line1: data.logradouro || "",
+    address_line2: data.complemento || "",
+    neighborhood: data.bairro || "",
+    city: data.localidade || "",
+    state: data.uf || "",
+    country: "Brasil",
+  };
 }
 
 function bindManualAddressField(field) {
