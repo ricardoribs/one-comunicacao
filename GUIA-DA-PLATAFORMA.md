@@ -4,21 +4,20 @@ Este documento apresenta a estrutura da plataforma ONE, os perfis de acesso e os
 
 ## 1. Visão geral
 
-A plataforma é composta por três frentes:
+A plataforma é composta por duas frentes ativas:
 
 - Site institucional: apresenta a agência, capta leads e direciona acessos.
-- Área do Cliente: portal em que cada cliente acompanha campanhas, relatórios, materiais, faturas, cobranças e mensagens do próprio escopo.
 - Painel interno: ambiente de operação da equipe com dashboard, kanban, CRM, campanhas, produção, analytics, financeiro e gestão de acesso.
+
+Observação: a antiga Área do Cliente foi descontinuada no frontend público.
 
 ## 2. Estrutura da aplicação
 
 ### Frontend
 
 - `frontend/index.html`: site institucional
-- `frontend/area-cliente.html`: portal do cliente
 - `frontend/painel-interno.html`: painel interno
-- `frontend/assets/js/index-app.js`: fluxos da home e handoff de login
-- `frontend/assets/js/client-app.js`: lógica da Área do Cliente
+- `frontend/assets/js/index-app.js`: fluxos da home institucional
 - `frontend/assets/js/admin-app.js`: lógica do painel interno
 
 ### Backend
@@ -127,16 +126,15 @@ Não faz:
 
 Responsabilidade principal:
 
-- acompanhar a operação do próprio cliente
+- perfil legado sem portal público ativo
 
 Pode fazer:
 
-- acessar somente a Área do Cliente
-- consultar campanhas, relatórios, faturas, cobranças e mensagens do próprio escopo
-- aprovar ou solicitar revisão de materiais publicados no portal
+- ter o atendimento conduzido pela equipe ONE conforme o escopo contratado
 
 Não faz:
 
+- acessar um portal público dedicado
 - acessar o painel interno
 - alterar dados internos da operação
 
@@ -145,7 +143,6 @@ Não faz:
 Em ambiente local:
 
 - Site: `http://localhost:3000/`
-- Área do Cliente: `http://localhost:3000/area-cliente.html`
 - Painel interno: `http://localhost:3000/painel-interno.html`
 - API: `http://localhost:3000/api`
 
@@ -196,34 +193,13 @@ Esses dados entram na API de contatos para tratamento comercial posterior.
 
 Pela home, o usuário pode:
 
-- abrir a Área do Cliente
-- abrir o painel interno
-- iniciar o fluxo de login
+- navegar pelo site institucional
+- preencher o formulário comercial
+- abrir o painel interno quando possuir o endereço e as credenciais corretas
 
-## 7. Área do Cliente
+## 7. Portal do cliente
 
-### O que o cliente vê
-
-Ao entrar, o portal monta um dashboard com dados do próprio cliente:
-
-- faturamento
-- leads consolidados do escopo
-- ROI
-- campanhas
-- relatórios
-- materiais em aprovação
-- faturas e cobranças
-- mensagens
-
-### Ações disponíveis
-
-O cliente pode:
-
-- consultar campanhas ativas e históricas
-- abrir relatórios publicados
-- aprovar ou pedir revisão de materiais
-- acompanhar faturas e cobranças
-- trocar mensagens com a equipe
+O portal público do cliente foi descontinuado. O acompanhamento operacional permanece centralizado no painel interno da equipe e no fluxo de atendimento conduzido pela ONE.
 
 ## 8. Painel interno
 
