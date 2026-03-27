@@ -7,6 +7,7 @@ const reportModel = require('../models/reportModel');
 const taskModel = require('../models/taskModel');
 const userModel = require('../models/userModel');
 const { hasCapability, sanitizeDashboardSummary } = require('../utils/access');
+const { getInternalClientScope, getInternalClientAccessScope } = require('../utils/internalClientScope');
 
 async function getClientDashboard(user) {
   const [
@@ -103,7 +104,7 @@ async function getInternalDashboard(user) {
       table: 'clients',
       scopeConfig: {
         client: 'c.id = $TENANT',
-        internal: 'c.manager_id = $TENANT',
+        internal: getInternalClientScope('c'),
       },
       prefix: 'WHERE',
       startIndex: 1,
@@ -113,7 +114,7 @@ async function getInternalDashboard(user) {
       table: 'campaigns',
       scopeConfig: {
         client: 'c.id = $TENANT',
-        internal: 'c.manager_id = $TENANT',
+        internal: getInternalClientScope('c'),
       },
       prefix: 'WHERE',
       startIndex: 1,
@@ -125,14 +126,16 @@ async function getInternalDashboard(user) {
     tenantDb.query(user, {
       table: 'tasks',
       scopeConfig: {
-        client: 'c.id = $TENANT',
-        internal: 'c.manager_id = $TENANT',
+        client: 't.client_id = $TENANT',
+        internal: [
+          't.assigned_to = $TENANT',
+          ...getInternalClientAccessScope('t.client_id'),
+        ],
       },
       prefix: 'AND',
       startIndex: 1,
       sql: `SELECT COUNT(*) AS open_tasks
             FROM tasks t
-            LEFT JOIN clients c ON c.id = t.client_id
             WHERE t.status <> 'Concluido'
             __TENANT_SCOPE__`,
     }),
@@ -140,7 +143,7 @@ async function getInternalDashboard(user) {
       table: 'metrics',
       scopeConfig: {
         client: 'c.id = $TENANT',
-        internal: 'c.manager_id = $TENANT',
+        internal: getInternalClientScope('c'),
       },
       prefix: 'WHERE',
       startIndex: 1,
@@ -154,7 +157,7 @@ async function getInternalDashboard(user) {
       table: 'metrics',
       scopeConfig: {
         client: 'c.id = $TENANT',
-        internal: 'c.manager_id = $TENANT',
+        internal: getInternalClientScope('c'),
       },
       prefix: 'WHERE',
       startIndex: 1,

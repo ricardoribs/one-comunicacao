@@ -1,6 +1,12 @@
 const tenantDb = require('../db/tenantDb');
 const { normalizePagination, paginationClause } = require('../utils/pagination');
 const createScopedQuery = require('../utils/scopedQuery');
+const { getInternalClientAccessScope } = require('../utils/internalClientScope');
+
+const scopeConfig = {
+  client: 'cam.client_id = $TENANT',
+  internal: getInternalClientAccessScope('cam.client_id'),
+};
 
 function baseQuery() {
   return `
@@ -43,11 +49,6 @@ function withRoi(record) {
 
 async function list(user, query = {}) {
   const { limit, offset } = normalizePagination(query);
-  const scopeConfig = {
-    client: 'cam.client_id = $TENANT',
-    internal:
-      'EXISTS (SELECT 1 FROM clients scoped_clients WHERE scoped_clients.id = cam.client_id AND scoped_clients.manager_id = $TENANT)',
-  };
   const scope = createScopedQuery(user).build(scopeConfig, { prefix: 'WHERE', startIndex: 1 });
   const page = paginationClause(limit, offset, scope.nextIndex);
   const { rows } = await tenantDb.query(user, {
@@ -66,11 +67,7 @@ async function list(user, query = {}) {
 async function findById(id, user = null) {
   const { rows } = await tenantDb.query(user, {
     table: 'campaigns',
-    scopeConfig: {
-      client: 'cam.client_id = $TENANT',
-      internal:
-        'EXISTS (SELECT 1 FROM clients scoped_clients WHERE scoped_clients.id = cam.client_id AND scoped_clients.manager_id = $TENANT)',
-    },
+    scopeConfig,
     prefix: 'AND',
     startIndex: 2,
     sql: `${baseQuery()} WHERE cam.id = $1 __TENANT_SCOPE__
@@ -107,11 +104,7 @@ async function create(data, user = null) {
 async function update(id, data, user = null) {
   const { rows } = await tenantDb.query(user, {
     table: 'campaigns',
-    scopeConfig: {
-      client: 'cam.client_id = $TENANT',
-      internal:
-        'EXISTS (SELECT 1 FROM clients scoped_clients WHERE scoped_clients.id = cam.client_id AND scoped_clients.manager_id = $TENANT)',
-    },
+    scopeConfig,
     prefix: 'AND',
     startIndex: 11,
     sql: `UPDATE campaigns cam
@@ -150,8 +143,7 @@ async function remove(id, user = null) {
     table: 'campaigns',
     scopeConfig: {
       client: 'client_id = $TENANT',
-      internal:
-        'EXISTS (SELECT 1 FROM clients scoped_clients WHERE scoped_clients.id = campaigns.client_id AND scoped_clients.manager_id = $TENANT)',
+      internal: getInternalClientAccessScope('campaigns.client_id'),
     },
     prefix: 'AND',
     startIndex: 2,

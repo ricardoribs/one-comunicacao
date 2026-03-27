@@ -37,7 +37,23 @@ async function fetchWithRetry(url, options, retries = 3) {
         return response;
       }
 
-      lastError = new Error(`Email provider respondeu ${response.status}`);
+      let providerMessage = '';
+      try {
+        const payload = await response.json();
+        providerMessage = payload?.message || payload?.error || '';
+      } catch (_error) {
+        try {
+          providerMessage = await response.text();
+        } catch (__error) {
+          providerMessage = '';
+        }
+      }
+
+      lastError = new Error(
+        providerMessage
+          ? `Email provider respondeu ${response.status}: ${providerMessage}`
+          : `Email provider respondeu ${response.status}`
+      );
     } catch (error) {
       clearTimeout(timeout);
       lastError = error;

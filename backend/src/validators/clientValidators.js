@@ -30,6 +30,7 @@ exports.clientSchema = z.object({
   zip_code: emptyToNullString().optional(),
   country: emptyToNullString().optional(),
   notes: emptyToNullString().optional(),
+  brand_manual: emptyToNullString().optional(),
 });
 
 exports.clientUpdateSchema = exports.clientSchema.partial();

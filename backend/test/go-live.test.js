@@ -30,7 +30,11 @@ async function createUser({ name, email, role, clientId = null, password = 'Vali
 }
 
 async function login(email, password = 'Valid@Test123') {
-  return request(app).post('/api/auth/login').send({ email, password });
+  global.__oneLoginRequestCounter = (global.__oneLoginRequestCounter || 10) + 1;
+  return request(app)
+    .post('/api/auth/login')
+    .set('X-Forwarded-For', `203.0.113.${global.__oneLoginRequestCounter}`)
+    .send({ email, password });
 }
 
 test('readiness responde 200 com checks estruturados', { concurrency: false }, async () => {
@@ -297,6 +301,67 @@ test('equipe interna lista apenas usuarios internos ativos em /users/team e /use
   await userModel.remove(designerInativo.id);
   await userModel.remove(designerAtivo.id);
   await userModel.remove(gestor.id);
+});
+
+test('gestor atualiza manual da marca e designer relacionado visualiza o cliente no escopo operacional', { concurrency: false }, async () => {
+  const suffix = Date.now() + 12;
+  const gestor = await createUser({
+    name: `Gestor Manual ${suffix}`,
+    email: `gestor.manual.${suffix}@one.test`,
+    role: 'gestor',
+  });
+  const designer = await createUser({
+    name: `Designer Manual ${suffix}`,
+    email: `designer.manual.${suffix}@one.test`,
+    role: 'designer',
+  });
+
+  const clientId = await createClient(`Cliente Manual ${suffix}`, `Empresa Manual ${suffix}`, gestor.id);
+
+  await pool.query(
+    `INSERT INTO campaigns (client_id, name, channel, audience, objective, budget, status)
+     VALUES ($1, 'Campanha Manual', 'Instagram', 'Regional', 'Posicionamento', 500, 'Ativa')`,
+    [clientId]
+  );
+
+  await pool.query(
+    `INSERT INTO tasks (client_id, assigned_to, status, type, column_name, title, description, deadline)
+     VALUES ($1, $2, 'Em progresso', 'design', 'doing', 'Peca principal', 'Criacao visual', CURRENT_DATE)`,
+    [clientId, designer.id]
+  );
+
+  const gestorAuth = await login(gestor.email);
+  const updateResponse = await request(app)
+    .put(`/api/clients/${clientId}`)
+    .set('Authorization', `Bearer ${gestorAuth.body.accessToken}`)
+    .send({
+      brand_manual: 'Tom consultivo, foco em prova social e CTA objetivo.',
+      legal_document: '12345678000199',
+    });
+
+  assert.equal(updateResponse.status, 200);
+  assert.equal(updateResponse.body.brand_manual, 'Tom consultivo, foco em prova social e CTA objetivo.');
+
+  const designerAuth = await login(designer.email);
+  const [clientsResponse, campaignsResponse] = await Promise.all([
+    request(app).get('/api/clients').set('Authorization', `Bearer ${designerAuth.body.accessToken}`),
+    request(app).get('/api/campaigns').set('Authorization', `Bearer ${designerAuth.body.accessToken}`),
+  ]);
+
+  assert.equal(clientsResponse.status, 200);
+  assert.equal(campaignsResponse.status, 200);
+  assert.equal(clientsResponse.body.length, 1);
+  assert.equal(clientsResponse.body[0].id, clientId);
+  assert.equal(clientsResponse.body[0].brand_manual, 'Tom consultivo, foco em prova social e CTA objetivo.');
+  assert.equal('legal_document' in clientsResponse.body[0], false);
+  assert.equal(campaignsResponse.body.length, 1);
+  assert.equal(campaignsResponse.body[0].client_id, clientId);
+
+  await pool.query('DELETE FROM tasks');
+  await pool.query('DELETE FROM campaigns');
+  await userModel.remove(designer.id);
+  await userModel.remove(gestor.id);
+  await pool.query('DELETE FROM clients');
 });
 
 test('gestor nao cria cobranca para lead fora do proprio tenant operacional', { concurrency: false }, async () => {

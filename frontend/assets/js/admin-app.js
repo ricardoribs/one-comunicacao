@@ -2,6 +2,7 @@
 const APP = window.ONE_APP;
 const FORM = window.FormUtils || window.ONE_FORM;
 const INTERNAL_HANDOFF_KEY = "one_internal_handoff";
+const DAILY_CHECKLIST_STORAGE_KEY = "one_daily_checklist_v1";
 
 const ROLE_LABELS = {
   admin: "Admin",
@@ -71,13 +72,15 @@ const PAGE_ACCESS = {
   admin: ["home", "kanban", "crm", "campanhas", "producao", "trafego", "analytics", "financeiro", "acesso"],
   gestor: ["home", "kanban", "crm", "campanhas", "producao", "trafego", "analytics"],
   designer: ["home", "kanban", "producao"],
-  comercial: ["home", "crm", "campanhas", "financeiro"],
-  dev: ["home", "kanban", "analytics"]
+  comercial: ["home", "kanban", "crm", "campanhas", "producao", "financeiro"],
+  dev: ["home", "kanban", "producao", "analytics"]
 };
 
 const ROLE_DATA_ACCESS = {
   admin: {
     manageTasks: true,
+    manageClients: true,
+    manageMaterials: true,
     homeFinancial: true,
     homeTeam: true,
     assignableUsers: true,
@@ -96,6 +99,8 @@ const ROLE_DATA_ACCESS = {
   },
   gestor: {
     manageTasks: true,
+    manageClients: true,
+    manageMaterials: true,
     homeFinancial: false,
     homeTeam: true,
     assignableUsers: true,
@@ -114,6 +119,8 @@ const ROLE_DATA_ACCESS = {
   },
   designer: {
     manageTasks: true,
+    manageClients: false,
+    manageMaterials: true,
     homeFinancial: false,
     homeTeam: false,
     assignableUsers: true,
@@ -131,7 +138,9 @@ const ROLE_DATA_ACCESS = {
     integrations: false
   },
   comercial: {
-    manageTasks: false,
+    manageTasks: true,
+    manageClients: true,
+    manageMaterials: false,
     homeFinancial: true,
     homeTeam: false,
     assignableUsers: true,
@@ -145,15 +154,17 @@ const ROLE_DATA_ACCESS = {
     metrics: false,
     reports: true,
     materials: true,
-    files: false,
+    files: true,
     integrations: false
   },
   dev: {
     manageTasks: true,
+    manageClients: false,
+    manageMaterials: false,
     homeFinancial: false,
     homeTeam: false,
     assignableUsers: true,
-    clients: false,
+    clients: true,
     contacts: false,
     campaigns: false,
     tasks: true,
@@ -161,11 +172,57 @@ const ROLE_DATA_ACCESS = {
     charges: false,
     invoices: false,
     metrics: true,
-    reports: false,
-    materials: false,
-    files: false,
+    reports: true,
+    materials: true,
+    files: true,
     integrations: true
   }
+};
+
+const DAILY_CHECKLIST_TEMPLATES = {
+  admin: [
+    { id: "briefing", label: "Receber e priorizar as demandas do dia" },
+    { id: "delegation", label: "Delegar responsáveis e destravar pendências" },
+    { id: "meetings", label: "Validar agenda de reuniões estratégicas" },
+    { id: "finance", label: "Conferir financeiro e rotinas administrativas" }
+  ],
+  gestor: [
+    { id: "direction", label: "Receber direcionamentos e organizar a fila do dia" },
+    { id: "follow_up", label: "Acompanhar entregas e repasses entre equipe e cliente" },
+    { id: "recordings", label: "Conferir agenda de gravações e demandas externas" },
+    { id: "approval", label: "Validar o que precisa sair para revisão ou postagem" }
+  ],
+  designer: [
+    { id: "briefing", label: "Revisar briefing, pauta, roteiro ou ideia aprovada" },
+    { id: "execution", label: "Executar captação, edição, design ou postagem do dia" },
+    { id: "quality", label: "Fazer checagem de qualidade antes de enviar" },
+    { id: "adjustments", label: "Aplicar ajustes e correções solicitados" }
+  ],
+  comercial: [
+    { id: "pipeline", label: "Revisar leads, follow-ups e oportunidades abertas" },
+    { id: "service", label: "Responder clientes e alinhar demandas comerciais" },
+    { id: "handoff", label: "Repassar prioridades para operação e produção" },
+    { id: "finance", label: "Acompanhar cobranças, faturas e pendências do dia" }
+  ],
+  dev: [
+    { id: "backlog", label: "Revisar backlog técnico e priorizar bloqueios" },
+    { id: "analytics", label: "Validar analytics, integrações e pontos de falha" },
+    { id: "support", label: "Destravar a operação em fluxos críticos" },
+    { id: "delivery", label: "Registrar andamento técnico no kanban" }
+  ]
+};
+
+const TASK_TYPE_LABELS = {
+  geral: "Geral",
+  design: "Design",
+  revisao_design: "Revisão Design",
+  captacao: "Captação",
+  edicao: "Edição",
+  social_media: "Social Media",
+  atendimento: "Atendimento",
+  financeiro: "Financeiro",
+  adm: "ADM",
+  reuniao_estrategica: "Reunião Estratégica"
 };
 
 const state = {
@@ -377,6 +434,22 @@ function hasRoleDataAccess(capability) {
   return Boolean(ROLE_DATA_ACCESS[state.session?.user?.role]?.[capability]);
 }
 
+function canManageTasks() {
+  return hasRoleDataAccess("manageTasks");
+}
+
+function canManageClients() {
+  return hasRoleDataAccess("manageClients");
+}
+
+function canManageMaterials() {
+  return hasRoleDataAccess("manageMaterials");
+}
+
+function canDeleteTasks() {
+  return state.session?.user?.role === "admin";
+}
+
 function getScopedClientOptions() {
   if (state.clients.length) {
     return state.clients.map((client) => ({ id: client.id, name: client.name }));
@@ -486,6 +559,29 @@ function clearInternalHandoff() {
   sessionStorage.removeItem(INTERNAL_HANDOFF_KEY);
 }
 
+function getTodayChecklistKey() {
+  const userId = state.session?.user?.id || "anon";
+  const role = state.session?.user?.role || "internal";
+  const dateKey = new Date().toISOString().slice(0, 10);
+  return `${DAILY_CHECKLIST_STORAGE_KEY}:${userId}:${role}:${dateKey}`;
+}
+
+function readDailyChecklistState() {
+  try {
+    return JSON.parse(localStorage.getItem(getTodayChecklistKey()) || "{}");
+  } catch (_error) {
+    return {};
+  }
+}
+
+function writeDailyChecklistState(nextState) {
+  try {
+    localStorage.setItem(getTodayChecklistKey(), JSON.stringify(nextState));
+  } catch (_error) {
+    // noop: checklist local e opcional
+  }
+}
+
 async function apiFetch(path, options = {}) {
   const data = await APP.fetchJson(path, options);
   const session = APP.loadSession();
@@ -531,6 +627,45 @@ function normalizePipelineStage(stage) {
 
 function formatCurrencyValue(value) {
   return formatCurrency(Number(value || 0));
+}
+
+function normalizeDateKey(value) {
+  if (!value) {
+    return "";
+  }
+
+  return new Date(value).toISOString().slice(0, 10);
+}
+
+function isOverdueDate(value) {
+  const dateKey = normalizeDateKey(value);
+  if (!dateKey) {
+    return false;
+  }
+
+  const todayKey = new Date().toISOString().slice(0, 10);
+  return dateKey < todayKey;
+}
+
+function formatTaskTypeLabel(type) {
+  const normalized = String(type || "geral").trim();
+  return TASK_TYPE_LABELS[normalized] || normalized;
+}
+
+function taskTypeOptions(selected = "") {
+  const normalized = String(selected || "geral").trim();
+  const knownOptions = Object.entries(TASK_TYPE_LABELS)
+    .map(
+      ([value, label]) =>
+        `<option value="${value}" ${normalized === value ? "selected" : ""}>${label}</option>`
+    )
+    .join("");
+
+  if (normalized && !TASK_TYPE_LABELS[normalized]) {
+    return `${knownOptions}<option value="${escapeHtml(normalized)}" selected>${escapeHtml(normalized)}</option>`;
+  }
+
+  return knownOptions;
 }
 
 function mergeInternalUsers(...sources) {
@@ -709,13 +844,14 @@ function escapeHtml(value) {
 }
 
 function getDeadlineClass(task) {
-  if (task.status === "Concluido" || !task.due_date) {
+  const dueDateValue = task.due_date || task.deadline;
+  if (task.status === "Concluido" || !dueDateValue) {
     return "deadline-ok";
   }
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const dueDate = new Date(task.due_date);
+  const dueDate = new Date(dueDateValue);
   dueDate.setHours(0, 0, 0, 0);
 
   if (Number.isNaN(dueDate.getTime())) {
@@ -1133,7 +1269,7 @@ function renderHome() {
           <div class="item-row">
             <div>
               <div class="block-title-sm">${task.title}</div>
-              <div class="block-text-xs">${task.client_name || "Interno"} · ${formatDate(task.due_date)}</div>
+              <div class="block-text-xs">${task.client_name || "Interno"} · ${formatDate(task.due_date || task.deadline)}</div>
             </div>
             <span class="badge ${task.status === "Em progresso" ? "badge-yellow" : "badge-gray"}">${task.status}</span>
           </div>
@@ -1332,6 +1468,149 @@ function renderHome() {
   }
 }
 
+function getRoutineChecklistItems() {
+  return DAILY_CHECKLIST_TEMPLATES[state.session?.user?.role] || [];
+}
+
+function getChecklistItemStorageId(itemId) {
+  return `${state.session?.user?.role || "internal"}:${itemId}`;
+}
+
+function getKanbanTasksForToday(filteredTasks) {
+  const currentUserId = Number(state.session?.user?.id || 0);
+  const scopedTasks = filteredTasks.filter((task) => Number(task.assigned_to || 0) === currentUserId);
+  const source = scopedTasks.length ? scopedTasks : filteredTasks;
+
+  return source
+    .filter((task) => normalizeDateKey(task.due_date || task.deadline))
+    .filter((task) => {
+      const dateKey = normalizeDateKey(task.due_date || task.deadline);
+      const todayKey = new Date().toISOString().slice(0, 10);
+      return dateKey <= todayKey && String(task.status || "").toLowerCase() !== "concluido";
+    })
+    .sort((left, right) => String(left.due_date || left.deadline || "").localeCompare(String(right.due_date || right.deadline || "")));
+}
+
+function bindDailyChecklistInteractions(container) {
+  if (!container) {
+    return;
+  }
+
+  const stateByDay = readDailyChecklistState();
+  container.querySelectorAll("[data-daily-checklist]").forEach((input) => {
+    if (input.dataset.boundChecklist === "1") {
+      return;
+    }
+
+    input.checked = Boolean(stateByDay[input.dataset.dailyChecklist]);
+    input.addEventListener("change", () => {
+      const nextState = readDailyChecklistState();
+      nextState[input.dataset.dailyChecklist] = input.checked;
+      writeDailyChecklistState(nextState);
+    });
+    input.dataset.boundChecklist = "1";
+  });
+}
+
+function renderKanbanChecklist(filteredTasks) {
+  const container = document.getElementById("kanban-daily-checklist");
+  if (!container) {
+    return;
+  }
+
+  const persistedState = readDailyChecklistState();
+  const routineItems = getRoutineChecklistItems();
+  const dueTasks = getKanbanTasksForToday(filteredTasks);
+
+  container.innerHTML = `
+    <div class="section-sub">Rotina sugerida para ${ROLE_LABELS[state.session?.user?.role] || "o perfil atual"}.</div>
+    ${routineItems
+      .map(
+        (item) => `
+          <label class="muted-panel-row">
+            <span style="display:flex;align-items:center;gap:10px;">
+              <input type="checkbox" data-daily-checklist="${getChecklistItemStorageId(item.id)}" ${persistedState[getChecklistItemStorageId(item.id)] ? "checked" : ""}>
+              <span>${item.label}</span>
+            </span>
+            <span class="badge ${persistedState[getChecklistItemStorageId(item.id)] ? "badge-green" : "badge-gray"}">${persistedState[getChecklistItemStorageId(item.id)] ? "Feito" : "Pendente"}</span>
+          </label>
+        `
+      )
+      .join("")}
+    <div class="section-header"><div class="section-title">Entregas do dia</div></div>
+    ${
+      dueTasks.length
+        ? dueTasks
+            .map(
+              (task) => `
+                <div class="item-row">
+                  <div>
+                    <div class="block-title-sm">${task.title}</div>
+                    <div class="block-text-xs">${task.client_name || "Interno"} · ${task.assigned_to_name || "Sem responsável"}</div>
+                  </div>
+                  <span class="badge ${isOverdueDate(task.due_date || task.deadline) ? "badge-pink" : "badge-blue"}">${isOverdueDate(task.due_date || task.deadline) ? "Atrasada" : "Hoje"}</span>
+                </div>
+              `
+            )
+            .join("")
+        : UI.empty("Sem tarefas vencendo hoje", "Quando houver prioridade para hoje ou atrasada, ela aparecerá aqui.")
+    }
+  `;
+
+  bindDailyChecklistInteractions(container);
+}
+
+function resolveKanbanClient(filteredTasks) {
+  const selectedClientId = state.filters.kanbanClient;
+  if (selectedClientId) {
+    return state.clients.find((client) => String(client.id) === String(selectedClientId)) || null;
+  }
+
+  const clientIds = [...new Set(filteredTasks.map((task) => task.client_id).filter(Boolean))];
+  if (clientIds.length === 1) {
+    return state.clients.find((client) => String(client.id) === String(clientIds[0])) || null;
+  }
+
+  return null;
+}
+
+function renderKanbanBrandManual(filteredTasks) {
+  const container = document.getElementById("kanban-brand-manual");
+  if (!container) {
+    return;
+  }
+
+  const client = resolveKanbanClient(filteredTasks);
+  if (!client) {
+    container.innerHTML = UI.empty(
+      "Selecione um cliente no filtro do kanban",
+      "Quando um cliente estiver em foco, o manual da marca aparece aqui para orientar briefing, design, revisão e postagem."
+    );
+    return;
+  }
+
+  const brandManual = String(client.brand_manual || "").trim();
+  const contactBits = [client.company || null, client.contact_name || null].filter(Boolean).join(" · ");
+
+  container.innerHTML = `
+    <div class="section-header">
+      <div>
+        <div class="section-title">${escapeHtml(client.name || "Cliente")}</div>
+        <div class="section-sub">${escapeHtml(contactBits || "Manual operacional da marca")}</div>
+      </div>
+      ${canManageClients() ? `<button type="button" class="btn btn-outline btn-sm" onclick="openModal('novo-cliente', ${client.id})">Editar</button>` : ""}
+    </div>
+    ${
+      brandManual
+        ? `<div class="muted-panel">${escapeHtml(brandManual).replace(/\n/g, "<br>")}</div>`
+        : UI.empty(
+            "Manual de marca ainda não cadastrado",
+            "Abra o cliente no CRM e preencha o campo de manual da marca com tom de voz, referências, restrições, roteiro e observações de execução."
+          )
+    }
+  `;
+}
+
 function renderKanban() {
   const columns = [
     { key: "backlog", label: "Backlog" },
@@ -1342,6 +1621,11 @@ function renderKanban() {
   const filtered = state.filters.kanbanClient
     ? state.tasks.filter((task) => String(task.client_id) === String(state.filters.kanbanClient))
     : state.tasks;
+  const canEditTasks = canManageTasks();
+  const canRemoveTasks = canDeleteTasks();
+
+  renderKanbanChecklist(filtered);
+  renderKanbanBrandManual(filtered);
 
   document.getElementById("kanban-board").innerHTML = columns
     .map((column) => {
@@ -1356,15 +1640,20 @@ function renderKanban() {
                   <div class="k-card-client" title="${escapeHtml(task.client_name || "Interno")}">${task.client_name || "Interno"}</div>
                   <div class="k-card-title" title="${escapeHtml(task.title)}">${task.title}</div>
                   <div class="k-card-desc" title="${escapeHtml(task.description || "")}">${task.description || "Sem descrição."}</div>
+                  <div class="status-gap-top"><span class="badge badge-blue">${formatTaskTypeLabel(task.type)}</span></div>
                   <div class="status-gap-top"><span class="badge ${task.status === "Concluido" ? "badge-green" : task.status === "Em progresso" ? "badge-yellow" : "badge-gray"}">${task.status}</span></div>
                   <div class="k-card-meta">
                     <span class="k-card-assignee" title="${escapeHtml(task.assigned_to_name || "Sem responsável")}">${task.assigned_to_name || "Sem responsável"}</span>
-                    <span class="k-card-deadline ${getDeadlineClass(task)}">${formatDate(task.due_date)}</span>
+                    <span class="k-card-deadline ${getDeadlineClass(task)}">${formatDate(task.due_date || task.deadline)}</span>
                   </div>
-                  <div class="actions-gap-top">
-                    <button class="btn btn-ghost btn-sm" onclick="openModal('nova-tarefa', ${task.id})">Editar</button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteTask(${task.id})">Excluir</button>
-                  </div>
+                  ${
+                    canEditTasks || canRemoveTasks
+                      ? `<div class="actions-gap-top">
+                          ${canEditTasks ? `<button class="btn btn-ghost btn-sm" onclick="openModal('nova-tarefa', ${task.id})">Editar</button>` : ""}
+                          ${canRemoveTasks ? `<button class="btn btn-danger btn-sm" onclick="deleteTask(${task.id})">Excluir</button>` : ""}
+                        </div>`
+                      : ""
+                  }
                 </div>
               `
             )
@@ -1537,6 +1826,7 @@ function renderCampaigns() {
 }
 
 function renderProduction() {
+  const canEditProduction = canManageMaterials();
   document.getElementById("design-grid").innerHTML = state.materials
     .map(
       (material) => `
@@ -1554,8 +1844,8 @@ function renderProduction() {
               className: "btn btn-outline btn-sm",
               missingMessage: "Arquivo ainda não disponível para abertura."
             })}
-            <button class="btn btn-ghost btn-sm" onclick="openModal('nova-entrega', ${material.id})">Editar</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteMaterial(${material.id})">Excluir</button>
+            ${canEditProduction ? `<button class="btn btn-ghost btn-sm" onclick="openModal('nova-entrega', ${material.id})">Editar</button>` : ""}
+            ${canEditProduction ? `<button class="btn btn-danger btn-sm" onclick="deleteMaterial(${material.id})">Excluir</button>` : ""}
           </div>
         </div>
       `
@@ -2030,8 +2320,8 @@ function renderAccessV2() {
     Admin: ["Clientes", "Campanhas", "Kanban", "Produção", "Tráfego", "Analytics", "Financeiro", "Controle de acesso"],
     Gestor: ["Dashboard interno", "Kanban", "CRM", "Campanhas", "Produção", "Tráfego", "Analytics", "Cobranças"],
     Designer: ["Dashboard interno", "Kanban", "Produção"],
-    Comercial: ["Dashboard interno", "CRM", "Campanhas", "Financeiro"],
-    Dev: ["Dashboard interno", "Kanban", "Analytics"],
+    Comercial: ["Dashboard interno", "Kanban", "CRM", "Campanhas", "Produção", "Financeiro"],
+    Dev: ["Dashboard interno", "Kanban", "Produção", "Analytics"],
     Cliente: ["Dashboard", "Campanhas", "Relatórios", "Faturas", "Mensagens"]
   };
 
@@ -2201,13 +2491,22 @@ async function refreshData() {
   }
 
   const crmActions = document.querySelector("#page-crm .topbar-actions");
-  if (crmActions && !document.getElementById("btn-new-client")) {
+  const newClientButton = document.getElementById("btn-new-client");
+  if (crmActions && canManageClients() && !newClientButton) {
     const button = document.createElement("button");
     button.id = "btn-new-client";
     button.className = "btn btn-outline btn-sm";
     button.textContent = "+ Novo cliente";
     button.onclick = () => openModal("novo-cliente");
     crmActions.prepend(button);
+  }
+  if (newClientButton && !canManageClients()) {
+    newClientButton.remove();
+  }
+
+  const newDeliveryButton = document.getElementById("btn-new-delivery");
+  if (newDeliveryButton) {
+    newDeliveryButton.style.display = canManageMaterials() ? "" : "none";
   }
 
   renderAll();
@@ -2689,6 +2988,7 @@ function openModal(type, id = null) {
         <div class="field"><label>Telefone contato</label><input name="contact_phone" value="${client.contact_phone || ""}"></div>
         <div class="field"><label>Email financeiro</label><input type="email" name="billing_email" value="${client.billing_email || ""}"></div>
         ${buildClientAddressFields(client)}
+        <div class="field form-full"><label>Manual da marca</label><textarea name="brand_manual" placeholder="Tom de voz, referências, restrições, roteiro da marca, orientações de gravação, edição, design e postagem.">${client.brand_manual || ""}</textarea><div class="field-help">Use este campo para registrar o jeito certo de falar, criar, revisar e publicar para esta marca.</div></div>
         <div class="field form-full"><label>Observações</label><textarea name="notes">${client.notes || ""}</textarea></div>
       `
     );
@@ -2702,6 +3002,7 @@ function openModal(type, id = null) {
         <div class="field form-full"><label>Título</label><input name="title" value="${task.title || ""}" required></div>
         <div class="field"><label>Cliente</label><select name="client_id"><option value="">Interno</option>${clientOptions(task.client_id)}</select></div>
         <div class="field"><label>Responsável</label><select name="assigned_to"><option value="">Ninguém</option>${userOptions(task.assigned_to)}</select></div>
+        <div class="field"><label>Tipo</label><select name="type">${taskTypeOptions(task.type || "geral")}</select></div>
         <div class="field"><label>Status</label><select name="status"><option ${task.status === "Backlog" ? "selected" : ""}>Backlog</option><option ${task.status === "Em progresso" ? "selected" : ""}>Em progresso</option><option ${task.status === "Concluido" ? "selected" : ""}>Concluido</option></select></div>
         <div class="field"><label>Coluna</label><select name="column_name"><option value="backlog" ${task.column_name === "backlog" ? "selected" : ""}>Backlog</option><option value="todo" ${task.column_name === "todo" ? "selected" : ""}>A Fazer</option><option value="doing" ${task.column_name === "doing" ? "selected" : ""}>Em Progresso</option><option value="done" ${task.column_name === "done" ? "selected" : ""}>Concluído</option></select></div>
         <div class="field"><label>Prazo</label><input type="date" name="deadline" value="${(task.deadline || task.due_date) ? String(task.deadline || task.due_date).slice(0, 10) : ""}"></div>

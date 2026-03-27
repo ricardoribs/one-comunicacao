@@ -1,6 +1,12 @@
 const tenantDb = require('../db/tenantDb');
 const { normalizePagination, paginationClause } = require('../utils/pagination');
 const createScopedQuery = require('../utils/scopedQuery');
+const { getInternalClientAccessScope } = require('../utils/internalClientScope');
+
+const scopeConfig = {
+  client: 'r.client_id = $TENANT',
+  internal: getInternalClientAccessScope('r.client_id'),
+};
 
 const selectColumns = `
   r.id,
@@ -13,11 +19,6 @@ const selectColumns = `
 
 async function list(user, query = {}) {
   const { limit, offset } = normalizePagination(query);
-  const scopeConfig = {
-    client: 'r.client_id = $TENANT',
-    internal:
-      'EXISTS (SELECT 1 FROM clients scoped_clients WHERE scoped_clients.id = r.client_id AND scoped_clients.manager_id = $TENANT)',
-  };
   const scope = createScopedQuery(user).build(scopeConfig, { prefix: 'WHERE', startIndex: 1 });
   const page = paginationClause(limit, offset, scope.nextIndex);
   const { rows } = await tenantDb.query(user, {

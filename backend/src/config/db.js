@@ -64,6 +64,7 @@ function createPgMemPool() {
       zip_code VARCHAR(20),
       country VARCHAR(80),
       notes TEXT,
+      brand_manual TEXT,
       asaas_customer_id VARCHAR(80),
       created_at TIMESTAMP NOT NULL DEFAULT NOW()
     );

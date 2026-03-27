@@ -1,12 +1,13 @@
 const tenantDb = require('../db/tenantDb');
 const { normalizePagination, paginationClause } = require('../utils/pagination');
 const createScopedQuery = require('../utils/scopedQuery');
+const { getInternalClientAccessScope } = require('../utils/internalClientScope');
 
 const scopeConfig = {
   client: 'f.client_id = $TENANT',
   internal: [
     'f.uploaded_by = $TENANT',
-    'EXISTS (SELECT 1 FROM clients scoped_clients WHERE scoped_clients.id = f.client_id AND scoped_clients.manager_id = $TENANT)',
+    ...getInternalClientAccessScope('f.client_id'),
   ],
 };
 
@@ -81,7 +82,7 @@ async function remove(id, user = null) {
       client: 'client_id = $TENANT',
       internal: [
         'uploaded_by = $TENANT',
-        'EXISTS (SELECT 1 FROM clients scoped_clients WHERE scoped_clients.id = files.client_id AND scoped_clients.manager_id = $TENANT)',
+        ...getInternalClientAccessScope('files.client_id'),
       ],
     },
     prefix: 'AND',
