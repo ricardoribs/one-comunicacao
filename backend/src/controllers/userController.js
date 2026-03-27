@@ -14,14 +14,14 @@ exports.list = asyncHandler(async (req, res) => {
   );
 });
 
-exports.listInternalTeam = asyncHandler(async (_req, res) => {
-  const users = await userModel.listActiveInternalTeam();
+exports.listInternalTeam = asyncHandler(async (req, res) => {
+  const users = await userModel.listActiveInternalTeam(req.user);
   res.setHeader('Cache-Control', 'no-store');
   res.json(users);
 });
 
-exports.listAssignableInternal = asyncHandler(async (_req, res) => {
-  const users = await userModel.listAssignableInternalUsers();
+exports.listAssignableInternal = asyncHandler(async (req, res) => {
+  const users = await userModel.listAssignableInternalUsers(req.user);
   res.setHeader('Cache-Control', 'no-store');
   res.json(users);
 });
