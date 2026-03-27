@@ -1,45 +1,57 @@
 # Playbook de Onboarding
 
-Este material foi feito para o primeiro dia de um novo colaborador na plataforma ONE. A ideia e simples: em poucos minutos, a pessoa entende onde entrar, o que fazer primeiro e quais erros evitar.
+Este material foi feito para o primeiro dia de um novo colaborador na plataforma ONE. O objetivo é acelerar o entendimento sobre acesso, rotina inicial e responsabilidade de cada perfil.
 
-## 1. O que voce precisa receber no primeiro dia
+## 1. O que você precisa receber no primeiro dia
 
-Antes de acessar a plataforma, confirme que voce recebeu:
+Antes de acessar a plataforma, confirme que você recebeu:
 
 - seu e-mail de acesso
-- sua senha inicial ou link de ativacao
+- sua senha inicial ou link de ativação
 - seu perfil correto no sistema
-- orientacao sobre qual carteira, cliente ou area voce atende
+- orientação sobre qual carteira, cliente ou área você atende
 
-Se qualquer um desses itens estiver faltando, fale com o admin antes de começar.
+Se qualquer um desses itens estiver faltando, fale com o `admin` antes de começar.
 
 ## 2. Onde entrar
 
 ### Painel interno
 
-Use para operar tarefas, CRM, campanhas, producao, analytics e financeiro:
+Use para operar tarefas, CRM, campanhas, produção, analytics e financeiro:
 
 - `painel-interno.html`
 
-### Area do cliente
+### Área do Cliente
 
 Use apenas se seu perfil for `client`:
 
 - `area-cliente.html`
 
-## 3. Qual modulo voce vai usar
+## 3. O que cada perfil faz
 
-### Se voce e comercial
+### `admin`
 
-Comece por:
+Foco inicial:
 
-- CRM
-- Campanhas
-- Financeiro
+- conferir membros ativos
+- revisar perfis e permissões
+- acompanhar a saúde geral da operação
 
-### Se voce e gestor
+Módulos de entrada:
 
-Comece por:
+- Visão Geral
+- Acesso
+- Financeiro, quando necessário
+
+### `gestor`
+
+Foco inicial:
+
+- revisar tarefas urgentes
+- acompanhar campanhas ativas
+- identificar gargalos de produção e aprovação
+
+Módulos de entrada:
 
 - Visão Geral
 - Kanban
@@ -47,122 +59,182 @@ Comece por:
 - Produção
 - Analytics
 
-### Se voce e designer / producao
+### `designer`
 
-Comece por:
+Foco inicial:
+
+- revisar tarefas atribuídas
+- conferir prazos de entrega
+- acompanhar materiais com revisão pendente
+
+Módulos de entrada:
 
 - Kanban
 - Produção
 
-### Se voce e admin
+### `comercial`
 
-Comece por:
+Foco inicial:
 
-- Visão Geral
-- Controle de Acesso
+- revisar leads novos
+- confirmar se o pipeline está atualizado
+- acompanhar propostas, fechamentos e pendências financeiras
+
+Módulos de entrada:
+
+- CRM
+- Campanhas
+- Financeiro
+
+### `dev`
+
+Foco inicial:
+
+- revisar tarefas técnicas
+- conferir analytics e integrações necessárias
+- identificar bloqueios operacionais de natureza técnica
+
+Módulos de entrada:
+
+- Kanban
+- Analytics
+
+### `client`
+
+Foco inicial:
+
+- acompanhar campanhas e relatórios
+- revisar materiais enviados para aprovação
+- consultar financeiro do próprio contrato
+
+Módulo de entrada:
+
+- Área do Cliente
 
 ## 4. O que fazer nos primeiros 15 minutos
 
 1. Entrar no sistema.
 2. Conferir se seu nome aparece corretamente.
-3. Conferir se os modulos do seu perfil estao visiveis.
-4. Abrir o modulo principal da sua funcao.
+3. Conferir se os módulos do seu perfil estão visíveis.
+4. Abrir o módulo principal da sua função.
 5. Identificar os itens em andamento.
 
 ## 5. Primeira checagem por perfil
 
-### Comercial
+### `comercial`
 
 Verifique:
 
 - se existem leads novos
-- se o pipeline esta atualizado
-- se ha propostas ou fechamentos pendentes
+- se o pipeline está atualizado
+- se há propostas ou fechamentos pendentes
 
-### Gestor
+### `gestor`
 
 Verifique:
 
 - tarefas urgentes
 - campanhas ativas
-- entregas em aprovacao
-- gargalos de operacao
+- entregas em aprovação
+- gargalos de operação
 
-### Designer / Producao
+### `designer`
 
 Verifique:
 
-- tarefas atribuidas a voce
+- tarefas atribuídas a você
 - prazo das entregas
-- materiais com revisao pendente
+- materiais com revisão pendente
 
-### Admin
+### `dev`
+
+Verifique:
+
+- tarefas técnicas abertas
+- métricas ou integrações com problema
+- dependências que possam travar a operação
+
+### `admin`
 
 Verifique:
 
 - membros ativos
-- perfis e permissoes
-- saude geral da operacao
+- perfis e permissões
+- saúde geral da operação
 
-## 6. Regras basicas da casa
+## 6. Regras básicas da casa
 
-- nao deixe lead sem responsavel
-- nao deixe tarefa sem prazo
-- nao envie material sem revisar
-- nao altere status fora da realidade
-- nao trabalhe em planilha paralela se o dado ja existe no sistema
+- não deixe lead sem responsável
+- não deixe tarefa sem prazo
+- não envie material sem revisar
+- não altere status fora da realidade
+- não trabalhe em planilha paralela se o dado já existe no sistema
 
 ## 7. O que cada pessoa precisa atualizar
 
-### Comercial atualiza
+### `comercial`
+
+Atualiza:
 
 - etapa do lead
-- observacoes comerciais
-- conversao para cliente
-- cobranca e fatura quando aplicavel
+- observações comerciais
+- conversão para cliente
+- cobrança e fatura, quando aplicável
 
-### Operacao atualiza
+### `gestor`
+
+Atualiza:
+
+- prioridade operacional
+- distribuição de tarefas
+- andamento de campanhas
+- acompanhamento de entregas e aprovações
+
+### `designer`
+
+Atualiza:
 
 - tarefa
 - status de entrega
-- material em aprovacao
-- leitura de campanhas e performance
+- material em aprovação
+- arquivo publicado
 
-### Admin atualiza
+### `dev`
 
-- usuarios
+Atualiza:
+
+- tarefas técnicas
+- registros ligados a leitura analítica ou integração, quando necessário
+
+### `admin`
+
+Atualiza:
+
+- usuários
 - perfis
 - acessos
 
-## 8. Erros que mais atrapalham o time
+## 8. Quando pedir ajuda
 
-- criar cliente duplicado
-- esquecer de mudar etapa do lead
-- deixar tarefa parada sem status
-- subir material no cliente errado
-- marcar como entregue algo que ainda esta em revisao
+Fale com o `admin` ou com o `gestor` se:
 
-## 9. Quando pedir ajuda
-
-Fale com o admin ou gestor se:
-
-- voce nao estiver vendo um modulo que deveria ver
+- você não estiver vendo um módulo que deveria ver
 - seu perfil estiver errado
-- um cliente nao aparecer no seu escopo
+- um cliente não aparecer no seu escopo
 - houver erro ao salvar ou editar um registro
-- voce nao souber qual fluxo seguir
+- você não souber qual fluxo seguir
 
-## 10. Sua missao no primeiro dia
+## 9. Sua missão no primeiro dia
 
-Se voce completar estes 5 passos, seu onboarding minimo ja aconteceu:
+Se você completar estes cinco passos, o onboarding mínimo já aconteceu:
 
 1. entrar no sistema
-2. entender quais modulos sao seus
+2. entender quais módulos são seus
 3. localizar seus itens em andamento
 4. atualizar pelo menos um registro real
-5. saber a quem recorrer em caso de duvida
+5. saber a quem recorrer em caso de dúvida
 
-## 11. Leitura complementar
+## 10. Leitura complementar
 
 - [GUIA-OPERACIONAL-EQUIPE.md](GUIA-OPERACIONAL-EQUIPE.md)
 - [GUIA-DA-PLATAFORMA.md](GUIA-DA-PLATAFORMA.md)
