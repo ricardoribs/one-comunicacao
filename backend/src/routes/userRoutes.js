@@ -9,6 +9,7 @@ const router = express.Router();
 
 router.use(authenticate);
 router.get('/team', authorizeCapability('view_dashboard_team'), controller.listInternalTeam);
+router.get('/assignable', authorizeCapability('view_internal_directory'), controller.listAssignableInternal);
 router.use(authorize('admin'));
 router.get('/', validate(paginationQuerySchema, 'query'), controller.list);
 router.post('/', validate(userSchema), controller.create);

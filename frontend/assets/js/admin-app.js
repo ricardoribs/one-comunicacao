@@ -80,6 +80,7 @@ const ROLE_DATA_ACCESS = {
     manageTasks: true,
     homeFinancial: true,
     homeTeam: true,
+    assignableUsers: true,
     clients: true,
     contacts: true,
     campaigns: true,
@@ -97,6 +98,7 @@ const ROLE_DATA_ACCESS = {
     manageTasks: true,
     homeFinancial: false,
     homeTeam: true,
+    assignableUsers: true,
     clients: true,
     contacts: true,
     campaigns: true,
@@ -114,6 +116,7 @@ const ROLE_DATA_ACCESS = {
     manageTasks: true,
     homeFinancial: false,
     homeTeam: false,
+    assignableUsers: true,
     clients: true,
     contacts: false,
     campaigns: true,
@@ -131,6 +134,7 @@ const ROLE_DATA_ACCESS = {
     manageTasks: false,
     homeFinancial: true,
     homeTeam: false,
+    assignableUsers: true,
     clients: true,
     contacts: true,
     campaigns: true,
@@ -148,6 +152,7 @@ const ROLE_DATA_ACCESS = {
     manageTasks: true,
     homeFinancial: false,
     homeTeam: false,
+    assignableUsers: true,
     clients: false,
     contacts: false,
     campaigns: false,
@@ -167,6 +172,7 @@ const state = {
   session: null,
   dashboard: null,
   team: [],
+  assignableUsers: [],
   integrations: [],
   clients: [],
   campaigns: [],
@@ -2121,9 +2127,10 @@ async function refreshData() {
     platformBreakdown.innerHTML = UI.empty("Carregando tráfego...", "Buscando métricas e campanhas.");
   }
 
-  const [dashboard, team, clients, campaigns, tasks, users, contacts, invoices, metrics, reports, materials, files, charges, integrations] = await Promise.all([
+  const [dashboard, team, assignableUsers, clients, campaigns, tasks, users, contacts, invoices, metrics, reports, materials, files, charges, integrations] = await Promise.all([
     apiFetch("/dashboard"),
     roleDataAccess.homeTeam ? apiFetch("/users/team", { cache: "no-store" }).catch(() => []) : Promise.resolve([]),
+    roleDataAccess.assignableUsers ? apiFetch("/users/assignable", { cache: "no-store" }).catch(() => []) : Promise.resolve([]),
     roleDataAccess.clients ? apiFetch("/clients") : Promise.resolve([]),
     roleDataAccess.campaigns ? apiFetch("/campaigns") : Promise.resolve([]),
     roleDataAccess.tasks ? apiFetch("/tasks") : Promise.resolve([]),
@@ -2139,7 +2146,8 @@ async function refreshData() {
   ]);
 
   state.dashboard = dashboard;
-  state.team = mergeInternalUsers(team, dashboard?.team, users);
+  state.team = mergeInternalUsers(team, assignableUsers, dashboard?.team, users);
+  state.assignableUsers = mergeInternalUsers(assignableUsers, team);
   state.clients = clients;
   state.campaigns = campaigns;
   state.tasks = tasks;
@@ -2358,7 +2366,9 @@ function clientOptions(selectedId) {
 }
 
 function userOptions(selectedId) {
-  return state.users
+  const source = state.assignableUsers.length ? state.assignableUsers : state.team.length ? state.team : state.users;
+  return source
+    .filter((user) => user && user.is_active !== false)
     .filter((user) => user.role !== "client")
     .map((user) => `<option value="${user.id}" ${String(selectedId) === String(user.id) ? "selected" : ""}>${user.name}</option>`)
     .join("");
