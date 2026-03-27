@@ -9,10 +9,16 @@ const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',
   'image/png',
   'image/webp',
+  'image/gif',
+  'image/heic',
+  'image/heif',
   'application/pdf',
   'application/zip',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'video/mp4',
+  'video/quicktime',
+  'video/webm',
 ]);
 
 const uploadBreaker = new CircuitBreaker({
@@ -44,7 +50,7 @@ async function uploadFile(file) {
     throw new AppError('Arquivo não enviado.', 400);
   }
 
-  await validateFileSignature(file);
+  const detectedType = await validateFileSignature(file);
 
   if (env.uploadProvider === 'cloudinary') {
     if (!env.cloudinaryCloudName || !env.cloudinaryApiKey || !env.cloudinaryApiSecret) {
@@ -67,6 +73,8 @@ async function uploadFile(file) {
       storedName: result.public_id,
       url: result.secure_url,
       signedUrl: null,
+      mimeType: detectedType.mime,
+      extension: detectedType.ext,
     };
   }
 
@@ -74,6 +82,8 @@ async function uploadFile(file) {
     storedName: file.filename,
     url: `/uploads/${file.filename}`,
     signedUrl: `/uploads/${path.basename(file.filename)}`,
+    mimeType: detectedType.mime,
+    extension: detectedType.ext,
   };
 }
 
@@ -103,7 +113,13 @@ async function deleteUploadedFile(file) {
 }
 
 function inferCloudinaryResourceType(mimeType = '') {
-  return mimeType.startsWith('image/') ? 'image' : 'raw';
+  if (mimeType.startsWith('image/')) {
+    return 'image';
+  }
+  if (mimeType.startsWith('video/')) {
+    return 'video';
+  }
+  return 'raw';
 }
 
 function inferFileFormat(file = {}) {
@@ -116,10 +132,16 @@ function inferFileFormat(file = {}) {
     'image/jpeg': 'jpg',
     'image/png': 'png',
     'image/webp': 'webp',
+    'image/gif': 'gif',
+    'image/heic': 'heic',
+    'image/heif': 'heif',
     'application/pdf': 'pdf',
     'application/zip': 'zip',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+    'video/mp4': 'mp4',
+    'video/quicktime': 'mov',
+    'video/webm': 'webm',
   };
 
   return mimeMap[file.mime_type] || null;

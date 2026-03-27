@@ -78,8 +78,9 @@ function buildScopedStatement(
   }
 
   const scope = createScopedQuery(user).build(scopeConfig, { prefix, startIndex });
+  const isInsertStatement = /^\s*INSERT\b/i.test(sql);
 
-  if (scope.clause && !sql.includes('__TENANT_SCOPE__')) {
+  if (scope.clause && !sql.includes('__TENANT_SCOPE__') && !isInsertStatement) {
     throw new Error(`[TENANT GUARD] Placeholder __TENANT_SCOPE__ ausente na query de ${table}.`);
   }
 
