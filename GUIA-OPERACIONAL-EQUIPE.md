@@ -1,175 +1,189 @@
 # Guia Operacional da Equipe
 
-Este documento e uma versao mais direta do manual da plataforma, pensado para onboarding, treinamento interno e consulta rapida da equipe comercial e operacional.
-
-Se o [GUIA-DA-PLATAFORMA.md](GUIA-DA-PLATAFORMA.md) explica a plataforma inteira, este guia mostra como trabalhar nela no dia a dia.
+Este guia traduz a plataforma ONE para a rotina do time. O foco aqui é explicar quem usa o quê, o que cada perfil deve atualizar e quais práticas evitam retrabalho.
 
 ## 1. Para que a plataforma serve
 
-A plataforma organiza a operacao da ONE em um fluxo unico:
+A plataforma organiza a operação da ONE em um fluxo único:
 
 - o site capta leads
 - o comercial trata e converte oportunidades
-- a operacao organiza tarefas, campanhas e entregas
-- o cliente acompanha campanhas, materiais, relatorios e financeiro
+- a operação organiza campanhas, tarefas e entregas
+- o cliente acompanha o que foi publicado no portal
 
-Na pratica, isso reduz conversa solta, planilha paralela e retrabalho.
+Na prática, isso reduz conversa solta, planilha paralela e perda de contexto.
 
-## 2. Quem usa o que
+## 2. O que cada perfil faz
 
-### Comercial
+### `admin`
 
-Usa principalmente:
+Responsável por:
 
-- dashboard interno
-- CRM
-- campanhas
-- financeiro
-
-Objetivo principal:
-
-- transformar leads em clientes
-- manter pipeline atualizado
-- registrar cobrancas e acompanhar faturas
-
-### Gestor
+- administrar usuários, perfis e acessos
+- acompanhar a visão geral da operação
+- corrigir problemas de escopo, permissão e cadastro
+- apoiar processos financeiros e operacionais quando necessário
 
 Usa principalmente:
 
-- dashboard interno
-- kanban
-- CRM
-- campanhas
-- producao
-- trafego
-- analytics
+- Visão Geral
+- Financeiro
+- Acesso
+- módulos operacionais conforme necessidade
 
-Objetivo principal:
+### `gestor`
 
-- organizar a operacao dos clientes do seu escopo
+Responsável por:
+
+- organizar a carteira do próprio escopo
 - distribuir tarefas
-- acompanhar entregas, campanhas e performance
-
-### Designer / Producao
+- acompanhar campanhas, produção e performance
+- garantir que a operação esteja atualizada
 
 Usa principalmente:
 
-- dashboard interno
-- kanban
-- producao
+- Visão Geral
+- Kanban
+- CRM
+- Campanhas
+- Produção
+- Analytics
 
-Objetivo principal:
+### `designer`
+
+Responsável por:
 
 - executar entregas
-- atualizar status
-- subir materiais
-- manter o cliente com visibilidade do que esta em aprovacao
+- atualizar tarefas
+- publicar materiais e arquivos
+- manter o fluxo de aprovação organizado
 
-### Admin
+Usa principalmente:
 
-Usa tudo, com foco adicional em:
+- Kanban
+- Produção
+- campanhas e relatórios do escopo
 
-- controle de acesso
-- configuracao de equipe
-- visao geral completa
+### `comercial`
 
-## 3. Rotina recomendada da equipe comercial
+Responsável por:
 
-## 3.1 Inicio do dia
+- tratar leads
+- manter pipeline atualizado
+- converter oportunidades em clientes
+- registrar cobrança e fatura quando aplicável
+
+Usa principalmente:
+
+- Visão Geral
+- CRM
+- Campanhas
+- Financeiro
+
+### `dev`
+
+Responsável por:
+
+- apoiar a operação técnica
+- acompanhar indicadores e integrações
+- organizar tarefas técnicas
+
+Usa principalmente:
+
+- Visão Geral
+- Kanban
+- Analytics
+
+### `client`
+
+Responsável por:
+
+- acompanhar entregas e informações do próprio contrato
+- aprovar ou solicitar revisão de materiais
+- consultar financeiro do próprio escopo
+
+Usa principalmente:
+
+- Área do Cliente
+
+## 3. Rotina recomendada do time comercial
+
+### Início do dia
 
 1. Entrar no painel interno.
-2. Abrir o modulo `CRM / Leads`.
-3. Ver quais leads entraram recentemente.
-4. Conferir etapas do pipeline.
-5. Priorizar contatos parados, propostas abertas e oportunidades proximas de fechamento.
+2. Abrir o módulo `CRM`.
+3. Verificar leads novos e oportunidades paradas.
+4. Revisar propostas, negociações e fechamentos.
+5. Atualizar o que mudou antes de abrir novas frentes.
 
-## 3.2 Cadastro de lead
+### Cadastro e atualização de leads
 
-Quando um lead entrar pelo site ou chegar por outro canal:
+Sempre que um lead entrar pelo site ou por outro canal:
 
-1. Abra `CRM / Leads`.
-2. Clique em `Novo lead`.
-3. Preencha os dados principais:
-   - nome
-   - empresa
-   - servico
-   - telefone
-   - whatsapp
-   - e-mail
-   - origem
-   - responsavel
-   - etapa
-   - valor estimado
-4. Salve.
+1. Abrir `CRM`.
+2. Clicar em `Novo lead`.
+3. Preencher os dados principais:
+- nome
+- empresa
+- serviço
+- telefone
+- WhatsApp
+- e-mail
+- origem
+- responsável
+- etapa
+- valor estimado
+4. Salvar.
 
-Boa pratica:
+Regras práticas:
 
-- nao deixe lead sem owner
-- nao deixe lead sem origem
-- nao deixe lead em etapa errada
+- não deixar lead sem owner
+- não deixar lead sem origem
+- não deixar lead em etapa desatualizada
 
-## 3.3 Atualizacao do pipeline
-
-O pipeline deve refletir a situacao real do lead.
-
-Etapas usuais:
-
-- Prospecção
-- Contato feito
-- Proposta
-- Negociação
-- Fechado
-
-Regra pratica:
-
-- se houve contato, atualize
-- se houve proposta, registre
-- se perdeu timing, registre observacao
-- se virou cliente, converta
-
-## 3.4 Conversao de lead em cliente
+### Conversão em cliente
 
 Quando a venda fechar:
 
-1. No CRM, localize o lead.
-2. Clique em `Converter`.
-3. Verifique os dados do cliente criado.
-4. Confirme se o cliente ja aparece na base ativa.
+1. Localizar o lead no CRM.
+2. Clicar em `Converter`.
+3. Revisar os dados do cliente gerado.
+4. Confirmar se a base ativa foi atualizada.
 
 Depois disso:
 
-- o cliente pode entrar no fluxo de campanhas
+- campanhas podem ser cadastradas
 - tarefas podem ser criadas
-- cobrancas e faturas podem ser registradas
+- cobranças e faturas podem ser registradas
 
-## 3.5 Financeiro comercial
+### Financeiro comercial
 
-No modulo `Financeiro`, o comercial consegue:
+No módulo `Financeiro`, o comercial:
 
-- ver cobrancas emitidas
-- ver faturas abertas
-- registrar nova cobranca
-- registrar nova fatura
-- atualizar status
+- consulta cobranças emitidas
+- consulta faturas abertas
+- cria novas cobranças
+- cria novas faturas
+- atualiza status quando houver retorno
 
-Fluxo minimo:
+Fluxo mínimo:
 
-1. Gere a cobranca ou fatura.
-2. Confirme vencimento e valor.
-3. Acompanhe retorno.
-4. Atualize status para manter a operacao alinhada.
+1. Gerar cobrança ou fatura.
+2. Conferir valor e vencimento.
+3. Acompanhar retorno.
+4. Atualizar o status no mesmo dia.
 
-## 4. Rotina recomendada da equipe operacional
+## 4. Rotina recomendada da operação
 
-## 4.1 Inicio do dia
+### Início do dia
 
 1. Entrar no painel interno.
-2. Conferir `Visão Geral`.
-3. Conferir `Kanban`.
+2. Conferir a `Visão Geral`.
+3. Conferir o `Kanban`.
 4. Conferir `Produção`.
-5. Conferir materiais em aprovacao ou revisao.
+5. Verificar materiais em aprovação ou revisão.
 
-## 4.2 Organizando tarefas no kanban
+### Organização de tarefas
 
 Cada tarefa deve estar na coluna correta:
 
@@ -180,46 +194,36 @@ Cada tarefa deve estar na coluna correta:
 
 Ao criar uma tarefa:
 
-1. Clique em `Nova tarefa`.
-2. Informe:
-   - titulo
-   - cliente
-   - responsavel
-   - status
-   - coluna
-   - prazo
-   - descricao
-3. Salve.
+1. Clicar em `Nova tarefa`.
+2. Informar:
+- título
+- cliente
+- responsável
+- status
+- coluna
+- prazo
+- descrição
+3. Salvar.
 
-Regra pratica:
+Regras práticas:
 
-- tarefa sem responsavel vira gargalo
+- tarefa sem responsável vira gargalo
 - tarefa sem prazo vira esquecimento
-- tarefa concluida deve sair de `Em Progresso`
+- tarefa concluída não deve permanecer em andamento
 
-## 4.3 Cadastro e acompanhamento de campanhas
+### Campanhas
 
-No modulo `Campanhas`, a equipe consegue:
-
-- criar campanha
-- editar campanha
-- acompanhar canal
-- acompanhar orcamento
-- vincular cliente
-
-Ao abrir uma campanha:
-
-verifique sempre:
+Ao cadastrar ou revisar uma campanha, sempre conferir:
 
 - cliente correto
 - canal correto
-- publico correto
+- público correto
 - objetivo claro
-- budget consistente
+- orçamento coerente
 
-## 4.4 Producao e entregas
+### Produção e materiais
 
-No modulo `Produção`, a equipe pode:
+No módulo `Produção`, a equipe pode:
 
 - criar entrega
 - subir arquivo
@@ -228,11 +232,11 @@ No modulo `Produção`, a equipe pode:
 
 Fluxo recomendado:
 
-1. Criar entrega com titulo claro.
+1. Criar a entrega com título claro.
 2. Associar ao cliente certo.
-3. Associar a campanha quando houver.
+3. Associar à campanha quando houver.
 4. Fazer upload do arquivo.
-5. Definir status adequado.
+5. Definir o status adequado.
 
 Status mais usados:
 
@@ -240,70 +244,67 @@ Status mais usados:
 - Aprovado
 - Revisão
 
-## 4.5 Materiais em aprovacao
+### Materiais em aprovação
 
-Quando um material for para o cliente:
+Antes de publicar algo para o cliente:
 
-1. confira se o arquivo correto foi anexado
-2. confira se o cliente correto foi vinculado
-3. publique com status coerente
-4. acompanhe se houve aprovacao ou revisao
+1. conferir se o arquivo correto foi anexado
+2. conferir se o cliente correto foi vinculado
+3. conferir se o status está coerente
+4. acompanhar retorno de aprovação ou revisão
 
-Se o cliente pedir revisao:
+Se o cliente pedir revisão:
 
-- atualize a entrega
-- substitua o arquivo, se necessario
-- mantenha o historico organizado
-
-## 4.6 Trafego e analytics
-
-Os modulos `Tráfego Pago` e `Analytics` servem para leitura operacional e gerencial.
-
-Use para:
-
-- acompanhar budget
-- comparar canais
-- observar receita
-- observar leads
-- acompanhar CTR e conversao
-
-Regra pratica:
-
-- nao tome decisao olhando um numero isolado
-- cruze campanha, cliente, periodo e objetivo
+- atualizar a entrega
+- substituir o arquivo, se necessário
+- manter o histórico organizado
 
 ## 5. O que o cliente enxerga
 
-A equipe precisa saber o que o cliente ve no portal:
+A equipe precisa saber o que fica visível no portal:
 
 - campanhas
-- relatorios
-- materiais para aprovacao
+- relatórios
+- materiais em aprovação
 - faturas
+- cobranças
 - mensagens
 
-Isso significa que tudo o que for publicado internamente com escopo de cliente deve estar:
+Isso significa que tudo o que for publicado para o cliente precisa estar:
 
 - correto
 - claro
 - atualizado
 - sem duplicidade
 
-## 6. Boas praticas operacionais
+## 6. Boas práticas operacionais
 
-### Para comercial
+### Para `comercial`
 
-- nao deixar lead sem dono
-- nao deixar lead sem etapa
-- nao deixar proposta sem acompanhamento
-- nao registrar cobranca com valor ou vencimento errado
+- não deixar lead sem dono
+- não deixar lead sem etapa
+- não deixar proposta sem acompanhamento
+- não registrar cobrança com valor ou vencimento errado
 
-### Para operacao
+### Para `gestor`
 
-- nao deixar tarefa sem responsavel
-- nao deixar tarefa sem prazo
-- nao subir material no cliente errado
-- nao enviar para aprovacao sem conferir arquivo final
+- não deixar campanha sem responsável
+- não deixar backlog sem priorização
+- não deixar tarefa crítica sem acompanhamento
+- não perder visibilidade do que está em aprovação
+
+### Para `designer`
+
+- não subir material no cliente errado
+- não enviar para aprovação sem revisar o arquivo final
+- não concluir entrega sem atualizar status
+- não ignorar prazo e responsável
+
+### Para `dev`
+
+- não tratar tarefa técnica fora do fluxo do kanban
+- não alterar configuração sensível sem registro
+- não assumir escopo comercial ou financeiro sem alinhamento
 
 ### Para todos
 
@@ -311,69 +312,50 @@ Isso significa que tudo o que for publicado internamente com escopo de cliente d
 - atualizar status no mesmo dia
 - evitar controle paralelo fora do sistema
 
-## 7. Checklist diario
+## 7. Checklist diário
 
 ### Comercial
 
-- ha leads novos para tratar?
-- ha propostas paradas?
-- ha lead pronto para conversao?
-- ha cobrancas ou faturas para acompanhar?
+- há leads novos para tratar?
+- há propostas paradas?
+- há lead pronto para conversão?
+- há cobranças ou faturas para acompanhar?
 
-### Operacao
+### Operação
 
-- ha tarefas atrasadas?
-- ha entregas sem responsavel?
-- ha material aguardando revisao?
-- ha campanha sem acompanhamento?
+- há tarefas atrasadas?
+- há entregas sem responsável?
+- há material aguardando revisão?
+- há campanha sem acompanhamento?
 
-## 8. Checklist semanal
+### Técnico
 
-### Comercial
+- há tarefa técnica bloqueada?
+- há integração com erro?
+- há métrica ou dashboard sem atualização esperada?
 
-- pipeline esta atualizado?
-- houve conversoes registradas?
-- houve perda de oportunidade sem observacao?
-- financeiro comercial esta coerente?
+## 8. Quando chamar o `admin`
 
-### Operacao
+Acione o `admin` quando houver:
 
-- backlog foi priorizado?
-- tarefas concluidas foram encerradas?
-- materiais aprovados foram organizados?
-- analytics da semana foram lidos?
-
-## 9. Erros comuns que devem ser evitados
-
-- criar cliente duplicado
-- cadastrar lead com telefone ou e-mail errado
-- gerar cobranca no cliente errado
-- subir material sem arquivo
-- aprovar fluxo sem atualizar status
-- deixar tarefa importante no backlog sem responsavel
-
-## 10. Quando chamar o admin
-
-Acione o admin quando houver:
-
-- problema de permissao
-- necessidade de criar ou editar usuario
-- necessidade de revisar perfil de acesso
-- duvida sobre visibilidade de modulo
+- problema de permissão
+- necessidade de criar, editar ou remover usuário
+- dúvida sobre perfil de acesso
+- inconsistência de escopo
 - necessidade de auditoria de dados
 
-## 11. Documentos complementares
+## 9. Documentos complementares
 
 - [PLAYBOOK-ONBOARDING.md](PLAYBOOK-ONBOARDING.md)
 - [GUIA-DA-PLATAFORMA.md](GUIA-DA-PLATAFORMA.md)
 - [PERMISSIONS-MATRIX.md](PERMISSIONS-MATRIX.md)
 - [README.md](README.md)
 
-## 12. Resumo rapido
+## 10. Resumo rápido
 
-Se a equipe lembrar de quatro regras, a operacao ja melhora:
+Se a equipe lembrar destas quatro regras, a operação já melhora:
 
-1. tudo que entrar no sistema precisa ter dono
-2. tudo que estiver em andamento precisa ter status
-3. tudo que for para o cliente precisa estar revisado
+1. tudo que entra no sistema precisa ter responsável
+2. tudo que está em andamento precisa ter status
+3. tudo que vai para o cliente precisa estar revisado
 4. tudo que impacta receita precisa estar registrado no financeiro
