@@ -591,6 +591,34 @@ async function apiFetch(path, options = {}) {
   return data;
 }
 
+function toArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function createEmptyDashboard() {
+  return {
+    mode: "internal",
+    team: [],
+    campaigns: [],
+    reports: [],
+    materials: [],
+    invoices: [],
+    tasks: [],
+    messages: [],
+    widgets: {
+      financial: false,
+      team: false
+    },
+    summary: {
+      clients_count: 0,
+      campaigns_count: 0,
+      leads: 0,
+      revenue: 0,
+      open_tasks: 0
+    }
+  };
+}
+
 function formatCurrency(value) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -2294,16 +2322,27 @@ function renderFinance() {
 }
 
 function renderAll() {
-  renderSidebarCounts();
-  renderHome();
-  renderKanban();
-  renderCRM();
-  renderCampaigns();
-  renderProduction();
-  renderTraffic();
-  renderAnalytics();
-  renderFinance();
-  renderAccessV2();
+  const sections = [
+    ["contadores", renderSidebarCounts],
+    ["home", renderHome],
+    ["kanban", renderKanban],
+    ["crm", renderCRM],
+    ["campanhas", renderCampaigns],
+    ["producao", renderProduction],
+    ["trafego", renderTraffic],
+    ["analytics", renderAnalytics],
+    ["financeiro", renderFinance],
+    ["acesso", renderAccessV2]
+  ];
+
+  sections.forEach(([label, renderer]) => {
+    try {
+      renderer();
+    } catch (error) {
+      console.error(`[renderAll] Falha ao renderizar ${label}:`, error);
+    }
+  });
+
   bindLegacyInlineHandlers();
 }
 
@@ -2332,6 +2371,16 @@ function renderAccessV2() {
 
 async function refreshData() {
   const roleDataAccess = ROLE_DATA_ACCESS[state.session.user.role] || {};
+  const fetchFailures = [];
+  const loadResource = async (label, loader, fallback) => {
+    try {
+      return await loader();
+    } catch (error) {
+      fetchFailures.push(label);
+      console.warn(`[refreshData] Falha ao carregar ${label}:`, error);
+      return typeof fallback === "function" ? fallback() : fallback;
+    }
+  };
   const homeKpis = document.querySelector("#page-home .kpi-grid");
   if (homeKpis) {
     homeKpis.innerHTML = UI.skeletonKpis(4);
@@ -2418,42 +2467,52 @@ async function refreshData() {
   }
 
   const [dashboard, team, assignableUsers, clients, campaigns, tasks, users, contacts, invoices, metrics, reports, materials, files, charges, integrations] = await Promise.all([
-    apiFetch("/dashboard"),
-    roleDataAccess.homeTeam ? apiFetch("/users/team", { cache: "no-store" }).catch(() => []) : Promise.resolve([]),
-    roleDataAccess.assignableUsers ? apiFetch("/users/assignable", { cache: "no-store" }).catch(() => []) : Promise.resolve([]),
-    roleDataAccess.clients ? apiFetch("/clients") : Promise.resolve([]),
-    roleDataAccess.campaigns ? apiFetch("/campaigns") : Promise.resolve([]),
-    roleDataAccess.tasks ? apiFetch("/tasks") : Promise.resolve([]),
-    roleDataAccess.users ? apiFetch("/users") : Promise.resolve([]),
-    roleDataAccess.contacts ? apiFetch("/contacts") : Promise.resolve([]),
-    roleDataAccess.invoices ? apiFetch("/invoices") : Promise.resolve([]),
-    roleDataAccess.metrics ? apiFetch("/metrics") : Promise.resolve([]),
-    roleDataAccess.reports ? apiFetch("/reports") : Promise.resolve([]),
-    roleDataAccess.materials ? apiFetch("/materials") : Promise.resolve([]),
-    roleDataAccess.files ? apiFetch("/files") : Promise.resolve([]),
-    roleDataAccess.charges ? apiFetch("/charges") : Promise.resolve([]),
-    roleDataAccess.integrations ? apiFetch("/integrations") : Promise.resolve([])
+    loadResource("dashboard", () => apiFetch("/dashboard"), () => createEmptyDashboard()),
+    roleDataAccess.homeTeam ? loadResource("equipe", () => apiFetch("/users/team", { cache: "no-store" }), []) : Promise.resolve([]),
+    roleDataAccess.assignableUsers ? loadResource("responsáveis", () => apiFetch("/users/assignable", { cache: "no-store" }), []) : Promise.resolve([]),
+    roleDataAccess.clients ? loadResource("clientes", () => apiFetch("/clients"), []) : Promise.resolve([]),
+    roleDataAccess.campaigns ? loadResource("campanhas", () => apiFetch("/campaigns"), []) : Promise.resolve([]),
+    roleDataAccess.tasks ? loadResource("tarefas", () => apiFetch("/tasks"), []) : Promise.resolve([]),
+    roleDataAccess.users ? loadResource("usuários", () => apiFetch("/users"), []) : Promise.resolve([]),
+    roleDataAccess.contacts ? loadResource("CRM", () => apiFetch("/contacts"), []) : Promise.resolve([]),
+    roleDataAccess.invoices ? loadResource("faturas", () => apiFetch("/invoices"), []) : Promise.resolve([]),
+    roleDataAccess.metrics ? loadResource("métricas", () => apiFetch("/metrics"), []) : Promise.resolve([]),
+    roleDataAccess.reports ? loadResource("relatórios", () => apiFetch("/reports"), []) : Promise.resolve([]),
+    roleDataAccess.materials ? loadResource("produção", () => apiFetch("/materials"), []) : Promise.resolve([]),
+    roleDataAccess.files ? loadResource("arquivos", () => apiFetch("/files"), []) : Promise.resolve([]),
+    roleDataAccess.charges ? loadResource("cobranças", () => apiFetch("/charges"), []) : Promise.resolve([]),
+    roleDataAccess.integrations ? loadResource("integrações", () => apiFetch("/integrations"), []) : Promise.resolve([])
   ]);
 
-  state.dashboard = dashboard;
-  state.team = mergeInternalUsers(team, assignableUsers, dashboard?.team, users);
-  state.assignableUsers = mergeInternalUsers(assignableUsers, team);
-  state.clients = clients;
-  state.campaigns = campaigns;
-  state.tasks = tasks;
-  state.users = users.length ? users : [state.session.user];
-  state.contacts = contacts;
-  state.invoices = invoices;
-  state.metrics = metrics;
-  state.reports = reports;
-  state.materials = materials;
-  state.files = files;
-  state.charges = charges;
-  state.integrations = integrations;
+  state.dashboard = dashboard && typeof dashboard === "object" ? dashboard : createEmptyDashboard();
+  state.team = mergeInternalUsers(toArray(team), toArray(assignableUsers), toArray(state.dashboard?.team), toArray(users));
+  state.assignableUsers = mergeInternalUsers(toArray(assignableUsers), toArray(team));
+  state.clients = toArray(clients);
+  state.campaigns = toArray(campaigns);
+  state.tasks = toArray(tasks);
+  state.users = toArray(users).length ? toArray(users) : [state.session.user];
+  state.contacts = toArray(contacts);
+  state.invoices = toArray(invoices);
+  state.metrics = toArray(metrics);
+  state.reports = toArray(reports);
+  state.materials = toArray(materials);
+  state.files = toArray(files);
+  state.charges = toArray(charges);
+  state.integrations = toArray(integrations);
+
+  const scopedClients = getScopedClientOptions();
+  const hasSelectedKanbanClient = scopedClients.some((client) => String(client.id) === String(state.filters.kanbanClient));
+  const hasSelectedAnalyticsClient = scopedClients.some((client) => String(client.id) === String(state.filters.analyticsClient));
+  if (state.filters.kanbanClient && !hasSelectedKanbanClient) {
+    state.filters.kanbanClient = "";
+  }
+  if (state.filters.analyticsClient && !hasSelectedAnalyticsClient) {
+    state.filters.analyticsClient = "";
+  }
 
   const kanbanFilter = document.querySelector("#page-kanban select");
   if (kanbanFilter) {
-    kanbanFilter.innerHTML = `<option value="">Todos os clientes</option>${getScopedClientOptions()
+    kanbanFilter.innerHTML = `<option value="">Todos os clientes</option>${scopedClients
       .map((client) => `<option value="${client.id}">${client.name}</option>`)
       .join("")}`;
     kanbanFilter.value = state.filters.kanbanClient;
@@ -2461,7 +2520,7 @@ async function refreshData() {
 
   const analyticsClientFilter = document.getElementById("analytics-client-filter");
   if (analyticsClientFilter) {
-    analyticsClientFilter.innerHTML = `<option value="">Todos os clientes</option>${getScopedClientOptions()
+    analyticsClientFilter.innerHTML = `<option value="">Todos os clientes</option>${scopedClients
       .map((client) => `<option value="${client.id}">${client.name}</option>`)
       .join("")}`;
     analyticsClientFilter.value = state.filters.analyticsClient;
@@ -2510,6 +2569,11 @@ async function refreshData() {
   }
 
   renderAll();
+
+  if (fetchFailures.length) {
+    const uniqueFailures = [...new Set(fetchFailures)];
+    showToast(`Alguns módulos não carregaram: ${uniqueFailures.join(", ")}.`);
+  }
 }
 
 async function doLogin() {
