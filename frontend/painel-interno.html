@@ -802,7 +802,27 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
     </div>
   </div>
   <div class="page-body">
-    <div class="kanban" id="kanban-board"></div>
+    <div class="two-col">
+      <div class="card">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Checklist diário</div>
+            <div class="section-sub">Prioridades do dia por perfil e entregas com vencimento imediato.</div>
+          </div>
+        </div>
+        <div class="stack-sm" id="kanban-daily-checklist"></div>
+      </div>
+      <div class="card">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Manual da marca</div>
+            <div class="section-sub">Tom de voz, roteiro, restrições e orientações da conta selecionada.</div>
+          </div>
+        </div>
+        <div id="kanban-brand-manual"></div>
+      </div>
+    </div>
+    <div class="kanban mt-5" id="kanban-board"></div>
   </div>
 </section>
 
@@ -875,7 +895,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   <div class="topbar">
     <div><div class="topbar-title">Produção</div><div class="topbar-sub">Design, copy e landing pages</div></div>
     <div class="topbar-actions">
-      <button class="btn btn-pink btn-sm" onclick="openModal('nova-entrega')">+ Nova entrega</button>
+      <button id="btn-new-delivery" class="btn btn-pink btn-sm" onclick="openModal('nova-entrega')">+ Nova entrega</button>
     </div>
   </div>
   <div class="page-body">

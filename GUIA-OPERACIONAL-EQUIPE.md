@@ -15,6 +15,8 @@ Na prática, isso reduz conversa solta, planilha paralela e perda de contexto.
 
 ## 2. O que cada perfil faz
 
+Para o mapeamento nominal da equipe atual, consulte tambem [MAPEAMENTO-EQUIPE-ACESSOS.md](./MAPEAMENTO-EQUIPE-ACESSOS.md).
+
 ### `admin`
 
 Responsável por:

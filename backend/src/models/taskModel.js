@@ -1,6 +1,7 @@
 const tenantDb = require('../db/tenantDb');
 const { normalizePagination, paginationClause } = require('../utils/pagination');
 const createScopedQuery = require('../utils/scopedQuery');
+const { getInternalClientAccessScope } = require('../utils/internalClientScope');
 
 const selectColumns = `
   t.id,
@@ -20,7 +21,7 @@ function taskScopeConfig(alias = 't') {
     client: `${alias}.client_id = $TENANT`,
     internal: [
       `${alias}.assigned_to = $TENANT`,
-      `EXISTS (SELECT 1 FROM clients scoped_clients WHERE scoped_clients.id = ${alias}.client_id AND scoped_clients.manager_id = $TENANT)`,
+      ...getInternalClientAccessScope(`${alias}.client_id`),
     ],
   };
 }
@@ -89,7 +90,7 @@ async function update(id, data, user = null) {
       client: 'client_id = $TENANT',
       internal: [
         'assigned_to = $TENANT',
-        'EXISTS (SELECT 1 FROM clients scoped_clients WHERE scoped_clients.id = tasks.client_id AND scoped_clients.manager_id = $TENANT)',
+        ...getInternalClientAccessScope('tasks.client_id'),
       ],
     },
     prefix: 'AND',
@@ -139,7 +140,7 @@ async function remove(id, user = null) {
       client: 'client_id = $TENANT',
       internal: [
         'assigned_to = $TENANT',
-        'EXISTS (SELECT 1 FROM clients scoped_clients WHERE scoped_clients.id = tasks.client_id AND scoped_clients.manager_id = $TENANT)',
+        ...getInternalClientAccessScope('tasks.client_id'),
       ],
     },
     prefix: 'AND',

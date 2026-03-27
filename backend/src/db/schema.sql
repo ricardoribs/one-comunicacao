@@ -19,6 +19,7 @@ CREATE TABLE clients (
   segment VARCHAR(80),
   manager_id INTEGER,
   started_at DATE,
+  brand_manual TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
 

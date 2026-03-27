@@ -1,37 +1,43 @@
 const tenantDb = require('../db/tenantDb');
 const { normalizePagination, paginationClause } = require('../utils/pagination');
 const createScopedQuery = require('../utils/scopedQuery');
+const { getInternalClientScope } = require('../utils/internalClientScope');
 
 const scopeConfig = {
   client: 'c.id = $TENANT',
-  internal: 'c.manager_id = $TENANT',
+  internal: getInternalClientScope('c'),
 };
+
+const baseSelectColumns = `
+  c.id,
+  c.name,
+  c.company,
+  c.plan,
+  c.mrr,
+  c.segment,
+  c.manager_id,
+  c.started_at,
+  c.legal_document,
+  c.contact_name,
+  c.contact_email,
+  c.contact_phone,
+  c.billing_email,
+  c.address_line1,
+  c.address_line2,
+  c.neighborhood,
+  c.city,
+  c.state,
+  c.zip_code,
+  c.country,
+  c.notes,
+  c.brand_manual,
+  c.asaas_customer_id,
+  c.created_at
+`;
 
 const baseSelect = `
   SELECT
-    c.id,
-    c.name,
-    c.company,
-    c.plan,
-    c.mrr,
-    c.segment,
-    c.manager_id,
-    c.started_at,
-    c.legal_document,
-    c.contact_name,
-    c.contact_email,
-    c.contact_phone,
-    c.billing_email,
-    c.address_line1,
-    c.address_line2,
-    c.neighborhood,
-    c.city,
-    c.state,
-    c.zip_code,
-    c.country,
-    c.notes,
-    c.asaas_customer_id,
-    c.created_at
+    ${baseSelectColumns}
   FROM clients c
 `;
 
@@ -46,39 +52,28 @@ async function list(user, query = {}) {
     prefix: 'WHERE',
     startIndex: 1,
     sql: `
+      WITH scoped_clients AS (
+        ${baseSelect}
+        __TENANT_SCOPE__
+      ),
+      client_totals AS (
+        SELECT
+          cam.client_id,
+          COUNT(DISTINCT cam.id) AS campaigns_count,
+          COALESCE(SUM(m.leads), 0) AS total_leads,
+          COALESCE(SUM(m.revenue), 0) AS total_revenue
+        FROM campaigns cam
+        LEFT JOIN metrics m ON m.campaign_id = cam.id
+        GROUP BY cam.client_id
+      )
       SELECT
-        c.id,
-        c.name,
-        c.company,
-        c.plan,
-        c.mrr,
-        c.segment,
-        c.manager_id,
-        c.started_at,
-        c.legal_document,
-        c.contact_name,
-        c.contact_email,
-        c.contact_phone,
-        c.billing_email,
-        c.address_line1,
-        c.address_line2,
-        c.neighborhood,
-        c.city,
-        c.state,
-        c.zip_code,
-        c.country,
-        c.notes,
-        c.asaas_customer_id,
-        c.created_at,
-        COUNT(DISTINCT cam.id) AS campaigns_count,
-        COALESCE(SUM(m.leads), 0) AS total_leads,
-        COALESCE(SUM(m.revenue), 0) AS total_revenue
-      FROM clients c
-      LEFT JOIN campaigns cam ON cam.client_id = c.id
-      LEFT JOIN metrics m ON m.campaign_id = cam.id
-      __TENANT_SCOPE__
-      GROUP BY c.id
-      ORDER BY c.created_at DESC${page.clause}`,
+        scoped_clients.*,
+        COALESCE(client_totals.campaigns_count, 0) AS campaigns_count,
+        COALESCE(client_totals.total_leads, 0) AS total_leads,
+        COALESCE(client_totals.total_revenue, 0) AS total_revenue
+      FROM scoped_clients
+      LEFT JOIN client_totals ON client_totals.client_id = scoped_clients.id
+      ORDER BY scoped_clients.created_at DESC${page.clause}`,
     suffixParams: page.values,
   });
 
@@ -120,16 +115,17 @@ function buildClientParams(data) {
     data.zip_code || null,
     data.country || null,
     data.notes || null,
+    data.brand_manual || null,
   ];
 }
 
 const insertClientSql = `INSERT INTO clients (
   name, company, plan, mrr, segment, manager_id, started_at, legal_document, contact_name, contact_email,
-  contact_phone, billing_email, address_line1, address_line2, neighborhood, city, state, zip_code, country, notes
+  contact_phone, billing_email, address_line1, address_line2, neighborhood, city, state, zip_code, country, notes, brand_manual
 )
 VALUES (
   $1, $2, COALESCE($3, 'growth'), COALESCE($4, 0), $5, $6, $7, $8, $9, $10,
-  $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
+  $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
 )
 RETURNING id`;
 
@@ -167,11 +163,11 @@ async function createWithClient(client, data, user) {
     bypassScope: true,
     sql: `INSERT INTO clients (
       name, company, plan, mrr, segment, manager_id, started_at, legal_document, contact_name, contact_email,
-      contact_phone, billing_email, address_line1, address_line2, neighborhood, city, state, zip_code, country, notes
+      contact_phone, billing_email, address_line1, address_line2, neighborhood, city, state, zip_code, country, notes, brand_manual
     )
     VALUES (
       $1, $2, COALESCE($3, 'growth'), COALESCE($4, 0), $5, $6, $7, $8, $9, $10,
-      $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
+      $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
     )
     RETURNING id`,
     params: [
@@ -187,10 +183,10 @@ async function update(id, data, user = null) {
     table: 'clients',
     scopeConfig: {
       client: 'id = $TENANT',
-      internal: 'manager_id = $TENANT',
+      internal: getInternalClientScope('clients'),
     },
     prefix: 'AND',
-    startIndex: 23,
+    startIndex: 24,
     sql: `UPDATE clients
      SET name = COALESCE($2, name),
          company = COALESCE($3, company),
@@ -212,7 +208,8 @@ async function update(id, data, user = null) {
          zip_code = COALESCE($19, zip_code),
          country = COALESCE($20, country),
          notes = COALESCE($21, notes),
-         asaas_customer_id = COALESCE($22, asaas_customer_id)
+         brand_manual = COALESCE($22, brand_manual),
+         asaas_customer_id = COALESCE($23, asaas_customer_id)
      WHERE id = $1
      __TENANT_SCOPE__
      RETURNING id`,
@@ -238,6 +235,7 @@ async function update(id, data, user = null) {
       data.zip_code || null,
       data.country || null,
       data.notes || null,
+      data.brand_manual || null,
       data.asaas_customer_id || null,
     ],
   });
@@ -250,7 +248,7 @@ async function remove(id, user = null) {
     table: 'clients',
     scopeConfig: {
       client: 'id = $TENANT',
-      internal: 'manager_id = $TENANT',
+      internal: getInternalClientScope('clients'),
     },
     prefix: 'AND',
     startIndex: 2,

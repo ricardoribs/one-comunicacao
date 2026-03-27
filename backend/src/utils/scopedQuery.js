@@ -35,7 +35,7 @@ function createScopedQuery(user) {
       const scopedFragments = fragments.map((fragment) => `(${fragment.replaceAll('$TENANT', placeholder)})`);
 
       return {
-        clause: ` ${prefix} ${scopedFragments.join(' OR ')}`,
+        clause: ` ${prefix} (${scopedFragments.join(' OR ')})`,
         values: [tenantValue],
         nextIndex: startIndex + 1,
       };
