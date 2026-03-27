@@ -143,7 +143,7 @@ app.use(
         'style-src-attr': ["'unsafe-inline'"],
         'font-src': ["'self'", 'https://fonts.gstatic.com', 'data:'],
         'img-src': ["'self'", 'data:', 'https:', 'blob:'],
-        'connect-src': ["'self'"],
+        'connect-src': ["'self'", 'https://viacep.com.br'],
         'frame-ancestors': ["'none'"],
         'object-src': ["'none'"],
         'base-uri': ["'self'"],

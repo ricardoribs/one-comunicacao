@@ -2482,32 +2482,41 @@ function setAddressFieldValue(field, value, force = false) {
 }
 
 async function fetchCepSuggestion(cep) {
-  const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`, {
-    method: "GET",
-    cache: "no-store",
-    headers: {
-      Accept: "application/json"
+  const mapCepResponse = (data) => {
+    if (data?.erro) {
+      throw new Error("CEP nao encontrado.");
     }
-  });
 
-  if (!response.ok) {
-    throw new Error("Nao foi possivel consultar o CEP no momento.");
-  }
-
-  const data = await response.json().catch(() => ({}));
-  if (data?.erro) {
-    throw new Error("CEP nao encontrado.");
-  }
-
-  return {
-    zip_code: formatZipCodeInput(cep),
-    address_line1: data.logradouro || "",
-    address_line2: data.complemento || "",
-    neighborhood: data.bairro || "",
-    city: data.localidade || "",
-    state: data.uf || "",
-    country: "Brasil",
+    return {
+      zip_code: formatZipCodeInput(cep),
+      address_line1: data.logradouro || data.address_line1 || "",
+      address_line2: data.complemento || data.address_line2 || "",
+      neighborhood: data.bairro || data.neighborhood || "",
+      city: data.localidade || data.city || "",
+      state: data.uf || data.state || "",
+      country: data.country || "Brasil",
+    };
   };
+
+  try {
+    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`, {
+      method: "GET",
+      cache: "no-store",
+      headers: {
+        Accept: "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error("Nao foi possivel consultar o CEP no momento.");
+    }
+
+    const data = await response.json().catch(() => ({}));
+    return mapCepResponse(data);
+  } catch (_error) {
+    const data = await apiFetch(`/address/cep/${cep}`, { cache: "no-store" });
+    return mapCepResponse(data);
+  }
 }
 
 function bindManualAddressField(field) {
@@ -2646,7 +2655,8 @@ function initClientAddressAssist(form) {
 
   zipField.addEventListener("blur", () => {
     const cep = normalizeZipCode(zipField.value);
-    if (cep.length === 8 && ![stateField, cityField, neighborhoodField, addressField].some((field) => String(field?.value || "").trim())) {
+    if (cep.length === 8) {
+      clearTimeout(lookupTimer);
       applyAddressLookup(false);
     }
   });
