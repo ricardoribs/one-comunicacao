@@ -6,10 +6,8 @@ Plataforma full stack para agencia de marketing digital, integrada sobre o HTML 
 
 - `frontend/`
   - `index.html`: site institucional
-  - `area-cliente.html`: portal do cliente
   - `painel-interno.html`: painel administrativo e interno
   - `assets/js/index-app.js`
-  - `assets/js/client-app.js`
   - `assets/js/admin-app.js`
 - `backend/`
   - `src/routes`, `src/controllers`, `src/services`, `src/models`, `src/middlewares`
@@ -73,7 +71,6 @@ npm run dev
 7. Acesse:
 
 - `http://localhost:3000/`
-- `http://localhost:3000/area-cliente.html`
 - `http://localhost:3000/painel-interno.html`
 
 ## Bootstrap seguro do primeiro admin

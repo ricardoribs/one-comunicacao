@@ -106,7 +106,7 @@ Responsável por:
 
 Usa principalmente:
 
-- Área do Cliente
+- acompanhamento conduzido pela equipe interna; não há portal público ativo
 
 ## 3. Rotina recomendada do time comercial
 

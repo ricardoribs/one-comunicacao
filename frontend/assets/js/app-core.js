@@ -32,10 +32,6 @@
       return "/painel-interno.html";
     }
 
-    if (currentPath.includes("area-cliente")) {
-      return "/area-cliente.html";
-    }
-
     return "/";
   }
 

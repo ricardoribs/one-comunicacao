@@ -44,8 +44,8 @@ Este documento resume o papel de cada perfil, os limites de acesso e as principa
 
 ### `client` (Cliente)
 
-- Acessa somente a Área do Cliente.
-- Consulta dashboard, campanhas, relatórios, faturas, cobranças e mensagens do próprio cliente.
+- Perfil legado, sem portal público ativo.
+- O atendimento ocorre pela operação interna da ONE conforme o escopo contratado.
 - Não acessa o painel interno.
 - Não altera registros internos da operação.
 

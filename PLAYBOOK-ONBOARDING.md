@@ -21,12 +21,6 @@ Use para operar tarefas, CRM, campanhas, produção, analytics e financeiro:
 
 - `painel-interno.html`
 
-### Área do Cliente
-
-Use apenas se seu perfil for `client`:
-
-- `area-cliente.html`
-
 ## 3. O que cada perfil faz
 
 ### `admin`
@@ -109,7 +103,7 @@ Foco inicial:
 
 Módulo de entrada:
 
-- Área do Cliente
+- sem portal público ativo; o atendimento é conduzido pela equipe ONE
 
 ## 4. O que fazer nos primeiros 15 minutos
 

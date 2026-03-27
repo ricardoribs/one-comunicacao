@@ -247,10 +247,6 @@ app.get('/painel-interno.html', (req, res) => {
   sendHtmlPage(res, 'painel-interno.html');
 });
 
-app.get('/area-cliente.html', (req, res) => {
-  sendHtmlPage(res, 'area-cliente.html');
-});
-
 app.get('/politica-de-privacidade.html', (req, res) => {
   sendHtmlPage(res, 'politica-de-privacidade.html');
 });
