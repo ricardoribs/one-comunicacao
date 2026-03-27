@@ -38,6 +38,9 @@ const baseSelect = `
   LEFT JOIN clients c ON c.id = u.client_id
 `;
 
+const INTERNAL_ROLE_FILTER = "LOWER(u.role) IN ('admin', 'gestor', 'designer', 'comercial', 'dev')";
+const ACTIVE_INTERNAL_FILTER = 'COALESCE(u.is_active, true) = true';
+
 async function findByEmail(email, executor = pool) {
   const { rows } = await getExecutor(executor).query(`${baseSelect} WHERE LOWER(u.email) = LOWER($1)`, [email]);
   return rows[0] || null;
@@ -55,19 +58,46 @@ async function list(query = {}) {
   return rows;
 }
 
-async function listActiveInternalTeam() {
+async function listActiveInternalTeam(actor = null) {
+  if (actor?.role === 'client' && actor.client_id) {
+    const { rows } = await pool.query(
+      `SELECT DISTINCT
+         u.id,
+         u.name,
+         u.role,
+         u.is_active,
+         u.last_login_at
+       FROM users u
+       INNER JOIN clients c ON c.id = $1
+       WHERE ${INTERNAL_ROLE_FILTER}
+         AND ${ACTIVE_INTERNAL_FILTER}
+         AND (
+           u.id = c.manager_id
+           OR u.client_id = c.id
+         )
+       ORDER BY u.role, u.name`,
+      [actor.client_id]
+    );
+    return rows;
+  }
+
   const { rows } = await pool.query(
-    `SELECT id, name, role, is_active, last_login_at
-     FROM users
-     WHERE LOWER(role) IN ('admin', 'gestor', 'designer', 'comercial', 'dev')
-       AND COALESCE(is_active, true) = true
-     ORDER BY role, name`
+    `SELECT
+       u.id,
+       u.name,
+       u.role,
+       u.is_active,
+       u.last_login_at
+     FROM users u
+     WHERE ${INTERNAL_ROLE_FILTER}
+       AND ${ACTIVE_INTERNAL_FILTER}
+     ORDER BY u.role, u.name`
   );
   return rows;
 }
 
-async function listAssignableInternalUsers() {
-  return listActiveInternalTeam();
+async function listAssignableInternalUsers(actor = null) {
+  return listActiveInternalTeam(actor);
 }
 
 async function create(data, executor = pool) {

@@ -153,6 +153,54 @@ test(
   }
 );
 
+test('dashboard do cliente limita a equipe ao gerente e usuarios vinculados ao proprio cliente', { concurrency: false }, async () => {
+  const suffix = Date.now() + 10;
+  const gestor = await createUser({
+    name: `Gestor Equipe ${suffix}`,
+    email: `gestor.equipe.${suffix}@one.test`,
+    role: 'gestor',
+  });
+  const designerVinculado = await createUser({
+    name: `Designer Vinculado ${suffix}`,
+    email: `designer.vinculado.${suffix}@one.test`,
+    role: 'designer',
+  });
+  const designerExterno = await createUser({
+    name: `Designer Externo ${suffix}`,
+    email: `designer.externo.${suffix}@one.test`,
+    role: 'designer',
+  });
+
+  const clientAId = await createClient(`Cliente Equipe A ${suffix}`, 'Empresa Equipe A', gestor.id);
+  const clientBId = await createClient(`Cliente Equipe B ${suffix}`, 'Empresa Equipe B', gestor.id);
+
+  await userModel.update(designerVinculado.id, { client_id: clientAId });
+  await userModel.update(designerExterno.id, { client_id: clientBId });
+
+  const clientUser = await createUser({
+    name: `Cliente Equipe ${suffix}`,
+    email: `cliente.equipe.${suffix}@one.test`,
+    role: 'client',
+    clientId: clientAId,
+  });
+
+  const auth = await login(clientUser.email);
+  const response = await request(app).get('/api/dashboard').set('Authorization', `Bearer ${auth.body.accessToken}`);
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.mode, 'client');
+
+  const teamIds = response.body.team.map((user) => user.id).sort((left, right) => left - right);
+  assert.deepEqual(teamIds, [designerVinculado.id, gestor.id].sort((left, right) => left - right));
+  assert.equal(response.body.team.some((user) => user.id === designerExterno.id), false);
+
+  await userModel.remove(clientUser.id);
+  await userModel.remove(designerExterno.id);
+  await userModel.remove(designerVinculado.id);
+  await userModel.remove(gestor.id);
+  await pool.query('DELETE FROM clients');
+});
+
 test('dashboard interno do gestor aplica widgets e sanitizacao por capacidade', { concurrency: false }, async () => {
   const suffix = Date.now() + 1;
   const gestor = await createUser({
@@ -200,6 +248,55 @@ test('dashboard interno do gestor aplica widgets e sanitizacao por capacidade', 
   await pool.query('DELETE FROM campaigns');
   await userModel.remove(gestor.id);
   await pool.query('DELETE FROM clients');
+});
+
+test('equipe interna lista apenas usuarios internos ativos em /users/team e /users/assignable', { concurrency: false }, async () => {
+  const suffix = Date.now() + 11;
+  const gestor = await createUser({
+    name: `Gestor Time ${suffix}`,
+    email: `gestor.time.${suffix}@one.test`,
+    role: 'gestor',
+  });
+  const designerAtivo = await createUser({
+    name: `Designer Ativo ${suffix}`,
+    email: `designer.ativo.${suffix}@one.test`,
+    role: 'designer',
+  });
+  const designerInativo = await createUser({
+    name: `Designer Inativo ${suffix}`,
+    email: `designer.inativo.${suffix}@one.test`,
+    role: 'designer',
+  });
+  const clientUser = await createUser({
+    name: `Cliente Interno ${suffix}`,
+    email: `cliente.interno.${suffix}@one.test`,
+    role: 'client',
+  });
+
+  await userModel.update(designerInativo.id, { is_active: false });
+
+  const auth = await login(gestor.email);
+  const [teamResponse, assignableResponse] = await Promise.all([
+    request(app).get('/api/users/team').set('Authorization', `Bearer ${auth.body.accessToken}`),
+    request(app).get('/api/users/assignable').set('Authorization', `Bearer ${auth.body.accessToken}`),
+  ]);
+
+  assert.equal(teamResponse.status, 200);
+  assert.equal(assignableResponse.status, 200);
+
+  const expectedIds = [designerAtivo.id, gestor.id].sort((left, right) => left - right);
+  const teamIds = teamResponse.body.map((user) => user.id).sort((left, right) => left - right);
+  const assignableIds = assignableResponse.body.map((user) => user.id).sort((left, right) => left - right);
+
+  assert.deepEqual(teamIds, expectedIds);
+  assert.deepEqual(assignableIds, expectedIds);
+  assert.equal(teamResponse.body.some((user) => user.id === designerInativo.id), false);
+  assert.equal(teamResponse.body.some((user) => user.id === clientUser.id), false);
+
+  await userModel.remove(clientUser.id);
+  await userModel.remove(designerInativo.id);
+  await userModel.remove(designerAtivo.id);
+  await userModel.remove(gestor.id);
 });
 
 test('gestor nao cria cobranca para lead fora do proprio tenant operacional', { concurrency: false }, async () => {

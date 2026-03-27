@@ -70,7 +70,7 @@ async function getClientDashboard(user) {
     invoiceModel.list(user),
     messageModel.listForUser(user),
     taskModel.list(user),
-    userModel.listActiveInternalTeam(),
+    userModel.listActiveInternalTeam(user),
   ]);
 
   const campaignsCount = Number(campaignCountResult.rows[0]?.campaigns_count || 0);
@@ -164,7 +164,7 @@ async function getInternalDashboard(user) {
             INNER JOIN clients c ON c.id = cam.client_id
             __TENANT_SCOPE__`,
     }),
-    hasCapability(user, 'view_dashboard_team') ? userModel.listActiveInternalTeam() : Promise.resolve([]),
+    hasCapability(user, 'view_dashboard_team') ? userModel.listActiveInternalTeam(user) : Promise.resolve([]),
   ]);
 
   return {
