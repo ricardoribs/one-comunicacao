@@ -20,6 +20,12 @@ exports.listInternalTeam = asyncHandler(async (_req, res) => {
   res.json(users);
 });
 
+exports.listAssignableInternal = asyncHandler(async (_req, res) => {
+  const users = await userModel.listAssignableInternalUsers();
+  res.setHeader('Cache-Control', 'no-store');
+  res.json(users);
+});
+
 exports.create = asyncHandler(async (req, res) => {
   await authService.register(req.body);
   const user = await userModel.findByEmail(req.body.email);

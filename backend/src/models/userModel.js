@@ -66,6 +66,10 @@ async function listActiveInternalTeam() {
   return rows;
 }
 
+async function listAssignableInternalUsers() {
+  return listActiveInternalTeam();
+}
+
 async function create(data, executor = pool) {
   const { rows } = await getExecutor(executor).query(
     `INSERT INTO users (client_id, name, email, password, role, is_active, email_verified_at)
@@ -322,6 +326,7 @@ module.exports = {
   findById,
   list,
   listActiveInternalTeam,
+  listAssignableInternalUsers,
   create,
   update,
   remove,
