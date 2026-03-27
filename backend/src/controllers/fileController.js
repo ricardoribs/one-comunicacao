@@ -22,7 +22,7 @@ exports.upload = asyncHandler(async (req, res) => {
       uploaded_by: req.user.id,
       original_name: req.file.originalname,
       stored_name: uploaded.storedName,
-      mime_type: req.file.mimetype,
+      mime_type: uploaded.mimeType || req.file.mimetype,
       size: req.file.size,
       url: uploaded.url,
     },

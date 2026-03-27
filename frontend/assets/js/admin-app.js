@@ -2798,6 +2798,9 @@ async function fetchCepSuggestion(cep) {
   };
 
   try {
+    const data = await apiFetch(`/address/cep/${cep}`, { cache: "no-store" });
+    return mapCepResponse(data);
+  } catch (_error) {
     const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`, {
       method: "GET",
       cache: "no-store",
@@ -2811,9 +2814,6 @@ async function fetchCepSuggestion(cep) {
     }
 
     const data = await response.json().catch(() => ({}));
-    return mapCepResponse(data);
-  } catch (_error) {
-    const data = await apiFetch(`/address/cep/${cep}`, { cache: "no-store" });
     return mapCepResponse(data);
   }
 }
@@ -3068,7 +3068,7 @@ function openModal(type, id = null) {
         <div class="field"><label>Cliente</label><select name="client_id">${clientOptions(material.client_id)}</select></div>
         <div class="field"><label>Campanha</label><select name="campaign_id"><option value="">Nenhuma</option>${campaignOptions(material.client_id, material.campaign_id)}</select></div>
         <div class="field"><label>Status</label><select name="status"><option ${material.status === "Pendente" ? "selected" : ""}>Pendente</option><option ${material.status === "Aprovado" ? "selected" : ""}>Aprovado</option><option ${material.status === "Revisao" ? "selected" : ""}>Revisão</option></select></div>
-        <div class="field form-full"><label>Arquivo</label><input type="file" name="file"></div>
+        <div class="field form-full"><label>Arquivo</label><input type="file" name="file" accept=".jpg,.jpeg,.png,.webp,.gif,.heic,.heif,.pdf,.zip,.docx,.xlsx,.mp4,.mov,.webm"><div class="field-help">Formatos aceitos: imagem, PDF, ZIP, DOCX, XLSX, MP4, MOV e WEBM.</div></div>
       `,
       material.id ? "Atualizar" : "Salvar"
     );

@@ -303,6 +303,40 @@ test('equipe interna lista apenas usuarios internos ativos em /users/team e /use
   await userModel.remove(gestor.id);
 });
 
+test('gestor cria tarefa para cliente do proprio escopo sem erro interno', { concurrency: false }, async () => {
+  const suffix = Date.now() + 13;
+  const gestor = await createUser({
+    name: `Gestor Tarefa ${suffix}`,
+    email: `gestor.tarefa.${suffix}@one.test`,
+    role: 'gestor',
+  });
+
+  const clientId = await createClient(`Cliente Tarefa ${suffix}`, `Empresa Tarefa ${suffix}`, gestor.id);
+  const auth = await login(gestor.email);
+
+  const response = await request(app)
+    .post('/api/tasks')
+    .set('Authorization', `Bearer ${auth.body.accessToken}`)
+    .send({
+      client_id: clientId,
+      assigned_to: gestor.id,
+      status: 'Backlog',
+      type: 'design',
+      column_name: 'todo',
+      title: 'Tarefa de validacao',
+      description: 'Criada por gestor no proprio escopo operacional.',
+    });
+
+  assert.equal(response.status, 201);
+  assert.equal(response.body.client_id, clientId);
+  assert.equal(response.body.assigned_to, gestor.id);
+  assert.equal(response.body.title, 'Tarefa de validacao');
+
+  await pool.query('DELETE FROM tasks');
+  await userModel.remove(gestor.id);
+  await pool.query('DELETE FROM clients');
+});
+
 test('gestor atualiza manual da marca e designer relacionado visualiza o cliente no escopo operacional', { concurrency: false }, async () => {
   const suffix = Date.now() + 12;
   const gestor = await createUser({
