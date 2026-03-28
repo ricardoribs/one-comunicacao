@@ -17,3 +17,7 @@ exports.create = asyncHandler(async (req, res) => {
 
   res.status(201).json(await messageModel.create(payload, req.user));
 });
+
+exports.markRead = asyncHandler(async (req, res) => {
+  res.json(await messageModel.markRead(req.user, req.body || {}));
+});

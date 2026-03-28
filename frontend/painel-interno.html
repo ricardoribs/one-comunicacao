@@ -165,6 +165,29 @@ body.sidebar-open #sidebar-backdrop{display:block;opacity:1}
 .topbar-actions > *{min-width:0}
 .page-body{flex:1;padding:var(--space-8);overflow-x:hidden}
 
+/* NOTIFICATIONS */
+.notification-shell{position:relative;display:flex;align-items:center;flex:0 0 auto}
+.notification-trigger{position:relative;display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border:1px solid var(--border);background:var(--white);color:var(--text);cursor:pointer;transition:var(--tr);border-radius:2px}
+.notification-trigger:hover{border-color:rgba(232,52,105,.32);color:var(--pink)}
+.notification-trigger svg{width:18px;height:18px;fill:currentColor}
+.notification-badge{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center;background:var(--pink);color:#fff;font-size:10px;font-weight:700;letter-spacing:.04em;border-radius:999px;box-shadow:0 8px 16px rgba(232,52,105,.24)}
+.notification-panel{position:absolute;top:calc(100% + 10px);right:0;width:min(360px,calc(100vw - 32px));background:var(--white);border:1px solid var(--border);box-shadow:0 24px 40px rgba(13,13,15,.14);display:none;flex-direction:column;max-height:420px;overflow:hidden;z-index:140;border-radius:2px}
+.notification-shell.open .notification-panel{display:flex}
+.notification-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3);padding:var(--space-4);border-bottom:1px solid var(--border);background:#fcfbf9}
+.notification-panel-head strong{display:block;font-size:var(--text-sm);font-weight:700;color:var(--text)}
+.notification-panel-head span{display:block;margin-top:2px;font-size:var(--text-xs);color:var(--muted)}
+.notification-list{display:flex;flex-direction:column;overflow-y:auto}
+.notification-item{width:100%;display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-4);background:var(--white);border:none;border-bottom:1px solid var(--border);text-align:left;cursor:pointer;transition:background var(--tr)}
+.notification-item:last-child{border-bottom:none}
+.notification-item:hover{background:var(--gray)}
+.notification-item.is-unread{background:#fff6f9}
+.notification-item-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3)}
+.notification-item-title{font-size:var(--text-sm);font-weight:600;line-height:1.45;color:var(--text)}
+.notification-item-meta{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);font-size:var(--text-xs);color:var(--muted)}
+.notification-status{display:inline-flex;align-items:center;justify-content:center;min-height:20px;padding:0 var(--space-2);background:var(--pink-light);color:var(--pink);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:999px}
+.notification-empty{display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-6);font-size:var(--text-sm);color:var(--muted)}
+.notification-empty strong{font-size:var(--text-sm);color:var(--text)}
+
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:var(--space-2);padding:var(--space-3) var(--space-4);font-size:var(--text-sm);font-weight:500;cursor:pointer;border:none;transition:var(--tr);white-space:nowrap;letter-spacing:.01em;border-radius:var(--radius-0)}
 .btn-pink{background:var(--pink);color:#fff}
@@ -516,6 +539,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .topbar-title{font-size:var(--text-lg)}
   .topbar-actions{width:100%;justify-content:flex-start}
   .topbar-actions > .text-meta{width:100%;order:-1}
+  .notification-panel{right:0;left:auto;width:min(340px,calc(100vw - 24px))}
   .kpi-grid{grid-template-columns:1fr 1fr}
   .three-col,.access-grid,.fin-grid,.form-grid{grid-template-columns:1fr}
   .pipeline{grid-template-columns:repeat(5,minmax(240px,240px))}
@@ -568,6 +592,9 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .kpi-grid{grid-template-columns:1fr}
   .topbar{align-items:flex-start;padding:var(--space-4) var(--space-4) var(--space-4) 72px}
   .topbar-actions{width:100%;justify-content:flex-start}
+  .notification-shell{width:100%}
+  .notification-trigger{width:100%;justify-content:center}
+  .notification-panel{left:0;right:auto;width:100%}
   .topbar-actions > .btn,
   .topbar-actions > .btn-select,
   .topbar-actions > select{width:100%;justify-content:center}

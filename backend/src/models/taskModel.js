@@ -54,6 +54,19 @@ async function list(user, query = {}) {
   return rows;
 }
 
+async function findById(id, user = null) {
+  const { rows } = await tenantDb.query(user, {
+    table: 'tasks',
+    scopeConfig: taskScopeConfig('t'),
+    prefix: 'AND',
+    startIndex: 2,
+    sql: selectSql('WHERE t.id = $1 __TENANT_SCOPE__'),
+    params: [id],
+  });
+
+  return rows[0] || null;
+}
+
 async function create(data, user = null) {
   const { rows } = await tenantDb.query(user || { role: 'admin' }, {
     table: 'tasks',
@@ -72,15 +85,7 @@ async function create(data, user = null) {
       data.title,
     ],
   });
-  const { rows: createdRows } = await tenantDb.query(user, {
-    table: 'tasks',
-    scopeConfig: taskScopeConfig('t'),
-    prefix: 'AND',
-    startIndex: 2,
-    sql: selectSql('WHERE t.id = $1 __TENANT_SCOPE__'),
-    params: [rows[0].id],
-  });
-  return createdRows[0] || null;
+  return findById(rows[0].id, user);
 }
 
 async function update(id, data, user = null) {
@@ -122,15 +127,7 @@ async function update(id, data, user = null) {
   if (!rows[0]) {
     return null;
   }
-  const { rows: updatedRows } = await tenantDb.query(user, {
-    table: 'tasks',
-    scopeConfig: taskScopeConfig('t'),
-    prefix: 'AND',
-    startIndex: 2,
-    sql: selectSql('WHERE t.id = $1 __TENANT_SCOPE__'),
-    params: [rows[0].id],
-  });
-  return updatedRows[0] || null;
+  return findById(rows[0].id, user);
 }
 
 async function remove(id, user = null) {
@@ -152,6 +149,7 @@ async function remove(id, user = null) {
 
 module.exports = {
   list,
+  findById,
   create,
   update,
   remove,

@@ -178,6 +178,15 @@ const ROLE_DATA_ACCESS = {
 };
 
 const NON_BLOCKING_MODULE_FAILURES = new Set(["arquivos", "integrações"]);
+const NOTIFICATION_CONTEXT_TYPE = "task_assignment";
+const NOTIFICATION_POLL_MS = 30000;
+const notificationRuntime = {
+  pollHandle: null,
+  bootstrapped: false,
+  seenIds: new Set(),
+  syncingRead: false,
+  open: false,
+};
 
 const TASK_TYPE_LABELS = {
   geral: "Geral",
@@ -209,6 +218,7 @@ const state = {
   reports: [],
   materials: [],
   files: [],
+  notifications: [],
   checklist: null,
   activePage: "home",
   filters: {
@@ -848,6 +858,272 @@ function showToast(message) {
   setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
+function sortNotifications(items = []) {
+  return [...items].sort((left, right) => new Date(right.created_at || 0).getTime() - new Date(left.created_at || 0).getTime());
+}
+
+function isUnreadNotification(item) {
+  return Boolean(item) && !item.read_at && Number(item.receiver_id || 0) === Number(state.session?.user?.id || 0);
+}
+
+function formatNotificationTime(value) {
+  const date = value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const diffMs = date.getTime() - Date.now();
+  const diffMinutes = Math.round(diffMs / 60000);
+  const absoluteMinutes = Math.abs(diffMinutes);
+  const formatter = new Intl.RelativeTimeFormat("pt-BR", { numeric: "auto" });
+
+  if (absoluteMinutes < 60) {
+    return formatter.format(diffMinutes, "minute");
+  }
+
+  const diffHours = Math.round(diffMinutes / 60);
+  if (Math.abs(diffHours) < 24) {
+    return formatter.format(diffHours, "hour");
+  }
+
+  const diffDays = Math.round(diffHours / 24);
+  if (Math.abs(diffDays) < 7) {
+    return formatter.format(diffDays, "day");
+  }
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(date);
+}
+
+function buildNotificationPanelHtml() {
+  const notifications = sortNotifications(state.notifications).slice(0, 12);
+  const unreadCount = notifications.filter(isUnreadNotification).length;
+  const itemsHtml = notifications.length
+    ? notifications
+        .map((item) => {
+          const unreadClass = isUnreadNotification(item) ? " is-unread" : "";
+          const action = item.context_type === NOTIFICATION_CONTEXT_TYPE && item.context_id ? "Abrir tarefa" : "Abrir";
+
+          return `
+            <button type="button" class="notification-item${unreadClass}" data-notification-item="1" data-notification-id="${item.id}" data-notification-context="${escapeHtml(
+              item.context_type || ""
+            )}" data-notification-context-id="${item.context_id || ""}">
+              <div class="notification-item-head">
+                <strong class="notification-item-title">${escapeHtml(item.content || "Nova notificação")}</strong>
+                ${isUnreadNotification(item) ? '<span class="notification-status">Novo</span>' : ""}
+              </div>
+              <div class="notification-item-meta">
+                <span>${escapeHtml(formatNotificationTime(item.created_at))}</span>
+                <span>${action}</span>
+              </div>
+            </button>
+          `;
+        })
+        .join("")
+    : `
+        <div class="notification-empty">
+          <strong>Nenhuma notificação</strong>
+          <span>As novas atribuições de tarefa aparecerão aqui.</span>
+        </div>
+      `;
+
+  return `
+    <button type="button" class="notification-trigger" data-notification-toggle="1" aria-label="Abrir notificações" aria-expanded="${
+      notificationRuntime.open ? "true" : "false"
+    }">
+      <span class="notification-trigger-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+          <path d="M12 3a5 5 0 0 0-5 5v2.6c0 .7-.2 1.4-.6 2l-1.2 1.9A1 1 0 0 0 6 16h12a1 1 0 0 0 .8-1.5l-1.2-1.9a3.8 3.8 0 0 1-.6-2V8a5 5 0 0 0-5-5Zm0 18a2.5 2.5 0 0 0 2.3-1.5h-4.6A2.5 2.5 0 0 0 12 21Z"></path>
+        </svg>
+      </span>
+      ${unreadCount ? `<span class="notification-badge">${unreadCount > 9 ? "9+" : unreadCount}</span>` : ""}
+    </button>
+    <div class="notification-panel" role="dialog" aria-label="Notificações">
+      <div class="notification-panel-head">
+        <div>
+          <strong>Notificações</strong>
+          <span>${unreadCount ? `${unreadCount} nova${unreadCount > 1 ? "s" : ""}` : "Tudo em dia"}</span>
+        </div>
+      </div>
+      <div class="notification-list">${itemsHtml}</div>
+    </div>
+  `;
+}
+
+function renderNotifications() {
+  document.querySelectorAll("[data-notification-shell]").forEach((shell) => {
+    shell.classList.toggle("open", notificationRuntime.open);
+    shell.innerHTML = buildNotificationPanelHtml();
+  });
+}
+
+function closeNotifications() {
+  if (!notificationRuntime.open) {
+    return;
+  }
+
+  notificationRuntime.open = false;
+  renderNotifications();
+}
+
+async function markNotificationsRead() {
+  const unreadIds = state.notifications.filter(isUnreadNotification).map((item) => item.id);
+  if (!unreadIds.length || notificationRuntime.syncingRead) {
+    return;
+  }
+
+  notificationRuntime.syncingRead = true;
+
+  try {
+    await apiFetch("/messages/read", {
+      method: "PATCH",
+      body: JSON.stringify({
+        ids: unreadIds,
+        context_type: NOTIFICATION_CONTEXT_TYPE,
+      }),
+    });
+
+    const readAt = new Date().toISOString();
+    state.notifications = state.notifications.map((item) =>
+      unreadIds.includes(item.id)
+        ? {
+            ...item,
+            read_at: item.read_at || readAt,
+          }
+        : item
+    );
+    renderNotifications();
+  } catch (error) {
+    console.warn("[notifications] Falha ao marcar notificações como lidas:", error);
+  } finally {
+    notificationRuntime.syncingRead = false;
+  }
+}
+
+function ensureNotificationUi() {
+  document.querySelectorAll(".topbar-actions").forEach((actions) => {
+    let shell = actions.querySelector("[data-notification-shell]");
+    if (!shell) {
+      shell = document.createElement("div");
+      shell.className = "notification-shell";
+      shell.dataset.notificationShell = "1";
+      actions.prepend(shell);
+    }
+
+    if (shell.dataset.notificationBound === "1") {
+      return;
+    }
+
+    shell.addEventListener("click", async (event) => {
+      const toggle = event.target.closest("[data-notification-toggle]");
+      if (toggle) {
+        event.preventDefault();
+        event.stopPropagation();
+        notificationRuntime.open = !notificationRuntime.open;
+        renderNotifications();
+        if (notificationRuntime.open) {
+          await markNotificationsRead();
+        }
+        return;
+      }
+
+      const item = event.target.closest("[data-notification-item]");
+      if (!item) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      closeNotifications();
+
+      if (item.dataset.notificationContext === NOTIFICATION_CONTEXT_TYPE) {
+        goTo("kanban");
+      }
+    });
+
+    shell.dataset.notificationBound = "1";
+  });
+
+  if (document.body.dataset.notificationGlobalBound !== "1") {
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest("[data-notification-shell]")) {
+        closeNotifications();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeNotifications();
+      }
+    });
+
+    document.body.dataset.notificationGlobalBound = "1";
+  }
+
+  renderNotifications();
+}
+
+async function refreshNotifications({ silent = false, suppressErrors = false } = {}) {
+  if (!state.session?.user?.id) {
+    return [];
+  }
+
+  try {
+    const notifications = await apiFetch(`/messages?context_type=${encodeURIComponent(NOTIFICATION_CONTEXT_TYPE)}&limit=20`, {
+      cache: "no-store",
+    });
+    const normalized = sortNotifications(toArray(notifications));
+    const newUnread = notificationRuntime.bootstrapped
+      ? normalized.filter((item) => isUnreadNotification(item) && !notificationRuntime.seenIds.has(item.id))
+      : [];
+
+    state.notifications = normalized;
+    normalized.forEach((item) => notificationRuntime.seenIds.add(item.id));
+    notificationRuntime.bootstrapped = true;
+    ensureNotificationUi();
+
+    if (!silent && newUnread.length) {
+      showToast(newUnread[0].content || "Você recebeu uma nova notificação.");
+    }
+
+    return normalized;
+  } catch (error) {
+    console.warn("[notifications] Falha ao carregar notificações:", error);
+    if (!suppressErrors) {
+      showToast("Não foi possível atualizar as notificações agora.");
+    }
+    return [];
+  }
+}
+
+function stopNotificationPolling() {
+  if (notificationRuntime.pollHandle) {
+    clearInterval(notificationRuntime.pollHandle);
+    notificationRuntime.pollHandle = null;
+  }
+
+  notificationRuntime.bootstrapped = false;
+  notificationRuntime.seenIds = new Set();
+  notificationRuntime.syncingRead = false;
+  notificationRuntime.open = false;
+  state.notifications = [];
+  renderNotifications();
+}
+
+function startNotificationPolling() {
+  stopNotificationPolling();
+
+  notificationRuntime.pollHandle = window.setInterval(() => {
+    if (document.hidden) {
+      return;
+    }
+
+    refreshNotifications({ suppressErrors: true }).catch(() => {});
+  }, NOTIFICATION_POLL_MS);
+}
+
 function escapeInlineMessage(value) {
   return String(value || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
@@ -1055,6 +1331,8 @@ function syncNavigation() {
   document.querySelectorAll(".app-screen").forEach((screen) => {
     screen.classList.toggle("active", screen.id === `page-${state.activePage}`);
   });
+
+  ensureNotificationUi();
 }
 
 function goTo(page) {
@@ -2817,10 +3095,13 @@ async function initializeApp() {
   bindSidebarInteractions();
   bindLegacyInlineHandlers();
   await refreshData();
+  await refreshNotifications({ silent: true, suppressErrors: true });
+  startNotificationPolling();
 }
 
 function doLogout() {
   closeSidebar();
+  stopNotificationPolling();
   APP.logout({ reason: "manual" }).finally(() => {
     clearSession();
     window.location.href = "/";
