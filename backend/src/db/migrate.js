@@ -208,6 +208,58 @@ async function reconcileSchemaDrift(databaseConfig) {
         USING (app.can_access_client(client_id))
         WITH CHECK (app.can_access_client(client_id));
 
+      CREATE TABLE IF NOT EXISTS materials (
+        id SERIAL PRIMARY KEY,
+        client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+        campaign_id INTEGER REFERENCES campaigns(id) ON DELETE SET NULL,
+        uploaded_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        title VARCHAR(160) NOT NULL,
+        filename VARCHAR(255),
+        url TEXT,
+        status VARCHAR(30) NOT NULL,
+        feedback TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+
+      ALTER TABLE materials
+        ADD COLUMN IF NOT EXISTS campaign_id INTEGER REFERENCES campaigns(id) ON DELETE SET NULL,
+        ADD COLUMN IF NOT EXISTS uploaded_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        ADD COLUMN IF NOT EXISTS filename VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS url TEXT,
+        ADD COLUMN IF NOT EXISTS status VARCHAR(30) NOT NULL DEFAULT 'Rascunho',
+        ADD COLUMN IF NOT EXISTS feedback TEXT,
+        ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT NOW();
+
+      CREATE INDEX IF NOT EXISTS idx_materials_client_id_created_at ON materials(client_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_materials_campaign_id ON materials(campaign_id);
+      CREATE INDEX IF NOT EXISTS idx_materials_uploaded_by_created_at ON materials(uploaded_by, created_at DESC);
+
+      CREATE TABLE IF NOT EXISTS files (
+        id SERIAL PRIMARY KEY,
+        client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
+        uploaded_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        original_name VARCHAR(255) NOT NULL,
+        stored_name VARCHAR(255) NOT NULL,
+        mime_type VARCHAR(120),
+        size INTEGER NOT NULL DEFAULT 0,
+        url TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+
+      ALTER TABLE files
+        ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
+        ADD COLUMN IF NOT EXISTS uploaded_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        ADD COLUMN IF NOT EXISTS original_name VARCHAR(255) NOT NULL DEFAULT 'arquivo',
+        ADD COLUMN IF NOT EXISTS stored_name VARCHAR(255) NOT NULL DEFAULT 'arquivo',
+        ADD COLUMN IF NOT EXISTS mime_type VARCHAR(120),
+        ADD COLUMN IF NOT EXISTS size INTEGER NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS url TEXT NOT NULL DEFAULT '',
+        ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT NOW();
+
+      CREATE INDEX IF NOT EXISTS idx_files_client_id_created_at ON files(client_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_files_uploaded_by_created_at ON files(uploaded_by, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_files_stored_name ON files(stored_name);
+
       CREATE TABLE IF NOT EXISTS client_integrations (
         id SERIAL PRIMARY KEY,
         client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
@@ -274,6 +326,23 @@ async function reconcileSchemaDrift(databaseConfig) {
       CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
       CREATE INDEX IF NOT EXISTS idx_notifications_user_read_at ON notifications(user_id, read_at, created_at DESC);
 
+      CREATE OR REPLACE FUNCTION app.can_access_upload_row(target_client_id INTEGER, actor_user_id INTEGER)
+      RETURNS BOOLEAN
+      LANGUAGE SQL
+      STABLE
+      AS $$
+        SELECT
+          app.is_admin()
+          OR (app.is_client() AND target_client_id = app.current_client_id())
+          OR (
+            app.is_internal()
+            AND (
+              actor_user_id = app.current_user_id()
+              OR app.can_access_client(target_client_id)
+            )
+          );
+      $$;
+
       CREATE OR REPLACE FUNCTION app.can_access_task(task_client_id INTEGER, assigned_user_id INTEGER, created_user_id INTEGER)
       RETURNS BOOLEAN
       LANGUAGE SQL
@@ -297,6 +366,22 @@ async function reconcileSchemaDrift(databaseConfig) {
       CREATE POLICY tasks_tenant_isolation ON tasks
         USING (app.can_access_task(client_id, assigned_to, created_by))
         WITH CHECK (app.can_access_task(client_id, assigned_to, created_by));
+
+      ALTER TABLE materials ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE materials FORCE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS materials_tenant_isolation ON materials;
+      CREATE POLICY materials_tenant_isolation ON materials
+        FOR ALL
+        USING (app.can_access_upload_row(client_id, uploaded_by))
+        WITH CHECK (app.can_access_upload_row(client_id, uploaded_by));
+
+      ALTER TABLE files ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE files FORCE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS files_tenant_isolation ON files;
+      CREATE POLICY files_tenant_isolation ON files
+        FOR ALL
+        USING (app.can_access_upload_row(client_id, uploaded_by))
+        WITH CHECK (app.can_access_upload_row(client_id, uploaded_by));
     `);
 
     console.log('Schema drift reconciliation concluida.');
