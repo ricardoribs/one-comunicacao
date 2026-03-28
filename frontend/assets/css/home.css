@@ -530,7 +530,9 @@ section[id] {
 .hero-media {
   display: grid;
   gap: 12px;
-  align-content: end;
+  align-content: start;
+  align-self: start;
+  padding-top: clamp(52px, 5vw, 72px);
 }
 
 .hero-video-shell,
@@ -1485,6 +1487,10 @@ section[id] {
   .contact-grid,
   .faq-layout {
     grid-template-columns: 1fr;
+  }
+
+  .hero-media {
+    padding-top: 0;
   }
 
   .services-grid,
