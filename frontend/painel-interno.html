@@ -494,19 +494,27 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-campanhas .table-wrap table th:nth-child(7),#page-campanhas .table-wrap table td:nth-child(7){width:8%}
 #page-campanhas .table-wrap table th:nth-child(8),#page-campanhas .table-wrap table td:nth-child(8){width:14%}
 
-#page-crm #crm-clientes .table-wrap table{min-width:1040px}
-#page-crm #crm-clientes .table-wrap table th:nth-child(1),#page-crm #crm-clientes .table-wrap table td:nth-child(1){width:24%}
-#page-crm #crm-clientes .table-wrap table th:nth-child(2),#page-crm #crm-clientes .table-wrap table td:nth-child(2){width:13%}
-#page-crm #crm-clientes .table-wrap table th:nth-child(3),#page-crm #crm-clientes .table-wrap table td:nth-child(3){width:16%}
-#page-crm #crm-clientes .table-wrap table th:nth-child(4),#page-crm #crm-clientes .table-wrap table td:nth-child(4){width:10%}
-#page-crm #crm-clientes .table-wrap table th:nth-child(5),#page-crm #crm-clientes .table-wrap table td:nth-child(5){width:9%}
-#page-crm #crm-clientes .table-wrap table th:nth-child(6),#page-crm #crm-clientes .table-wrap table td:nth-child(6){width:10%}
-#page-crm #crm-clientes .table-wrap table th:nth-child(7),#page-crm #crm-clientes .table-wrap table td:nth-child(7){width:18%}
+#page-crm #crm-clientes .table-wrap table{min-width:1180px;table-layout:auto}
+#page-crm #crm-clientes .table-wrap tbody td{vertical-align:top;padding-top:var(--space-4);padding-bottom:var(--space-4)}
+#page-crm #crm-clientes .table-wrap table th:nth-child(1),#page-crm #crm-clientes .table-wrap table td:nth-child(1){width:26%}
+#page-crm #crm-clientes .table-wrap table th:nth-child(2),#page-crm #crm-clientes .table-wrap table td:nth-child(2){width:15%}
+#page-crm #crm-clientes .table-wrap table th:nth-child(3),#page-crm #crm-clientes .table-wrap table td:nth-child(3){width:18%}
+#page-crm #crm-clientes .table-wrap table th:nth-child(4),#page-crm #crm-clientes .table-wrap table td:nth-child(4){width:11%}
+#page-crm #crm-clientes .table-wrap table th:nth-child(5),#page-crm #crm-clientes .table-wrap table td:nth-child(5){width:8%}
+#page-crm #crm-clientes .table-wrap table th:nth-child(6),#page-crm #crm-clientes .table-wrap table td:nth-child(6){width:12%}
+#page-crm #crm-clientes .table-wrap table th:nth-child(7),#page-crm #crm-clientes .table-wrap table td:nth-child(7){width:20%}
 #page-crm #crm-clientes .table-wrap table td:nth-child(5){text-align:left}
 #page-crm #crm-clientes .table-wrap table td:nth-child(6){text-align:right}
-#page-crm #crm-clientes .table-actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2)}
-#page-crm #crm-clientes .crm-plan-cell{gap:var(--space-2)}
+#page-crm #crm-clientes .crm-client-primary .cell-title{font-size:var(--text-sm);line-height:1.4}
+#page-crm #crm-clientes .crm-cell-muted,
+#page-crm #crm-clientes .crm-plan-cell,
+#page-crm #crm-clientes .crm-mrr-cell{gap:var(--space-2)}
+#page-crm #crm-clientes .crm-cell-copy{font-size:var(--text-sm);line-height:1.45;color:var(--text);white-space:normal;overflow:visible;text-overflow:clip}
 #page-crm #crm-clientes .crm-plan-cell .badge{width:max-content;max-width:100%}
+#page-crm #crm-clientes .crm-plan-cell .cell-sub{white-space:normal;line-height:1.45}
+#page-crm #crm-clientes .crm-mrr-cell .cell-sub{text-align:right}
+#page-crm #crm-clientes .crm-client-actions{display:flex;flex-wrap:nowrap;align-items:center;gap:var(--space-2);white-space:nowrap}
+#page-crm #crm-clientes .crm-client-actions .btn{flex:0 0 auto}
 
 #page-producao #prod-copy .table-wrap table,
 #page-producao #prod-lp .table-wrap table{min-width:960px}
