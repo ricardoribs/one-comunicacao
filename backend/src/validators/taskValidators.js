@@ -1,7 +1,7 @@
 const { z } = require('zod');
 
 const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/;
-const taskStatusEnum = z.enum(['Backlog', 'Em progresso', 'Em andamento', 'Concluido']);
+const taskStatusEnum = z.enum(['Backlog', 'A Fazer', 'Em progresso', 'Em andamento', 'Concluido', 'Concluído']);
 const taskTypeEnum = z.enum([
   'geral',
   'design',

@@ -1,7 +1,7 @@
 const { z } = require('zod');
 const { paginationQuerySchema } = require('./commonValidators');
 
-const contextTypeEnum = z.enum(['general', 'task_assignment', 'task', 'campaign', 'client', 'contact']);
+const contextTypeEnum = z.enum(['general', 'task_assignment', 'task_completed', 'task', 'campaign', 'client', 'contact']);
 
 exports.messageSchema = z.object({
   receiver_id: z.coerce.number().int().positive(),
