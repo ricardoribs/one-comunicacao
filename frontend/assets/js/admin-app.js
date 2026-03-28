@@ -2,8 +2,6 @@
 const APP = window.ONE_APP;
 const FORM = window.FormUtils || window.ONE_FORM;
 const INTERNAL_HANDOFF_KEY = "one_internal_handoff";
-const DAILY_CHECKLIST_STORAGE_KEY = "one_daily_checklist_v1";
-
 const ROLE_LABELS = {
   admin: "Admin",
   gestor: "Gestor",
@@ -179,39 +177,6 @@ const ROLE_DATA_ACCESS = {
   }
 };
 
-const DAILY_CHECKLIST_TEMPLATES = {
-  admin: [
-    { id: "briefing", label: "Receber e priorizar as demandas do dia" },
-    { id: "delegation", label: "Delegar responsáveis e destravar pendências" },
-    { id: "meetings", label: "Validar agenda de reuniões estratégicas" },
-    { id: "finance", label: "Conferir financeiro e rotinas administrativas" }
-  ],
-  gestor: [
-    { id: "direction", label: "Receber direcionamentos e organizar a fila do dia" },
-    { id: "follow_up", label: "Acompanhar entregas e repasses entre equipe e cliente" },
-    { id: "recordings", label: "Conferir agenda de gravações e demandas externas" },
-    { id: "approval", label: "Validar o que precisa sair para revisão ou postagem" }
-  ],
-  designer: [
-    { id: "briefing", label: "Revisar briefing, pauta, roteiro ou ideia aprovada" },
-    { id: "execution", label: "Executar captação, edição, design ou postagem do dia" },
-    { id: "quality", label: "Fazer checagem de qualidade antes de enviar" },
-    { id: "adjustments", label: "Aplicar ajustes e correções solicitados" }
-  ],
-  comercial: [
-    { id: "pipeline", label: "Revisar leads, follow-ups e oportunidades abertas" },
-    { id: "service", label: "Responder clientes e alinhar demandas comerciais" },
-    { id: "handoff", label: "Repassar prioridades para operação e produção" },
-    { id: "finance", label: "Acompanhar cobranças, faturas e pendências do dia" }
-  ],
-  dev: [
-    { id: "backlog", label: "Revisar backlog técnico e priorizar bloqueios" },
-    { id: "analytics", label: "Validar analytics, integrações e pontos de falha" },
-    { id: "support", label: "Destravar a operação em fluxos críticos" },
-    { id: "delivery", label: "Registrar andamento técnico no kanban" }
-  ]
-};
-
 const TASK_TYPE_LABELS = {
   geral: "Geral",
   design: "Design",
@@ -242,6 +207,7 @@ const state = {
   reports: [],
   materials: [],
   files: [],
+  checklist: null,
   activePage: "home",
   filters: {
     kanbanClient: "",
@@ -557,29 +523,6 @@ function loadInternalHandoff() {
 
 function clearInternalHandoff() {
   sessionStorage.removeItem(INTERNAL_HANDOFF_KEY);
-}
-
-function getTodayChecklistKey() {
-  const userId = state.session?.user?.id || "anon";
-  const role = state.session?.user?.role || "internal";
-  const dateKey = new Date().toISOString().slice(0, 10);
-  return `${DAILY_CHECKLIST_STORAGE_KEY}:${userId}:${role}:${dateKey}`;
-}
-
-function readDailyChecklistState() {
-  try {
-    return JSON.parse(localStorage.getItem(getTodayChecklistKey()) || "{}");
-  } catch (_error) {
-    return {};
-  }
-}
-
-function writeDailyChecklistState(nextState) {
-  try {
-    localStorage.setItem(getTodayChecklistKey(), JSON.stringify(nextState));
-  } catch (_error) {
-    // noop: checklist local e opcional
-  }
 }
 
 async function apiFetch(path, options = {}) {
@@ -1210,7 +1153,13 @@ function renderHome() {
       {
         label: "Clientes Ativos",
         value: state.dashboard.summary.clients_count,
-        sub: hasRoleDataAccess("clients") ? `${state.clients.length} cadastrados` : "escopo atual do perfil",
+        sub: hasRoleDataAccess("clients")
+          ? `${
+              state.clients.length
+                ? `${state.clients.length} cadastrados`
+                : `${Number(state.dashboard.summary.clients_count || 0)} no escopo atual`
+            }`
+          : "escopo atual do perfil",
         page: "crm",
         tabGroup: "crm",
         tab: "clientes"
@@ -1496,12 +1445,140 @@ function renderHome() {
   }
 }
 
-function getRoutineChecklistItems() {
-  return DAILY_CHECKLIST_TEMPLATES[state.session?.user?.role] || [];
+function getChecklistTodayKey() {
+  return new Date().toISOString().slice(0, 10);
 }
 
-function getChecklistItemStorageId(itemId) {
-  return `${state.session?.user?.role || "internal"}:${itemId}`;
+function normalizeChecklistItem(item, index = 0) {
+  const label = String(item?.label || item?.text || "").trim();
+  if (!label) {
+    return null;
+  }
+
+  return {
+    id: String(item?.id || `check_${Date.now()}_${index}`),
+    label,
+    done: Boolean(item?.done),
+    createdAt: item?.createdAt || new Date().toISOString()
+  };
+}
+
+function getChecklistDayDiff(dateKey) {
+  if (!dateKey) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  const today = new Date(getChecklistTodayKey());
+  const target = new Date(dateKey);
+  today.setHours(0, 0, 0, 0);
+  target.setHours(0, 0, 0, 0);
+  return Math.floor((today - target) / 86400000);
+}
+
+function createEmptyChecklistSnapshot() {
+  return {
+    activeDate: getChecklistTodayKey(),
+    activeItems: [],
+    history: []
+  };
+}
+
+function normalizeChecklistSnapshot(rawStore) {
+  const todayKey = getChecklistTodayKey();
+  const source = rawStore && typeof rawStore === "object" ? rawStore : {};
+  const activeDate = normalizeDateKey(source.activeDate) || todayKey;
+  const activeItems =
+    activeDate === todayKey
+      ? toArray(source.activeItems)
+          .map((item, index) => normalizeChecklistItem(item, index))
+          .filter(Boolean)
+      : [];
+
+  const history = toArray(source.history)
+    .map((entry, index) => {
+      const date = normalizeDateKey(entry?.date || entry?.completedAt);
+      const items = toArray(entry?.items)
+        .map((item, itemIndex) => normalizeChecklistItem({ ...item, done: true }, itemIndex))
+        .filter(Boolean);
+
+      if (!date || !items.length) {
+        return null;
+      }
+
+      const diffDays = getChecklistDayDiff(date);
+      if (diffDays < 0 || diffDays > 30) {
+        return null;
+      }
+
+      return {
+        id: String(entry?.id || `history_${date}_${index}`),
+        date,
+        completedAt: entry?.completedAt || `${date}T23:59:59.000Z`,
+        items
+      };
+    })
+    .filter(Boolean)
+    .sort((left, right) => String(right.completedAt || right.date).localeCompare(String(left.completedAt || left.date)));
+
+  return {
+    activeDate: todayKey,
+    activeItems,
+    history
+  };
+}
+
+function getChecklistStore() {
+  return normalizeChecklistSnapshot(state.checklist);
+}
+
+async function persistChecklistItems(items) {
+  const payload = {
+    items: toArray(items)
+      .map((item, index) => normalizeChecklistItem(item, index))
+      .filter(Boolean)
+      .slice(0, 100)
+  };
+
+  const snapshot = await apiFetch("/checklists/daily", {
+    method: "PUT",
+    cache: "no-store",
+    body: JSON.stringify(payload)
+  });
+  state.checklist = normalizeChecklistSnapshot(snapshot);
+  return state.checklist;
+}
+
+function createChecklistItem(label) {
+  const nextLabel = String(label || "").trim();
+  if (!nextLabel) {
+    throw new Error("Digite um item para adicionar ao checklist.");
+  }
+
+  return {
+    id: `check_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    label: nextLabel,
+    done: false,
+    createdAt: new Date().toISOString()
+  };
+}
+
+function getChecklistHistoryGroups(history) {
+  const groups = [
+    { key: "today", title: "Concluído hoje", min: 0, max: 0 },
+    { key: "yesterday", title: "Ontem", min: 1, max: 1 },
+    { key: "week", title: "Últimos 7 dias", min: 2, max: 7 },
+    { key: "month", title: "Últimos 30 dias", min: 8, max: 30 }
+  ];
+
+  return groups
+    .map((group) => ({
+      ...group,
+      entries: history.filter((entry) => {
+        const diffDays = getChecklistDayDiff(entry.date);
+        return diffDays >= group.min && diffDays <= group.max;
+      })
+    }))
+    .filter((group) => group.entries.length);
 }
 
 function getKanbanTasksForToday(filteredTasks) {
@@ -1524,20 +1601,72 @@ function bindDailyChecklistInteractions(container) {
     return;
   }
 
-  const stateByDay = readDailyChecklistState();
-  container.querySelectorAll("[data-daily-checklist]").forEach((input) => {
-    if (input.dataset.boundChecklist === "1") {
+  if (container.dataset.boundChecklist === "1") {
+    return;
+  }
+
+  container.addEventListener("submit", async (event) => {
+    const form = event.target.closest("[data-checklist-form]");
+    if (!form) {
       return;
     }
 
-    input.checked = Boolean(stateByDay[input.dataset.dailyChecklist]);
-    input.addEventListener("change", () => {
-      const nextState = readDailyChecklistState();
-      nextState[input.dataset.dailyChecklist] = input.checked;
-      writeDailyChecklistState(nextState);
-    });
-    input.dataset.boundChecklist = "1";
+    event.preventDefault();
+    const input = form.querySelector("[name='checklist-item']");
+
+    try {
+      const currentStore = getChecklistStore();
+      await persistChecklistItems([...currentStore.activeItems, createChecklistItem(input?.value || "")]);
+      if (input) {
+        input.value = "";
+      }
+      renderKanban();
+    } catch (error) {
+      showToast(error.message);
+      renderKanban();
+    }
   });
+
+  container.addEventListener("change", async (event) => {
+    const input = event.target.closest("[data-daily-checklist]");
+    if (!input) {
+      return;
+    }
+
+    try {
+      const currentStore = getChecklistStore();
+      const nextItems = currentStore.activeItems.map((item) =>
+        item.id === input.dataset.dailyChecklist ? { ...item, done: Boolean(input.checked) } : item
+      );
+      const shouldArchive = nextItems.length > 0 && nextItems.every((item) => item.done);
+      await persistChecklistItems(nextItems);
+      renderKanban();
+      if (shouldArchive && !state.checklist?.activeItems?.length) {
+        showToast("Checklist concluído e movido para o histórico.");
+      }
+    } catch (error) {
+      showToast(error.message);
+      renderKanban();
+    }
+  });
+
+  container.addEventListener("click", async (event) => {
+    const removeButton = event.target.closest("[data-checklist-remove]");
+    if (!removeButton) {
+      return;
+    }
+
+    try {
+      const currentStore = getChecklistStore();
+      await persistChecklistItems(currentStore.activeItems.filter((item) => item.id !== removeButton.dataset.checklistRemove));
+      renderKanban();
+    } catch (error) {
+      showToast(error.message);
+      renderKanban();
+    }
+  });
+
+  container.dataset.boundChecklist = "1";
 }
 
 function renderKanbanChecklist(filteredTasks) {
@@ -1546,25 +1675,51 @@ function renderKanbanChecklist(filteredTasks) {
     return;
   }
 
-  const persistedState = readDailyChecklistState();
-  const routineItems = getRoutineChecklistItems();
+  const checklistStore = getChecklistStore();
+  const historyGroups = getChecklistHistoryGroups(checklistStore.history);
   const dueTasks = getKanbanTasksForToday(filteredTasks);
+  const completedItems = checklistStore.activeItems.filter((item) => item.done).length;
 
   container.innerHTML = `
-    <div class="section-sub">Rotina sugerida para ${ROLE_LABELS[state.session?.user?.role] || "o perfil atual"}.</div>
-    ${routineItems
-      .map(
-        (item) => `
-          <label class="muted-panel-row">
-            <span style="display:flex;align-items:center;gap:10px;">
-              <input type="checkbox" data-daily-checklist="${getChecklistItemStorageId(item.id)}" ${persistedState[getChecklistItemStorageId(item.id)] ? "checked" : ""}>
-              <span>${item.label}</span>
-            </span>
-            <span class="badge ${persistedState[getChecklistItemStorageId(item.id)] ? "badge-green" : "badge-gray"}">${persistedState[getChecklistItemStorageId(item.id)] ? "Feito" : "Pendente"}</span>
-          </label>
-        `
-      )
-      .join("")}
+    <div class="section-sub">Checklist pessoal de ${escapeHtml(state.session?.user?.name || "usuário atual")}. Cada pessoa monta e conclui a própria rotina.</div>
+    <form class="checklist-composer" data-checklist-form>
+      <input
+        type="text"
+        name="checklist-item"
+        class="checklist-input"
+        maxlength="120"
+        placeholder="Adicionar item do seu checklist diário"
+        aria-label="Novo item do checklist"
+      >
+      <button type="submit" class="btn btn-outline btn-sm">Adicionar</button>
+    </form>
+    <div class="checklist-progress">
+      ${
+        checklistStore.activeItems.length
+          ? `${completedItems} de ${checklistStore.activeItems.length} itens concluídos hoje`
+          : "Nenhum item aberto para hoje"
+      }
+    </div>
+    <div class="checklist-list">
+      ${
+        checklistStore.activeItems.length
+          ? checklistStore.activeItems
+              .map(
+                (item) => `
+                  <label class="checklist-row${item.done ? " is-done" : ""}">
+                    <span class="checklist-row-main">
+                      <input type="checkbox" data-daily-checklist="${item.id}" ${item.done ? "checked" : ""}>
+                      <span class="checklist-row-label">${escapeHtml(item.label)}</span>
+                    </span>
+                    <span class="badge ${item.done ? "badge-green" : "badge-gray"}">${item.done ? "Feito" : "Pendente"}</span>
+                    <button type="button" class="btn btn-ghost btn-sm checklist-remove" data-checklist-remove="${item.id}">Remover</button>
+                  </label>
+                `
+              )
+              .join("")
+          : UI.empty("Seu checklist está vazio", "Adicione os itens que você quer acompanhar hoje. Quando todos forem concluídos, a lista vai para o histórico.")
+      }
+    </div>
     <div class="section-header"><div class="section-title">Entregas do dia</div></div>
     ${
       dueTasks.length
@@ -1583,6 +1738,43 @@ function renderKanbanChecklist(filteredTasks) {
             .join("")
         : UI.empty("Sem tarefas vencendo hoje", "Quando houver prioridade para hoje ou atrasada, ela aparecerá aqui.")
     }
+    <div class="section-header checklist-history-head"><div class="section-title">Histórico do checklist</div><div class="section-sub">Registros concluídos por período. Após 30 dias, eles são removidos.</div></div>
+    <div class="checklist-history">
+      ${
+        historyGroups.length
+          ? historyGroups
+              .map(
+                (group) => `
+                  <div class="checklist-history-group">
+                    <div class="checklist-history-title">${group.title}</div>
+                    ${group.entries
+                      .map(
+                        (entry) => `
+                          <div class="checklist-history-card">
+                            <div class="checklist-history-meta">${formatDate(entry.date)} · ${entry.items.length} ${entry.items.length === 1 ? "item" : "itens"}</div>
+                            <div class="checklist-history-list">
+                              ${entry.items
+                                .map(
+                                  (item) => `
+                                    <div class="checklist-history-item">
+                                      <span class="badge badge-green">Feito</span>
+                                      <span>${escapeHtml(item.label)}</span>
+                                    </div>
+                                  `
+                                )
+                                .join("")}
+                            </div>
+                          </div>
+                        `
+                      )
+                      .join("")}
+                  </div>
+                `
+              )
+              .join("")
+          : UI.empty("Nenhum checklist concluído ainda", "Assim que você finalizar todos os itens do dia, o registro aparecerá aqui.")
+      }
+    </div>
   `;
 
   bindDailyChecklistInteractions(container);
@@ -2466,13 +2658,14 @@ async function refreshData() {
     platformBreakdown.innerHTML = UI.empty("Carregando tráfego...", "Buscando métricas e campanhas.");
   }
 
-  const [dashboard, team, assignableUsers, clients, campaigns, tasks, users, contacts, invoices, metrics, reports, materials, files, charges, integrations] = await Promise.all([
+  const [dashboard, team, assignableUsers, clients, campaigns, tasks, checklist, users, contacts, invoices, metrics, reports, materials, files, charges, integrations] = await Promise.all([
     loadResource("dashboard", () => apiFetch("/dashboard"), () => createEmptyDashboard()),
     roleDataAccess.homeTeam ? loadResource("equipe", () => apiFetch("/users/team", { cache: "no-store" }), []) : Promise.resolve([]),
     roleDataAccess.assignableUsers ? loadResource("responsáveis", () => apiFetch("/users/assignable", { cache: "no-store" }), []) : Promise.resolve([]),
     roleDataAccess.clients ? loadResource("clientes", () => apiFetch("/clients"), []) : Promise.resolve([]),
     roleDataAccess.campaigns ? loadResource("campanhas", () => apiFetch("/campaigns"), []) : Promise.resolve([]),
     roleDataAccess.tasks ? loadResource("tarefas", () => apiFetch("/tasks"), []) : Promise.resolve([]),
+    roleDataAccess.tasks ? loadResource("checklist", () => apiFetch("/checklists/daily", { cache: "no-store" }), () => createEmptyChecklistSnapshot()) : Promise.resolve(createEmptyChecklistSnapshot()),
     roleDataAccess.users ? loadResource("usuários", () => apiFetch("/users"), []) : Promise.resolve([]),
     roleDataAccess.contacts ? loadResource("CRM", () => apiFetch("/contacts"), []) : Promise.resolve([]),
     roleDataAccess.invoices ? loadResource("faturas", () => apiFetch("/invoices"), []) : Promise.resolve([]),
@@ -2499,6 +2692,7 @@ async function refreshData() {
   state.files = toArray(files);
   state.charges = toArray(charges);
   state.integrations = toArray(integrations);
+  state.checklist = normalizeChecklistSnapshot(checklist);
 
   const scopedClients = getScopedClientOptions();
   const hasSelectedKanbanClient = scopedClients.some((client) => String(client.id) === String(state.filters.kanbanClient));
