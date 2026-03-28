@@ -919,7 +919,8 @@ function normalizeTaskTypeValue(value) {
 
 function taskTypeOptions(selected = "") {
   const rawSelected = String(selected || "").trim();
-  const normalized = normalizeTaskTypeValue(rawSelected || "planejamento");
+  const normalized = rawSelected ? normalizeTaskTypeValue(rawSelected) : "";
+  const placeholderOption = `<option value="" ${!rawSelected ? "selected" : ""}>Escolher tipo</option>`;
   const knownOptions = TASK_TYPE_OPTIONS
     .map(
       ({ value, label }) =>
@@ -928,10 +929,10 @@ function taskTypeOptions(selected = "") {
     .join("");
 
   if (rawSelected && !TASK_TYPE_LABELS[normalized]) {
-    return `${knownOptions}<option value="${escapeHtml(rawSelected)}" selected>${escapeHtml(rawSelected)}</option>`;
+    return `${placeholderOption}${knownOptions}<option value="${escapeHtml(rawSelected)}" selected>${escapeHtml(rawSelected)}</option>`;
   }
 
-  return knownOptions;
+  return `${placeholderOption}${knownOptions}`;
 }
 
 function campaignChannelOptions(selected = "") {
@@ -4137,8 +4138,8 @@ function openModal(type, id = null) {
       `
         <div class="field form-full"><label>Título</label><input name="title" value="${escapeHtml(task.title || "")}" required></div>
         <div class="field"><label>Cliente</label><select name="client_id"><option value="">Interno</option>${clientOptions(task.client_id)}</select></div>
-        <div class="field"><label>Responsável</label><select name="assigned_to"><option value="">Todos da equipe</option>${userOptions(task.assigned_to)}</select><div class="field-help">Deixe em "Todos da equipe" quando a tarefa puder ser acompanhada e concluída por qualquer pessoa do time.</div></div>
-        <div class="field"><label>Tipo</label><select name="type">${taskTypeOptions(task.type || "planejamento")}</select><div class="field-help">Tipos disponíveis: Design Gráfico, Copywriting, Edição de Vídeo, Captação, Fotografia, Planejamento, Social Media, Tráfego Pago, Cobertura, Releases, Newsletter, Reunião, Aprovação Cliente, Refação e Urgente.</div></div>
+        <div class="field"><label>Responsável</label><select name="assigned_to"><option value="">Todos da equipe</option>${userOptions(task.assigned_to)}</select></div>
+        <div class="field"><label>Tipo</label><select name="type">${taskTypeOptions(task.type || "")}</select></div>
         <div class="field"><label>Status</label><select name="status">${taskStatusOptions(task.status || getTaskStatusValue(task))}</select></div>
         <div class="field"><label>Coluna</label><select name="column_name">${taskColumnOptions(task.column_name || getTaskColumnName(task))}</select></div>
         <div class="field"><label>Prazo</label><input type="date" name="deadline" value="${(task.deadline || task.due_date) ? String(task.deadline || task.due_date).slice(0, 10) : ""}"></div>
