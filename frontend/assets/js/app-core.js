@@ -24,6 +24,7 @@
   const activityEvents = ["click", "keydown", "mousemove", "scroll", "touchstart"];
   let idleTimer = null;
   let warningTimer = null;
+  let refreshInFlight = null;
 
   function resolveLoginPath() {
     const currentPath = window.location.pathname || "/";
@@ -83,21 +84,33 @@
   }
 
   async function refreshSession() {
-    const response = await fetch(`${API_BASE}/auth/refresh`, {
-      method: "POST",
-      credentials: "include"
-    });
-
-    if (!response.ok) {
-      clearSession();
-      notifyLogout("session-expired");
-      redirectToLogin();
-      throw new Error("Sua sessao expirou. Faca login novamente.");
+    if (refreshInFlight) {
+      return refreshInFlight;
     }
 
-    const session = await response.json();
-    saveSession(session);
-    return session;
+    refreshInFlight = (async () => {
+      const response = await fetch(`${API_BASE}/auth/refresh`, {
+        method: "POST",
+        credentials: "include"
+      });
+
+      if (!response.ok) {
+        clearSession();
+        notifyLogout("session-expired");
+        redirectToLogin();
+        throw new Error("Sua sessao expirou. Faca login novamente.");
+      }
+
+      const session = await response.json();
+      saveSession(session);
+      return session;
+    })();
+
+    try {
+      return await refreshInFlight;
+    } finally {
+      refreshInFlight = null;
+    }
   }
 
   async function ensureFreshSession() {
@@ -105,7 +118,7 @@
     const accessToken = session?.accessToken || session?.token;
 
     if (!accessToken) {
-      return null;
+      return refreshSession();
     }
 
     if (!isTokenExpired(accessToken)) {
@@ -126,9 +139,10 @@
     if (options.auth !== false) {
       const session = await ensureFreshSession();
       const accessToken = session?.accessToken || session?.token;
-      if (accessToken) {
-        headers.set("Authorization", `Bearer ${accessToken}`);
+      if (!accessToken) {
+        throw new Error("Sua sessao expirou. Faca login novamente.");
       }
+      headers.set("Authorization", `Bearer ${accessToken}`);
     }
 
     const controller = new AbortController();
