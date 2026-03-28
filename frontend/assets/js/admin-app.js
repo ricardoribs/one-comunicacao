@@ -177,6 +177,8 @@ const ROLE_DATA_ACCESS = {
   }
 };
 
+const NON_BLOCKING_MODULE_FAILURES = new Set(["arquivos", "integrações"]);
+
 const TASK_TYPE_LABELS = {
   geral: "Geral",
   design: "Design",
@@ -2568,7 +2570,9 @@ async function refreshData() {
     try {
       return await loader();
     } catch (error) {
-      fetchFailures.push(label);
+      if (!NON_BLOCKING_MODULE_FAILURES.has(label)) {
+        fetchFailures.push(label);
+      }
       console.warn(`[refreshData] Falha ao carregar ${label}:`, error);
       return typeof fallback === "function" ? fallback() : fallback;
     }
