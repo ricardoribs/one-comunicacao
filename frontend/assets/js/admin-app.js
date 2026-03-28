@@ -214,6 +214,14 @@ const CAMPAIGN_CHANNEL_OPTIONS = [
 ];
 
 const INVOICE_STATUS_OPTIONS = ["Em aberto", "Pago", "Atrasado", "Cancelado"];
+const CLIENT_PLAN_OPTIONS = ["One Ideal", "One Start", "One Master", "Sob demanda"];
+const ON_DEMAND_SERVICE_OPTIONS = [
+  "Cobertura de Eventos",
+  "Releases (Imprensa)",
+  "Newsletter",
+  "Fotografia",
+  "Tráfego Pago (como serviço isolado)"
+];
 
 const state = {
   session: null,
@@ -624,6 +632,82 @@ function normalizePipelineStage(stage) {
 
 function formatCurrencyValue(value) {
   return formatCurrency(Number(value || 0));
+}
+
+function normalizeLooseText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function normalizeClientPlanLabel(value) {
+  const raw = String(value || "").trim();
+  const normalized = normalizeLooseText(raw);
+
+  if (!normalized) {
+    return "-";
+  }
+
+  if (normalized === "combo one" || normalized === "one ideal" || normalized === "combo one ideal" || normalized === "one") {
+    return "One Ideal";
+  }
+  if (normalized.includes("ideal")) {
+    return "One Ideal";
+  }
+  if (normalized.includes("start")) {
+    return "One Start";
+  }
+  if (normalized.includes("master")) {
+    return "One Master";
+  }
+  if (
+    normalized.includes("sob demanda")
+    || normalized.includes("complemento")
+    || normalized.includes("evento")
+    || normalized.includes("release")
+    || normalized.includes("imprensa")
+    || normalized.includes("newsletter")
+    || normalized.includes("fotografia")
+    || normalized.includes("trafego pago")
+  ) {
+    return "Sob demanda";
+  }
+
+  return raw;
+}
+
+function getOnDemandServiceLabel(value) {
+  const normalized = normalizeLooseText(value);
+
+  if (!normalized || normalizeClientPlanLabel(value) !== "Sob demanda") {
+    return "";
+  }
+  if (normalized.includes("evento")) {
+    return "Cobertura de Eventos";
+  }
+  if (normalized.includes("release") || normalized.includes("imprensa")) {
+    return "Releases (Imprensa)";
+  }
+  if (normalized.includes("newsletter")) {
+    return "Newsletter";
+  }
+  if (normalized.includes("fotografia")) {
+    return "Fotografia";
+  }
+  if (normalized.includes("trafego pago")) {
+    return "Tráfego Pago (como serviço isolado)";
+  }
+
+  return normalized === "sob demanda" ? "" : String(value || "").trim();
+}
+
+function clientPlanOptions(selected = "") {
+  const normalized = normalizeClientPlanLabel(selected);
+  return CLIENT_PLAN_OPTIONS.map(
+    (option) => `<option value="${escapeHtml(option)}" ${option === normalized ? "selected" : ""}>${escapeHtml(option)}</option>`
+  ).join("");
 }
 
 function normalizeDateKey(value) {
@@ -2276,12 +2360,25 @@ function renderCRM() {
 
   document.getElementById("clientes-tbody").innerHTML = state.clients
     .map(
-      (client) => `
+      (client) => {
+        const segmentLabel = String(client.segment || "").trim() || "Não informado";
+        const planLabel = normalizeClientPlanLabel(client.plan);
+        const onDemandService = getOnDemandServiceLabel(client.plan);
+
+        return `
         <tr>
-          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span></td>
-          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(client.segment || client.company || "-")}">${escapeHtml(client.segment || client.company || "-")}</span></td>
-          <td><span class="badge badge-gray">${escapeHtml(client.plan || "-")}</span></td>
-          <td>${formatDate(client.started_at)}</td>
+          <td class="cell-stack">
+            <span class="cell-title" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span>
+            <span class="cell-sub" title="${escapeHtml(client.company || "Sem empresa")}">${escapeHtml(client.company || "Sem empresa")}</span>
+          </td>
+          <td class="cell-stack">
+            <span class="cell-sub" title="${escapeHtml(segmentLabel)}">${escapeHtml(segmentLabel)}</span>
+          </td>
+          <td class="cell-stack crm-plan-cell">
+            <span class="badge badge-gray" title="${escapeHtml(planLabel)}">${escapeHtml(planLabel)}</span>
+            ${onDemandService && planLabel === "Sob demanda" ? `<span class="cell-sub" title="${escapeHtml(onDemandService)}">${escapeHtml(onDemandService)}</span>` : ""}
+          </td>
+          <td><span class="cell-sub">${formatDate(client.started_at)}</span></td>
           <td><span class="badge badge-green">Ativo</span></td>
           <td data-align="right"><span class="${getValueToneClass(client.mrr)}">${formatCurrencyValue(client.mrr)}</span></td>
           <td class="cell-actions">
@@ -2292,7 +2389,8 @@ function renderCRM() {
             </div>
           </td>
         </tr>
-      `
+      `;
+      }
     )
     .join("") || UI.tableEmpty(7, "Nenhum cliente cadastrado", "Cadastre o primeiro cliente para iniciar o acompanhamento comercial.");
 
@@ -2425,7 +2523,7 @@ function renderProduction() {
         </tr>
       `
     )
-    .join("") || UI.tableEmpty(5, "Nenhum relatório disponível", "Os relatórios publicados e compartilhados aparecerão aqui.");
+    .join("") || UI.tableEmpty(6, "Nenhum relatório disponível", "Os relatórios publicados e compartilhados aparecerão aqui.");
 }
 
 function renderTraffic() {
@@ -3612,7 +3710,14 @@ function openModal(type, id = null) {
       `
         <div class="field"><label>Nome</label><input name="name" value="${escapeHtml(client.name || "")}" required></div>
         <div class="field"><label>Empresa</label><input name="company" value="${escapeHtml(client.company || "")}" required></div>
-        <div class="field"><label>Plano</label><input name="plan" value="${escapeHtml(client.plan || "")}"></div>
+        <div class="field">
+          <label>Plano</label>
+          <select name="plan">
+            <option value="">Selecione</option>
+            ${clientPlanOptions(client.plan || "")}
+          </select>
+          <div class="field-help">Planos válidos: One Ideal, One Start, One Master e Sob demanda. Em Sob demanda, entram Cobertura de Eventos, Releases (Imprensa), Newsletter, Fotografia e Tráfego Pago como serviço isolado.</div>
+        </div>
         <div class="field"><label>MRR</label><input type="number" step="0.01" name="mrr" value="${client.mrr || ""}"></div>
         <div class="field"><label>Segmento</label><input name="segment" value="${escapeHtml(client.segment || "")}"></div>
         <div class="field"><label>Responsável</label><select name="manager_id"><option value="">Selecione</option>${userOptions(client.manager_id)}</select></div>
@@ -3824,6 +3929,7 @@ async function submitModal(event, type, id) {
     async () => {
     if (type === "novo-cliente") {
       const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["manager_id", "started_at"]);
+      payload.plan = payload.plan ? normalizeClientPlanLabel(payload.plan) : null;
       payload.zip_code = formatZipCodeInput(payload.zip_code);
       payload.state = normalizeStateCode(payload.state);
       payload.country = normalizeCountry(payload.country);
