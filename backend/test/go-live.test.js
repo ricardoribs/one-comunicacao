@@ -454,3 +454,70 @@ test('gestor nao cria cobranca para lead fora do proprio tenant operacional', { 
   await userModel.remove(gestorA.id);
   await userModel.remove(gestorB.id);
 });
+
+test('atribuicao de tarefa gera notificacao e permite marcar como lida', { concurrency: false }, async () => {
+  const suffix = Date.now() + 20;
+  const gestor = await createUser({
+    name: `Gestor Notificacao ${suffix}`,
+    email: `gestor.notificacao.${suffix}@one.test`,
+    role: 'gestor',
+  });
+  const thalisson = await createUser({
+    name: `Demo Motion Designer ${suffix}`,
+    email: `thalisson.${suffix}@one.test`,
+    role: 'designer',
+  });
+
+  const clientId = await createClient(`Cliente Notificacao ${suffix}`, `Empresa Notificacao ${suffix}`, gestor.id);
+  const gestorAuth = await login(gestor.email);
+
+  const createTaskResponse = await request(app)
+    .post('/api/tasks')
+    .set('Authorization', `Bearer ${gestorAuth.body.accessToken}`)
+    .send({
+      client_id: clientId,
+      assigned_to: thalisson.id,
+      status: 'Backlog',
+      type: 'design',
+      column_name: 'todo',
+      title: 'Landing page institucional',
+      description: 'Criar estrutura inicial da página.',
+    });
+
+  assert.equal(createTaskResponse.status, 201);
+
+  const thalissonAuth = await login(thalisson.email);
+  const notificationsResponse = await request(app)
+    .get('/api/messages')
+    .query({ context_type: 'task_assignment' })
+    .set('Authorization', `Bearer ${thalissonAuth.body.accessToken}`);
+
+  assert.equal(notificationsResponse.status, 200);
+  assert.equal(notificationsResponse.body.length, 1);
+  assert.equal(notificationsResponse.body[0].receiver_id, thalisson.id);
+  assert.equal(notificationsResponse.body[0].context_id, createTaskResponse.body.id);
+  assert.equal(notificationsResponse.body[0].read_at, null);
+  assert.match(notificationsResponse.body[0].content, /Landing page institucional/);
+
+  const markReadResponse = await request(app)
+    .patch('/api/messages/read')
+    .set('Authorization', `Bearer ${thalissonAuth.body.accessToken}`)
+    .send({ context_type: 'task_assignment' });
+
+  assert.equal(markReadResponse.status, 200);
+  assert.equal(markReadResponse.body.updated, 1);
+
+  const readBackResponse = await request(app)
+    .get('/api/messages')
+    .query({ context_type: 'task_assignment' })
+    .set('Authorization', `Bearer ${thalissonAuth.body.accessToken}`);
+
+  assert.equal(readBackResponse.status, 200);
+  assert.ok(readBackResponse.body[0].read_at);
+
+  await pool.query('DELETE FROM messages');
+  await pool.query('DELETE FROM tasks');
+  await userModel.remove(thalisson.id);
+  await userModel.remove(gestor.id);
+  await pool.query('DELETE FROM clients');
+});

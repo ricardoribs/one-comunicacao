@@ -162,6 +162,7 @@ function createPgMemPool() {
       context_type VARCHAR(40) NOT NULL DEFAULT 'general',
       context_id INTEGER,
       content TEXT NOT NULL,
+      read_at TIMESTAMP,
       created_at TIMESTAMP NOT NULL DEFAULT NOW()
     );
 

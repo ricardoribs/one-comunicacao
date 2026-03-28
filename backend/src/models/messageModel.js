@@ -9,6 +9,7 @@ const selectColumns = `
   m.context_type,
   m.context_id,
   m.content,
+  m.read_at,
   m.created_at
 `;
 
@@ -125,34 +126,23 @@ async function listForUser(user, query = {}) {
 }
 
 async function create(data, user) {
-  const { rows } = await tenantDb.query(user, {
-    table: 'messages',
-    scopeConfig: {
-      client: ['sender_client.id = $TENANT', 'receiver_client.id = $TENANT'],
-      internal: [
-        'sender.id = $TENANT',
-        'receiver.id = $TENANT',
-        'sender_client.manager_id = $TENANT',
-        'receiver_client.manager_id = $TENANT',
-      ],
-    },
-    prefix: 'AND',
-    startIndex: 6,
-    sql: `WITH allowed AS (
-      SELECT 1
-      FROM users sender
-      INNER JOIN users receiver ON receiver.id = $2
-      LEFT JOIN clients sender_client ON sender_client.id = sender.client_id
-      LEFT JOIN clients receiver_client ON receiver_client.id = receiver.client_id
-      WHERE sender.id = $1
-      __TENANT_SCOPE__
-    )
-    INSERT INTO messages (sender_id, receiver_id, context_type, context_id, content)
-    SELECT $1, $2, $3, $4, $5
-    FROM allowed
-    RETURNING id`,
-    params: [data.sender_id, data.receiver_id, data.context_type || 'general', data.context_id || null, data.content],
+  const id = await tenantDb.runWithTenantContext(user, async (client) => {
+    const { rows } = await client.query(
+      `
+        INSERT INTO messages (sender_id, receiver_id, context_type, context_id, content)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id
+      `,
+      [data.sender_id, data.receiver_id, data.context_type || 'general', data.context_id || null, data.content]
+    );
+
+    return rows[0]?.id || null;
   });
+
+  if (!id) {
+    return null;
+  }
+
   const { rows: createdRows } = await tenantDb.query(user, {
     table: 'messages',
     scopeConfig: {
@@ -174,12 +164,53 @@ async function create(data, user) {
      LEFT JOIN clients receiver_client ON receiver_client.id = receiver.client_id
      WHERE m.id = $1
      __TENANT_SCOPE__`,
-    params: [rows[0].id],
+    params: [id],
   });
   return createdRows[0] || null;
+}
+
+async function markRead(user, data = {}) {
+  const values = [user.id];
+  const filters = [];
+  let index = 2;
+
+  if (Array.isArray(data.ids) && data.ids.length) {
+    filters.push(`id = ANY($${index++}::int[])`);
+    values.push(data.ids.map((item) => Number(item)).filter(Boolean));
+  }
+
+  if (data.context_type) {
+    filters.push(`context_type = $${index++}`);
+    values.push(data.context_type);
+  }
+
+  if (data.context_id) {
+    filters.push(`context_id = $${index++}`);
+    values.push(Number(data.context_id));
+  }
+
+  return tenantDb.runWithTenantContext(user, async (client) => {
+    const { rows } = await client.query(
+      `
+        UPDATE messages
+           SET read_at = COALESCE(read_at, NOW())
+         WHERE receiver_id = $1
+           AND read_at IS NULL
+           ${filters.length ? `AND ${filters.join(' AND ')}` : ''}
+        RETURNING id
+      `,
+      values
+    );
+
+    return {
+      updated: rows.length,
+      ids: rows.map((row) => row.id),
+    };
+  });
 }
 
 module.exports = {
   listForUser,
   create,
+  markRead,
 };
