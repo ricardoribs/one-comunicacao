@@ -35,6 +35,7 @@ const contactRoutes = require('./routes/contactRoutes');
 const chargeRoutes = require('./routes/chargeRoutes');
 const accountRoutes = require('./routes/accountRoutes');
 const addressRoutes = require('./routes/addressRoutes');
+const checklistRoutes = require('./routes/checklistRoutes');
 
 const app = express();
 const htmlCache = new Map();
@@ -242,6 +243,7 @@ app.use('/api/contacts', contactRoutes);
 app.use('/api/charges', chargeRoutes);
 app.use('/api/account', accountRoutes);
 app.use('/api/address', addressRoutes);
+app.use('/api/checklists', checklistRoutes);
 
 app.get('/painel-interno.html', (req, res) => {
   sendHtmlPage(res, 'painel-interno.html');
