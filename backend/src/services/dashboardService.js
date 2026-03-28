@@ -1,4 +1,5 @@
 const tenantDb = require('../db/tenantDb');
+const logger = require('../config/logger');
 const campaignModel = require('../models/campaignModel');
 const invoiceModel = require('../models/invoiceModel');
 const materialModel = require('../models/materialModel');
@@ -8,6 +9,15 @@ const taskModel = require('../models/taskModel');
 const userModel = require('../models/userModel');
 const { hasCapability, sanitizeDashboardSummary } = require('../utils/access');
 const { getInternalClientScope, getInternalClientAccessScope } = require('../utils/internalClientScope');
+
+async function safeDashboardLoad(label, loader, fallback) {
+  try {
+    return await loader();
+  } catch (error) {
+    logger.warn({ err: error, module: label }, 'Falha parcial ao montar dashboard.');
+    return typeof fallback === 'function' ? fallback() : fallback;
+  }
+}
 
 async function getClientDashboard(user) {
   const [
@@ -23,7 +33,7 @@ async function getClientDashboard(user) {
     tasks,
     teamResult,
   ] = await Promise.all([
-    tenantDb.query(user, {
+    safeDashboardLoad('dashboard.client.campaigns_count', () => tenantDb.query(user, {
       table: 'campaigns',
       scopeConfig: {
         client: 'cam.client_id = $TENANT',
@@ -31,8 +41,8 @@ async function getClientDashboard(user) {
       prefix: 'WHERE',
       startIndex: 1,
       sql: 'SELECT COUNT(*) AS campaigns_count FROM campaigns cam __TENANT_SCOPE__',
-    }),
-    tenantDb.query(user, {
+    }), { rows: [{ campaigns_count: 0 }] }),
+    safeDashboardLoad('dashboard.client.revenue', () => tenantDb.query(user, {
       table: 'metrics',
       scopeConfig: {
         client: 'cam.client_id = $TENANT',
@@ -43,8 +53,8 @@ async function getClientDashboard(user) {
               FROM metrics m
               INNER JOIN campaigns cam ON cam.id = m.campaign_id
               __TENANT_SCOPE__`,
-    }),
-    tenantDb.query(user, {
+    }), { rows: [{ revenue: 0 }] }),
+    safeDashboardLoad('dashboard.client.leads', () => tenantDb.query(user, {
       table: 'metrics',
       scopeConfig: {
         client: 'cam.client_id = $TENANT',
@@ -55,8 +65,8 @@ async function getClientDashboard(user) {
               FROM metrics m
               INNER JOIN campaigns cam ON cam.id = m.campaign_id
               __TENANT_SCOPE__`,
-    }),
-    tenantDb.query(user, {
+    }), { rows: [{ leads: 0 }] }),
+    safeDashboardLoad('dashboard.client.budget', () => tenantDb.query(user, {
       table: 'campaigns',
       scopeConfig: {
         client: 'cam.client_id = $TENANT',
@@ -64,14 +74,14 @@ async function getClientDashboard(user) {
       prefix: 'WHERE',
       startIndex: 1,
       sql: 'SELECT COALESCE(SUM(cam.budget), 0) AS budget FROM campaigns cam __TENANT_SCOPE__',
-    }),
-    campaignModel.list(user),
-    reportModel.list(user),
-    materialModel.list(user),
-    invoiceModel.list(user),
-    messageModel.listForUser(user),
-    taskModel.list(user),
-    userModel.listActiveInternalTeam(user),
+    }), { rows: [{ budget: 0 }] }),
+    safeDashboardLoad('dashboard.client.campaigns', () => campaignModel.list(user), []),
+    safeDashboardLoad('dashboard.client.reports', () => reportModel.list(user), []),
+    safeDashboardLoad('dashboard.client.materials', () => materialModel.list(user), []),
+    safeDashboardLoad('dashboard.client.invoices', () => invoiceModel.list(user), []),
+    safeDashboardLoad('dashboard.client.messages', () => messageModel.listForUser(user), []),
+    safeDashboardLoad('dashboard.client.tasks', () => taskModel.list(user), []),
+    safeDashboardLoad('dashboard.client.team', () => userModel.listActiveInternalTeam(user), []),
   ]);
 
   const campaignsCount = Number(campaignCountResult.rows[0]?.campaigns_count || 0);
@@ -100,7 +110,7 @@ async function getClientDashboard(user) {
 
 async function getInternalDashboard(user) {
   const [clientsCountResult, campaignsCountResult, openTasksResult, leadsResult, revenueResult, teamResult] = await Promise.all([
-    tenantDb.query(user, {
+    safeDashboardLoad('dashboard.internal.clients_count', () => tenantDb.query(user, {
       table: 'clients',
       scopeConfig: {
         client: 'c.id = $TENANT',
@@ -109,8 +119,8 @@ async function getInternalDashboard(user) {
       prefix: 'WHERE',
       startIndex: 1,
       sql: 'SELECT COUNT(*) AS clients_count FROM clients c __TENANT_SCOPE__',
-    }),
-    tenantDb.query(user, {
+    }), { rows: [{ clients_count: 0 }] }),
+    safeDashboardLoad('dashboard.internal.campaigns_count', () => tenantDb.query(user, {
       table: 'campaigns',
       scopeConfig: {
         client: 'c.id = $TENANT',
@@ -122,8 +132,8 @@ async function getInternalDashboard(user) {
             FROM campaigns cam
             INNER JOIN clients c ON c.id = cam.client_id
             __TENANT_SCOPE__`,
-    }),
-    tenantDb.query(user, {
+    }), { rows: [{ campaigns_count: 0 }] }),
+    safeDashboardLoad('dashboard.internal.open_tasks', () => tenantDb.query(user, {
       table: 'tasks',
       scopeConfig: {
         client: 't.client_id = $TENANT AND t.assigned_to IS NOT NULL',
@@ -140,8 +150,8 @@ async function getInternalDashboard(user) {
             FROM tasks t
             WHERE t.status <> 'Concluido'
             __TENANT_SCOPE__`,
-    }),
-    tenantDb.query(user, {
+    }), { rows: [{ open_tasks: 0 }] }),
+    safeDashboardLoad('dashboard.internal.leads', () => tenantDb.query(user, {
       table: 'metrics',
       scopeConfig: {
         client: 'c.id = $TENANT',
@@ -154,8 +164,8 @@ async function getInternalDashboard(user) {
             INNER JOIN campaigns cam ON cam.id = m.campaign_id
             INNER JOIN clients c ON c.id = cam.client_id
             __TENANT_SCOPE__`,
-    }),
-    tenantDb.query(user, {
+    }), { rows: [{ leads: 0 }] }),
+    safeDashboardLoad('dashboard.internal.revenue', () => tenantDb.query(user, {
       table: 'metrics',
       scopeConfig: {
         client: 'c.id = $TENANT',
@@ -168,8 +178,10 @@ async function getInternalDashboard(user) {
             INNER JOIN campaigns cam ON cam.id = m.campaign_id
             INNER JOIN clients c ON c.id = cam.client_id
             __TENANT_SCOPE__`,
-    }),
-    hasCapability(user, 'view_dashboard_team') ? userModel.listActiveInternalTeam(user) : Promise.resolve([]),
+    }), { rows: [{ revenue: 0 }] }),
+    hasCapability(user, 'view_dashboard_team')
+      ? safeDashboardLoad('dashboard.internal.team', () => userModel.listActiveInternalTeam(user), [])
+      : Promise.resolve([]),
   ]);
 
   return {
