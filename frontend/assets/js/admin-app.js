@@ -191,17 +191,38 @@ const kanbanRuntime = {
   movingTaskId: null,
 };
 
-const TASK_TYPE_LABELS = {
-  geral: "Geral",
-  design: "Design",
-  revisao_design: "Revisão Design",
-  captacao: "Captação",
-  edicao: "Edição",
-  social_media: "Social Media",
-  atendimento: "Atendimento",
-  financeiro: "Financeiro",
-  adm: "ADM",
-  reuniao_estrategica: "Reunião Estratégica"
+const TASK_TYPE_OPTIONS = [
+  { value: "design_grafico", label: "DESIGN GRÁFICO" },
+  { value: "copywriting", label: "COPYWRITING" },
+  { value: "edicao_video", label: "EDIÇÃO DE VÍDEO" },
+  { value: "captacao", label: "CAPTAÇÃO" },
+  { value: "fotografia", label: "FOTOGRAFIA" },
+  { value: "planejamento", label: "PLANEJAMENTO" },
+  { value: "social_media", label: "SOCIAL MEDIA" },
+  { value: "trafego_pago", label: "TRÁFEGO PAGO" },
+  { value: "cobertura", label: "COBERTURA" },
+  { value: "releases", label: "RELEASES" },
+  { value: "newsletter", label: "NEWSLETTER" },
+  { value: "reuniao", label: "REUNIÃO" },
+  { value: "aprovacao_cliente", label: "APROVAÇÃO CLIENTE" },
+  { value: "refacao", label: "REFAÇÃO" },
+  { value: "urgente", label: "URGENTE" },
+];
+
+const TASK_TYPE_LABELS = Object.fromEntries(TASK_TYPE_OPTIONS.map((option) => [option.value, option.label]));
+const LEGACY_TASK_TYPE_ALIASES = {
+  geral: "planejamento",
+  design: "design_grafico",
+  revisao_design: "refacao",
+  captacao: "captacao",
+  edicao: "edicao_video",
+  social_media: "social_media",
+  atendimento: "social_media",
+  financeiro: "planejamento",
+  adm: "planejamento",
+  reuniao_estrategica: "reuniao",
+  trafego: "trafego_pago",
+  "landing-page": "copywriting",
 };
 
 const CAMPAIGN_CHANNEL_OPTIONS = [
@@ -876,21 +897,32 @@ function isOverdueDate(value) {
 }
 
 function formatTaskTypeLabel(type) {
-  const normalized = String(type || "geral").trim();
+  const normalized = normalizeTaskTypeValue(type || "planejamento");
   return TASK_TYPE_LABELS[normalized] || normalized;
 }
 
+function normalizeTaskTypeValue(value) {
+  const raw = String(value || "").trim();
+
+  if (!raw) {
+    return "planejamento";
+  }
+
+  return LEGACY_TASK_TYPE_ALIASES[raw] || raw;
+}
+
 function taskTypeOptions(selected = "") {
-  const normalized = String(selected || "geral").trim();
-  const knownOptions = Object.entries(TASK_TYPE_LABELS)
+  const rawSelected = String(selected || "").trim();
+  const normalized = normalizeTaskTypeValue(rawSelected || "planejamento");
+  const knownOptions = TASK_TYPE_OPTIONS
     .map(
-      ([value, label]) =>
+      ({ value, label }) =>
         `<option value="${value}" ${normalized === value ? "selected" : ""}>${label}</option>`
     )
     .join("");
 
-  if (normalized && !TASK_TYPE_LABELS[normalized]) {
-    return `${knownOptions}<option value="${escapeHtml(normalized)}" selected>${escapeHtml(normalized)}</option>`;
+  if (rawSelected && !TASK_TYPE_LABELS[normalized]) {
+    return `${knownOptions}<option value="${escapeHtml(rawSelected)}" selected>${escapeHtml(rawSelected)}</option>`;
   }
 
   return knownOptions;
@@ -4025,7 +4057,7 @@ function openModal(type, id = null) {
         <div class="field form-full"><label>Título</label><input name="title" value="${escapeHtml(task.title || "")}" required></div>
         <div class="field"><label>Cliente</label><select name="client_id"><option value="">Interno</option>${clientOptions(task.client_id)}</select></div>
         <div class="field"><label>Responsável</label><select name="assigned_to"><option value="">Ninguém</option>${userOptions(task.assigned_to)}</select></div>
-        <div class="field"><label>Tipo</label><select name="type">${taskTypeOptions(task.type || "geral")}</select></div>
+        <div class="field"><label>Tipo</label><select name="type">${taskTypeOptions(task.type || "planejamento")}</select></div>
         <div class="field"><label>Status</label><select name="status">${taskStatusOptions(task.status || getTaskStatusValue(task))}</select></div>
         <div class="field"><label>Coluna</label><select name="column_name">${taskColumnOptions(task.column_name || getTaskColumnName(task))}</select></div>
         <div class="field"><label>Prazo</label><input type="date" name="deadline" value="${(task.deadline || task.due_date) ? String(task.deadline || task.due_date).slice(0, 10) : ""}"></div>
@@ -4227,6 +4259,7 @@ async function submitModal(event, type, id) {
 
     if (type === "nova-tarefa") {
       const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["client_id", "assigned_to", "deadline"]);
+      payload.type = normalizeTaskTypeValue(payload.type);
       payload.column_name = getTaskColumnConfig(payload.column_name || payload.status).key;
       payload.status = getTaskStatusValue(payload.status || payload.column_name, payload.column_name);
       await apiFetch(id ? `/tasks/${id}` : "/tasks", {
