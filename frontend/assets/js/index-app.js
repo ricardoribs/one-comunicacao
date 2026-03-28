@@ -185,12 +185,65 @@ function bootLogoCarousels() {
   }
 
   carousels.forEach((carousel) => {
+    const track = carousel.querySelector(".marquee-track");
+    if (!track) {
+      return;
+    }
+
+    if (!track.dataset.loopReady) {
+      const originals = Array.from(track.children);
+      originals.forEach((item) => {
+        const clone = item.cloneNode(true);
+        clone.setAttribute("aria-hidden", "true");
+        clone.querySelectorAll("img").forEach((img) => {
+          img.alt = "";
+        });
+        track.appendChild(clone);
+      });
+      track.dataset.loopReady = "true";
+    }
+
     let pointerId = null;
     let startX = 0;
     let startScrollLeft = 0;
+    let rafId = 0;
+    let lastFrame = 0;
+    let isDragging = false;
+
+    const getLoopWidth = () => track.scrollWidth / 2;
+
+    const normalizeScroll = () => {
+      const loopWidth = getLoopWidth();
+      if (!loopWidth) {
+        return;
+      }
+
+      if (carousel.scrollLeft >= loopWidth) {
+        carousel.scrollLeft -= loopWidth;
+      } else if (carousel.scrollLeft < 0) {
+        carousel.scrollLeft += loopWidth;
+      }
+    };
+
+    const tick = (timestamp) => {
+      if (!lastFrame) {
+        lastFrame = timestamp;
+      }
+
+      const elapsed = timestamp - lastFrame;
+      lastFrame = timestamp;
+
+      if (!isDragging) {
+        carousel.scrollLeft += elapsed * 0.045;
+        normalizeScroll();
+      }
+
+      rafId = window.requestAnimationFrame(tick);
+    };
 
     const stopDragging = () => {
       pointerId = null;
+      isDragging = false;
       carousel.classList.remove("dragging");
     };
 
@@ -204,6 +257,7 @@ function bootLogoCarousels() {
       }
 
       pointerId = event.pointerId;
+      isDragging = true;
       startX = event.clientX;
       startScrollLeft = carousel.scrollLeft;
       carousel.classList.add("dragging");
@@ -216,11 +270,53 @@ function bootLogoCarousels() {
       }
 
       carousel.scrollLeft = startScrollLeft - (event.clientX - startX);
+      normalizeScroll();
     });
 
     carousel.addEventListener("pointerup", stopDragging);
     carousel.addEventListener("pointercancel", stopDragging);
     carousel.addEventListener("lostpointercapture", stopDragging);
+
+    rafId = window.requestAnimationFrame(tick);
+  });
+}
+
+function bootWorkflowCards() {
+  const grids = document.querySelectorAll(".workflow-grid");
+  if (!grids.length) {
+    return;
+  }
+
+  grids.forEach((grid) => {
+    const cards = Array.from(grid.querySelectorAll(".workflow-card"));
+    if (!cards.length) {
+      return;
+    }
+
+    const defaultCard = grid.querySelector(".workflow-card-featured") || cards[0];
+
+    const setActive = (targetCard) => {
+      cards.forEach((card) => {
+        card.classList.toggle("is-active", card === targetCard);
+      });
+    };
+
+    setActive(defaultCard);
+
+    cards.forEach((card) => {
+      card.addEventListener("mouseenter", () => setActive(card));
+      card.addEventListener("focusin", () => setActive(card));
+      card.addEventListener("pointerdown", () => setActive(card));
+    });
+
+    grid.addEventListener("mouseleave", () => setActive(defaultCard));
+    grid.addEventListener("focusout", () => {
+      window.requestAnimationFrame(() => {
+        if (!grid.contains(document.activeElement)) {
+          setActive(defaultCard);
+        }
+      });
+    });
   });
 }
 
@@ -248,6 +344,7 @@ function boot() {
   bootNavbar();
   bootRevealObserver();
   bootLogoCarousels();
+  bootWorkflowCards();
   bootMessageCounter();
   bootGlobalEvents();
 }
