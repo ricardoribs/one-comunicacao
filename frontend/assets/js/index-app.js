@@ -205,24 +205,31 @@ function bootLogoCarousels() {
 
     let pointerId = null;
     let startX = 0;
-    let startScrollLeft = 0;
+    let startOffset = 0;
+    let offset = 0;
     let rafId = 0;
     let lastFrame = 0;
     let isDragging = false;
+    const speed = 0.06;
 
     const getLoopWidth = () => track.scrollWidth / 2;
 
-    const normalizeScroll = () => {
+    const normalizeOffset = (value) => {
       const loopWidth = getLoopWidth();
-      if (!loopWidth) {
-        return;
+      if (!loopWidth || !Number.isFinite(loopWidth)) {
+        return 0;
       }
 
-      if (carousel.scrollLeft >= loopWidth) {
-        carousel.scrollLeft -= loopWidth;
-      } else if (carousel.scrollLeft < 0) {
-        carousel.scrollLeft += loopWidth;
+      let normalized = value % loopWidth;
+      if (normalized < 0) {
+        normalized += loopWidth;
       }
+
+      return normalized;
+    };
+
+    const render = () => {
+      track.style.transform = `translate3d(${-offset}px, 0, 0)`;
     };
 
     const tick = (timestamp) => {
@@ -234,8 +241,8 @@ function bootLogoCarousels() {
       lastFrame = timestamp;
 
       if (!isDragging) {
-        carousel.scrollLeft += elapsed * 0.045;
-        normalizeScroll();
+        offset = normalizeOffset(offset + elapsed * speed);
+        render();
       }
 
       rafId = window.requestAnimationFrame(tick);
@@ -259,7 +266,7 @@ function bootLogoCarousels() {
       pointerId = event.pointerId;
       isDragging = true;
       startX = event.clientX;
-      startScrollLeft = carousel.scrollLeft;
+      startOffset = offset;
       carousel.classList.add("dragging");
       carousel.setPointerCapture(event.pointerId);
     });
@@ -269,14 +276,15 @@ function bootLogoCarousels() {
         return;
       }
 
-      carousel.scrollLeft = startScrollLeft - (event.clientX - startX);
-      normalizeScroll();
+      offset = normalizeOffset(startOffset - (event.clientX - startX));
+      render();
     });
 
     carousel.addEventListener("pointerup", stopDragging);
     carousel.addEventListener("pointercancel", stopDragging);
     carousel.addEventListener("lostpointercapture", stopDragging);
 
+    render();
     rafId = window.requestAnimationFrame(tick);
   });
 }
