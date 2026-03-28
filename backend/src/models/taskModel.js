@@ -16,13 +16,22 @@ const selectColumns = `
   t.created_at
 `;
 
+function taskClientScope(alias = 't') {
+  return `${alias}.client_id = $TENANT AND ${alias}.assigned_to IS NOT NULL`;
+}
+
+function taskInternalScope(alias = 't') {
+  return [
+    `${alias}.assigned_to = $TENANT`,
+    `${alias}.assigned_to IS NULL`,
+    ...getInternalClientAccessScope(`${alias}.client_id`),
+  ];
+}
+
 function taskScopeConfig(alias = 't') {
   return {
-    client: `${alias}.client_id = $TENANT`,
-    internal: [
-      `${alias}.assigned_to = $TENANT`,
-      ...getInternalClientAccessScope(`${alias}.client_id`),
-    ],
+    client: taskClientScope(alias),
+    internal: taskInternalScope(alias),
   };
 }
 
@@ -89,40 +98,42 @@ async function create(data, user = null) {
 }
 
 async function update(id, data, user = null) {
+  const updates = [];
+  const params = [id];
+  let index = 2;
+  const appendField = (key, column = key) => {
+    if (!Object.prototype.hasOwnProperty.call(data, key)) {
+      return;
+    }
+
+    updates.push(`${column} = $${index++}`);
+    params.push(data[key] ?? null);
+  };
+
+  appendField('client_id');
+  appendField('assigned_to');
+  appendField('status');
+  appendField('type');
+  appendField('column_name');
+  appendField('description');
+  appendField('deadline');
+  appendField('title');
+
+  if (!updates.length) {
+    return findById(id, user);
+  }
+
   const { rows } = await tenantDb.query(user, {
     table: 'tasks',
-    scopeConfig: {
-      client: 'client_id = $TENANT',
-      internal: [
-        'assigned_to = $TENANT',
-        ...getInternalClientAccessScope('tasks.client_id'),
-      ],
-    },
+    scopeConfig: taskScopeConfig('tasks'),
     prefix: 'AND',
-    startIndex: 10,
+    startIndex: index,
     sql: `UPDATE tasks
-     SET client_id = COALESCE($2, client_id),
-         assigned_to = COALESCE($3, assigned_to),
-         status = COALESCE($4, status),
-         type = COALESCE($5, type),
-         column_name = COALESCE($6, column_name),
-         description = COALESCE($7, description),
-         deadline = COALESCE($8, deadline),
-         title = COALESCE($9, title)
+     SET ${updates.join(',\n         ')}
      WHERE id = $1
      __TENANT_SCOPE__
      RETURNING id`,
-    params: [
-      id,
-      data.client_id || null,
-      data.assigned_to || null,
-      data.status || null,
-      data.type || null,
-      data.column_name || null,
-      data.description || null,
-      data.deadline || null,
-      data.title || null,
-    ],
+    params,
   });
   if (!rows[0]) {
     return null;
