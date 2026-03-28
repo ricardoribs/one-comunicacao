@@ -439,6 +439,81 @@ test('gestor cria tarefa para cliente do proprio escopo sem erro interno', { con
   await pool.query('DELETE FROM clients');
 });
 
+test('tarefa compartilhada fica visivel para equipe interna e nao aparece no dashboard do cliente', { concurrency: false }, async () => {
+  const suffix = Date.now() + 14;
+  const gestor = await createUser({
+    name: `Gestor Compartilhada ${suffix}`,
+    email: `gestor.compartilhada.${suffix}@one.test`,
+    role: 'gestor',
+  });
+  const designer = await createUser({
+    name: `Designer Compartilhada ${suffix}`,
+    email: `designer.compartilhada.${suffix}@one.test`,
+    role: 'designer',
+  });
+
+  const clientId = await createClient(`Cliente Compartilhado ${suffix}`, `Empresa Compartilhada ${suffix}`, gestor.id);
+  const clientUser = await createUser({
+    name: `Cliente Compartilhado ${suffix}`,
+    email: `cliente.compartilhado.${suffix}@one.test`,
+    role: 'client',
+    clientId,
+  });
+
+  const gestorAuth = await login(gestor.email);
+  const createTaskResponse = await request(app)
+    .post('/api/tasks')
+    .set('Authorization', `Bearer ${gestorAuth.body.accessToken}`)
+    .send({
+      client_id: clientId,
+      status: 'Backlog',
+      type: 'planejamento',
+      column_name: 'todo',
+      title: 'Tarefa compartilhada da equipe',
+      description: 'Pode ser acompanhada por qualquer pessoa interna.',
+    });
+
+  assert.equal(createTaskResponse.status, 201);
+  assert.equal(createTaskResponse.body.assigned_to, null);
+
+  const designerAuth = await login(designer.email);
+  const [tasksResponse, internalDashboardResponse] = await Promise.all([
+    request(app).get('/api/tasks').set('Authorization', `Bearer ${designerAuth.body.accessToken}`),
+    request(app).get('/api/dashboard').set('Authorization', `Bearer ${designerAuth.body.accessToken}`),
+  ]);
+
+  assert.equal(tasksResponse.status, 200);
+  assert.equal(internalDashboardResponse.status, 200);
+  assert.ok(tasksResponse.body.some((task) => task.id === createTaskResponse.body.id && task.assigned_to === null));
+  assert.equal(internalDashboardResponse.body.summary.open_tasks, 1);
+
+  const moveResponse = await request(app)
+    .put(`/api/tasks/${createTaskResponse.body.id}`)
+    .set('Authorization', `Bearer ${designerAuth.body.accessToken}`)
+    .send({
+      status: 'Concluido',
+      column_name: 'done',
+    });
+
+  assert.equal(moveResponse.status, 200);
+  assert.equal(moveResponse.body.status, 'Concluido');
+  assert.equal(moveResponse.body.column_name, 'done');
+
+  const clientAuth = await login(clientUser.email);
+  const clientDashboardResponse = await request(app)
+    .get('/api/dashboard')
+    .set('Authorization', `Bearer ${clientAuth.body.accessToken}`);
+
+  assert.equal(clientDashboardResponse.status, 200);
+  assert.equal(clientDashboardResponse.body.tasks.some((task) => task.id === createTaskResponse.body.id), false);
+
+  await pool.query('DELETE FROM tasks');
+  await userModel.remove(clientUser.id);
+  await userModel.remove(designer.id);
+  await userModel.remove(gestor.id);
+  await pool.query('DELETE FROM clients');
+});
+
 test('gestor atualiza manual da marca e designer relacionado visualiza o cliente no escopo operacional', { concurrency: false }, async () => {
   const suffix = Date.now() + 12;
   const gestor = await createUser({

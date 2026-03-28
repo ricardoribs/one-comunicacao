@@ -126,9 +126,10 @@ async function getInternalDashboard(user) {
     tenantDb.query(user, {
       table: 'tasks',
       scopeConfig: {
-        client: 't.client_id = $TENANT',
+        client: 't.client_id = $TENANT AND t.assigned_to IS NOT NULL',
         internal: [
           't.assigned_to = $TENANT',
+          't.assigned_to IS NULL',
           ...getInternalClientAccessScope('t.client_id'),
         ],
       },

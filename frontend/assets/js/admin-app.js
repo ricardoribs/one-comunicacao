@@ -878,6 +878,14 @@ function taskColumnOptions(selected = "") {
     .join("");
 }
 
+function getTaskAssigneeLabel(taskOrName) {
+  if (typeof taskOrName === "object" && taskOrName) {
+    return String(taskOrName.assigned_to_name || "").trim() || "Todos da equipe";
+  }
+
+  return String(taskOrName || "").trim() || "Todos da equipe";
+}
+
 function normalizeDateKey(value) {
   if (!value) {
     return "";
@@ -2187,7 +2195,7 @@ function getChecklistHistoryGroups(history) {
 
 function getKanbanTasksForToday(filteredTasks) {
   const currentUserId = Number(state.session?.user?.id || 0);
-  const scopedTasks = filteredTasks.filter((task) => Number(task.assigned_to || 0) === currentUserId);
+  const scopedTasks = filteredTasks.filter((task) => Number(task.assigned_to || 0) === currentUserId || task.assigned_to == null);
   const source = scopedTasks.length ? scopedTasks : filteredTasks;
 
   return source
@@ -2333,7 +2341,7 @@ function renderKanbanChecklist(filteredTasks) {
                 <div class="item-row">
                   <div>
                     <div class="block-title-sm">${escapeHtml(task.title)}</div>
-                    <div class="block-text-xs">${escapeHtml(task.client_name || "Interno")} · ${escapeHtml(task.assigned_to_name || "Sem responsável")}</div>
+                    <div class="block-text-xs">${escapeHtml(task.client_name || "Interno")} · ${escapeHtml(getTaskAssigneeLabel(task))}</div>
                   </div>
                   <span class="badge ${isOverdueDate(task.due_date || task.deadline) ? "badge-pink" : "badge-blue"}">${isOverdueDate(task.due_date || task.deadline) ? "Atrasada" : "Hoje"}</span>
                 </div>
@@ -2469,7 +2477,7 @@ function renderKanban() {
                     getTaskStatusDisplayLabel(task)
                   )}</span></div>
                   <div class="k-card-meta">
-                    <span class="k-card-assignee" title="${escapeHtml(task.assigned_to_name || "Sem responsável")}">${escapeHtml(task.assigned_to_name || "Sem responsável")}</span>
+                    <span class="k-card-assignee" title="${escapeHtml(getTaskAssigneeLabel(task))}">${escapeHtml(getTaskAssigneeLabel(task))}</span>
                     <span class="k-card-deadline ${getDeadlineClass(task)}">${formatDate(task.due_date || task.deadline)}</span>
                   </div>
                   ${
@@ -4056,7 +4064,7 @@ function openModal(type, id = null) {
       `
         <div class="field form-full"><label>Título</label><input name="title" value="${escapeHtml(task.title || "")}" required></div>
         <div class="field"><label>Cliente</label><select name="client_id"><option value="">Interno</option>${clientOptions(task.client_id)}</select></div>
-        <div class="field"><label>Responsável</label><select name="assigned_to"><option value="">Ninguém</option>${userOptions(task.assigned_to)}</select></div>
+        <div class="field"><label>Responsável</label><select name="assigned_to"><option value="">Todos da equipe</option>${userOptions(task.assigned_to)}</select><div class="field-help">Deixe em "Todos da equipe" quando a tarefa puder ser acompanhada e concluída por qualquer pessoa do time.</div></div>
         <div class="field"><label>Tipo</label><select name="type">${taskTypeOptions(task.type || "planejamento")}</select></div>
         <div class="field"><label>Status</label><select name="status">${taskStatusOptions(task.status || getTaskStatusValue(task))}</select></div>
         <div class="field"><label>Coluna</label><select name="column_name">${taskColumnOptions(task.column_name || getTaskColumnName(task))}</select></div>
