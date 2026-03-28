@@ -38,6 +38,22 @@ const baseSelect = `
   LEFT JOIN clients c ON c.id = u.client_id
 `;
 
+const safeSelect = `
+  SELECT
+    u.id,
+    u.client_id,
+    u.name,
+    u.email,
+    u.role,
+    u.is_active,
+    u.email_verified_at,
+    u.created_at,
+    c.name AS client_name,
+    c.company AS client_company
+  FROM users u
+  LEFT JOIN clients c ON c.id = u.client_id
+`;
+
 const INTERNAL_ROLE_FILTER = "LOWER(u.role) IN ('admin', 'gestor', 'designer', 'comercial', 'dev')";
 const ACTIVE_INTERNAL_FILTER = 'COALESCE(u.is_active, true) = true';
 
@@ -54,7 +70,7 @@ async function findById(id, executor = pool) {
 async function list(query = {}) {
   const { limit, offset } = normalizePagination(query);
   const page = paginationClause(limit, offset, 1);
-  const { rows } = await pool.query(`${baseSelect} ORDER BY u.created_at DESC${page.clause}`, page.values);
+  const { rows } = await pool.query(`${safeSelect} ORDER BY u.created_at DESC${page.clause}`, page.values);
   return rows;
 }
 
@@ -141,6 +157,16 @@ async function update(id, data, executor = pool) {
 
 async function remove(id) {
   await pool.query('DELETE FROM users WHERE id = $1', [id]);
+}
+
+async function findSecurityById(id, executor = pool) {
+  const { rows } = await getExecutor(executor).query(
+    `SELECT id, failed_login_attempts, locked_until, last_login_at
+     FROM users
+     WHERE id = $1`,
+    [id]
+  );
+  return rows[0] || null;
 }
 
 async function recordFailedLogin(id, lockThreshold, lockMinutes) {
@@ -360,6 +386,7 @@ module.exports = {
   create,
   update,
   remove,
+  findSecurityById,
   recordFailedLogin,
   resetLoginFailures,
   createRefreshToken,

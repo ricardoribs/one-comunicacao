@@ -122,6 +122,28 @@ async function findById(id, user = null) {
   return rows[0] || null;
 }
 
+async function findByFilePath(filePath, user = null) {
+  const { rows } = await tenantDb.query(user, {
+    table: 'materials',
+    scopeConfig: {
+      client: 'm.client_id = $TENANT',
+      internal: [
+        'm.uploaded_by = $TENANT',
+        ...getInternalClientAccessScope('m.client_id'),
+      ],
+    },
+    prefix: 'AND',
+    startIndex: 2,
+    sql: `SELECT ${selectColumns}, c.manager_id, c.name AS client_name
+     FROM materials m
+     INNER JOIN clients c ON c.id = m.client_id
+     WHERE (m.url = $1 OR m.filename = $1)
+     __TENANT_SCOPE__`,
+    params: [filePath],
+  });
+  return rows[0] || null;
+}
+
 async function remove(id, user = null) {
   await tenantDb.query(user, {
     table: 'materials',
@@ -144,5 +166,6 @@ module.exports = {
   create,
   update,
   findById,
+  findByFilePath,
   remove,
 };

@@ -1,12 +1,15 @@
 const asyncHandler = require('../utils/asyncHandler');
 const messageModel = require('../models/messageModel');
 const { sendPaginated } = require('../utils/response');
+const { ensureMessageTargetAccess } = require('../utils/access');
 
 exports.list = asyncHandler(async (req, res) => {
   return sendPaginated(res, req, await messageModel.listForUser(req.user, req.query));
 });
 
 exports.create = asyncHandler(async (req, res) => {
+  await ensureMessageTargetAccess(req.user, req.body.receiver_id);
+
   const payload = {
     sender_id: req.user.id,
     receiver_id: req.body.receiver_id,

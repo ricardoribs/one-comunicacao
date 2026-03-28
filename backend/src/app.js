@@ -17,6 +17,11 @@ const errorMiddleware = require('./middlewares/errorMiddleware');
 const requestContextMiddleware = require('./middlewares/requestContextMiddleware');
 const sanitizeMiddleware = require('./middlewares/sanitizeMiddleware');
 const contentTypeMiddleware = require('./middlewares/contentTypeMiddleware');
+const asyncHandler = require('./utils/asyncHandler');
+const { authenticate, authorize } = require('./middlewares/authMiddleware');
+const fileModel = require('./models/fileModel');
+const materialModel = require('./models/materialModel');
+const reportModel = require('./models/reportModel');
 
 const authRoutes = require('./routes/authRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
@@ -206,25 +211,60 @@ app.use((req, res, next) => {
   next();
 });
 
-if (!env.isProduction) {
-  app.use('/uploads', express.static(env.uploadsDir, { maxAge: 0 }));
-}
 app.use('/assets', express.static(path.join(env.frontendDir, 'assets'), { maxAge: env.isProduction ? '7d' : 0 }));
 
-async function livenessHandler(req, res) {
-  const health = await healthService.getLiveness();
+async function resolveLocalUploadAccess(fileName, user) {
+  const relativePath = `/uploads/${fileName}`;
+
+  return (
+    (await fileModel.findByStoredName(fileName, user)) ||
+    (await materialModel.findByFilePath(relativePath, user)) ||
+    (await materialModel.findByFilePath(fileName, user)) ||
+    (await reportModel.findByFilePath(relativePath, user))
+  );
+}
+
+app.get(
+  '/uploads/:fileName',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    const safeName = path.basename(req.params.fileName || '');
+    if (!safeName || safeName !== req.params.fileName) {
+      return res.status(404).json({ message: 'Arquivo nao encontrado.', request_id: req.requestId });
+    }
+
+    const filePath = path.resolve(env.uploadsDir, safeName);
+    const uploadsRoot = path.resolve(env.uploadsDir);
+    if (!(filePath === path.join(uploadsRoot, safeName) && filePath.startsWith(uploadsRoot))) {
+      return res.status(404).json({ message: 'Arquivo nao encontrado.', request_id: req.requestId });
+    }
+
+    const allowedAsset = await resolveLocalUploadAccess(safeName, req.user);
+    if (!allowedAsset || !fs.existsSync(filePath)) {
+      return res.status(404).json({ message: 'Arquivo nao encontrado.', request_id: req.requestId });
+    }
+
+    res.setHeader('Cache-Control', 'no-store');
+    res.sendFile(filePath);
+  })
+);
+
+async function publicHealthHandler(req, res) {
+  const health = await healthService.getPublicHealth();
   res.status(health.status === 'ok' ? 200 : 503).json(health);
 }
 
-async function readinessHandler(req, res) {
-  const readiness = await healthService.getReadiness();
-  res.status(readiness.status === 'down' ? 503 : 200).json(readiness);
+async function internalHealthHandler(req, res) {
+  const health = await healthService.getInternalHealth();
+  res.status(health.status === 'down' ? 503 : 200).json(health);
 }
 
-app.get('/health', livenessHandler);
-app.get('/api/health', livenessHandler);
-app.get('/ready', readinessHandler);
-app.get('/api/ready', readinessHandler);
+app.get('/health', publicHealthHandler);
+app.get('/api/health', publicHealthHandler);
+app.get('/ready', publicHealthHandler);
+app.get('/api/ready', publicHealthHandler);
+app.get('/api/health/internal', authenticate, authorize('admin'), internalHealthHandler);
+app.get('/api/ready/internal', authenticate, authorize('admin'), internalHealthHandler);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);

@@ -7,6 +7,7 @@ const userModel = require('../models/userModel');
 const { withTransaction } = require('../utils/db');
 const { sendMail } = require('./mailService');
 const { buildVerificationEmail, buildPasswordResetEmail } = require('./emailTemplates');
+const logger = require('../config/logger');
 
 function buildUserPayload(user) {
   return {
@@ -204,7 +205,24 @@ async function refreshAccessToken(rawRefreshToken, metadata = {}) {
   return withTransaction(async (dbClient) => {
     const tokenRecord = await userModel.findRefreshTokenForUpdate(tokenHash, dbClient);
 
-    if (!tokenRecord || tokenRecord.revoked_at || !tokenRecord.is_active) {
+    if (!tokenRecord) {
+      throw new AppError('Refresh token invalido', 401);
+    }
+
+    if (tokenRecord.revoked_at || tokenRecord.replaced_by_token_hash) {
+      await userModel.revokeAllRefreshTokensForUser(tokenRecord.user_id, metadata.ip, dbClient);
+      logger.warn(
+        {
+          user_id: tokenRecord.user_id,
+          token_hash: tokenHash,
+          event: 'refresh_token_replay_detected',
+        },
+        'Replay de refresh token detectado. Todas as sessoes foram revogadas.'
+      );
+      throw new AppError('Sessao invalida. Faca login novamente.', 401);
+    }
+
+    if (!tokenRecord.is_active) {
       throw new AppError('Refresh token invalido', 401);
     }
 
