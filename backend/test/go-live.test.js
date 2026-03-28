@@ -37,23 +37,125 @@ async function login(email, password = 'Valid@Test123') {
     .send({ email, password });
 }
 
-test('readiness responde 200 com checks estruturados', { concurrency: false }, async () => {
+test('readiness publico responde 200 sem checks internos', { concurrency: false }, async () => {
   const response = await request(app).get('/api/ready');
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(response.body, {
+    status: 'ok',
+    database: 'up',
+  });
+});
+
+test('health publico responde 200 com payload reduzido', { concurrency: false }, async () => {
+  const response = await request(app).get('/api/health');
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(response.body, {
+    status: 'ok',
+    database: 'up',
+  });
+});
+
+test('health interno exige admin e expõe checks detalhados apenas autenticado', { concurrency: false }, async () => {
+  const suffix = Date.now() + 200;
+  const admin = await createUser({
+    name: `Admin Health ${suffix}`,
+    email: `admin.health.${suffix}@one.test`,
+    role: 'admin',
+  });
+
+  const unauthenticated = await request(app).get('/api/health/internal');
+  assert.equal(unauthenticated.status, 401);
+
+  const auth = await login(admin.email);
+  const response = await request(app).get('/api/health/internal').set('Authorization', `Bearer ${auth.body.accessToken}`);
 
   assert.equal(response.status, 200);
   assert.ok(['ok', 'degraded'].includes(response.body.status));
   assert.equal(response.body.checks.database.status, 'up');
   assert.ok(response.body.checks.mail.status);
-  assert.ok(response.body.checks.upload.status);
-  assert.ok(response.body.checks.payment.status);
+
+  await userModel.remove(admin.id);
 });
 
-test('health responde 200 com status do banco', { concurrency: false }, async () => {
-  const response = await request(app).get('/api/health');
+test('listagem de usuarios omite metadados sensiveis no endpoint principal', { concurrency: false }, async () => {
+  const suffix = Date.now() + 201;
+  const admin = await createUser({
+    name: `Admin Users ${suffix}`,
+    email: `admin.users.${suffix}@one.test`,
+    role: 'admin',
+  });
+
+  const auth = await login(admin.email);
+  const response = await request(app).get('/api/users').set('Authorization', `Bearer ${auth.body.accessToken}`);
 
   assert.equal(response.status, 200);
-  assert.equal(response.body.status, 'ok');
-  assert.equal(response.body.checks.database.status, 'up');
+  assert.ok(Array.isArray(response.body));
+  assert.ok(response.body.length >= 1);
+
+  const currentAdmin = response.body.find((user) => user.id === admin.id);
+  assert.ok(currentAdmin);
+  assert.equal('failed_login_attempts' in currentAdmin, false);
+  assert.equal('locked_until' in currentAdmin, false);
+  assert.equal('last_login_at' in currentAdmin, false);
+  assert.equal('password' in currentAdmin, false);
+
+  await userModel.remove(admin.id);
+});
+
+test('cliente nao envia mensagem para outro cliente fora do canal interno permitido', { concurrency: false }, async () => {
+  const suffix = Date.now() + 202;
+  const gestor = await createUser({
+    name: `Gestor Message ${suffix}`,
+    email: `gestor.message.${suffix}@one.test`,
+    role: 'gestor',
+  });
+
+  const clientAId = await createClient(`Cliente Msg A ${suffix}`, 'Empresa Msg A', gestor.id);
+  const clientBId = await createClient(`Cliente Msg B ${suffix}`, 'Empresa Msg B', gestor.id);
+
+  const clientA = await createUser({
+    name: `Cliente A Msg ${suffix}`,
+    email: `clientea.message.${suffix}@one.test`,
+    role: 'client',
+    clientId: clientAId,
+  });
+  const clientB = await createUser({
+    name: `Cliente B Msg ${suffix}`,
+    email: `clienteb.message.${suffix}@one.test`,
+    role: 'client',
+    clientId: clientBId,
+  });
+
+  const auth = await login(clientA.email);
+  const blocked = await request(app)
+    .post('/api/messages')
+    .set('Authorization', `Bearer ${auth.body.accessToken}`)
+    .send({
+      receiver_id: clientB.id,
+      context_type: 'general',
+      content: 'Mensagem indevida entre clientes',
+    });
+
+  assert.equal(blocked.status, 403);
+
+  const allowed = await request(app)
+    .post('/api/messages')
+    .set('Authorization', `Bearer ${auth.body.accessToken}`)
+    .send({
+      receiver_id: gestor.id,
+      context_type: 'general',
+      content: 'Mensagem permitida para a equipe interna vinculada',
+    });
+
+  assert.equal(allowed.status, 201);
+
+  await pool.query('DELETE FROM messages');
+  await userModel.remove(clientB.id);
+  await userModel.remove(clientA.id);
+  await userModel.remove(gestor.id);
+  await pool.query('DELETE FROM clients');
 });
 
 test(

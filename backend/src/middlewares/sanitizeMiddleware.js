@@ -18,7 +18,10 @@ function sanitizeValue(value, key = '') {
     ) {
       return normalized;
     }
-    return normalized.replace(/[<>]/g, '');
+    return normalized
+      .replace(/javascript:/gi, '')
+      .replace(/on\w+\s*=/gi, '')
+      .replace(/[<>]/g, '');
   }
 
   return value;

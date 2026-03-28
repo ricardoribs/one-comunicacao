@@ -72,7 +72,7 @@ test('cliente nao acessa rota de admin', async () => {
   await userModel.remove(user.id);
 });
 
-test('refresh token rotativo invalida o token anterior e bloqueia reutilizacao', async () => {
+test('refresh token rotativo invalida o token anterior e revoga todas as sessoes ao detectar replay', async () => {
   const email = `auth.refresh.${Date.now()}@one.com`;
   const user = await createVerifiedUser(email);
 
@@ -95,7 +95,7 @@ test('refresh token rotativo invalida o token anterior e bloqueia reutilizacao',
   assert.equal(replayAttempt.status, 401);
 
   const rotatedRefresh = await request(app).post('/api/auth/refresh').set('Cookie', rotatedRefreshCookie);
-  assert.equal(rotatedRefresh.status, 200);
+  assert.equal(rotatedRefresh.status, 401);
 
   await userModel.remove(user.id);
 });

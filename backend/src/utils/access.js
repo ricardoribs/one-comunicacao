@@ -1,6 +1,9 @@
 const AppError = require('./AppError');
 const clientModel = require('../models/clientModel');
 const contactModel = require('../models/contactModel');
+const userModel = require('../models/userModel');
+
+const INTERNAL_ROLES = new Set(['admin', 'gestor', 'designer', 'comercial', 'dev']);
 
 const ROLE_CAPABILITIES = {
   admin: {
@@ -28,6 +31,7 @@ const ROLE_CAPABILITIES = {
     manage_invoices: true,
     view_charges: true,
     manage_charges: true,
+    send_messages: true,
   },
   gestor: {
     view_dashboard: true,
@@ -54,6 +58,7 @@ const ROLE_CAPABILITIES = {
     manage_invoices: false,
     view_charges: true,
     manage_charges: true,
+    send_messages: true,
   },
   designer: {
     view_dashboard: true,
@@ -80,6 +85,7 @@ const ROLE_CAPABILITIES = {
     manage_invoices: false,
     view_charges: false,
     manage_charges: false,
+    send_messages: true,
   },
   comercial: {
     view_dashboard: true,
@@ -106,6 +112,7 @@ const ROLE_CAPABILITIES = {
     manage_invoices: true,
     view_charges: true,
     manage_charges: true,
+    send_messages: true,
   },
   dev: {
     view_dashboard: true,
@@ -132,6 +139,7 @@ const ROLE_CAPABILITIES = {
     manage_invoices: false,
     view_charges: false,
     manage_charges: false,
+    send_messages: true,
   },
   client: {
     view_dashboard: true,
@@ -158,6 +166,7 @@ const ROLE_CAPABILITIES = {
     manage_invoices: false,
     view_charges: true,
     manage_charges: false,
+    send_messages: true,
   },
 };
 
@@ -286,6 +295,46 @@ async function ensureContactAccess(user, contactId) {
   return contactModel.findById(contactId, user);
 }
 
+async function ensureMessageTargetAccess(user, receiverId) {
+  const target = await userModel.findById(receiverId);
+
+  if (!target || target.is_active === false) {
+    throw new AppError('Destinatario nao encontrado.', 404);
+  }
+
+  if (Number(target.id) === Number(user.id)) {
+    return target;
+  }
+
+  const targetIsInternal = INTERNAL_ROLES.has(target.role);
+
+  if (user.role === 'client') {
+    if (!targetIsInternal || !user.client_id) {
+      throw new AppError('Sem permissao para enviar mensagem para este destinatario.', 403);
+    }
+
+    const scopedInternalUsers = await userModel.listActiveInternalTeam(user);
+    const canReachTarget = scopedInternalUsers.some((internalUser) => Number(internalUser.id) === Number(target.id));
+
+    if (!canReachTarget) {
+      throw new AppError('Sem permissao para enviar mensagem para este destinatario.', 403);
+    }
+
+    return target;
+  }
+
+  if (targetIsInternal) {
+    return target;
+  }
+
+  if (!target.client_id) {
+    throw new AppError('Sem permissao para enviar mensagem para este destinatario.', 403);
+  }
+
+  await ensureClientAccess(user, target.client_id);
+  return target;
+}
+
 module.exports = {
   ROLE_CAPABILITIES,
   isAdmin,
@@ -300,4 +349,5 @@ module.exports = {
   canAccessContact,
   ensureClientAccess,
   ensureContactAccess,
+  ensureMessageTargetAccess,
 };

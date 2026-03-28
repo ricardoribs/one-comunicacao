@@ -75,6 +75,18 @@ async function findById(id, user = null) {
   return rows[0] || null;
 }
 
+async function findByStoredName(storedName, user = null) {
+  const { rows } = await tenantDb.query(user, {
+    table: 'files',
+    scopeConfig,
+    prefix: 'AND',
+    startIndex: 2,
+    sql: `SELECT ${selectColumns} FROM files f WHERE f.stored_name = $1 __TENANT_SCOPE__`,
+    params: [storedName],
+  });
+  return rows[0] || null;
+}
+
 async function remove(id, user = null) {
   await tenantDb.query(user, {
     table: 'files',
@@ -96,5 +108,6 @@ module.exports = {
   list,
   create,
   findById,
+  findByStoredName,
   remove,
 };

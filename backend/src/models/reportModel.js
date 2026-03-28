@@ -36,6 +36,23 @@ async function list(user, query = {}) {
   return rows;
 }
 
+async function findByFilePath(filePath, user = null) {
+  const { rows } = await tenantDb.query(user, {
+    table: 'reports',
+    scopeConfig,
+    prefix: 'AND',
+    startIndex: 2,
+    sql: `SELECT ${selectColumns}, c.name AS client_name
+     FROM reports r
+     INNER JOIN clients c ON c.id = r.client_id
+     WHERE r.file_url = $1
+     __TENANT_SCOPE__`,
+    params: [filePath],
+  });
+  return rows[0] || null;
+}
+
 module.exports = {
   list,
+  findByFilePath,
 };

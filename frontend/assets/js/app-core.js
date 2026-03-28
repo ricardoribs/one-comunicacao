@@ -215,6 +215,33 @@
       }
     }
 
+    if (url.startsWith("/uploads/")) {
+      const session = await ensureFreshSession();
+      const accessToken = session?.accessToken || session?.token;
+
+      if (!accessToken) {
+        throw new Error("Sua sessao expirou. Faca login novamente.");
+      }
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        },
+        credentials: "include"
+      });
+
+      if (!response.ok) {
+        throw new Error("Nao foi possivel abrir o arquivo solicitado.");
+      }
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      window.open(blobUrl, "_blank", "noopener,noreferrer");
+      window.setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60000);
+      return blobUrl;
+    }
+
     window.open(url, "_blank", "noopener,noreferrer");
     return url;
   }

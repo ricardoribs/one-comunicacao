@@ -9,10 +9,9 @@ async function checkDatabase() {
   try {
     await db.query('SELECT 1');
     return { status: 'up' };
-  } catch (error) {
+  } catch (_error) {
     return {
       status: 'down',
-      error: error.message,
     };
   }
 }
@@ -29,20 +28,16 @@ function checkSentry() {
   };
 }
 
-async function getLiveness() {
+async function getPublicHealth() {
   const database = await checkDatabase();
 
   return {
-    status: database.status === 'down' ? 'down' : 'ok',
-    uptime: Math.round(process.uptime()),
-    environment: env.nodeEnv,
-    checks: {
-      database,
-    },
+    status: database.status === 'down' ? 'degraded' : 'ok',
+    database: database.status,
   };
 }
 
-async function getReadiness() {
+async function getInternalHealth() {
   const database = await checkDatabase();
   const sentryHealth = checkSentry();
   const mailHealth = mailService.getHealth();
@@ -80,6 +75,8 @@ async function getReadiness() {
 }
 
 module.exports = {
-  getLiveness,
-  getReadiness,
+  getPublicHealth,
+  getInternalHealth,
+  getLiveness: getPublicHealth,
+  getReadiness: getInternalHealth,
 };

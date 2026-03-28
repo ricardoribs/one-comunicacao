@@ -101,11 +101,10 @@ async function sendMail(payload) {
       {
         to: payload.to,
         subject: payload.subject,
+        mock: true,
       },
-      '[MAIL MOCK]'
+      '[MAIL MOCK] E-mail simulado - conteudo omitido dos logs.'
     );
-
-    logger.debug({ html: payload.html }, 'Conteudo do email');
     return { id: 'mock', mock: true };
   }
 

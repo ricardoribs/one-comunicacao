@@ -201,6 +201,20 @@ const TASK_TYPE_LABELS = {
   reuniao_estrategica: "Reunião Estratégica"
 };
 
+const CAMPAIGN_CHANNEL_OPTIONS = [
+  "Meta Ads",
+  "Instagram + Meta",
+  "Google Ads",
+  "Instagram",
+  "Facebook",
+  "Google",
+  "TikTok",
+  "Email",
+  "Outro"
+];
+
+const INVOICE_STATUS_OPTIONS = ["Em aberto", "Pago", "Atrasado", "Cancelado"];
+
 const state = {
   session: null,
   dashboard: null,
@@ -232,8 +246,8 @@ const UI = {
   empty: (msg = "Nenhum registro disponível", sub = "") => `
     <div class="empty-state">
       <div class="empty-state-icon">○</div>
-      <div class="empty-state-title">${msg}</div>
-      ${sub ? `<div class="empty-state-sub">${sub}</div>` : ""}
+      <div class="empty-state-title">${escapeHtml(msg)}</div>
+      ${sub ? `<div class="empty-state-sub">${escapeHtml(sub)}</div>` : ""}
     </div>`,
 
   tableEmpty: (cols, msg = "Nenhum registro disponível", sub = "") => `
@@ -241,8 +255,8 @@ const UI = {
       <td colspan="${cols}">
         <div class="empty-state">
           <div class="empty-state-icon">○</div>
-          <div class="empty-state-title">${msg}</div>
-          ${sub ? `<div class="empty-state-sub">${sub}</div>` : ""}
+          <div class="empty-state-title">${escapeHtml(msg)}</div>
+          ${sub ? `<div class="empty-state-sub">${escapeHtml(sub)}</div>` : ""}
         </div>
       </td>
     </tr>`,
@@ -651,6 +665,32 @@ function taskTypeOptions(selected = "") {
   return knownOptions;
 }
 
+function campaignChannelOptions(selected = "") {
+  const normalized = String(selected || "").trim();
+  const knownOptions = CAMPAIGN_CHANNEL_OPTIONS.map(
+    (option) => `<option value="${escapeHtml(option)}" ${option === selected ? "selected" : ""}>${escapeHtml(option)}</option>`
+  ).join("");
+
+  if (normalized && !CAMPAIGN_CHANNEL_OPTIONS.includes(normalized)) {
+    return `${knownOptions}<option value="${escapeHtml(normalized)}" selected>${escapeHtml(normalized)}</option>`;
+  }
+
+  return knownOptions;
+}
+
+function invoiceStatusOptions(selected = "") {
+  const normalized = String(selected || "").trim();
+  const knownOptions = INVOICE_STATUS_OPTIONS.map(
+    (option) => `<option value="${escapeHtml(option)}" ${option === selected ? "selected" : ""}>${escapeHtml(option)}</option>`
+  ).join("");
+
+  if (normalized && !INVOICE_STATUS_OPTIONS.includes(normalized)) {
+    return `${knownOptions}<option value="${escapeHtml(normalized)}" selected>${escapeHtml(normalized)}</option>`;
+  }
+
+  return knownOptions;
+}
+
 function mergeInternalUsers(...sources) {
   const merged = new Map();
 
@@ -705,9 +745,9 @@ function renderKpiCards(container, cards) {
     .map(
       (item) => `
         <div class="kpi-card">
-          <div class="kpi-label">${item.label}</div>
-          <div class="kpi-val">${item.value}</div>
-          <div class="kpi-sub${item.subClass ? ` ${item.subClass}` : ""}">${item.sub}</div>
+          <div class="kpi-label">${escapeHtml(item.label)}</div>
+          <div class="kpi-val">${escapeHtml(item.value)}</div>
+          <div class="kpi-sub${item.subClass ? ` ${item.subClass}` : ""}">${escapeHtml(item.sub)}</div>
         </div>
       `
     )
@@ -824,6 +864,10 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function escapeHtmlWithBreaks(value) {
+  return escapeHtml(value).replace(/\n/g, "<br>");
 }
 
 function getDeadlineClass(task) {
@@ -1145,27 +1189,27 @@ function renderResourceAction(
   } = {}
 ) {
   if (url) {
-    if (url.startsWith("/api/files/")) {
+    if (url.startsWith("/api/files/") || url.startsWith("/uploads/")) {
       return `<button type="button" class="${className}" onclick="openProtectedResource('${escapeInlineMessage(
         url
-      )}')">${label}</button>`;
+      )}')">${escapeHtml(label)}</button>`;
     }
 
-    return `<a class="${className}" href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+    return `<a class="${className}" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>`;
   }
 
   return `<button type="button" class="${className}" onclick="showToast('${escapeInlineMessage(
     missingMessage
-  )}')">${label}</button>`;
+  )}')">${escapeHtml(label)}</button>`;
 }
 
 function renderMemberRow(user, currentUserId) {
   const lastAccess = user.last_login_at ? formatDate(user.last_login_at) : "Nunca";
   return `
     <tr>
-      <td class="cell-stack"><div class="row"><div class="avatar av-pink">${getInitials(user.name)}</div><strong class="cell-title" title="${escapeHtml(user.name)}">${user.name}</strong></div></td>
+      <td class="cell-stack"><div class="row"><div class="avatar av-pink">${getInitials(user.name)}</div><strong class="cell-title" title="${escapeHtml(user.name)}">${escapeHtml(user.name)}</strong></div></td>
       <td><span class="sb-role-badge ${getRoleBadgeClass(user.role)}">${ROLE_LABELS[user.role] || user.role}</span></td>
-      <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(user.email)}">${user.email}</span></td>
+      <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(user.email)}">${escapeHtml(user.email)}</span></td>
       <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(lastAccess)}">${lastAccess}</span></td>
       <td><span class="badge ${user.is_active ? "badge-green" : "badge-gray"}">${user.is_active ? "Ativo" : "Inativo"}</span></td>
       <td class="cell-actions">
@@ -1408,8 +1452,8 @@ function renderBarChart(containerId, values, labels, formatter) {
       (value, index) => `
         <div class="bar-item">
           <div class="bar-meta">
-            <div class="bar-label">${labels[index]}</div>
-            <div class="bar-val">${formatter(value)}</div>
+            <div class="bar-label">${escapeHtml(labels[index])}</div>
+            <div class="bar-val">${escapeHtml(formatter(value))}</div>
           </div>
           <div class="bar-track">
             <div class="bar-fill" style="width:${((value / max) * 100).toFixed(1)}%"></div>
@@ -1506,9 +1550,9 @@ function renderHome() {
             ${item.tab ? `data-home-tab="${item.tab}"` : ""}
             ${item.page ? `aria-label="Abrir ${item.label}"` : `aria-disabled="true" tabindex="-1"`}
           >
-            <div class="kpi-label">${item.label}</div>
-            <div class="kpi-val">${item.label === "Faturamento" ? item.value : formatNumber(item.value)}</div>
-            <div class="kpi-sub">${item.sub}</div>
+            <div class="kpi-label">${escapeHtml(item.label)}</div>
+            <div class="kpi-val">${escapeHtml(item.label === "Faturamento" ? item.value : formatNumber(item.value))}</div>
+            <div class="kpi-sub">${escapeHtml(item.sub)}</div>
           </button>
         `
       )
@@ -1525,10 +1569,10 @@ function renderHome() {
         (task) => `
           <div class="item-row">
             <div>
-              <div class="block-title-sm">${task.title}</div>
-              <div class="block-text-xs">${task.client_name || "Interno"} · ${formatDate(task.due_date || task.deadline)}</div>
+              <div class="block-title-sm">${escapeHtml(task.title)}</div>
+              <div class="block-text-xs">${escapeHtml(task.client_name || "Interno")} · ${formatDate(task.due_date || task.deadline)}</div>
             </div>
-            <span class="badge ${task.status === "Em progresso" ? "badge-yellow" : "badge-gray"}">${task.status}</span>
+            <span class="badge ${task.status === "Em progresso" ? "badge-yellow" : "badge-gray"}">${escapeHtml(task.status)}</span>
           </div>
         `
       )
@@ -1608,10 +1652,10 @@ function renderHome() {
           (item) => `
             <div class="item-row">
               <div>
-                <div class="block-title-sm">${item.title}</div>
-                <div class="block-text-xs">${item.client_name || "Operação interna"}</div>
+                <div class="block-title-sm">${escapeHtml(item.title)}</div>
+                <div class="block-text-xs">${escapeHtml(item.client_name || "Operação interna")}</div>
               </div>
-              <span class="badge ${item.status === "Aprovado" ? "badge-green" : item.status === "Revisao" ? "badge-yellow" : "badge-gray"}">${item.report_month ? "Relatório" : normalizeMaterialStatus(item.status || "Pendente")}</span>
+              <span class="badge ${item.status === "Aprovado" ? "badge-green" : item.status === "Revisao" ? "badge-yellow" : "badge-gray"}">${escapeHtml(item.report_month ? "Relatório" : normalizeMaterialStatus(item.status || "Pendente"))}</span>
             </div>
           `
         )
@@ -1644,7 +1688,7 @@ function renderHome() {
                 <div class="team-member">
                   <div class="avatar av-pink">${getInitials(user.name)}</div>
                   <div class="team-member-info">
-                    <div class="team-member-name">${user.name}</div>
+                    <div class="team-member-name">${escapeHtml(user.name)}</div>
                     <div class="team-member-role">${ROLE_LABELS[user.role]}</div>
                   </div>
                 </div>
@@ -1661,8 +1705,8 @@ function renderHome() {
           (file) => `
             <div class="item-row">
               <div>
-                <div class="block-title-sm">${file.original_name}</div>
-                <div class="block-text-xs">${file.client_name || "Interno"} · ${Math.round((file.size || 0) / 1024)} KB</div>
+                <div class="block-title-sm">${escapeHtml(file.original_name)}</div>
+                <div class="block-text-xs">${escapeHtml(file.client_name || "Interno")} · ${Math.round((file.size || 0) / 1024)} KB</div>
               </div>
               ${renderResourceAction(file.url, { label: "Abrir", className: "btn btn-ghost btn-sm" })}
             </div>
@@ -1681,8 +1725,8 @@ function renderHome() {
           (metric) => `
             <div class="item-row">
               <div>
-                <div class="block-title-sm">${metric.campaign_name}</div>
-                <div class="block-text-xs">${metric.client_name} · ${formatDate(metric.period)}</div>
+                <div class="block-title-sm">${escapeHtml(metric.campaign_name)}</div>
+                <div class="block-text-xs">${escapeHtml(metric.client_name)} · ${formatDate(metric.period)}</div>
               </div>
               <span class="badge badge-blue">${formatNumber(metric.leads)} leads</span>
             </div>
@@ -1701,8 +1745,8 @@ function renderHome() {
           (report) => `
             <div class="item-row">
               <div>
-                <div class="block-title-sm">${report.title}</div>
-                <div class="block-text-xs">${report.client_name} · ${formatDate(report.report_month)}</div>
+                <div class="block-title-sm">${escapeHtml(report.title)}</div>
+                <div class="block-text-xs">${escapeHtml(report.client_name)} · ${formatDate(report.report_month)}</div>
               </div>
               ${renderResourceAction(report.file_url, {
                 missingMessage: "Relatório ainda não disponível para abertura."
@@ -2008,8 +2052,8 @@ function renderKanbanChecklist(filteredTasks) {
               (task) => `
                 <div class="item-row">
                   <div>
-                    <div class="block-title-sm">${task.title}</div>
-                    <div class="block-text-xs">${task.client_name || "Interno"} · ${task.assigned_to_name || "Sem responsável"}</div>
+                    <div class="block-title-sm">${escapeHtml(task.title)}</div>
+                    <div class="block-text-xs">${escapeHtml(task.client_name || "Interno")} · ${escapeHtml(task.assigned_to_name || "Sem responsável")}</div>
                   </div>
                   <span class="badge ${isOverdueDate(task.due_date || task.deadline) ? "badge-pink" : "badge-blue"}">${isOverdueDate(task.due_date || task.deadline) ? "Atrasada" : "Hoje"}</span>
                 </div>
@@ -2026,7 +2070,7 @@ function renderKanbanChecklist(filteredTasks) {
               .map(
                 (group) => `
                   <div class="checklist-history-group">
-                    <div class="checklist-history-title">${group.title}</div>
+                    <div class="checklist-history-title">${escapeHtml(group.title)}</div>
                     ${group.entries
                       .map(
                         (entry) => `
@@ -2102,7 +2146,7 @@ function renderKanbanBrandManual(filteredTasks) {
     </div>
     ${
       brandManual
-        ? `<div class="muted-panel">${escapeHtml(brandManual).replace(/\n/g, "<br>")}</div>`
+        ? `<div class="muted-panel">${escapeHtmlWithBreaks(brandManual)}</div>`
         : UI.empty(
             "Manual de marca ainda não cadastrado",
             "Abra o cliente no CRM e preencha o campo de manual da marca com tom de voz, referências, restrições, roteiro e observações de execução."
@@ -2137,13 +2181,13 @@ function renderKanban() {
             .map(
               (task) => `
                 <div class="k-card">
-                  <div class="k-card-client" title="${escapeHtml(task.client_name || "Interno")}">${task.client_name || "Interno"}</div>
-                  <div class="k-card-title" title="${escapeHtml(task.title)}">${task.title}</div>
-                  <div class="k-card-desc" title="${escapeHtml(task.description || "")}">${task.description || "Sem descrição."}</div>
-                  <div class="status-gap-top"><span class="badge badge-blue">${formatTaskTypeLabel(task.type)}</span></div>
-                  <div class="status-gap-top"><span class="badge ${task.status === "Concluido" ? "badge-green" : task.status === "Em progresso" ? "badge-yellow" : "badge-gray"}">${task.status}</span></div>
+                  <div class="k-card-client" title="${escapeHtml(task.client_name || "Interno")}">${escapeHtml(task.client_name || "Interno")}</div>
+                  <div class="k-card-title" title="${escapeHtml(task.title)}">${escapeHtml(task.title)}</div>
+                  <div class="k-card-desc" title="${escapeHtml(task.description || "")}">${escapeHtml(task.description || "Sem descrição.")}</div>
+                  <div class="status-gap-top"><span class="badge badge-blue">${escapeHtml(formatTaskTypeLabel(task.type))}</span></div>
+                  <div class="status-gap-top"><span class="badge ${task.status === "Concluido" ? "badge-green" : task.status === "Em progresso" ? "badge-yellow" : "badge-gray"}">${escapeHtml(task.status)}</span></div>
                   <div class="k-card-meta">
-                    <span class="k-card-assignee" title="${escapeHtml(task.assigned_to_name || "Sem responsável")}">${task.assigned_to_name || "Sem responsável"}</span>
+                    <span class="k-card-assignee" title="${escapeHtml(task.assigned_to_name || "Sem responsável")}">${escapeHtml(task.assigned_to_name || "Sem responsável")}</span>
                     <span class="k-card-deadline ${getDeadlineClass(task)}">${formatDate(task.due_date || task.deadline)}</span>
                   </div>
                   ${
@@ -2213,8 +2257,8 @@ function renderCRM() {
             .map(
               (contact) => `
                 <div class="pipe-card">
-                  <div class="pipe-lead-name" title="${escapeHtml(contact.name)}">${contact.name}</div>
-                  <div class="pipe-lead-company" title="${escapeHtml(contact.company || "Sem empresa")}">${contact.company || "Sem empresa"}</div>
+                  <div class="pipe-lead-name" title="${escapeHtml(contact.name)}">${escapeHtml(contact.name)}</div>
+                  <div class="pipe-lead-company" title="${escapeHtml(contact.company || "Sem empresa")}">${escapeHtml(contact.company || "Sem empresa")}</div>
                   <div class="pipe-lead-val">${formatCurrency(contact.estimated_value)}</div>
                   <div class="item-card-actions">
                     <button class="btn btn-ghost btn-sm" onclick="openModal('novo-lead', ${contact.id})">Editar</button>
@@ -2234,9 +2278,9 @@ function renderCRM() {
     .map(
       (client) => `
         <tr>
-          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(client.name)}">${client.name}</span></td>
-          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(client.segment || client.company || "-")}">${client.segment || client.company || "-"}</span></td>
-          <td><span class="badge badge-gray">${client.plan || "-"}</span></td>
+          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(client.segment || client.company || "-")}">${escapeHtml(client.segment || client.company || "-")}</span></td>
+          <td><span class="badge badge-gray">${escapeHtml(client.plan || "-")}</span></td>
           <td>${formatDate(client.started_at)}</td>
           <td><span class="badge badge-green">Ativo</span></td>
           <td data-align="right"><span class="${getValueToneClass(client.mrr)}">${formatCurrencyValue(client.mrr)}</span></td>
@@ -2259,10 +2303,10 @@ function renderCRM() {
         <div class="card card-sm">
           <div class="historic-card-head">
             <div>
-              <div class="historic-card-title">${item.title || item.description}</div>
-              <div class="historic-card-sub">${item.client_name || item.contact_name || ""}</div>
+              <div class="historic-card-title">${escapeHtml(item.title || item.description)}</div>
+              <div class="historic-card-sub">${escapeHtml(item.client_name || item.contact_name || "")}</div>
             </div>
-            <span class="badge badge-gray">${item.report_month ? "Relatório" : item.payment_method || item.status}</span>
+            <span class="badge badge-gray">${escapeHtml(item.report_month ? "Relatório" : item.payment_method || item.status)}</span>
           </div>
         </div>
       `
@@ -2306,13 +2350,13 @@ function renderCampaigns() {
     .map(
       (campaign) => `
         <tr>
-          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(campaign.name)}">${campaign.name}</span></td>
-          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(campaign.client_name)}">${campaign.client_name}</span></td>
-          <td><span class="badge ${getChannelBadgeClass(campaign.channel)}">${campaign.channel}</span></td>
-          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(campaign.audience || "-")}">${campaign.audience || "-"}</span></td>
+          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(campaign.name)}">${escapeHtml(campaign.name)}</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(campaign.client_name)}">${escapeHtml(campaign.client_name)}</span></td>
+          <td><span class="badge ${getChannelBadgeClass(campaign.channel)}">${escapeHtml(campaign.channel)}</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(campaign.audience || "-")}">${escapeHtml(campaign.audience || "-")}</span></td>
           <td data-align="right"><span class="${getValueToneClass(campaign.budget)}">${formatCurrencyValue(campaign.budget)}</span></td>
           <td>${formatDate(campaign.start_date)}</td>
-          <td><span class="badge ${getCampaignStatusBadgeClass(campaign.status)}">${campaign.status}</span></td>
+          <td><span class="badge ${getCampaignStatusBadgeClass(campaign.status)}">${escapeHtml(campaign.status)}</span></td>
           <td class="cell-actions">
             <div class="table-actions">
               <button class="btn btn-ghost btn-sm" onclick="openModal('nova-campanha', ${campaign.id})">Editar</button>
@@ -2333,10 +2377,10 @@ function renderProduction() {
         <div class="card card-sm">
           <div class="historic-card-head">
             <div>
-              <div class="historic-card-title">${material.title}</div>
-              <div class="historic-card-sub">${material.client_name}</div>
+              <div class="historic-card-title">${escapeHtml(material.title)}</div>
+              <div class="historic-card-sub">${escapeHtml(material.client_name)}</div>
             </div>
-            <span class="badge ${material.status === "Aprovado" ? "badge-green" : material.status === "Revisao" ? "badge-yellow" : "badge-pink"}">${normalizeMaterialStatus(material.status)}</span>
+            <span class="badge ${material.status === "Aprovado" ? "badge-green" : material.status === "Revisao" ? "badge-yellow" : "badge-pink"}">${escapeHtml(normalizeMaterialStatus(material.status))}</span>
           </div>
           <div class="item-card-actions">
             ${renderResourceAction(material.url || material.file_url, {
@@ -2356,11 +2400,11 @@ function renderProduction() {
     .map(
       (file) => `
         <tr>
-          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(file.original_name)}">${file.original_name}</span></td>
-          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(file.client_name || "Interno")}">${file.client_name || "Interno"}</span></td>
+          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(file.original_name)}">${escapeHtml(file.original_name)}</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(file.client_name || "Interno")}">${escapeHtml(file.client_name || "Interno")}</span></td>
           <td>${file.mime_type || "-"}</td>
           <td data-align="right">${Math.round((file.size || 0) / 1024)} KB</td>
-          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(file.uploaded_by_name || "-")}">${file.uploaded_by_name || "-"}</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(file.uploaded_by_name || "-")}">${escapeHtml(file.uploaded_by_name || "-")}</span></td>
           <td class="cell-actions">${renderResourceAction(file.url, { label: "Abrir", className: "btn btn-ghost btn-sm" })}</td>
         </tr>
       `
@@ -2371,10 +2415,10 @@ function renderProduction() {
     .map(
       (report) => `
         <tr>
-          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(report.title)}">${report.title}</span></td>
-          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(report.client_name)}">${report.client_name}</span></td>
+          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(report.title)}">${escapeHtml(report.title)}</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(report.client_name)}">${escapeHtml(report.client_name)}</span></td>
           <td>${formatDate(report.report_month)}</td>
-          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(report.summary || "-")}">${report.summary || "-"}</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(report.summary || "-")}">${escapeHtml(report.summary || "-")}</span></td>
           <td class="cell-actions">${renderResourceAction(report.file_url, {
             missingMessage: "Relatório ainda não disponível para abertura."
           })}</td>
@@ -2449,7 +2493,7 @@ function renderTraffic() {
             return `
               <div>
                 <div class="progress-item-head">
-                  <span>${platform.label}</span>
+                  <span>${escapeHtml(platform.label)}</span>
                   <span class="text-strong">${formatCurrency(platform.budget)} · ROAS ${platformRoas.toFixed(1)}x</span>
                 </div>
                 <div class="progress-bar"><div class="progress-fill" style="width:${((platform.budget / maxBudget) * 100).toFixed(1)}%"></div></div>
@@ -2466,8 +2510,8 @@ function renderTraffic() {
       (campaign) => `
         <div class="item-row">
           <div>
-            <div class="block-title-sm">${campaign.name}</div>
-            <div class="block-text-xs">${campaign.client_name}</div>
+            <div class="block-title-sm">${escapeHtml(campaign.name)}</div>
+            <div class="block-text-xs">${escapeHtml(campaign.client_name)}</div>
           </div>
           <span class="badge ${Number(campaign.roi || 0) === 0 ? "badge-gray" : "badge-blue"}">ROI ${Number(campaign.roi || 0).toFixed(1)}%</span>
         </div>
@@ -2479,14 +2523,14 @@ function renderTraffic() {
     .map(
       (campaign) => `
         <tr>
-          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(campaign.name)}">${campaign.name}</span></td>
-          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(campaign.client_name)}">${campaign.client_name}</span></td>
-          <td><span class="badge ${getChannelBadgeClass(campaign.channel)}">${campaign.channel}</span></td>
+          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(campaign.name)}">${escapeHtml(campaign.name)}</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(campaign.client_name)}">${escapeHtml(campaign.client_name)}</span></td>
+          <td><span class="badge ${getChannelBadgeClass(campaign.channel)}">${escapeHtml(campaign.channel)}</span></td>
           <td data-align="right"><span class="${getValueToneClass(campaign.budget)}">${formatCurrencyValue(campaign.budget)}</span></td>
           <td data-align="right"><span class="${getValueToneClass(campaign.leads)}">${formatNumber(campaign.leads)}</span></td>
           <td data-align="right"><span class="${getValueToneClass(campaign.revenue)}">${formatCurrencyValue(campaign.revenue)}</span></td>
           <td data-align="right"><span class="${Number(campaign.roi || 0) === 0 ? "value-zero" : "value-strong"}">${Number(campaign.roi || 0).toFixed(2)}%</span></td>
-          <td><span class="badge ${getCampaignStatusBadgeClass(campaign.status)}">${campaign.status}</span></td>
+          <td><span class="badge ${getCampaignStatusBadgeClass(campaign.status)}">${escapeHtml(campaign.status)}</span></td>
         </tr>
       `
     )
@@ -2523,9 +2567,9 @@ function renderAnalytics() {
       .map(
         (item) => `
           <div class="kpi-card">
-            <div class="kpi-label">${item.label}</div>
-            <div class="kpi-val">${item.value}</div>
-            <div class="kpi-sub">${item.sub}</div>
+            <div class="kpi-label">${escapeHtml(item.label)}</div>
+            <div class="kpi-val">${escapeHtml(item.value)}</div>
+            <div class="kpi-sub">${escapeHtml(item.sub)}</div>
           </div>
         `
       )
@@ -2553,7 +2597,9 @@ function renderAnalytics() {
               <span class="cell-title">${provider.name}</span>
               <span class="cell-sub">${escapeHtml(subtitle)}</span>
             </div>
-            <span class="badge ${getIntegrationStatusBadgeClass(integration?.status || "disconnected")}">${integration ? INTEGRATION_STATUS_LABELS[integration.status] || integration.status : "Não configurado"}</span>
+            <span class="badge ${getIntegrationStatusBadgeClass(integration?.status || "disconnected")}">${escapeHtml(
+              integration ? INTEGRATION_STATUS_LABELS[integration.status] || integration.status : "Não configurado"
+            )}</span>
           </div>
         `;
       }
@@ -2587,11 +2633,11 @@ function renderAnalytics() {
 
       return `
         <div class="analytics-side-item">
-          <div class="cell-stack">
-            <span class="cell-title">${provider.name}</span>
-            <span class="cell-sub">${subtitle}</span>
-          </div>
-          <span class="badge ${getIntegrationStatusBadgeClass(status)}">${badgeLabel}</span>
+            <div class="cell-stack">
+              <span class="cell-title">${provider.name}</span>
+              <span class="cell-sub">${escapeHtml(subtitle)}</span>
+            </div>
+          <span class="badge ${getIntegrationStatusBadgeClass(status)}">${escapeHtml(badgeLabel)}</span>
         </div>
       `;
     }).join("");
@@ -2604,7 +2650,7 @@ function renderAnalytics() {
     .map(
       (metric) => `
         <tr>
-          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(metric.client_name)}">${metric.client_name}</span></td>
+          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(metric.client_name)}">${escapeHtml(metric.client_name)}</span></td>
           <td data-align="right"><span class="${getValueToneClass(metric.leads)}">${formatNumber(metric.leads)}</span></td>
           <td data-align="right"><span class="${getValueToneClass(metric.revenue)}">${formatCurrencyValue(metric.revenue)}</span></td>
           <td data-align="right"><span class="${getValueToneClass(metric.impressions)}">${formatNumber(metric.impressions)}</span></td>
@@ -2622,15 +2668,17 @@ function renderAnalytics() {
       .map(
         (integration) => `
           <tr>
-            <td class="cell-stack"><span class="cell-title" title="${escapeHtml(integration.client_name)}">${integration.client_name}</span></td>
+            <td class="cell-stack"><span class="cell-title" title="${escapeHtml(integration.client_name)}">${escapeHtml(integration.client_name)}</span></td>
             <td class="cell-stack"><span class="cell-title">${getIntegrationProviderLabel(integration.provider_key)}</span></td>
-            <td><span class="badge ${getIntegrationStatusBadgeClass(integration.status)}">${INTEGRATION_STATUS_LABELS[integration.status] || integration.status}</span></td>
+            <td><span class="badge ${getIntegrationStatusBadgeClass(integration.status)}">${escapeHtml(
+              INTEGRATION_STATUS_LABELS[integration.status] || integration.status
+            )}</span></td>
             <td class="cell-stack">
-              <span class="cell-title" title="${escapeHtml(integration.external_account_id || "-")}">${integration.external_account_id || "-"}</span>
-              <span class="cell-sub" title="${escapeHtml(integration.external_property_id || "-")}">${integration.external_property_id || "Sem propriedade vinculada"}</span>
+              <span class="cell-title" title="${escapeHtml(integration.external_account_id || "-")}">${escapeHtml(integration.external_account_id || "-")}</span>
+              <span class="cell-sub" title="${escapeHtml(integration.external_property_id || "-")}">${escapeHtml(integration.external_property_id || "Sem propriedade vinculada")}</span>
             </td>
             <td>${formatDateTime(integration.last_sync_at)}</td>
-            <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(integration.updated_by_name || integration.created_by_name || "-")}">${integration.updated_by_name || integration.created_by_name || "-"}</span></td>
+            <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(integration.updated_by_name || integration.created_by_name || "-")}">${escapeHtml(integration.updated_by_name || integration.created_by_name || "-")}</span></td>
             <td class="cell-actions">
               ${
                 canManageIntegrations()
@@ -2690,9 +2738,9 @@ function renderFinance() {
       .map(
         (item) => `
           <div class="kpi-card">
-            <div class="kpi-label">${item.label}</div>
-            <div class="kpi-val">${item.value}</div>
-            <div class="kpi-sub">${item.sub}</div>
+            <div class="kpi-label">${escapeHtml(item.label)}</div>
+            <div class="kpi-val">${escapeHtml(item.value)}</div>
+            <div class="kpi-sub">${escapeHtml(item.sub)}</div>
           </div>
         `
       )
@@ -2703,7 +2751,7 @@ function renderFinance() {
     .map(
       ({ client, revenue, chargeVolume, campaignCost, margin }) => `
         <div class="fin-row">
-          <span><strong>${client.name}</strong></span>
+          <span><strong>${escapeHtml(client.name)}</strong></span>
           <span>${formatCurrency(revenue)}</span>
           <span class="metric-note">${formatCurrency(campaignCost)} · Cobrado ${formatCurrency(chargeVolume)}</span>
           <span class="${margin >= 50 ? "margin-good" : margin >= 20 ? "margin-warn" : "margin-bad"}">${margin}%</span>
@@ -2725,7 +2773,7 @@ function renderFinance() {
       (bucket) => `
         <div>
           <div class="progress-item-head">
-            <span>${bucket.label}</span><span class="text-strong">${formatCurrency(bucket.value)}</span>
+            <span>${escapeHtml(bucket.label)}</span><span class="text-strong">${formatCurrency(bucket.value)}</span>
           </div>
           <div class="progress-bar progress-sm"><div class="progress-fill" style="width:${Math.min((bucket.value / Math.max(totalRevenue || 1, 1)) * 100, 100)}%;background:var(--ink)"></div></div>
         </div>
@@ -2743,15 +2791,15 @@ function renderFinance() {
   }
   const chargeRows = state.charges.map(
     (charge) => `
-      <div class="charge-item">
-        <div class="charge-head">
-          <div>
-            <div class="charge-name">${charge.client_name || charge.contact_name || "Sem cliente"}</div>
-            <div class="charge-sub">${charge.payment_method} · vencimento ${formatDate(charge.due_date)} · ${formatCurrency(charge.amount)}</div>
+        <div class="charge-item">
+          <div class="charge-head">
+            <div>
+            <div class="charge-name">${escapeHtml(charge.client_name || charge.contact_name || "Sem cliente")}</div>
+            <div class="charge-sub">${escapeHtml(charge.payment_method)} · vencimento ${formatDate(charge.due_date)} · ${formatCurrency(charge.amount)}</div>
+            </div>
+          <span class="badge ${String(charge.status || "").toLowerCase().includes("receive") || String(charge.status || "").toLowerCase().includes("paid") ? "badge-green" : "badge-yellow"}">${escapeHtml(normalizeChargeStatus(charge.status))}</span>
           </div>
-          <span class="badge ${String(charge.status || "").toLowerCase().includes("receive") || String(charge.status || "").toLowerCase().includes("paid") ? "badge-green" : "badge-yellow"}">${normalizeChargeStatus(charge.status)}</span>
-        </div>
-        <div class="charge-desc">${charge.description || "Cobrança gerada sem observação complementar"}</div>
+        <div class="charge-desc">${escapeHtml(charge.description || "Cobrança gerada sem observação complementar")}</div>
         <div class="item-actions">
           ${charge.payment_link ? `<button class="btn btn-ghost btn-sm" onclick="openChargeResource(${charge.id}, 'payment_link')">Abrir link</button>` : ""}
           ${charge.boleto_url ? `<button class="btn btn-ghost btn-sm" onclick="openChargeResource(${charge.id}, 'boleto_url')">Boleto</button>` : ""}
@@ -2772,10 +2820,10 @@ function renderFinance() {
         <div class="invoice-item">
           <div class="invoice-head">
             <div>
-              <div class="invoice-name">${invoice.client_name}</div>
+              <div class="invoice-name">${escapeHtml(invoice.client_name)}</div>
               <div class="invoice-sub">Vencimento ${formatDate(invoice.due_date)} · ${formatCurrency(invoice.amount)}</div>
             </div>
-            <span class="badge ${invoice.status === "Pago" ? "badge-green" : invoice.status === "Em aberto" ? "badge-yellow" : "badge-blue"}">${invoice.status}</span>
+            <span class="badge ${invoice.status === "Pago" ? "badge-green" : invoice.status === "Em aberto" ? "badge-yellow" : "badge-blue"}">${escapeHtml(invoice.status)}</span>
           </div>
           ${
             canManageInvoices
@@ -2989,7 +3037,7 @@ async function refreshData() {
   const kanbanFilter = document.querySelector("#page-kanban select");
   if (kanbanFilter) {
     kanbanFilter.innerHTML = `<option value="">Todos os clientes</option>${scopedClients
-      .map((client) => `<option value="${client.id}">${client.name}</option>`)
+      .map((client) => `<option value="${client.id}">${escapeHtml(client.name)}</option>`)
       .join("")}`;
     kanbanFilter.value = state.filters.kanbanClient;
   }
@@ -2997,7 +3045,7 @@ async function refreshData() {
   const analyticsClientFilter = document.getElementById("analytics-client-filter");
   if (analyticsClientFilter) {
     analyticsClientFilter.innerHTML = `<option value="">Todos os clientes</option>${scopedClients
-      .map((client) => `<option value="${client.id}">${client.name}</option>`)
+      .map((client) => `<option value="${client.id}">${escapeHtml(client.name)}</option>`)
       .join("")}`;
     analyticsClientFilter.value = state.filters.analyticsClient;
   }
@@ -3191,11 +3239,11 @@ function exportFinanceCsv() {
 function modalFormWrapper(title, body, submitLabel = "Salvar") {
   return `
     <form id="modal-form">
-      <div class="modal-title" id="modal-dialog-title">${title}</div>
+      <div class="modal-title" id="modal-dialog-title">${escapeHtml(title)}</div>
       <div class="form-grid">${body}</div>
       <div class="modal-actions">
         <button type="button" class="btn btn-outline" onclick="closeModal()">Cancelar</button>
-        <button type="submit" id="modal-submit-btn" class="btn btn-pink">${submitLabel}</button>
+        <button type="submit" id="modal-submit-btn" class="btn btn-pink">${escapeHtml(submitLabel)}</button>
       </div>
     </form>
   `;
@@ -3203,7 +3251,10 @@ function modalFormWrapper(title, body, submitLabel = "Salvar") {
 
 function clientOptions(selectedId) {
   return state.clients
-    .map((client) => `<option value="${client.id}" ${String(selectedId) === String(client.id) ? "selected" : ""}>${client.name}</option>`)
+    .map(
+      (client) =>
+        `<option value="${client.id}" ${String(selectedId) === String(client.id) ? "selected" : ""}>${escapeHtml(client.name)}</option>`
+    )
     .join("");
 }
 
@@ -3212,13 +3263,18 @@ function userOptions(selectedId) {
   return source
     .filter((user) => user && user.is_active !== false)
     .filter((user) => user.role !== "client")
-    .map((user) => `<option value="${user.id}" ${String(selectedId) === String(user.id) ? "selected" : ""}>${user.name}</option>`)
+    .map((user) => `<option value="${user.id}" ${String(selectedId) === String(user.id) ? "selected" : ""}>${escapeHtml(user.name)}</option>`)
     .join("");
 }
 
 function contactOptions(selectedId) {
   return state.contacts
-    .map((contact) => `<option value="${contact.id}" ${String(selectedId) === String(contact.id) ? "selected" : ""}>${contact.name}${contact.company ? ` · ${contact.company}` : ""}</option>`)
+    .map(
+      (contact) =>
+        `<option value="${contact.id}" ${String(selectedId) === String(contact.id) ? "selected" : ""}>${escapeHtml(contact.name)}${
+          contact.company ? ` · ${escapeHtml(contact.company)}` : ""
+        }</option>`
+    )
     .join("");
 }
 
@@ -3235,7 +3291,10 @@ function normalizeFormPayload(payload, nullableKeys = []) {
 function campaignOptions(clientId, selectedId) {
   return state.campaigns
     .filter((campaign) => !clientId || String(campaign.client_id) === String(clientId))
-    .map((campaign) => `<option value="${campaign.id}" ${String(selectedId) === String(campaign.id) ? "selected" : ""}>${campaign.name}</option>`)
+    .map(
+      (campaign) =>
+        `<option value="${campaign.id}" ${String(selectedId) === String(campaign.id) ? "selected" : ""}>${escapeHtml(campaign.name)}</option>`
+    )
     .join("");
 }
 
@@ -3551,21 +3610,21 @@ function openModal(type, id = null) {
     html = modalFormWrapper(
       client.id ? "Editar cliente" : "Novo cliente",
       `
-        <div class="field"><label>Nome</label><input name="name" value="${client.name || ""}" required></div>
-        <div class="field"><label>Empresa</label><input name="company" value="${client.company || ""}" required></div>
-        <div class="field"><label>Plano</label><input name="plan" value="${client.plan || ""}"></div>
+        <div class="field"><label>Nome</label><input name="name" value="${escapeHtml(client.name || "")}" required></div>
+        <div class="field"><label>Empresa</label><input name="company" value="${escapeHtml(client.company || "")}" required></div>
+        <div class="field"><label>Plano</label><input name="plan" value="${escapeHtml(client.plan || "")}"></div>
         <div class="field"><label>MRR</label><input type="number" step="0.01" name="mrr" value="${client.mrr || ""}"></div>
-        <div class="field"><label>Segmento</label><input name="segment" value="${client.segment || ""}"></div>
+        <div class="field"><label>Segmento</label><input name="segment" value="${escapeHtml(client.segment || "")}"></div>
         <div class="field"><label>Responsável</label><select name="manager_id"><option value="">Selecione</option>${userOptions(client.manager_id)}</select></div>
         <div class="field"><label>Início</label><input type="date" name="started_at" value="${client.started_at ? String(client.started_at).slice(0, 10) : ""}"></div>
-        <div class="field"><label>Documento</label><input name="legal_document" value="${client.legal_document || ""}"></div>
-        <div class="field"><label>Contato principal</label><input name="contact_name" value="${client.contact_name || ""}"></div>
-        <div class="field"><label>Email contato</label><input type="email" name="contact_email" value="${client.contact_email || ""}"></div>
-        <div class="field"><label>Telefone contato</label><input name="contact_phone" value="${client.contact_phone || ""}"></div>
-        <div class="field"><label>Email financeiro</label><input type="email" name="billing_email" value="${client.billing_email || ""}"></div>
+        <div class="field"><label>Documento</label><input name="legal_document" value="${escapeHtml(client.legal_document || "")}"></div>
+        <div class="field"><label>Contato principal</label><input name="contact_name" value="${escapeHtml(client.contact_name || "")}"></div>
+        <div class="field"><label>Email contato</label><input type="email" name="contact_email" value="${escapeHtml(client.contact_email || "")}"></div>
+        <div class="field"><label>Telefone contato</label><input name="contact_phone" value="${escapeHtml(client.contact_phone || "")}"></div>
+        <div class="field"><label>Email financeiro</label><input type="email" name="billing_email" value="${escapeHtml(client.billing_email || "")}"></div>
         ${buildClientAddressFields(client)}
-        <div class="field form-full"><label>Manual da marca</label><textarea name="brand_manual" placeholder="Tom de voz, referências, restrições, roteiro da marca, orientações de gravação, edição, design e postagem.">${client.brand_manual || ""}</textarea><div class="field-help">Use este campo para registrar o jeito certo de falar, criar, revisar e publicar para esta marca.</div></div>
-        <div class="field form-full"><label>Observações</label><textarea name="notes">${client.notes || ""}</textarea></div>
+        <div class="field form-full"><label>Manual da marca</label><textarea name="brand_manual" placeholder="Tom de voz, referências, restrições, roteiro da marca, orientações de gravação, edição, design e postagem.">${escapeHtml(client.brand_manual || "")}</textarea><div class="field-help">Use este campo para registrar o jeito certo de falar, criar, revisar e publicar para esta marca.</div></div>
+        <div class="field form-full"><label>Observações</label><textarea name="notes">${escapeHtml(client.notes || "")}</textarea></div>
       `
     );
   }
@@ -3575,14 +3634,14 @@ function openModal(type, id = null) {
     html = modalFormWrapper(
       task.id ? "Editar tarefa" : "Nova tarefa",
       `
-        <div class="field form-full"><label>Título</label><input name="title" value="${task.title || ""}" required></div>
+        <div class="field form-full"><label>Título</label><input name="title" value="${escapeHtml(task.title || "")}" required></div>
         <div class="field"><label>Cliente</label><select name="client_id"><option value="">Interno</option>${clientOptions(task.client_id)}</select></div>
         <div class="field"><label>Responsável</label><select name="assigned_to"><option value="">Ninguém</option>${userOptions(task.assigned_to)}</select></div>
         <div class="field"><label>Tipo</label><select name="type">${taskTypeOptions(task.type || "geral")}</select></div>
         <div class="field"><label>Status</label><select name="status"><option ${task.status === "Backlog" ? "selected" : ""}>Backlog</option><option ${task.status === "Em progresso" ? "selected" : ""}>Em progresso</option><option ${task.status === "Concluido" ? "selected" : ""}>Concluido</option></select></div>
         <div class="field"><label>Coluna</label><select name="column_name"><option value="backlog" ${task.column_name === "backlog" ? "selected" : ""}>Backlog</option><option value="todo" ${task.column_name === "todo" ? "selected" : ""}>A Fazer</option><option value="doing" ${task.column_name === "doing" ? "selected" : ""}>Em Progresso</option><option value="done" ${task.column_name === "done" ? "selected" : ""}>Concluído</option></select></div>
         <div class="field"><label>Prazo</label><input type="date" name="deadline" value="${(task.deadline || task.due_date) ? String(task.deadline || task.due_date).slice(0, 10) : ""}"></div>
-        <div class="field form-full"><label>Descrição</label><textarea name="description">${task.description || ""}</textarea></div>
+        <div class="field form-full"><label>Descrição</label><textarea name="description">${escapeHtml(task.description || "")}</textarea></div>
       `
     );
   }
@@ -3592,29 +3651,29 @@ function openModal(type, id = null) {
     html = modalFormWrapper(
       contact.id ? "Editar lead" : "Novo lead",
       `
-        <div class="field"><label>Nome</label><input name="name" value="${contact.name || ""}" required></div>
-        <div class="field"><label>Empresa</label><input name="company" value="${contact.company || ""}"></div>
-        <div class="field"><label>Serviço</label><input name="service" value="${contact.service || ""}"></div>
-        <div class="field"><label>Telefone</label><input name="phone" value="${contact.phone || ""}" required></div>
-        <div class="field"><label>WhatsApp</label><input name="whatsapp" value="${contact.whatsapp || ""}"></div>
-        <div class="field"><label>E-mail</label><input type="email" name="email" value="${contact.email || ""}" required></div>
-        <div class="field"><label>Documento</label><input name="document" value="${contact.document || ""}"></div>
-        <div class="field"><label>Origem</label><input name="source" value="${contact.source || ""}"></div>
+        <div class="field"><label>Nome</label><input name="name" value="${escapeHtml(contact.name || "")}" required></div>
+        <div class="field"><label>Empresa</label><input name="company" value="${escapeHtml(contact.company || "")}"></div>
+        <div class="field"><label>Serviço</label><input name="service" value="${escapeHtml(contact.service || "")}"></div>
+        <div class="field"><label>Telefone</label><input name="phone" value="${escapeHtml(contact.phone || "")}" required></div>
+        <div class="field"><label>WhatsApp</label><input name="whatsapp" value="${escapeHtml(contact.whatsapp || "")}"></div>
+        <div class="field"><label>E-mail</label><input type="email" name="email" value="${escapeHtml(contact.email || "")}" required></div>
+        <div class="field"><label>Documento</label><input name="document" value="${escapeHtml(contact.document || "")}"></div>
+        <div class="field"><label>Origem</label><input name="source" value="${escapeHtml(contact.source || "")}"></div>
         <div class="field"><label>Owner</label><select name="owner_id"><option value="">Selecione</option>${userOptions(contact.owner_id)}</select></div>
         <div class="field"><label>Responsável</label><select name="assigned_to"><option value="">Selecione</option>${userOptions(contact.assigned_to)}</select></div>
         <div class="field"><label>Etapa</label><select name="lead_stage"><option ${contact.lead_stage === "Prospeccao" ? "selected" : ""}>Prospecção</option><option ${contact.lead_stage === "Contato feito" ? "selected" : ""}>Contato feito</option><option ${contact.lead_stage === "Proposta" ? "selected" : ""}>Proposta</option><option ${contact.lead_stage === "Negociacao" ? "selected" : ""}>Negociação</option><option ${contact.lead_stage === "Fechado" ? "selected" : ""}>Fechado</option></select></div>
         <div class="field"><label>Valor estimado</label><input type="number" step="0.01" name="estimated_value" value="${contact.estimated_value || ""}"></div>
         <div class="field"><label>Data nascimento</label><input type="date" name="birth_date" value="${contact.birth_date ? String(contact.birth_date).slice(0, 10) : ""}"></div>
         <div class="field"><label>Último contato</label><input type="datetime-local" name="last_contact_at" value="${contact.last_contact_at ? new Date(contact.last_contact_at).toISOString().slice(0, 16) : ""}"></div>
-        <div class="field"><label>Cidade</label><input name="city" value="${contact.city || ""}"></div>
-        <div class="field"><label>Estado</label><input name="state" value="${contact.state || ""}"></div>
-        <div class="field form-full"><label>Endereço</label><input name="address_line1" value="${contact.address_line1 || ""}"></div>
-        <div class="field"><label>Complemento</label><input name="address_line2" value="${contact.address_line2 || ""}"></div>
-        <div class="field"><label>Bairro</label><input name="neighborhood" value="${contact.neighborhood || ""}"></div>
-        <div class="field"><label>CEP</label><input name="zip_code" value="${contact.zip_code || ""}"></div>
-        <div class="field"><label>País</label><input name="country" value="${contact.country || "Brasil"}"></div>
-        <div class="field form-full"><label>Mensagem</label><textarea name="message">${contact.message || ""}</textarea></div>
-        <div class="field form-full"><label>Observações</label><textarea name="notes">${contact.notes || ""}</textarea></div>
+        <div class="field"><label>Cidade</label><input name="city" value="${escapeHtml(contact.city || "")}"></div>
+        <div class="field"><label>Estado</label><input name="state" value="${escapeHtml(contact.state || "")}"></div>
+        <div class="field form-full"><label>Endereço</label><input name="address_line1" value="${escapeHtml(contact.address_line1 || "")}"></div>
+        <div class="field"><label>Complemento</label><input name="address_line2" value="${escapeHtml(contact.address_line2 || "")}"></div>
+        <div class="field"><label>Bairro</label><input name="neighborhood" value="${escapeHtml(contact.neighborhood || "")}"></div>
+        <div class="field"><label>CEP</label><input name="zip_code" value="${escapeHtml(contact.zip_code || "")}"></div>
+        <div class="field"><label>País</label><input name="country" value="${escapeHtml(contact.country || "Brasil")}"></div>
+        <div class="field form-full"><label>Mensagem</label><textarea name="message">${escapeHtml(contact.message || "")}</textarea></div>
+        <div class="field form-full"><label>Observações</label><textarea name="notes">${escapeHtml(contact.notes || "")}</textarea></div>
       `
     );
   }
@@ -3624,13 +3683,14 @@ function openModal(type, id = null) {
     html = modalFormWrapper(
       campaign.id ? "Editar campanha" : "Nova campanha",
       `
-        <div class="field form-full"><label>Nome</label><input name="name" value="${campaign.name || ""}" required></div>
+        <div class="field form-full"><label>Nome</label><input name="name" value="${escapeHtml(campaign.name || "")}" required></div>
         <div class="field"><label>Cliente</label><select name="client_id">${clientOptions(campaign.client_id)}</select></div>
-        <div class="field"><label>Canal</label><input name="channel" value="${campaign.channel || ""}" required></div>
-        <div class="field form-full"><label>Público</label><input name="audience" value="${campaign.audience || ""}"></div>
+        <div class="field"><label>Canal</label><select name="channel" required>${campaignChannelOptions(campaign.channel || "Meta Ads")}</select></div>
+        <div class="field form-full"><label>Público</label><input name="audience" value="${escapeHtml(campaign.audience || "")}"></div>
         <div class="field"><label>Orçamento</label><input type="number" step="0.01" name="budget" value="${campaign.budget || ""}" required></div>
         <div class="field"><label>Início</label><input type="date" name="start_date" value="${campaign.start_date ? String(campaign.start_date).slice(0, 10) : ""}"></div>
-        <div class="field form-full"><label>Objetivo</label><textarea name="objective">${campaign.objective || ""}</textarea></div>
+        <div class="field"><label>Status</label><select name="status"><option value="Ativa" ${campaign.status === "Ativa" ? "selected" : ""}>Ativa</option><option value="Pausada" ${campaign.status === "Pausada" ? "selected" : ""}>Pausada</option><option value="Encerrada" ${campaign.status === "Encerrada" ? "selected" : ""}>Encerrada</option><option value="Planejamento" ${campaign.status === "Planejamento" ? "selected" : ""}>Planejamento</option></select></div>
+        <div class="field form-full"><label>Objetivo</label><textarea name="objective">${escapeHtml(campaign.objective || "")}</textarea></div>
       `
     );
   }
@@ -3640,7 +3700,7 @@ function openModal(type, id = null) {
     html = modalFormWrapper(
       material.id ? "Editar entrega" : "Nova entrega",
       `
-        <div class="field form-full"><label>Título</label><input name="title" value="${material.title || ""}" required></div>
+        <div class="field form-full"><label>Título</label><input name="title" value="${escapeHtml(material.title || "")}" required></div>
         <div class="field"><label>Cliente</label><select name="client_id">${clientOptions(material.client_id)}</select></div>
         <div class="field"><label>Campanha</label><select name="campaign_id"><option value="">Nenhuma</option>${campaignOptions(material.client_id, material.campaign_id)}</select></div>
         <div class="field"><label>Status</label><select name="status"><option ${material.status === "Pendente" ? "selected" : ""}>Pendente</option><option ${material.status === "Aprovado" ? "selected" : ""}>Aprovado</option><option ${material.status === "Revisao" ? "selected" : ""}>Revisão</option></select></div>
@@ -3658,8 +3718,8 @@ function openModal(type, id = null) {
     html = modalFormWrapper(
       user.id ? "Editar membro" : "Novo membro",
       `
-        <div class="field"><label>Nome</label><input name="name" value="${user.name || ""}" required></div>
-        <div class="field"><label>E-mail</label><input type="email" name="email" value="${user.email || ""}" required></div>
+        <div class="field"><label>Nome</label><input name="name" value="${escapeHtml(user.name || "")}" required></div>
+        <div class="field"><label>E-mail</label><input type="email" name="email" value="${escapeHtml(user.email || "")}" required></div>
         <div class="field"><label>Perfil</label><select name="role"><option value="admin" ${user.role === "admin" ? "selected" : ""}>Admin</option><option value="gestor" ${user.role === "gestor" ? "selected" : ""}>Gestor</option><option value="designer" ${user.role === "designer" ? "selected" : ""}>Designer</option><option value="comercial" ${user.role === "comercial" ? "selected" : ""}>Comercial</option><option value="dev" ${user.role === "dev" ? "selected" : ""}>Dev</option><option value="client" ${user.role === "client" ? "selected" : ""}>Cliente</option></select></div>
         <div class="field"><label>Cliente vinculado</label><select name="client_id"><option value="">Nenhum</option>${clientOptions(user.client_id)}</select></div>
         <div class="field form-full"><label>Senha ${user.id ? "(opcional)" : ""}</label><input type="password" name="password" ${user.id ? "" : "required"}><div class="field-help">${passwordHelp}</div></div>
@@ -3687,14 +3747,14 @@ function openModal(type, id = null) {
       integration.id ? "Editar integração" : "Nova integração",
       `
         <div class="field"><label>Cliente</label><select name="client_id" required><option value="">Selecione</option>${scopedClients
-          .map((client) => `<option value="${client.id}" ${String(defaultClientId) === String(client.id) ? "selected" : ""}>${client.name}</option>`)
+          .map((client) => `<option value="${client.id}" ${String(defaultClientId) === String(client.id) ? "selected" : ""}>${escapeHtml(client.name)}</option>`)
           .join("")}</select></div>
         <div class="field"><label>Integração</label><select name="provider_key" required>${integrationProviderOptions(integration.provider_key || "ga4")}</select></div>
         <div class="field"><label>Status</label><select name="status"><option value="connected" ${integration.status === "connected" ? "selected" : ""}>Conectado</option><option value="configuring" ${(!integration.status || integration.status === "configuring") ? "selected" : ""}>Configurando</option><option value="error" ${integration.status === "error" ? "selected" : ""}>Erro</option><option value="disconnected" ${integration.status === "disconnected" ? "selected" : ""}>Desconectado</option></select></div>
-        <div class="field"><label>Conta externa</label><input name="external_account_id" value="${integration.external_account_id || ""}" placeholder="Ex.: conta, workspace ou business id"></div>
-        <div class="field"><label>Propriedade / recurso</label><input name="external_property_id" value="${integration.external_property_id || ""}" placeholder="Ex.: property id, dataset ou view"></div>
+        <div class="field"><label>Conta externa</label><input name="external_account_id" value="${escapeHtml(integration.external_account_id || "")}" placeholder="Ex.: conta, workspace ou business id"></div>
+        <div class="field"><label>Propriedade / recurso</label><input name="external_property_id" value="${escapeHtml(integration.external_property_id || "")}" placeholder="Ex.: property id, dataset ou view"></div>
         <div class="field"><label>Última sincronização</label><input type="datetime-local" name="last_sync_at" value="${formatDateTimeLocalValue(integration.last_sync_at)}"></div>
-        <div class="field form-full"><label>Último erro / observação</label><textarea name="last_error" placeholder="Descreva o erro atual ou uma observação de configuração.">${integration.last_error || ""}</textarea><div class="field-help">Este MVP registra o estado real no sistema por cliente. A conexão OAuth automática pode ser acoplada depois.</div></div>
+        <div class="field form-full"><label>Último erro / observação</label><textarea name="last_error" placeholder="Descreva o erro atual ou uma observação de configuração.">${escapeHtml(integration.last_error || "")}</textarea><div class="field-help">Este MVP registra o estado real no sistema por cliente. A conexão OAuth automática pode ser acoplada depois.</div></div>
       `,
       integration.id ? "Atualizar" : "Salvar"
     );
@@ -3706,7 +3766,7 @@ function openModal(type, id = null) {
       `
         <div class="field"><label>Cliente</label><select name="client_id">${clientOptions("")}</select></div>
         <div class="field"><label>Valor</label><input type="number" step="0.01" name="amount" required></div>
-        <div class="field"><label>Status</label><select name="status"><option>Em aberto</option><option>Pago</option><option>Atrasado</option></select></div>
+        <div class="field"><label>Status</label><select name="status">${invoiceStatusOptions("Em aberto")}</select></div>
         <div class="field"><label>Vencimento</label><input type="date" name="due_date"></div>
       `
     );
@@ -3723,7 +3783,7 @@ function openModal(type, id = null) {
         <div class="field"><label>Valor</label><input type="number" step="0.01" name="amount" required></div>
         <div class="field"><label>Vencimento</label><input type="date" name="due_date"></div>
         <div class="field"><label>Referencia externa</label><input name="external_reference" value=""></div>
-        <div class="field form-full"><label>Descrição</label><textarea name="description">Cobrança ${client.name || ""}</textarea></div>
+        <div class="field form-full"><label>Descrição</label><textarea name="description">${escapeHtml(`Cobrança ${client.name || ""}`)}</textarea></div>
       `
     );
   }
