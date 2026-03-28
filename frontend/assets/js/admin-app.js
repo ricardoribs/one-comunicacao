@@ -3038,6 +3038,26 @@ function setAddressFieldValue(field, value, force = false) {
   return true;
 }
 
+function clearAddressFieldValue(field) {
+  if (!field) {
+    return false;
+  }
+
+  const currentValue = String(field.value || "").trim();
+  const canClear = currentValue && field.dataset.autofilled === "1" && field.dataset.userEdited !== "1";
+
+  if (!canClear) {
+    return false;
+  }
+
+  field.dataset.settingValue = "1";
+  field.value = "";
+  field.dataset.autofilled = "0";
+  field.dataset.userEdited = "0";
+  delete field.dataset.settingValue;
+  return true;
+}
+
 async function fetchCepSuggestion(cep) {
   const mapCepResponse = (data) => {
     if (data?.erro) {
@@ -3121,6 +3141,10 @@ function initClientAddressAssist(form) {
   let lookupTimer = null;
   let lookupInFlightCep = "";
 
+  const clearAutofilledAddressFields = () => {
+    [stateField, cityField, neighborhoodField, addressField, complementField].forEach(clearAddressFieldValue);
+  };
+
   const applyAddressLookup = async (force = false) => {
     const cep = normalizeZipCode(zipField.value);
 
@@ -3184,10 +3208,19 @@ function initClientAddressAssist(form) {
     zipField.value = formatted;
     delete zipField.dataset.settingValue;
     clearTimeout(lookupTimer);
-    if (normalizeZipCode(formatted) !== lastResolvedCep) {
+    const normalizedCep = normalizeZipCode(formatted);
+
+    if (!normalizedCep) {
+      lastResolvedCep = "";
+      clearAutofilledAddressFields();
+      setCepFeedback(feedbackNode, "Informe o CEP para sugerir estado, cidade, bairro e rua. Todos os campos continuam editáveis manualmente.");
+      return;
+    }
+
+    if (normalizedCep !== lastResolvedCep) {
       setCepFeedback(feedbackNode, "Informe o CEP para sugerir estado, cidade, bairro e rua. Todos os campos continuam editáveis manualmente.");
     }
-    if (normalizeZipCode(formatted).length === 8) {
+    if (normalizedCep.length === 8) {
       lookupTimer = window.setTimeout(() => {
         applyAddressLookup(false);
       }, 350);
