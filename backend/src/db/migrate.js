@@ -133,6 +133,8 @@ async function reconcileSchemaDrift(databaseConfig) {
       );
 
       ALTER TABLE campaigns
+        ADD COLUMN IF NOT EXISTS name VARCHAR(160),
+        ADD COLUMN IF NOT EXISTS channel VARCHAR(60),
         ADD COLUMN IF NOT EXISTS audience TEXT,
         ADD COLUMN IF NOT EXISTS objective TEXT,
         ADD COLUMN IF NOT EXISTS pipeline_stage VARCHAR(40) NOT NULL DEFAULT 'planejamento',
@@ -141,6 +143,9 @@ async function reconcileSchemaDrift(databaseConfig) {
         ADD COLUMN IF NOT EXISTS end_date DATE,
         ADD COLUMN IF NOT EXISTS status VARCHAR(40) NOT NULL DEFAULT 'Ativa',
         ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+
+      CREATE INDEX IF NOT EXISTS idx_campaigns_client_id_created_at ON campaigns(client_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_campaigns_client_id_status ON campaigns(client_id, status);
 
       CREATE TABLE IF NOT EXISTS metrics (
         id SERIAL PRIMARY KEY,
@@ -155,11 +160,14 @@ async function reconcileSchemaDrift(databaseConfig) {
       );
 
       ALTER TABLE metrics
+        ADD COLUMN IF NOT EXISTS period DATE,
         ADD COLUMN IF NOT EXISTS leads INTEGER NOT NULL DEFAULT 0,
         ADD COLUMN IF NOT EXISTS revenue NUMERIC(12,2) NOT NULL DEFAULT 0,
         ADD COLUMN IF NOT EXISTS impressions INTEGER NOT NULL DEFAULT 0,
         ADD COLUMN IF NOT EXISTS clicks INTEGER NOT NULL DEFAULT 0,
         ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+
+      CREATE INDEX IF NOT EXISTS idx_metrics_campaign_id_period ON metrics(campaign_id, period DESC);
 
       CREATE TABLE IF NOT EXISTS invoices (
         id SERIAL PRIMARY KEY,
@@ -196,6 +204,10 @@ async function reconcileSchemaDrift(databaseConfig) {
       );
 
       ALTER TABLE reports
+        ADD COLUMN IF NOT EXISTS title VARCHAR(160),
+        ADD COLUMN IF NOT EXISTS report_month DATE,
+        ADD COLUMN IF NOT EXISTS summary TEXT,
+        ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW(),
         ADD COLUMN IF NOT EXISTS file_url TEXT;
 
       CREATE INDEX IF NOT EXISTS idx_reports_client_id_report_month ON reports(client_id, report_month DESC);
