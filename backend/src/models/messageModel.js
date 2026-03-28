@@ -127,14 +127,16 @@ async function listForUser(user, query = {}) {
 
 async function create(data, user) {
   const id = await tenantDb.runWithTenantContext(user, async (client) => {
-    const { rows } = await client.query(
-      `
+    const { rows } = await tenantDb.queryWithClient(user, client, {
+      table: 'messages',
+      sql: `
         INSERT INTO messages (sender_id, receiver_id, context_type, context_id, content)
         VALUES ($1, $2, $3, $4, $5)
         RETURNING id
       `,
-      [data.sender_id, data.receiver_id, data.context_type || 'general', data.context_id || null, data.content]
-    );
+      params: [data.sender_id, data.receiver_id, data.context_type || 'general', data.context_id || null, data.content],
+      bypassScope: true,
+    });
 
     return rows[0]?.id || null;
   });
@@ -190,8 +192,9 @@ async function markRead(user, data = {}) {
   }
 
   return tenantDb.runWithTenantContext(user, async (client) => {
-    const { rows } = await client.query(
-      `
+    const { rows } = await tenantDb.queryWithClient(user, client, {
+      table: 'messages',
+      sql: `
         UPDATE messages
            SET read_at = COALESCE(read_at, NOW())
          WHERE receiver_id = $1
@@ -199,8 +202,9 @@ async function markRead(user, data = {}) {
            ${filters.length ? `AND ${filters.join(' AND ')}` : ''}
         RETURNING id
       `,
-      values
-    );
+      params: values,
+      bypassScope: true,
+    });
 
     return {
       updated: rows.length,
