@@ -1,4 +1,5 @@
 const { z } = require('zod');
+const { normalizeTaskTypeValue } = require('../utils/taskTypes');
 
 const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/;
 const taskStatusEnum = z.enum(['Backlog', 'A Fazer', 'Em progresso', 'Em andamento', 'Concluido', 'Concluído']);
@@ -46,7 +47,13 @@ exports.taskSchema = z.object({
   client_id: emptyToNullNumber().optional(),
   assigned_to: emptyToNullNumber().optional(),
   status: taskStatusEnum,
-  type: taskTypeEnum.default('planejamento').optional(),
+  type: z.preprocess((value) => {
+    if (value === '' || value === undefined || value === null) {
+      return undefined;
+    }
+
+    return normalizeTaskTypeValue(value);
+  }, taskTypeEnum.default('planejamento').optional()),
   column_name: z.enum(['backlog', 'todo', 'doing', 'done']).default('backlog').optional(),
   title: z.string().trim().min(2).max(160),
   description: emptyString(z.string().max(5000)),

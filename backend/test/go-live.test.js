@@ -9,7 +9,7 @@ const userModel = require('../src/models/userModel');
 async function createClient(name, company, managerId = null) {
   const { rows } = await pool.query(
     `INSERT INTO clients (name, company, plan, mrr, manager_id)
-     VALUES ($1, $2, 'growth', 0, $3)
+     VALUES ($1, $2, 'One Start', 0, $3)
      RETURNING id`,
     [name, company, managerId]
   );
@@ -632,6 +632,43 @@ test('gestor nao cria cobranca para lead fora do proprio tenant operacional', { 
   await userModel.remove(gestorB.id);
 });
 
+test('cadastro de cliente aceita os novos planos da One e servicos sob demanda', { concurrency: false }, async () => {
+  const suffix = Date.now() + 21;
+  const gestor = await createUser({
+    name: `Gestor Plano ${suffix}`,
+    email: `gestor.plano.${suffix}@one.test`,
+    role: 'gestor',
+  });
+
+  const auth = await login(gestor.email);
+  const createResponse = await request(app)
+    .post('/api/clients')
+    .set('Authorization', `Bearer ${auth.body.accessToken}`)
+    .send({
+      name: `Cliente Plano ${suffix}`,
+      company: `Empresa Plano ${suffix}`,
+      plan: 'Sob demanda \u00b7 Releases (Imprensa)',
+      mrr: 0,
+      segment: 'Servicos',
+    });
+
+  assert.equal(createResponse.status, 201);
+  assert.equal(createResponse.body.plan, 'Sob demanda \u00b7 Releases (Imprensa)');
+
+  const updateResponse = await request(app)
+    .put(`/api/clients/${createResponse.body.id}`)
+    .set('Authorization', `Bearer ${auth.body.accessToken}`)
+    .send({
+      plan: 'One Master',
+    });
+
+  assert.equal(updateResponse.status, 200);
+  assert.equal(updateResponse.body.plan, 'One Master');
+
+  await pool.query('DELETE FROM clients WHERE id = $1', [createResponse.body.id]);
+  await userModel.remove(gestor.id);
+});
+
 test('atribuicao e conclusao de tarefa geram notificacoes para os envolvidos', { concurrency: false }, async () => {
   const suffix = Date.now() + 20;
   const gestor = await createUser({
@@ -664,29 +701,35 @@ test('atribuicao e conclusao de tarefa geram notificacoes para os envolvidos', {
   assert.equal(createTaskResponse.status, 201);
 
   const thalissonAuth = await login(thalisson.email);
+  const unreadCountResponse = await request(app)
+    .get('/api/notifications/unread-count')
+    .set('Authorization', `Bearer ${thalissonAuth.body.accessToken}`);
+
+  assert.equal(unreadCountResponse.status, 200);
+  assert.equal(unreadCountResponse.body.total, 1);
+
   const notificationsResponse = await request(app)
-    .get('/api/messages')
-    .query({ context_type: 'task_assignment' })
+    .get('/api/notifications')
     .set('Authorization', `Bearer ${thalissonAuth.body.accessToken}`);
 
   assert.equal(notificationsResponse.status, 200);
   assert.equal(notificationsResponse.body.length, 1);
-  assert.equal(notificationsResponse.body[0].receiver_id, thalisson.id);
-  assert.equal(notificationsResponse.body[0].context_id, createTaskResponse.body.id);
+  assert.equal(notificationsResponse.body[0].user_id, thalisson.id);
+  assert.equal(notificationsResponse.body[0].entity_type, 'task');
+  assert.equal(notificationsResponse.body[0].entity_id, createTaskResponse.body.id);
+  assert.equal(notificationsResponse.body[0].type, 'task_assigned');
   assert.equal(notificationsResponse.body[0].read_at, null);
-  assert.match(notificationsResponse.body[0].content, /Landing page institucional/);
+  assert.match(notificationsResponse.body[0].body, /Landing page institucional/);
 
   const markReadResponse = await request(app)
-    .patch('/api/messages/read')
+    .patch(`/api/notifications/${notificationsResponse.body[0].id}/read`)
     .set('Authorization', `Bearer ${thalissonAuth.body.accessToken}`)
-    .send({ context_type: 'task_assignment' });
+    .send();
 
-  assert.equal(markReadResponse.status, 200);
-  assert.equal(markReadResponse.body.updated, 1);
+  assert.equal(markReadResponse.status, 204);
 
   const readBackResponse = await request(app)
-    .get('/api/messages')
-    .query({ context_type: 'task_assignment' })
+    .get('/api/notifications')
     .set('Authorization', `Bearer ${thalissonAuth.body.accessToken}`);
 
   assert.equal(readBackResponse.status, 200);
@@ -705,17 +748,17 @@ test('atribuicao e conclusao de tarefa geram notificacoes para os envolvidos', {
   assert.equal(completionResponse.body.column_name, 'done');
 
   const gestorNotificationsResponse = await request(app)
-    .get('/api/messages')
-    .query({ context_type: 'task_completed' })
+    .get('/api/notifications')
     .set('Authorization', `Bearer ${gestorAuth.body.accessToken}`);
 
   assert.equal(gestorNotificationsResponse.status, 200);
   assert.equal(gestorNotificationsResponse.body.length, 1);
-  assert.equal(gestorNotificationsResponse.body[0].receiver_id, gestor.id);
-  assert.equal(gestorNotificationsResponse.body[0].context_id, createTaskResponse.body.id);
-  assert.match(gestorNotificationsResponse.body[0].content, /concluiu a tarefa/i);
+  assert.equal(gestorNotificationsResponse.body[0].user_id, gestor.id);
+  assert.equal(gestorNotificationsResponse.body[0].entity_id, createTaskResponse.body.id);
+  assert.equal(gestorNotificationsResponse.body[0].type, 'task_completed');
+  assert.match(gestorNotificationsResponse.body[0].body, /conclu/i);
 
-  await pool.query('DELETE FROM messages');
+  await pool.query('DELETE FROM notifications');
   await pool.query('DELETE FROM tasks');
   await userModel.remove(thalisson.id);
   await userModel.remove(gestor.id);

@@ -1,4 +1,5 @@
 const { z } = require('zod');
+const { CLIENT_PLAN_OPTIONS, normalizeClientPlan } = require('../utils/clientPlans');
 
 const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/;
 const isoDateTimeLocalRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
@@ -47,7 +48,13 @@ exports.contactUpdateSchema = exports.contactSchema.partial();
 
 exports.contactConvertSchema = z.object({
   manager_id: emptyToNullNumber().optional(),
-  plan: emptyToNullString(z.enum(['starter', 'growth', 'scale'])).optional(),
+  plan: z.preprocess((value) => {
+    if (value === '' || value === undefined || value === null) {
+      return undefined;
+    }
+
+    return normalizeClientPlan(value);
+  }, z.enum(CLIENT_PLAN_OPTIONS).optional()),
   mrr: z.coerce.number().min(0).max(9999999).optional(),
   segment: emptyToNullString(z.string().max(120)).optional(),
 });

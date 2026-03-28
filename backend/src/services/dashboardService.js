@@ -129,6 +129,7 @@ async function getInternalDashboard(user) {
         client: 't.client_id = $TENANT AND t.assigned_to IS NOT NULL',
         internal: [
           't.assigned_to = $TENANT',
+          't.created_by = $TENANT',
           't.assigned_to IS NULL',
           ...getInternalClientAccessScope('t.client_id'),
         ],

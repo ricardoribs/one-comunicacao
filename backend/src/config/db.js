@@ -46,7 +46,7 @@ function createPgMemPool() {
       id SERIAL PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
       company VARCHAR(255) NOT NULL,
-      plan VARCHAR(50) NOT NULL DEFAULT 'starter',
+      plan VARCHAR(120) NOT NULL DEFAULT 'One Start',
       mrr NUMERIC(12, 2) NOT NULL DEFAULT 0,
       segment VARCHAR(120),
       manager_id INTEGER,
@@ -169,6 +169,7 @@ function createPgMemPool() {
     CREATE TABLE tasks (
       id SERIAL PRIMARY KEY,
       client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
+      created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
       assigned_to INTEGER REFERENCES users(id) ON DELETE SET NULL,
       status VARCHAR(30) NOT NULL,
       type VARCHAR(40) NOT NULL DEFAULT 'geral',
@@ -178,6 +179,21 @@ function createPgMemPool() {
       deadline DATE,
       created_at TIMESTAMP NOT NULL DEFAULT NOW()
     );
+
+    CREATE TABLE notifications (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      type VARCHAR(60) NOT NULL,
+      title VARCHAR(160) NOT NULL,
+      body TEXT,
+      entity_type VARCHAR(40),
+      entity_id INTEGER,
+      read_at TIMESTAMP,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+
+    CREATE INDEX idx_notifications_user_id ON notifications(user_id);
+    CREATE INDEX idx_notifications_user_read_at ON notifications(user_id, read_at, created_at DESC);
 
     CREATE TABLE reports (
       id SERIAL PRIMARY KEY,

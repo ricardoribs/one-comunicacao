@@ -4,6 +4,7 @@ const clientModel = require('../models/clientModel');
 const { withTransaction } = require('../utils/db');
 const { sendPaginated } = require('../utils/response');
 const AppError = require('../utils/AppError');
+const { normalizeClientPlan } = require('../utils/clientPlans');
 
 exports.create = asyncHandler(async (req, res) => {
   const contact = await contactModel.create(req.body);
@@ -33,11 +34,12 @@ exports.convert = asyncHandler(async (req, res) => {
   }
 
   const clientId = await withTransaction(req.user, async (dbClient) => {
+    const normalizedPlan = normalizeClientPlan(req.body.plan) || 'One Start';
     const clientId = await clientModel.createWithClient(dbClient, {
       name: contact.name,
       company: contact.company || contact.name,
       manager_id: req.body.manager_id || req.user.id,
-      plan: req.body.plan || 'growth',
+      plan: normalizedPlan,
       mrr: req.body.mrr || 0,
       segment: req.body.segment || null,
       started_at: req.body.started_at || null,

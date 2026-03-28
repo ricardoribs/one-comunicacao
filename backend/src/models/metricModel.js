@@ -1,6 +1,7 @@
 const tenantDb = require('../db/tenantDb');
 const { normalizePagination, paginationClause } = require('../utils/pagination');
 const createScopedQuery = require('../utils/scopedQuery');
+const { getInternalClientScope } = require('../utils/internalClientScope');
 
 async function list(user, filters = {}) {
   const { limit, offset } = normalizePagination(filters);
@@ -21,7 +22,7 @@ async function list(user, filters = {}) {
   const scope = createScopedQuery(user).build(
     {
       client: 'cam.client_id = $TENANT',
-      internal: 'c.manager_id = $TENANT',
+      internal: getInternalClientScope('c'),
     },
     { prefix: 'WHERE', startIndex: index }
   );
@@ -31,7 +32,7 @@ async function list(user, filters = {}) {
     table: 'metrics',
     scopeConfig: {
       client: 'cam.client_id = $TENANT',
-      internal: 'c.manager_id = $TENANT',
+      internal: getInternalClientScope('c'),
     },
     prefix: where.length ? 'AND' : 'WHERE',
     startIndex: index,

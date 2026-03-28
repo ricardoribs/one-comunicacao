@@ -6,6 +6,7 @@ const { getInternalClientAccessScope } = require('../utils/internalClientScope')
 const selectColumns = `
   t.id,
   t.client_id,
+  t.created_by,
   t.assigned_to,
   t.status,
   t.type,
@@ -23,6 +24,7 @@ function taskClientScope(alias = 't') {
 function taskInternalScope(alias = 't') {
   return [
     `${alias}.assigned_to = $TENANT`,
+    `${alias}.created_by = $TENANT`,
     `${alias}.assigned_to IS NULL`,
     ...getInternalClientAccessScope(`${alias}.client_id`),
   ];
@@ -80,11 +82,12 @@ async function create(data, user = null) {
   const { rows } = await tenantDb.query(user || { role: 'admin' }, {
     table: 'tasks',
     scopeConfig: { internal: '1 = 1' },
-    sql: `INSERT INTO tasks (client_id, assigned_to, status, type, column_name, description, deadline, title)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    sql: `INSERT INTO tasks (client_id, created_by, assigned_to, status, type, column_name, description, deadline, title)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING id`,
     params: [
       data.client_id || null,
+      data.created_by || user?.id || null,
       data.assigned_to || null,
       data.status,
       data.type || 'geral',
@@ -144,13 +147,7 @@ async function update(id, data, user = null) {
 async function remove(id, user = null) {
   await tenantDb.query(user, {
     table: 'tasks',
-    scopeConfig: {
-      client: 'client_id = $TENANT',
-      internal: [
-        'assigned_to = $TENANT',
-        ...getInternalClientAccessScope('tasks.client_id'),
-      ],
-    },
+    scopeConfig: taskScopeConfig('tasks'),
     prefix: 'AND',
     startIndex: 2,
     sql: 'DELETE FROM tasks WHERE id = $1 __TENANT_SCOPE__',

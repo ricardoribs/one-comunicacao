@@ -2,6 +2,7 @@ const tenantDb = require('../db/tenantDb');
 const { normalizePagination, paginationClause } = require('../utils/pagination');
 const createScopedQuery = require('../utils/scopedQuery');
 const { getInternalClientScope } = require('../utils/internalClientScope');
+const { normalizeClientPlan } = require('../utils/clientPlans');
 
 const scopeConfig = {
   client: 'c.id = $TENANT',
@@ -97,7 +98,7 @@ function buildClientParams(data) {
   return [
     data.name,
     data.company,
-    data.plan,
+    normalizeClientPlan(data.plan),
     data.mrr,
     data.segment || null,
     data.manager_id || null,
@@ -124,7 +125,7 @@ const insertClientSql = `INSERT INTO clients (
   contact_phone, billing_email, address_line1, address_line2, neighborhood, city, state, zip_code, country, notes, brand_manual
 )
 VALUES (
-  $1, $2, COALESCE($3, 'growth'), COALESCE($4, 0), $5, $6, $7, $8, $9, $10,
+  $1, $2, COALESCE($3, 'One Start'), COALESCE($4, 0), $5, $6, $7, $8, $9, $10,
   $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
 )
 RETURNING id`;
@@ -166,7 +167,7 @@ async function createWithClient(client, data, user) {
       contact_phone, billing_email, address_line1, address_line2, neighborhood, city, state, zip_code, country, notes, brand_manual
     )
     VALUES (
-      $1, $2, COALESCE($3, 'growth'), COALESCE($4, 0), $5, $6, $7, $8, $9, $10,
+      $1, $2, COALESCE($3, 'One Start'), COALESCE($4, 0), $5, $6, $7, $8, $9, $10,
       $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
     )
     RETURNING id`,
