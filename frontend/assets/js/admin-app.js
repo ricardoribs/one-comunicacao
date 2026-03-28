@@ -757,6 +757,25 @@ function getOnDemandServiceLabel(value) {
   return normalized === "sob demanda" ? "" : String(value || "").trim();
 }
 
+function getClientPlanBadgeClass(value) {
+  const planLabel = normalizeClientPlanLabel(value);
+
+  if (planLabel === "One Master") {
+    return "badge-pink";
+  }
+  if (planLabel === "One Start") {
+    return "badge-blue";
+  }
+  if (planLabel === "One Ideal") {
+    return "badge-dark";
+  }
+  if (planLabel === "Sob demanda") {
+    return "badge-yellow";
+  }
+
+  return "badge-gray";
+}
+
 function clientPlanOptions(selected = "") {
   const normalized = normalizeClientPlanValue(selected);
   const knownValues = new Set();
@@ -2737,28 +2756,40 @@ function renderCRM() {
         const segmentLabel = String(client.segment || "").trim() || "Não informado";
         const planLabel = normalizeClientPlanLabel(client.plan);
         const onDemandService = getOnDemandServiceLabel(client.plan);
+        const campaignsLabel = Number(client.campaigns_count || 0)
+          ? `${formatNumber(client.campaigns_count)} ${Number(client.campaigns_count) === 1 ? "campanha vinculada" : "campanhas vinculadas"}`
+          : "Sem campanhas vinculadas";
+        const startedAtLabel = client.started_at ? formatDate(client.started_at) : "Sem data de início";
+        const mrrValue = formatCurrencyValue(client.mrr);
+        const mrrSub = Number(client.mrr || 0) > 0 ? "receita mensal recorrente" : "MRR ainda não informado";
 
         return `
         <tr>
-          <td class="cell-stack">
+          <td class="cell-stack crm-client-primary">
             <span class="cell-title" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span>
             <span class="cell-sub" title="${escapeHtml(client.company || "Sem empresa")}">${escapeHtml(client.company || "Sem empresa")}</span>
+            <span class="cell-sub" title="${escapeHtml(campaignsLabel)}">${escapeHtml(campaignsLabel)}</span>
           </td>
-          <td class="cell-stack">
-            <span class="cell-sub" title="${escapeHtml(segmentLabel)}">${escapeHtml(segmentLabel)}</span>
+          <td class="cell-stack crm-cell-muted">
+            <span class="crm-cell-copy" title="${escapeHtml(segmentLabel)}">${escapeHtml(segmentLabel)}</span>
           </td>
           <td class="cell-stack crm-plan-cell">
-            <span class="badge badge-gray" title="${escapeHtml(planLabel)}">${escapeHtml(planLabel)}</span>
+            <span class="badge ${getClientPlanBadgeClass(client.plan)}" title="${escapeHtml(planLabel)}">${escapeHtml(planLabel)}</span>
             ${onDemandService && planLabel === "Sob demanda" ? `<span class="cell-sub" title="${escapeHtml(onDemandService)}">${escapeHtml(onDemandService)}</span>` : ""}
           </td>
-          <td><span class="cell-sub">${formatDate(client.started_at)}</span></td>
+          <td class="cell-stack crm-cell-muted">
+            <span class="crm-cell-copy" title="${escapeHtml(startedAtLabel)}">${escapeHtml(startedAtLabel)}</span>
+          </td>
           <td><span class="badge badge-green">Ativo</span></td>
-          <td data-align="right"><span class="${getValueToneClass(client.mrr)}">${formatCurrencyValue(client.mrr)}</span></td>
+          <td class="cell-stack crm-mrr-cell" data-align="right">
+            <span class="${getValueToneClass(client.mrr)}">${mrrValue}</span>
+            <span class="cell-sub" title="${escapeHtml(mrrSub)}">${escapeHtml(mrrSub)}</span>
+          </td>
           <td class="cell-actions">
-            <div class="table-actions">
-              <button class="btn btn-ghost btn-sm" onclick="openModal('novo-cliente', ${client.id})">Editar</button>
-              <button class="btn btn-ghost btn-sm" onclick="openChargeModalForClient(${client.id})">Cobrar</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteClient(${client.id})">Excluir</button>
+            <div class="table-actions crm-client-actions">
+              <button type="button" class="btn btn-outline btn-sm" onclick="openModal('novo-cliente', ${client.id})">Editar</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="openChargeModalForClient(${client.id})">Cobrar</button>
+              <button type="button" class="btn btn-danger btn-sm" onclick="deleteClient(${client.id})">Excluir</button>
             </div>
           </td>
         </tr>
