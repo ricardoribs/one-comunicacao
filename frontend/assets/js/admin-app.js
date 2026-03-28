@@ -1821,15 +1821,18 @@ function renderHome() {
   const grid = document.querySelector("#page-home .kpi-grid");
   if (grid && state.dashboard) {
     const openTasks = state.tasks.filter((task) => normalizeTaskStatusLabel(task.status) !== "Concluido").length;
+    const scopedClientsCount = hasRoleDataAccess("clients") && state.clients.length
+      ? state.clients.length
+      : Number(state.dashboard.summary.clients_count || 0);
     const homeCards = [
       {
         label: "Clientes Ativos",
-        value: state.dashboard.summary.clients_count,
+        value: scopedClientsCount,
         sub: hasRoleDataAccess("clients")
           ? `${
-              state.clients.length
-                ? `${state.clients.length} cadastrados`
-                : `${Number(state.dashboard.summary.clients_count || 0)} no escopo atual`
+              scopedClientsCount
+                ? `${scopedClientsCount} cadastrados`
+                : "0 no escopo atual"
             }`
           : "escopo atual do perfil",
         page: "crm",
