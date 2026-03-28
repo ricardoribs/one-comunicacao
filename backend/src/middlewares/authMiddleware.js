@@ -6,7 +6,9 @@ const asyncHandler = require('../utils/asyncHandler');
 const logger = require('../config/logger');
 const createScopedQuery = require('../utils/scopedQuery');
 const { hasCapability } = require('../utils/access');
+const { resolveRequestAccessMetadata } = require('../utils/requestMetadata');
 const requestBuckets = new Map();
+const presenceBuckets = new Map();
 
 function enforceUserRateLimit(userId) {
   const key = String(userId);
@@ -22,6 +24,29 @@ function enforceUserRateLimit(userId) {
   if (current.count > 200) {
     throw new AppError('Limite de requisições por usuário excedido. Tente novamente em instantes.', 429);
   }
+}
+
+function schedulePresenceUpdate(userId, req) {
+  const key = String(userId);
+  const now = Date.now();
+  const lastUpdate = presenceBuckets.get(key) || 0;
+
+  if (now - lastUpdate < 60 * 1000) {
+    return;
+  }
+
+  presenceBuckets.set(key, now);
+  resolveRequestAccessMetadata(req)
+    .then((metadata) => userModel.recordPresence(userId, metadata))
+    .catch((error) => {
+      logger.warn(
+        {
+          user_id: userId,
+          error: error.message,
+        },
+        'Falha ao atualizar presenca do usuario.'
+      );
+    });
 }
 
 const authenticate = asyncHandler(async (req, res, next) => {
@@ -51,6 +76,7 @@ const authenticate = asyncHandler(async (req, res, next) => {
   };
   req.db = createScopedQuery(user);
   enforceUserRateLimit(user.id);
+  schedulePresenceUpdate(user.id, req);
 
   next();
 });

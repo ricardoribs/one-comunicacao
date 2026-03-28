@@ -12,6 +12,9 @@ const USER_UPDATE_COLUMNS = new Set([
   'failed_login_attempts',
   'locked_until',
   'last_login_at',
+  'last_seen_at',
+  'last_seen_ip',
+  'last_seen_location',
 ]);
 
 function getExecutor(executor = pool) {
@@ -31,6 +34,16 @@ const baseSelect = `
     u.failed_login_attempts,
     u.locked_until,
     u.last_login_at,
+    u.last_seen_at,
+    u.last_seen_ip,
+    u.last_seen_location,
+    CASE
+      WHEN COALESCE(u.is_active, true) = true
+        AND u.last_seen_at IS NOT NULL
+        AND u.last_seen_at >= CURRENT_TIMESTAMP::timestamp - INTERVAL '5 minutes'
+      THEN true
+      ELSE false
+    END AS is_online,
     u.created_at,
     c.name AS client_name,
     c.company AS client_company
@@ -47,6 +60,32 @@ const safeSelect = `
     u.role,
     u.is_active,
     u.email_verified_at,
+    u.created_at,
+    c.name AS client_name,
+    c.company AS client_company
+  FROM users u
+  LEFT JOIN clients c ON c.id = u.client_id
+`;
+
+const accessOverviewSelect = `
+  SELECT
+    u.id,
+    u.client_id,
+    u.name,
+    u.email,
+    u.role,
+    u.is_active,
+    u.email_verified_at,
+    u.last_login_at,
+    u.last_seen_at,
+    u.last_seen_location,
+    CASE
+      WHEN COALESCE(u.is_active, true) = true
+        AND u.last_seen_at IS NOT NULL
+        AND u.last_seen_at >= CURRENT_TIMESTAMP::timestamp - INTERVAL '5 minutes'
+      THEN true
+      ELSE false
+    END AS is_online,
     u.created_at,
     c.name AS client_name,
     c.company AS client_company
@@ -74,6 +113,13 @@ async function list(query = {}) {
   return rows;
 }
 
+async function listAccessOverview(query = {}) {
+  const { limit, offset } = normalizePagination(query);
+  const page = paginationClause(limit, offset, 1);
+  const { rows } = await pool.query(`${accessOverviewSelect} ORDER BY u.created_at DESC${page.clause}`, page.values);
+  return rows;
+}
+
 async function listActiveInternalTeam(actor = null) {
   if (actor?.role === 'client' && actor.client_id) {
     const { rows } = await pool.query(
@@ -82,7 +128,16 @@ async function listActiveInternalTeam(actor = null) {
          u.name,
          u.role,
          u.is_active,
-         u.last_login_at
+         u.last_login_at,
+         u.last_seen_at,
+         u.last_seen_location,
+         CASE
+           WHEN COALESCE(u.is_active, true) = true
+             AND u.last_seen_at IS NOT NULL
+             AND u.last_seen_at >= CURRENT_TIMESTAMP::timestamp - INTERVAL '5 minutes'
+           THEN true
+           ELSE false
+         END AS is_online
        FROM users u
        INNER JOIN clients c ON c.id = $1
        WHERE ${INTERNAL_ROLE_FILTER}
@@ -97,13 +152,49 @@ async function listActiveInternalTeam(actor = null) {
     return rows;
   }
 
+  if (actor?.role && actor.role !== 'admin') {
+    const { rows } = await pool.query(
+      `SELECT
+         u.id,
+         u.name,
+         u.role,
+         u.is_active,
+         u.last_login_at,
+         u.last_seen_at,
+         u.last_seen_location,
+         CASE
+           WHEN COALESCE(u.is_active, true) = true
+             AND u.last_seen_at IS NOT NULL
+             AND u.last_seen_at >= CURRENT_TIMESTAMP::timestamp - INTERVAL '5 minutes'
+           THEN true
+           ELSE false
+         END AS is_online
+       FROM users u
+       WHERE ${INTERNAL_ROLE_FILTER}
+         AND ${ACTIVE_INTERNAL_FILTER}
+         AND (LOWER(u.role) <> 'admin' OR u.id = $1)
+       ORDER BY u.role, u.name`,
+      [actor.id]
+    );
+    return rows;
+  }
+
   const { rows } = await pool.query(
     `SELECT
        u.id,
        u.name,
        u.role,
        u.is_active,
-       u.last_login_at
+       u.last_login_at,
+       u.last_seen_at,
+       u.last_seen_location,
+       CASE
+         WHEN COALESCE(u.is_active, true) = true
+           AND u.last_seen_at IS NOT NULL
+           AND u.last_seen_at >= CURRENT_TIMESTAMP::timestamp - INTERVAL '5 minutes'
+         THEN true
+         ELSE false
+       END AS is_online
      FROM users u
      WHERE ${INTERNAL_ROLE_FILTER}
        AND ${ACTIVE_INTERNAL_FILTER}
@@ -184,14 +275,34 @@ async function recordFailedLogin(id, lockThreshold, lockMinutes) {
   return rows[0] || null;
 }
 
-async function resetLoginFailures(id) {
+async function resetLoginFailures(id, metadata = {}) {
   await pool.query(
     `UPDATE users
      SET failed_login_attempts = 0,
          locked_until = NULL,
-         last_login_at = NOW()
+         last_login_at = NOW(),
+         last_seen_at = NOW(),
+         last_seen_ip = COALESCE($2, last_seen_ip),
+         last_seen_location = CASE
+           WHEN $3 IS NULL OR $3 = '' THEN last_seen_location
+           ELSE $3
+         END
      WHERE id = $1`,
-    [id]
+    [id, metadata.ip || null, metadata.location || null]
+  );
+}
+
+async function recordPresence(id, metadata = {}) {
+  await pool.query(
+    `UPDATE users
+     SET last_seen_at = NOW(),
+         last_seen_ip = COALESCE($2, last_seen_ip),
+         last_seen_location = CASE
+           WHEN $3 IS NULL OR $3 = '' THEN last_seen_location
+           ELSE $3
+         END
+     WHERE id = $1`,
+    [id, metadata.ip || null, metadata.location || null]
   );
 }
 
@@ -381,6 +492,7 @@ module.exports = {
   findByEmail,
   findById,
   list,
+  listAccessOverview,
   listActiveInternalTeam,
   listAssignableInternalUsers,
   create,
@@ -389,6 +501,7 @@ module.exports = {
   findSecurityById,
   recordFailedLogin,
   resetLoginFailures,
+  recordPresence,
   createRefreshToken,
   findRefreshToken,
   findRefreshTokenForUpdate,
