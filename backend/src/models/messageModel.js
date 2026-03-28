@@ -213,8 +213,30 @@ async function markRead(user, data = {}) {
   });
 }
 
+async function listAssignmentSendersForTask(taskId, user) {
+  const { rows } = await tenantDb.query(user, {
+    table: 'messages',
+    scopeConfig,
+    prefix: 'AND',
+    startIndex: 3,
+    sql: `SELECT DISTINCT m.sender_id
+     FROM messages m
+     INNER JOIN users sender ON sender.id = m.sender_id
+     INNER JOIN users receiver ON receiver.id = m.receiver_id
+     LEFT JOIN clients sender_client ON sender_client.id = sender.client_id
+     LEFT JOIN clients receiver_client ON receiver_client.id = receiver.client_id
+     WHERE m.context_type = $1
+       AND m.context_id = $2
+     __TENANT_SCOPE__`,
+    params: ['task_assignment', Number(taskId)],
+  });
+
+  return rows.map((row) => Number(row.sender_id)).filter(Boolean);
+}
+
 module.exports = {
   listForUser,
   create,
   markRead,
+  listAssignmentSendersForTask,
 };

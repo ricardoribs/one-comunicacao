@@ -557,7 +557,7 @@ test('gestor nao cria cobranca para lead fora do proprio tenant operacional', { 
   await userModel.remove(gestorB.id);
 });
 
-test('atribuicao de tarefa gera notificacao e permite marcar como lida', { concurrency: false }, async () => {
+test('atribuicao e conclusao de tarefa geram notificacoes para os envolvidos', { concurrency: false }, async () => {
   const suffix = Date.now() + 20;
   const gestor = await createUser({
     name: `Gestor Notificacao ${suffix}`,
@@ -616,6 +616,29 @@ test('atribuicao de tarefa gera notificacao e permite marcar como lida', { concu
 
   assert.equal(readBackResponse.status, 200);
   assert.ok(readBackResponse.body[0].read_at);
+
+  const completionResponse = await request(app)
+    .put(`/api/tasks/${createTaskResponse.body.id}`)
+    .set('Authorization', `Bearer ${thalissonAuth.body.accessToken}`)
+    .send({
+      status: 'Concluido',
+      column_name: 'done',
+    });
+
+  assert.equal(completionResponse.status, 200);
+  assert.equal(completionResponse.body.status, 'Concluido');
+  assert.equal(completionResponse.body.column_name, 'done');
+
+  const gestorNotificationsResponse = await request(app)
+    .get('/api/messages')
+    .query({ context_type: 'task_completed' })
+    .set('Authorization', `Bearer ${gestorAuth.body.accessToken}`);
+
+  assert.equal(gestorNotificationsResponse.status, 200);
+  assert.equal(gestorNotificationsResponse.body.length, 1);
+  assert.equal(gestorNotificationsResponse.body[0].receiver_id, gestor.id);
+  assert.equal(gestorNotificationsResponse.body[0].context_id, createTaskResponse.body.id);
+  assert.match(gestorNotificationsResponse.body[0].content, /concluiu a tarefa/i);
 
   await pool.query('DELETE FROM messages');
   await pool.query('DELETE FROM tasks');

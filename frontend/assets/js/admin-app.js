@@ -178,14 +178,17 @@ const ROLE_DATA_ACCESS = {
 };
 
 const NON_BLOCKING_MODULE_FAILURES = new Set(["arquivos", "integrações"]);
-const NOTIFICATION_CONTEXT_TYPE = "task_assignment";
-const NOTIFICATION_POLL_MS = 30000;
+const TASK_NOTIFICATION_CONTEXT_TYPES = new Set(["task_assignment", "task_completed"]);
+const NOTIFICATION_POLL_MS = 8000;
 const notificationRuntime = {
   pollHandle: null,
   bootstrapped: false,
   seenIds: new Set(),
   syncingRead: false,
   open: false,
+};
+const kanbanRuntime = {
+  movingTaskId: null,
 };
 
 const TASK_TYPE_LABELS = {
@@ -214,13 +217,29 @@ const CAMPAIGN_CHANNEL_OPTIONS = [
 ];
 
 const INVOICE_STATUS_OPTIONS = ["Em aberto", "Pago", "Atrasado", "Cancelado"];
-const CLIENT_PLAN_OPTIONS = ["One Ideal", "One Start", "One Master", "Sob demanda"];
 const ON_DEMAND_SERVICE_OPTIONS = [
   "Cobertura de Eventos",
   "Releases (Imprensa)",
   "Newsletter",
   "Fotografia",
   "Tráfego Pago (como serviço isolado)"
+];
+const CLIENT_PLAN_GROUPS = [
+  {
+    label: "Planos One",
+    options: [
+      { value: "One Ideal", label: "One Ideal" },
+      { value: "One Start", label: "One Start" },
+      { value: "One Master", label: "One Master" },
+    ],
+  },
+  {
+    label: "Sob demanda",
+    options: ON_DEMAND_SERVICE_OPTIONS.map((service) => ({
+      value: `Sob demanda · ${service}`,
+      label: service,
+    })),
+  },
 ];
 
 const state = {
@@ -656,7 +675,7 @@ function normalizeClientPlanLabel(value) {
   if (normalized.includes("ideal")) {
     return "One Ideal";
   }
-  if (normalized.includes("start")) {
+  if (normalized.includes("start") || normalized.includes("star")) {
     return "One Start";
   }
   if (normalized.includes("master")) {
@@ -676,6 +695,22 @@ function normalizeClientPlanLabel(value) {
   }
 
   return raw;
+}
+
+function normalizeClientPlanValue(value) {
+  const raw = String(value || "").trim();
+  const normalized = normalizeLooseText(raw);
+  const serviceLabel = getOnDemandServiceLabel(raw);
+
+  if (!raw) {
+    return "";
+  }
+
+  if (serviceLabel) {
+    return `Sob demanda · ${serviceLabel}`;
+  }
+
+  return normalizeClientPlanLabel(raw);
 }
 
 function getOnDemandServiceLabel(value) {
@@ -704,10 +739,122 @@ function getOnDemandServiceLabel(value) {
 }
 
 function clientPlanOptions(selected = "") {
-  const normalized = normalizeClientPlanLabel(selected);
-  return CLIENT_PLAN_OPTIONS.map(
-    (option) => `<option value="${escapeHtml(option)}" ${option === normalized ? "selected" : ""}>${escapeHtml(option)}</option>`
-  ).join("");
+  const normalized = normalizeClientPlanValue(selected);
+  const knownValues = new Set();
+  const groupsHtml = CLIENT_PLAN_GROUPS.map((group) => {
+    const optionsHtml = group.options
+      .map((option) => {
+        knownValues.add(option.value);
+        return `<option value="${escapeHtml(option.value)}" ${option.value === normalized ? "selected" : ""}>${escapeHtml(
+          option.label
+        )}</option>`;
+      })
+      .join("");
+
+    return `<optgroup label="${escapeHtml(group.label)}">${optionsHtml}</optgroup>`;
+  }).join("");
+
+  if (normalized && !knownValues.has(normalized)) {
+    return `${groupsHtml}<option value="${escapeHtml(normalized)}" selected>${escapeHtml(normalizeClientPlanLabel(normalized))}</option>`;
+  }
+
+  return groupsHtml;
+}
+
+function normalizeTaskStatusLabel(value) {
+  const raw = String(value || "").trim();
+
+  if (!raw) {
+    return "Backlog";
+  }
+  if (raw === "Concluído") {
+    return "Concluido";
+  }
+  if (raw === "Em andamento") {
+    return "Em progresso";
+  }
+
+  return raw;
+}
+
+function getTaskStatusBadgeClass(status) {
+  const normalized = normalizeTaskStatusLabel(status);
+
+  if (normalized === "Concluido") {
+    return "badge-green";
+  }
+  if (normalized === "Em progresso") {
+    return "badge-yellow";
+  }
+  if (normalized === "A Fazer") {
+    return "badge-blue";
+  }
+
+  return "badge-gray";
+}
+
+function getTaskColumnConfig(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  const byColumn = {
+    backlog: { key: "backlog", label: "Backlog", status: "Backlog" },
+    todo: { key: "todo", label: "A Fazer", status: "A Fazer" },
+    doing: { key: "doing", label: "Em Progresso", status: "Em progresso" },
+    done: { key: "done", label: "Concluído", status: "Concluido" },
+  };
+  const byStatus = {
+    backlog: byColumn.backlog,
+    "a fazer": byColumn.todo,
+    "em progresso": byColumn.doing,
+    "em andamento": byColumn.doing,
+    concluido: byColumn.done,
+    "concluído": byColumn.done,
+  };
+
+  return byColumn[normalized] || byStatus[normalizeLooseText(value)] || byColumn.backlog;
+}
+
+function getTaskColumnName(task) {
+  return getTaskColumnConfig(task?.column_name || task?.status).key;
+}
+
+function getTaskStatusValue(taskOrStatus, fallbackColumn = "") {
+  if (typeof taskOrStatus === "object" && taskOrStatus) {
+    return getTaskColumnConfig(taskOrStatus.column_name || taskOrStatus.status).status;
+  }
+
+  return getTaskColumnConfig(fallbackColumn || taskOrStatus).status;
+}
+
+function getTaskStatusDisplayLabel(taskOrStatus, fallbackColumn = "") {
+  if (typeof taskOrStatus === "object" && taskOrStatus) {
+    return getTaskColumnConfig(taskOrStatus.column_name || taskOrStatus.status).label;
+  }
+
+  return getTaskColumnConfig(fallbackColumn || taskOrStatus).label;
+}
+
+function taskStatusOptions(selected = "") {
+  const active = normalizeTaskStatusLabel(selected);
+  return [
+    { value: "Backlog", label: "Backlog" },
+    { value: "A Fazer", label: "A Fazer" },
+    { value: "Em progresso", label: "Em progresso" },
+    { value: "Concluido", label: "Concluído" },
+  ]
+    .map((option) => `<option value="${option.value}" ${option.value === active ? "selected" : ""}>${option.label}</option>`)
+    .join("");
+}
+
+function taskColumnOptions(selected = "") {
+  const active = getTaskColumnConfig(selected).key;
+  return [
+    { value: "backlog", label: "Backlog" },
+    { value: "todo", label: "A Fazer" },
+    { value: "doing", label: "Em Progresso" },
+    { value: "done", label: "Concluído" },
+  ]
+    .map((option) => `<option value="${option.value}" ${option.value === active ? "selected" : ""}>${option.label}</option>`)
+    .join("");
 }
 
 function normalizeDateKey(value) {
@@ -856,7 +1003,7 @@ function setSidebarCount(page, value) {
 }
 
 function renderSidebarCounts() {
-  const openTasks = state.tasks.filter((task) => task.status !== "Concluido").length;
+  const openTasks = state.tasks.filter((task) => normalizeTaskStatusLabel(task.status) !== "Concluido").length;
   const productionItems = state.materials.length + state.files.length + state.reports.length;
 
   setSidebarCount("kanban", openTasks);
@@ -956,7 +1103,7 @@ function escapeHtmlWithBreaks(value) {
 
 function getDeadlineClass(task) {
   const dueDateValue = task.due_date || task.deadline;
-  if (task.status === "Concluido" || !dueDateValue) {
+  if (normalizeTaskStatusLabel(task.status) === "Concluido" || !dueDateValue) {
     return "deadline-ok";
   }
 
@@ -1032,7 +1179,7 @@ function buildNotificationPanelHtml() {
     ? notifications
         .map((item) => {
           const unreadClass = isUnreadNotification(item) ? " is-unread" : "";
-          const action = item.context_type === NOTIFICATION_CONTEXT_TYPE && item.context_id ? "Abrir tarefa" : "Abrir";
+          const action = TASK_NOTIFICATION_CONTEXT_TYPES.has(item.context_type) && item.context_id ? "Abrir tarefa" : "Abrir";
 
           return `
             <button type="button" class="notification-item${unreadClass}" data-notification-item="1" data-notification-id="${item.id}" data-notification-context="${escapeHtml(
@@ -1053,7 +1200,7 @@ function buildNotificationPanelHtml() {
     : `
         <div class="notification-empty">
           <strong>Nenhuma notificação</strong>
-          <span>As novas atribuições de tarefa aparecerão aqui.</span>
+          <span>As novas movimentações de tarefa aparecerão aqui.</span>
         </div>
       `;
 
@@ -1109,7 +1256,6 @@ async function markNotificationsRead() {
       method: "PATCH",
       body: JSON.stringify({
         ids: unreadIds,
-        context_type: NOTIFICATION_CONTEXT_TYPE,
       }),
     });
 
@@ -1166,7 +1312,7 @@ function ensureNotificationUi() {
       event.stopPropagation();
       closeNotifications();
 
-      if (item.dataset.notificationContext === NOTIFICATION_CONTEXT_TYPE) {
+      if (TASK_NOTIFICATION_CONTEXT_TYPES.has(item.dataset.notificationContext)) {
         goTo("kanban");
       }
     });
@@ -1199,10 +1345,12 @@ async function refreshNotifications({ silent = false, suppressErrors = false } =
   }
 
   try {
-    const notifications = await apiFetch(`/messages?context_type=${encodeURIComponent(NOTIFICATION_CONTEXT_TYPE)}&limit=20`, {
+    const notifications = await apiFetch("/messages?limit=20", {
       cache: "no-store",
     });
-    const normalized = sortNotifications(toArray(notifications));
+    const normalized = sortNotifications(
+      toArray(notifications).filter((item) => TASK_NOTIFICATION_CONTEXT_TYPES.has(String(item?.context_type || "")))
+    );
     const newUnread = notificationRuntime.bootstrapped
       ? normalized.filter((item) => isUnreadNotification(item) && !notificationRuntime.seenIds.has(item.id))
       : [];
@@ -1242,6 +1390,22 @@ function stopNotificationPolling() {
 
 function startNotificationPolling() {
   stopNotificationPolling();
+
+  if (document.body.dataset.notificationRefreshBound !== "1") {
+    window.addEventListener("focus", () => {
+      refreshNotifications({ silent: true, suppressErrors: true }).catch(() => {});
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        refreshNotifications({ silent: true, suppressErrors: true }).catch(() => {});
+      }
+    });
+
+    document.body.dataset.notificationRefreshBound = "1";
+  }
+
+  refreshNotifications({ silent: true, suppressErrors: true }).catch(() => {});
 
   notificationRuntime.pollHandle = window.setInterval(() => {
     if (document.hidden) {
@@ -1556,7 +1720,7 @@ function renderHome() {
 
   const grid = document.querySelector("#page-home .kpi-grid");
   if (grid && state.dashboard) {
-    const openTasks = state.tasks.filter((task) => task.status !== "Concluido").length;
+    const openTasks = state.tasks.filter((task) => normalizeTaskStatusLabel(task.status) !== "Concluido").length;
     const homeCards = [
       {
         label: "Clientes Ativos",
@@ -1647,7 +1811,7 @@ function renderHome() {
   const topCards = document.querySelectorAll("#page-home .two-col .card");
   if (topCards[0]) {
     const urgentTasks = state.tasks
-      .filter((task) => task.status !== "Concluido")
+      .filter((task) => normalizeTaskStatusLabel(task.status) !== "Concluido")
       .slice(0, 4)
       .map(
         (task) => `
@@ -1656,7 +1820,7 @@ function renderHome() {
               <div class="block-title-sm">${escapeHtml(task.title)}</div>
               <div class="block-text-xs">${escapeHtml(task.client_name || "Interno")} · ${formatDate(task.due_date || task.deadline)}</div>
             </div>
-            <span class="badge ${task.status === "Em progresso" ? "badge-yellow" : "badge-gray"}">${escapeHtml(task.status)}</span>
+            <span class="badge ${getTaskStatusBadgeClass(task.status)}">${escapeHtml(getTaskStatusDisplayLabel(task))}</span>
           </div>
         `
       )
@@ -1999,7 +2163,7 @@ function getKanbanTasksForToday(filteredTasks) {
     .filter((task) => {
       const dateKey = normalizeDateKey(task.due_date || task.deadline);
       const todayKey = new Date().toISOString().slice(0, 10);
-      return dateKey <= todayKey && String(task.status || "").toLowerCase() !== "concluido";
+      return dateKey <= todayKey && normalizeTaskStatusLabel(task.status) !== "Concluido";
     })
     .sort((left, right) => String(left.due_date || left.deadline || "").localeCompare(String(right.due_date || right.deadline || "")));
 }
@@ -2257,19 +2421,21 @@ function renderKanban() {
 
   document.getElementById("kanban-board").innerHTML = columns
     .map((column) => {
-      const tasks = filtered.filter((task) => task.column_name === column.key);
+      const tasks = filtered.filter((task) => getTaskColumnName(task) === column.key);
       return `
-        <div class="kanban-col">
+        <div class="kanban-col" data-kanban-column="${column.key}">
           <div class="kanban-col-title">${column.label} <span class="col-count">${tasks.length}</span></div>
           ${tasks
             .map(
               (task) => `
-                <div class="k-card">
+                <div class="k-card" data-task-card="1" data-task-id="${task.id}" ${canEditTasks ? 'draggable="true"' : ""}>
                   <div class="k-card-client" title="${escapeHtml(task.client_name || "Interno")}">${escapeHtml(task.client_name || "Interno")}</div>
                   <div class="k-card-title" title="${escapeHtml(task.title)}">${escapeHtml(task.title)}</div>
                   <div class="k-card-desc" title="${escapeHtml(task.description || "")}">${escapeHtml(task.description || "Sem descrição.")}</div>
                   <div class="status-gap-top"><span class="badge badge-blue">${escapeHtml(formatTaskTypeLabel(task.type))}</span></div>
-                  <div class="status-gap-top"><span class="badge ${task.status === "Concluido" ? "badge-green" : task.status === "Em progresso" ? "badge-yellow" : "badge-gray"}">${escapeHtml(task.status)}</span></div>
+                  <div class="status-gap-top"><span class="badge ${getTaskStatusBadgeClass(task.status)}">${escapeHtml(
+                    getTaskStatusDisplayLabel(task)
+                  )}</span></div>
                   <div class="k-card-meta">
                     <span class="k-card-assignee" title="${escapeHtml(task.assigned_to_name || "Sem responsável")}">${escapeHtml(task.assigned_to_name || "Sem responsável")}</span>
                     <span class="k-card-deadline ${getDeadlineClass(task)}">${formatDate(task.due_date || task.deadline)}</span>
@@ -2290,6 +2456,100 @@ function renderKanban() {
       `;
     })
     .join("");
+
+  bindKanbanBoardInteractions();
+}
+
+async function moveTaskToColumn(taskId, nextColumn) {
+  const task = state.tasks.find((item) => Number(item.id) === Number(taskId));
+  const nextConfig = getTaskColumnConfig(nextColumn);
+
+  if (!task || kanbanRuntime.movingTaskId === Number(taskId)) {
+    return;
+  }
+
+  if (getTaskColumnName(task) === nextConfig.key && normalizeTaskStatusLabel(task.status) === nextConfig.status) {
+    return;
+  }
+
+  kanbanRuntime.movingTaskId = Number(taskId);
+
+  try {
+    await apiFetch(`/tasks/${taskId}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        column_name: nextConfig.key,
+        status: nextConfig.status,
+      }),
+    });
+    await refreshData();
+    await refreshNotifications({ silent: true, suppressErrors: true });
+    showToast(`Tarefa movida para ${nextConfig.label}.`);
+  } catch (error) {
+    showToast(error.message);
+  } finally {
+    kanbanRuntime.movingTaskId = null;
+  }
+}
+
+function bindKanbanBoardInteractions() {
+  const board = document.getElementById("kanban-board");
+  if (!board || board.dataset.kanbanBound === "1") {
+    return;
+  }
+
+  const clearDropTargets = () => {
+    board.querySelectorAll("[data-kanban-column]").forEach((column) => column.classList.remove("is-drop-target"));
+  };
+
+  board.addEventListener("dragstart", (event) => {
+    const card = event.target.closest("[data-task-card]");
+    if (!card || !card.draggable) {
+      return;
+    }
+
+    kanbanRuntime.movingTaskId = Number(card.dataset.taskId);
+    card.classList.add("is-dragging");
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", card.dataset.taskId);
+  });
+
+  board.addEventListener("dragend", () => {
+    clearDropTargets();
+    board.querySelectorAll("[data-task-card]").forEach((card) => card.classList.remove("is-dragging"));
+    kanbanRuntime.movingTaskId = null;
+  });
+
+  board.addEventListener("dragover", (event) => {
+    const column = event.target.closest("[data-kanban-column]");
+    if (!column) {
+      return;
+    }
+
+    event.preventDefault();
+    clearDropTargets();
+    column.classList.add("is-drop-target");
+  });
+
+  board.addEventListener("drop", async (event) => {
+    const column = event.target.closest("[data-kanban-column]");
+    if (!column) {
+      return;
+    }
+
+    event.preventDefault();
+    const taskId = Number(event.dataTransfer.getData("text/plain") || kanbanRuntime.movingTaskId);
+    clearDropTargets();
+    kanbanRuntime.movingTaskId = null;
+
+    if (!taskId) {
+      return;
+    }
+
+    await moveTaskToColumn(taskId, column.dataset.kanbanColumn);
+  });
+
+  board.dataset.kanbanBound = "1";
 }
 
 function renderCRM() {
@@ -3698,6 +3958,29 @@ function initClientAddressAssist(form) {
   form.dataset.boundClientAddressAssist = "1";
 }
 
+function initTaskStatusAssist(form) {
+  if (!form || form.dataset.boundTaskStatusAssist === "1") {
+    return;
+  }
+
+  const statusField = form.querySelector('[name="status"]');
+  const columnField = form.querySelector('[name="column_name"]');
+
+  if (!statusField || !columnField) {
+    return;
+  }
+
+  columnField.addEventListener("change", () => {
+    statusField.value = getTaskStatusValue(columnField.value);
+  });
+
+  statusField.addEventListener("change", () => {
+    columnField.value = getTaskColumnConfig(statusField.value).key;
+  });
+
+  form.dataset.boundTaskStatusAssist = "1";
+}
+
 function openModal(type, id = null) {
   const modal = document.getElementById("modal-content");
   lastFocusedElement = document.activeElement;
@@ -3743,8 +4026,8 @@ function openModal(type, id = null) {
         <div class="field"><label>Cliente</label><select name="client_id"><option value="">Interno</option>${clientOptions(task.client_id)}</select></div>
         <div class="field"><label>Responsável</label><select name="assigned_to"><option value="">Ninguém</option>${userOptions(task.assigned_to)}</select></div>
         <div class="field"><label>Tipo</label><select name="type">${taskTypeOptions(task.type || "geral")}</select></div>
-        <div class="field"><label>Status</label><select name="status"><option ${task.status === "Backlog" ? "selected" : ""}>Backlog</option><option ${task.status === "Em progresso" ? "selected" : ""}>Em progresso</option><option ${task.status === "Concluido" ? "selected" : ""}>Concluido</option></select></div>
-        <div class="field"><label>Coluna</label><select name="column_name"><option value="backlog" ${task.column_name === "backlog" ? "selected" : ""}>Backlog</option><option value="todo" ${task.column_name === "todo" ? "selected" : ""}>A Fazer</option><option value="doing" ${task.column_name === "doing" ? "selected" : ""}>Em Progresso</option><option value="done" ${task.column_name === "done" ? "selected" : ""}>Concluído</option></select></div>
+        <div class="field"><label>Status</label><select name="status">${taskStatusOptions(task.status || getTaskStatusValue(task))}</select></div>
+        <div class="field"><label>Coluna</label><select name="column_name">${taskColumnOptions(task.column_name || getTaskColumnName(task))}</select></div>
         <div class="field"><label>Prazo</label><input type="date" name="deadline" value="${(task.deadline || task.due_date) ? String(task.deadline || task.due_date).slice(0, 10) : ""}"></div>
         <div class="field form-full"><label>Descrição</label><textarea name="description">${escapeHtml(task.description || "")}</textarea></div>
       `
@@ -3911,6 +4194,9 @@ function openModal(type, id = null) {
     if (type === "novo-cliente") {
       initClientAddressAssist(form);
     }
+    if (type === "nova-tarefa") {
+      initTaskStatusAssist(form);
+    }
     window.setTimeout(() => {
       form.querySelector("input, select, textarea, button")?.focus();
     }, 0);
@@ -3929,7 +4215,7 @@ async function submitModal(event, type, id) {
     async () => {
     if (type === "novo-cliente") {
       const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["manager_id", "started_at"]);
-      payload.plan = payload.plan ? normalizeClientPlanLabel(payload.plan) : null;
+      payload.plan = payload.plan ? normalizeClientPlanValue(payload.plan) : null;
       payload.zip_code = formatZipCodeInput(payload.zip_code);
       payload.state = normalizeStateCode(payload.state);
       payload.country = normalizeCountry(payload.country);
@@ -3941,6 +4227,8 @@ async function submitModal(event, type, id) {
 
     if (type === "nova-tarefa") {
       const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["client_id", "assigned_to", "deadline"]);
+      payload.column_name = getTaskColumnConfig(payload.column_name || payload.status).key;
+      payload.status = getTaskStatusValue(payload.status || payload.column_name, payload.column_name);
       await apiFetch(id ? `/tasks/${id}` : "/tasks", {
         method: id ? "PUT" : "POST",
         body: JSON.stringify(payload)
