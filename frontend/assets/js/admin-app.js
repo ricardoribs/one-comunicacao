@@ -2376,7 +2376,7 @@ function renderKanbanChecklist(filteredTasks) {
   const completedItems = checklistStore.activeItems.filter((item) => item.done).length;
 
   container.innerHTML = `
-    <div class="section-sub">Checklist pessoal de ${escapeHtml(state.session?.user?.name || "usuário atual")}. Cada pessoa monta e conclui a própria rotina.</div>
+    <div class="section-sub">Checklist pessoal de ${escapeHtml(state.session?.user?.name || "usuário atual")}.</div>
     <form class="checklist-composer" data-checklist-form>
       <input
         type="text"
