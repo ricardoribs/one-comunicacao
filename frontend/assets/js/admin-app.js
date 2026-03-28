@@ -359,6 +359,39 @@ const UI = {
       `
     ).join(""),
 
+  skeletonMemberCards: (count = 4) =>
+    Array.from(
+      { length: count },
+      () => `
+        <article class="access-member-card access-member-card-skeleton" aria-hidden="true">
+          <div class="access-member-head">
+            <div class="access-member-ident">
+              <div class="avatar av-pink">○</div>
+              <div class="cell-stack" style="flex:1">
+                <div class="skeleton skeleton-text" style="width:58%"></div>
+                <div class="skeleton skeleton-text" style="width:72%"></div>
+              </div>
+            </div>
+            <div class="skeleton skeleton-badge" style="width:72px"></div>
+          </div>
+          <div class="access-member-meta">
+            <div class="access-member-meta-item">
+              <div class="skeleton skeleton-text" style="width:42%"></div>
+              <div class="skeleton skeleton-text" style="width:64%"></div>
+            </div>
+            <div class="access-member-meta-item">
+              <div class="skeleton skeleton-text" style="width:38%"></div>
+              <div class="skeleton skeleton-badge"></div>
+            </div>
+          </div>
+          <div class="access-member-actions">
+            <div class="skeleton skeleton-text" style="height:34px;width:100%"></div>
+            <div class="skeleton skeleton-text" style="height:34px;width:100%"></div>
+          </div>
+        </article>
+      `
+    ).join(""),
+
   skeletonKpis: (n = 4) =>
     Array.from(
       { length: n },
@@ -1615,19 +1648,32 @@ function renderResourceAction(
 function renderMemberRow(user, currentUserId) {
   const lastAccess = user.last_login_at ? formatDate(user.last_login_at) : "Nunca";
   return `
-    <tr>
-      <td class="cell-stack"><div class="row"><div class="avatar av-pink">${getInitials(user.name)}</div><strong class="cell-title" title="${escapeHtml(user.name)}">${escapeHtml(user.name)}</strong></div></td>
-      <td><span class="sb-role-badge ${getRoleBadgeClass(user.role)}">${ROLE_LABELS[user.role] || user.role}</span></td>
-      <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(user.email)}">${escapeHtml(user.email)}</span></td>
-      <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(lastAccess)}">${lastAccess}</span></td>
-      <td><span class="badge ${user.is_active ? "badge-green" : "badge-gray"}">${user.is_active ? "Ativo" : "Inativo"}</span></td>
-      <td class="cell-actions">
-        <div class="table-actions">
-          <button class="btn btn-ghost btn-sm" onclick="openModal('novo-membro', ${user.id})">Editar</button>
-          ${user.id !== currentUserId ? `<button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id})">Remover</button>` : ""}
+    <article class="access-member-card">
+      <div class="access-member-head">
+        <div class="access-member-ident">
+          <div class="avatar av-pink">${getInitials(user.name)}</div>
+          <div class="cell-stack">
+            <strong class="cell-title" title="${escapeHtml(user.name)}">${escapeHtml(user.name)}</strong>
+            <span class="cell-sub" title="${escapeHtml(user.email)}">${escapeHtml(user.email)}</span>
+          </div>
         </div>
-      </td>
-    </tr>
+        <span class="sb-role-badge ${getRoleBadgeClass(user.role)}">${ROLE_LABELS[user.role] || user.role}</span>
+      </div>
+      <div class="access-member-meta">
+        <div class="access-member-meta-item">
+          <span class="access-member-meta-label">Último acesso</span>
+          <span class="access-member-meta-value" title="${escapeHtml(lastAccess)}">${lastAccess}</span>
+        </div>
+        <div class="access-member-meta-item">
+          <span class="access-member-meta-label">Status</span>
+          <span class="badge ${user.is_active ? "badge-green" : "badge-gray"}">${user.is_active ? "Ativo" : "Inativo"}</span>
+        </div>
+      </div>
+      <div class="access-member-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openModal('novo-membro', ${user.id})">Editar</button>
+        ${user.id !== currentUserId ? `<button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id})">Remover</button>` : ""}
+      </div>
+    </article>
   `;
 }
 
@@ -3450,7 +3496,7 @@ function renderAccessV2() {
 
   document.getElementById("membros-tbody").innerHTML = state.users
     .map((user) => renderMemberRow(user, state.session.user.id))
-    .join("") || UI.tableEmpty(6, "Nenhum membro cadastrado", "Crie o primeiro usuário interno para liberar o acesso da equipe.");
+    .join("") || UI.empty("Nenhum membro cadastrado", "Crie o primeiro usuário interno para liberar o acesso da equipe.");
 
   const roleCards = {
     Admin: ["Clientes", "Campanhas", "Kanban", "Produção", "Tráfego", "Analytics", "Financeiro", "Controle de acesso"],
@@ -3517,7 +3563,7 @@ async function refreshData() {
 
   const membersBody = document.getElementById("membros-tbody");
   if (membersBody) {
-    membersBody.innerHTML = UI.skeletonRows(6, 3);
+    membersBody.innerHTML = UI.skeletonMemberCards(4);
   }
 
   const analyticsBody = document.getElementById("analytics-tbody");

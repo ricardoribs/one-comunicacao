@@ -530,12 +530,21 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-financeiro .fin-row > :nth-child(2),
 #page-financeiro .fin-row > :nth-child(4){text-align:right}
 
-#page-acesso .table-wrap table th:nth-child(1),#page-acesso .table-wrap table td:nth-child(1){width:24%}
-#page-acesso .table-wrap table th:nth-child(2),#page-acesso .table-wrap table td:nth-child(2){width:14%}
-#page-acesso .table-wrap table th:nth-child(3),#page-acesso .table-wrap table td:nth-child(3){width:24%}
-#page-acesso .table-wrap table th:nth-child(4),#page-acesso .table-wrap table td:nth-child(4){width:16%}
-#page-acesso .table-wrap table th:nth-child(5),#page-acesso .table-wrap table td:nth-child(5){width:10%}
-#page-acesso .table-wrap table th:nth-child(6),#page-acesso .table-wrap table td:nth-child(6){width:12%}
+#page-acesso #acesso-membros .access-member-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:var(--space-4);align-items:stretch}
+#page-acesso #acesso-membros .access-member-card{background:var(--white);border:1px solid var(--border);padding:var(--space-5);display:flex;flex-direction:column;gap:var(--space-4);min-width:0}
+#page-acesso #acesso-membros .access-member-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3);padding-bottom:var(--space-3);border-bottom:1px solid var(--border)}
+#page-acesso #acesso-membros .access-member-ident{display:flex;align-items:flex-start;gap:var(--space-3);min-width:0}
+#page-acesso #acesso-membros .access-member-ident .cell-stack{min-width:0}
+#page-acesso #acesso-membros .access-member-ident .cell-title{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35}
+#page-acesso #acesso-membros .access-member-ident .cell-sub{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.45}
+#page-acesso #acesso-membros .access-member-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3)}
+#page-acesso #acesso-membros .access-member-meta-item{display:flex;flex-direction:column;gap:var(--space-1);min-width:0}
+#page-acesso #acesso-membros .access-member-meta-label{font-size:var(--text-2xs);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+#page-acesso #acesso-membros .access-member-meta-value{font-size:var(--text-sm);line-height:1.45;color:var(--text);white-space:normal;overflow:visible;text-overflow:clip}
+#page-acesso #acesso-membros .access-member-actions{display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:auto;padding-top:var(--space-3);border-top:1px solid var(--border)}
+#page-acesso #acesso-membros .access-member-actions .btn{flex:1 1 140px;justify-content:center}
+#page-acesso #acesso-membros .empty-state{background:var(--white);border:1px solid var(--border)}
+#page-acesso #acesso-membros .access-member-card-skeleton{pointer-events:none}
 
 /* RESPONSIVE */
 @media(max-width:1024px){
@@ -591,6 +600,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .fin-row{gap:var(--space-2)}
   .table-actions,.item-actions,.modal-actions{flex-wrap:wrap}
   #page-crm #crm-clientes .crm-client-list{grid-template-columns:1fr}
+  #page-acesso #acesso-membros .access-member-list{grid-template-columns:1fr}
 }
 @media(max-width:650px){
   :root{--sidebar:0px}
@@ -648,6 +658,8 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .login-footer-links{flex-wrap:wrap;gap:var(--space-4)}
   #page-crm #crm-clientes .crm-client-facts{grid-template-columns:1fr}
   #page-crm #crm-clientes .crm-client-actions .btn{flex:1 1 100%}
+  #page-acesso #acesso-membros .access-member-meta{grid-template-columns:1fr}
+  #page-acesso #acesso-membros .access-member-actions .btn{flex:1 1 100%}
 }
 @media(max-width:375px){
   .page-body{padding:var(--space-3)}
@@ -1149,12 +1161,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
       <div class="tab" id="acesso-tab-perfis" onclick="setTab('acesso','perfis')">Perfis e Permissões</div>
     </div>
     <div id="acesso-membros">
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Membro</th><th>Perfil</th><th>E-mail</th><th>Último acesso</th><th>Status</th><th>Ações</th></tr></thead>
-          <tbody id="membros-tbody"></tbody>
-        </table>
-      </div>
+      <div class="access-member-list" id="membros-tbody"></div>
     </div>
     <div id="acesso-perfis" class="hidden-panel">
       <div class="access-grid" id="perfis-grid"></div>
