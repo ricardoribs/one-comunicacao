@@ -474,12 +474,13 @@ section[id] {
   display: grid;
   grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
   gap: 28px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .hero-copy {
   display: flex;
   flex-direction: column;
+  min-height: 100%;
 }
 
 .hero-heading {
@@ -511,7 +512,8 @@ section[id] {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-  margin-top: 30px;
+  margin-top: auto;
+  padding-top: 30px;
 }
 
 .metric-card {
@@ -538,7 +540,7 @@ section[id] {
 
 .hero-media {
   display: grid;
-  gap: 16px;
+  gap: 14px;
 }
 
 .hero-video-shell,
@@ -662,6 +664,7 @@ section[id] {
   padding: 22px 24px;
   border-color: rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 22px 46px rgba(22, 11, 17, 0.14);
 }
 
 .hero-side-card h3 {
@@ -844,10 +847,16 @@ section[id] {
 
 .marquee {
   margin-top: 28px;
-  overflow: hidden;
+  overflow: auto hidden;
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.05);
+  cursor: grab;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  user-select: none;
+  touch-action: pan-x;
+  scroll-snap-type: x proximity;
 }
 
 .marquee-track {
@@ -855,35 +864,35 @@ section[id] {
   align-items: center;
   gap: 20px;
   width: max-content;
-  padding: 20px;
-  animation: marquee 28s linear infinite;
+  min-width: 100%;
+  padding: 20px 26px 20px 20px;
+}
+
+.marquee::-webkit-scrollbar {
+  display: none;
+}
+
+.marquee.dragging {
+  cursor: grabbing;
 }
 
 .client-logo {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
   min-width: 180px;
   min-height: 100px;
   padding: 18px 24px;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.96);
+  scroll-snap-align: start;
 }
 
 .client-logo img {
   max-width: 140px;
   max-height: 58px;
   object-fit: contain;
-}
-
-@keyframes marquee {
-  from {
-    transform: translateX(0);
-  }
-
-  to {
-    transform: translateX(-50%);
-  }
 }
 
 .services-header {
@@ -1004,8 +1013,9 @@ section[id] {
 }
 
 .workflow-card-featured {
-  background: linear-gradient(180deg, #170d13 0%, #26131a 100%);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(58, 24, 37, 0.94) 0%, rgba(88, 38, 55, 0.92) 100%);
+  border-color: rgba(232, 52, 105, 0.14);
+  box-shadow: 0 18px 42px rgba(58, 24, 37, 0.14);
 }
 
 .workflow-card-featured .card-kicker,
@@ -1117,17 +1127,18 @@ section[id] {
 .plan-stats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
-  margin-top: 24px;
+  gap: 28px;
+  max-width: 1040px;
+  margin: 32px auto 0;
 }
 
 .plan-stat {
-  min-height: 146px;
-  padding: 24px 26px;
+  min-height: 138px;
+  padding: 24px 28px;
   border-radius: 24px;
   background: linear-gradient(135deg, #140c11 0%, #23161c 100%);
   color: #ffffff;
-  box-shadow: 0 24px 58px rgba(26, 15, 21, 0.18);
+  box-shadow: 0 22px 48px rgba(26, 15, 21, 0.14);
 }
 
 .plan-stat:last-child {
@@ -1231,6 +1242,15 @@ section[id] {
   padding: 34px;
 }
 
+.contact-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.contact-form-wrap {
+  display: flex;
+}
+
 .contact-cards {
   display: grid;
   gap: 12px;
@@ -1273,7 +1293,19 @@ section[id] {
 }
 
 .contact-form {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 100%;
   background: rgba(255, 255, 255, 0.96);
+}
+
+.contact-form-body {
+  display: grid;
+  gap: 14px;
+  flex: 1;
+  align-content: space-between;
 }
 
 .form-row {
@@ -1285,7 +1317,7 @@ section[id] {
 .form-group {
   display: grid;
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 0;
 }
 
 .form-group label {

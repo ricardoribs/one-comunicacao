@@ -178,6 +178,52 @@ function bootMessageCounter() {
   });
 }
 
+function bootLogoCarousels() {
+  const carousels = document.querySelectorAll("[data-logo-carousel]");
+  if (!carousels.length) {
+    return;
+  }
+
+  carousels.forEach((carousel) => {
+    let pointerId = null;
+    let startX = 0;
+    let startScrollLeft = 0;
+
+    const stopDragging = () => {
+      pointerId = null;
+      carousel.classList.remove("dragging");
+    };
+
+    carousel.addEventListener("dragstart", (event) => {
+      event.preventDefault();
+    });
+
+    carousel.addEventListener("pointerdown", (event) => {
+      if (event.pointerType === "mouse" && event.button !== 0) {
+        return;
+      }
+
+      pointerId = event.pointerId;
+      startX = event.clientX;
+      startScrollLeft = carousel.scrollLeft;
+      carousel.classList.add("dragging");
+      carousel.setPointerCapture(event.pointerId);
+    });
+
+    carousel.addEventListener("pointermove", (event) => {
+      if (pointerId !== event.pointerId) {
+        return;
+      }
+
+      carousel.scrollLeft = startScrollLeft - (event.clientX - startX);
+    });
+
+    carousel.addEventListener("pointerup", stopDragging);
+    carousel.addEventListener("pointercancel", stopDragging);
+    carousel.addEventListener("lostpointercapture", stopDragging);
+  });
+}
+
 function bootGlobalEvents() {
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && document.getElementById("mobile-menu")?.classList.contains("open")) {
@@ -201,6 +247,7 @@ function boot() {
   syncPublicShell();
   bootNavbar();
   bootRevealObserver();
+  bootLogoCarousels();
   bootMessageCounter();
   bootGlobalEvents();
 }
