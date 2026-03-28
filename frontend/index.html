@@ -212,7 +212,7 @@
           </p>
         </div>
 
-        <div class="marquee">
+        <div class="marquee" data-logo-carousel aria-label="Carrossel de logos dos clientes">
           <div class="marquee-track">
             <span class="client-logo"><img src="/assets/svg/shopcar.png" alt="Shop Car Auto Posto" /></span>
             <span class="client-logo"><img src="/assets/svg/uniao-do-brasil.svg" alt="Laticínios União" /></span>
@@ -220,12 +220,6 @@
             <span class="client-logo"><img src="/assets/svg/sorriso-facil.svg" alt="Sorriso Fácil" /></span>
             <span class="client-logo"><img src="/assets/svg/rural-pecas.svg" alt="Rural Peças" /></span>
             <span class="client-logo"><img src="/assets/svg/radical-fitness-clean.png" alt="Radical Fitness" /></span>
-            <span class="client-logo" aria-hidden="true"><img src="/assets/svg/shopcar.png" alt="" /></span>
-            <span class="client-logo" aria-hidden="true"><img src="/assets/svg/uniao-do-brasil.svg" alt="" /></span>
-            <span class="client-logo" aria-hidden="true"><img src="/assets/svg/cdl-mulher.svg" alt="" /></span>
-            <span class="client-logo" aria-hidden="true"><img src="/assets/svg/sorriso-facil.svg" alt="" /></span>
-            <span class="client-logo" aria-hidden="true"><img src="/assets/svg/rural-pecas.svg" alt="" /></span>
-            <span class="client-logo" aria-hidden="true"><img src="/assets/svg/radical-fitness-clean.png" alt="" /></span>
           </div>
         </div>
 
@@ -513,62 +507,64 @@
         </div>
       </div>
 
-      <div class="reveal">
+      <div class="contact-form-wrap reveal">
         <form class="contact-form" onsubmit="handleForm(event)" novalidate>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="f-name">Nome</label>
-              <input type="text" id="f-name" placeholder="Nome e sobrenome" required />
+          <div class="contact-form-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="f-name">Nome</label>
+                <input type="text" id="f-name" placeholder="Nome e sobrenome" required />
+              </div>
+              <div class="form-group">
+                <label for="f-phone">WhatsApp</label>
+                <input type="tel" id="f-phone" placeholder="(99) 98548-0961" required />
+              </div>
             </div>
             <div class="form-group">
-              <label for="f-phone">WhatsApp</label>
-              <input type="tel" id="f-phone" placeholder="(99) 98548-0961" required />
+              <label for="f-email">E-mail</label>
+              <input type="email" id="f-email" placeholder="seu@email.com" required />
             </div>
-          </div>
-          <div class="form-group">
-            <label for="f-email">E-mail</label>
-            <input type="email" id="f-email" placeholder="seu@email.com" required />
-          </div>
-          <div class="form-group">
-            <label for="f-company">Empresa</label>
-            <input type="text" id="f-company" placeholder="Nome da sua empresa" />
-          </div>
-          <div class="form-group">
-            <label for="f-service">Serviço de interesse</label>
-            <select id="f-service">
-              <option value="">Selecione...</option>
-              <option>Elaboração de cronograma mensal</option>
-              <option>Design Gráfico</option>
-              <option>Social Media</option>
-              <option>Copywriting</option>
-              <option>Cobertura de Evento</option>
-              <option>Combo ONE</option>
-              <option>Combo ONE Start</option>
-              <option>Combo ONE Master</option>
-              <option>Tráfego Pago</option>
-              <option>Outro</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="f-msg">Mensagem</label>
-            <textarea
-              id="f-msg"
-              placeholder="Qual é a demanda principal agora? O que precisa sair do papel?"
-              maxlength="1000"
-              aria-describedby="f-msg-count"
-            ></textarea>
-            <div id="f-msg-count">0/1000 caracteres</div>
-          </div>
-          <div class="form-group">
-            <label class="consent-row">
-              <input type="checkbox" id="f-consent" required />
-              <span>
-                Concordo com a coleta e o tratamento dos meus dados para contato comercial, conforme a
-                <a href="/politica-de-privacidade.html" target="_blank" rel="noopener noreferrer">Política de Privacidade</a>
-                e os
-                <a href="/termos-de-uso.html" target="_blank" rel="noopener noreferrer">Termos de Uso</a>.
-              </span>
-            </label>
+            <div class="form-group">
+              <label for="f-company">Empresa</label>
+              <input type="text" id="f-company" placeholder="Nome da sua empresa" />
+            </div>
+            <div class="form-group">
+              <label for="f-service">Serviço de interesse</label>
+              <select id="f-service">
+                <option value="">Selecione...</option>
+                <option>Elaboração de cronograma mensal</option>
+                <option>Design Gráfico</option>
+                <option>Social Media</option>
+                <option>Copywriting</option>
+                <option>Cobertura de Evento</option>
+                <option>Combo ONE</option>
+                <option>Combo ONE Start</option>
+                <option>Combo ONE Master</option>
+                <option>Tráfego Pago</option>
+                <option>Outro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="f-msg">Mensagem</label>
+              <textarea
+                id="f-msg"
+                placeholder="Qual é a demanda principal agora? O que precisa sair do papel?"
+                maxlength="1000"
+                aria-describedby="f-msg-count"
+              ></textarea>
+              <div id="f-msg-count">0/1000 caracteres</div>
+            </div>
+            <div class="form-group">
+              <label class="consent-row">
+                <input type="checkbox" id="f-consent" required />
+                <span>
+                  Concordo com a coleta e o tratamento dos meus dados para contato comercial, conforme a
+                  <a href="/politica-de-privacidade.html" target="_blank" rel="noopener noreferrer">Política de Privacidade</a>
+                  e os
+                  <a href="/termos-de-uso.html" target="_blank" rel="noopener noreferrer">Termos de Uso</a>.
+                </span>
+              </label>
+            </div>
           </div>
           <button type="submit" id="contact-submit" class="btn btn-primary contact-submit">Enviar mensagem</button>
         </form>
