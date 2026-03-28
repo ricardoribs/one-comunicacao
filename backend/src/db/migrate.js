@@ -117,6 +117,50 @@ async function reconcileSchemaDrift(databaseConfig) {
          END
        WHERE plan IS NOT NULL;
 
+      CREATE TABLE IF NOT EXISTS campaigns (
+        id SERIAL PRIMARY KEY,
+        client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+        name VARCHAR(160) NOT NULL,
+        channel VARCHAR(60) NOT NULL,
+        audience TEXT,
+        objective TEXT,
+        pipeline_stage VARCHAR(40) NOT NULL DEFAULT 'planejamento',
+        budget NUMERIC(12,2) NOT NULL DEFAULT 0,
+        start_date DATE,
+        end_date DATE,
+        status VARCHAR(40) NOT NULL DEFAULT 'Ativa',
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+
+      ALTER TABLE campaigns
+        ADD COLUMN IF NOT EXISTS audience TEXT,
+        ADD COLUMN IF NOT EXISTS objective TEXT,
+        ADD COLUMN IF NOT EXISTS pipeline_stage VARCHAR(40) NOT NULL DEFAULT 'planejamento',
+        ADD COLUMN IF NOT EXISTS budget NUMERIC(12,2) NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS start_date DATE,
+        ADD COLUMN IF NOT EXISTS end_date DATE,
+        ADD COLUMN IF NOT EXISTS status VARCHAR(40) NOT NULL DEFAULT 'Ativa',
+        ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+
+      CREATE TABLE IF NOT EXISTS metrics (
+        id SERIAL PRIMARY KEY,
+        campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+        period DATE NOT NULL,
+        leads INTEGER NOT NULL DEFAULT 0,
+        revenue NUMERIC(12,2) NOT NULL DEFAULT 0,
+        impressions INTEGER NOT NULL DEFAULT 0,
+        clicks INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE (campaign_id, period)
+      );
+
+      ALTER TABLE metrics
+        ADD COLUMN IF NOT EXISTS leads INTEGER NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS revenue NUMERIC(12,2) NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS impressions INTEGER NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS clicks INTEGER NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+
       CREATE TABLE IF NOT EXISTS invoices (
         id SERIAL PRIMARY KEY,
         client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
