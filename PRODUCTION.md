@@ -28,6 +28,10 @@ JWT_SECRET=<resultado do openssl rand -hex 64>
 JWT_EXPIRES_IN=15m
 REFRESH_TOKEN_EXPIRES_DAYS=7
 APP_BASE_URL=https://seu-dominio.onrender.com
+GEO_LOOKUP_ENABLED=true
+GEO_LOOKUP_TIMEOUT_MS=1200
+GEO_LOOKUP_CACHE_TTL_MS=21600000
+GEO_LOOKUP_URL_TEMPLATE=https://ipwho.is/{ip}?fields=success,country_code,country,region,city
 CORS_ORIGINS=https://seu-dominio.onrender.com,https://www.seu-dominio.com
 UPLOAD_PROVIDER=cloudinary
 CLOUDINARY_CLOUD_NAME=...
@@ -80,6 +84,57 @@ Configuracao esperada:
 - `JWT_SECRET`, `DATABASE_URL`, `RESEND_API_KEY`, `EMAIL_FROM`, `SENTRY_DSN` e `CLOUDINARY_*` como segredos
 - certificado CA do Supabase adicionado como Secret File no Render e `DATABASE_SSL_CA_FILE=/etc/secrets/prod-ca-2021.crt`
 - para o Supabase pooler, prefira `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USER` e `DATABASE_PASSWORD` separados para evitar problemas de parse da URL
+
+## 3.1 Geolocalizacao de acesso e presenca
+
+O painel interno agora mostra:
+
+- ultimo acesso real
+- status `Online` com base em atividade recente
+- localizacao de acesso quando disponivel
+
+Fluxo recomendado em producao:
+
+1. Coloque o dominio da aplicacao atras do Cloudflare.
+2. Ative `IP Geolocation` no Cloudflare.
+3. Ative o Managed Transform `Add visitor location headers`.
+
+Com isso, o backend recebe automaticamente headers como:
+
+- `cf-ipcity`
+- `cf-region`
+- `cf-ipcountry`
+
+Tambem ha compatibilidade nativa com headers da Vercel:
+
+- `x-vercel-ip-city`
+- `x-vercel-ip-country-region`
+- `x-vercel-ip-country`
+
+Comportamento do backend:
+
+- se os headers geograficos vierem da borda, eles sao priorizados
+- se nao vierem, o backend faz fallback por IP usando `GEO_LOOKUP_URL_TEMPLATE`
+- o fallback usa timeout curto e cache, para nao travar login nem presenca
+- IP local/privado nao dispara lookup externo
+
+Regras operacionais:
+
+- nunca envie esses headers pelo frontend; eles nao sao confiaveis
+- use headers do proxy/CDN ou o fallback do servidor
+- se nao houver header geografico e o lookup externo estiver desligado ou indisponivel, o painel exibira `Localizacao nao identificada`
+
+Quando quiser desabilitar o fallback externo:
+
+```env
+GEO_LOOKUP_ENABLED=false
+```
+
+Quando quiser trocar o provedor de lookup:
+
+```env
+GEO_LOOKUP_URL_TEMPLATE=https://seu-provedor/{ip}
+```
 
 ## 4. E-mail transacional
 
@@ -249,6 +304,10 @@ Teste manual:
 6. upload de arquivo
 7. criacao de cobranca
 8. logout local e logout global
+9. acessar `Controle de Acesso > Membros` e confirmar:
+   - ultimo acesso com data/hora real
+   - `Online` para usuario com atividade recente
+   - localizacao preenchida por header de borda ou fallback por IP
 
 Smoke automatizado:
 
@@ -280,3 +339,4 @@ O smoke testa:
 - [ ] staging separado e aprovado
 - [ ] backup automatico habilitado
 - [ ] `npm run smoke` executado com sucesso
+- [ ] geolocalizacao de acesso validada em `Controle de Acesso > Membros`
