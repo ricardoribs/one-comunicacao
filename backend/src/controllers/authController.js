@@ -1,12 +1,10 @@
 const asyncHandler = require('../utils/asyncHandler');
 const authService = require('../services/authService');
 const env = require('../config/env');
+const { resolveRequestAccessMetadata } = require('../utils/requestMetadata');
 
 function tokenMetadata(req) {
-  return {
-    ip: req.ip,
-    userAgent: req.headers['user-agent'] || '',
-  };
+  return resolveRequestAccessMetadata(req);
 }
 
 function setRefreshCookie(res, refreshToken, cookieOptions) {
@@ -28,7 +26,7 @@ exports.register = asyncHandler(async (req, res) => {
 });
 
 exports.login = asyncHandler(async (req, res) => {
-  const result = await authService.login(req.body, tokenMetadata(req));
+  const result = await authService.login(req.body, await tokenMetadata(req));
   setRefreshCookie(res, result.refreshToken, result.cookieOptions);
   res.json({
     accessToken: result.accessToken,
@@ -39,7 +37,7 @@ exports.login = asyncHandler(async (req, res) => {
 });
 
 exports.refresh = asyncHandler(async (req, res) => {
-  const result = await authService.refreshAccessToken(req.cookies?.[env.refreshCookieName], tokenMetadata(req));
+  const result = await authService.refreshAccessToken(req.cookies?.[env.refreshCookieName], await tokenMetadata(req));
   setRefreshCookie(res, result.refreshToken, result.cookieOptions);
   res.json({
     accessToken: result.accessToken,
@@ -50,7 +48,7 @@ exports.refresh = asyncHandler(async (req, res) => {
 });
 
 exports.logout = asyncHandler(async (req, res) => {
-  await authService.logout(req.cookies?.[env.refreshCookieName], tokenMetadata(req));
+  await authService.logout(req.cookies?.[env.refreshCookieName], await tokenMetadata(req));
   clearRefreshCookie(res);
   res.status(204).send();
 });

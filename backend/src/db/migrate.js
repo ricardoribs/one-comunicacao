@@ -94,7 +94,13 @@ async function reconcileSchemaDrift(databaseConfig) {
         ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER NOT NULL DEFAULT 0,
         ADD COLUMN IF NOT EXISTS locked_until TIMESTAMP NULL,
         ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP NULL,
+        ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMP NULL,
+        ADD COLUMN IF NOT EXISTS last_seen_ip VARCHAR(64),
+        ADD COLUMN IF NOT EXISTS last_seen_location VARCHAR(160),
         ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMP NULL;
+
+      CREATE INDEX IF NOT EXISTS idx_users_last_seen_at
+        ON users(last_seen_at DESC);
 
       ALTER TABLE clients
         ALTER COLUMN plan TYPE VARCHAR(120),

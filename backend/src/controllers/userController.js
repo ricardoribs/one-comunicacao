@@ -8,11 +8,18 @@ const AppError = require('../utils/AppError');
 
 exports.list = asyncHandler(async (req, res) => {
   const users = await userModel.list(req.query);
+  res.setHeader('Cache-Control', 'no-store');
   return sendPaginated(
     res,
     req,
     users.map(({ password: _password, ...user }) => user)
   );
+});
+
+exports.listAccessOverview = asyncHandler(async (req, res) => {
+  const users = await userModel.listAccessOverview(req.query);
+  res.setHeader('Cache-Control', 'no-store');
+  return sendPaginated(res, req, users);
 });
 
 exports.listInternalTeam = asyncHandler(async (req, res) => {

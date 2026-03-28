@@ -184,7 +184,7 @@ async function login({ email, password }, metadata = {}) {
     throw new AppError('Confirme seu e-mail antes de acessar a plataforma.', 403);
   }
 
-  await userModel.resetLoginFailures(user.id);
+  await userModel.resetLoginFailures(user.id, metadata);
   const freshUser = await userModel.findById(user.id);
   const refresh = await issueRefreshToken(freshUser, metadata);
 

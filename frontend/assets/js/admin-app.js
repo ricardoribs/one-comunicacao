@@ -272,6 +272,7 @@ const state = {
   campaigns: [],
   tasks: [],
   users: [],
+  accessMembers: [],
   contacts: [],
   charges: [],
   invoices: [],
@@ -1646,7 +1647,11 @@ function renderResourceAction(
 }
 
 function renderMemberRow(user, currentUserId) {
-  const lastAccess = user.last_login_at ? formatDate(user.last_login_at) : "Nunca";
+  const lastAccess = user.last_seen_at || user.last_login_at;
+  const lastAccessLabel = lastAccess ? formatDateTime(lastAccess) : "Sem registro de acesso";
+  const presenceLabel = !user.is_active ? "Inativo" : user.is_online ? "Online" : "Ativo";
+  const presenceBadgeClass = !user.is_active ? "badge-gray" : user.is_online ? "badge-blue" : "badge-green";
+  const locationLabel = String(user.last_seen_location || "").trim() || "Localização não identificada";
   return `
     <article class="access-member-card">
       <div class="access-member-head">
@@ -1662,11 +1667,12 @@ function renderMemberRow(user, currentUserId) {
       <div class="access-member-meta">
         <div class="access-member-meta-item">
           <span class="access-member-meta-label">Último acesso</span>
-          <span class="access-member-meta-value" title="${escapeHtml(lastAccess)}">${lastAccess}</span>
+          <span class="access-member-meta-value" title="${escapeHtml(lastAccessLabel)}">${lastAccessLabel}</span>
+          <span class="cell-sub" title="${escapeHtml(locationLabel)}">${escapeHtml(locationLabel)}</span>
         </div>
         <div class="access-member-meta-item">
-          <span class="access-member-meta-label">Status</span>
-          <span class="badge ${user.is_active ? "badge-green" : "badge-gray"}">${user.is_active ? "Ativo" : "Inativo"}</span>
+          <span class="access-member-meta-label">Presença</span>
+          <span class="badge ${presenceBadgeClass}">${presenceLabel}</span>
         </div>
       </div>
       <div class="access-member-actions">
@@ -3494,7 +3500,21 @@ function renderAccessV2() {
     return;
   }
 
-  document.getElementById("membros-tbody").innerHTML = state.users
+  const sortedUsers = [...(state.accessMembers.length ? state.accessMembers : state.users)].sort((left, right) => {
+    if (Boolean(left.is_online) !== Boolean(right.is_online)) {
+      return Number(Boolean(right.is_online)) - Number(Boolean(left.is_online));
+    }
+
+    const leftSeen = left.last_seen_at || left.last_login_at || "";
+    const rightSeen = right.last_seen_at || right.last_login_at || "";
+    if (leftSeen !== rightSeen) {
+      return String(rightSeen).localeCompare(String(leftSeen));
+    }
+
+    return String(left.name || "").localeCompare(String(right.name || ""), "pt-BR");
+  });
+
+  document.getElementById("membros-tbody").innerHTML = sortedUsers
     .map((user) => renderMemberRow(user, state.session.user.id))
     .join("") || UI.empty("Nenhum membro cadastrado", "Crie o primeiro usuário interno para liberar o acesso da equipe.");
 
@@ -3611,7 +3631,7 @@ async function refreshData() {
     platformBreakdown.innerHTML = UI.empty("Carregando tráfego...", "Buscando métricas e campanhas.");
   }
 
-  const [dashboard, team, assignableUsers, clients, campaigns, tasks, checklist, users, contacts, invoices, metrics, reports, materials, files, charges, integrations] = await Promise.all([
+  const [dashboard, team, assignableUsers, clients, campaigns, tasks, checklist, users, accessMembers, contacts, invoices, metrics, reports, materials, files, charges, integrations] = await Promise.all([
     loadResource("dashboard", () => apiFetch("/dashboard"), () => createEmptyDashboard()),
     roleDataAccess.homeTeam ? loadResource("equipe", () => apiFetch("/users/team", { cache: "no-store" }), []) : Promise.resolve([]),
     roleDataAccess.assignableUsers ? loadResource("responsáveis", () => apiFetch("/users/assignable", { cache: "no-store" }), []) : Promise.resolve([]),
@@ -3619,7 +3639,8 @@ async function refreshData() {
     roleDataAccess.campaigns ? loadResource("campanhas", () => apiFetch("/campaigns"), []) : Promise.resolve([]),
     roleDataAccess.tasks ? loadResource("tarefas", () => apiFetch("/tasks"), []) : Promise.resolve([]),
     roleDataAccess.tasks ? loadResource("checklist", () => apiFetch("/checklists/daily", { cache: "no-store" }), () => createEmptyChecklistSnapshot()) : Promise.resolve(createEmptyChecklistSnapshot()),
-    roleDataAccess.users ? loadResource("usuários", () => apiFetch("/users"), []) : Promise.resolve([]),
+    roleDataAccess.users ? loadResource("usuários", () => apiFetch("/users", { cache: "no-store" }), []) : Promise.resolve([]),
+    roleDataAccess.users ? loadResource("controle de acesso", () => apiFetch("/users/access-overview", { cache: "no-store" }), []) : Promise.resolve([]),
     roleDataAccess.contacts ? loadResource("CRM", () => apiFetch("/contacts"), []) : Promise.resolve([]),
     roleDataAccess.invoices ? loadResource("faturas", () => apiFetch("/invoices"), []) : Promise.resolve([]),
     roleDataAccess.metrics ? loadResource("métricas", () => apiFetch("/metrics", { cache: "no-store" }), []) : Promise.resolve([]),
@@ -3637,6 +3658,7 @@ async function refreshData() {
   state.campaigns = toArray(campaigns);
   state.tasks = toArray(tasks);
   state.users = toArray(users).length ? toArray(users) : [state.session.user];
+  state.accessMembers = toArray(accessMembers);
   state.contacts = toArray(contacts);
   state.invoices = toArray(invoices);
   state.metrics = toArray(metrics);

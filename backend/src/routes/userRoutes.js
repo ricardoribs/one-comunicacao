@@ -16,6 +16,7 @@ router.get(
   controller.listAssignableInternal
 );
 router.use(authorize('admin'));
+router.get('/access-overview', validate(paginationQuerySchema, 'query'), controller.listAccessOverview);
 router.get('/', validate(paginationQuerySchema, 'query'), controller.list);
 router.get('/:id/security', validate(idParamSchema, 'params'), controller.getSecurityInfo);
 router.post('/', validate(userSchema), controller.create);

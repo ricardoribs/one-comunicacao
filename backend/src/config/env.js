@@ -57,6 +57,12 @@ module.exports = {
   cloudinaryApiKey: process.env.CLOUDINARY_API_KEY || '',
   cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || '',
   appBaseUrl: process.env.APP_BASE_URL || '',
+  geoLookupEnabled: process.env.GEO_LOOKUP_ENABLED !== 'false',
+  geoLookupTimeoutMs: Number(process.env.GEO_LOOKUP_TIMEOUT_MS || 1200),
+  geoLookupCacheTtlMs: Number(process.env.GEO_LOOKUP_CACHE_TTL_MS || 6 * 60 * 60 * 1000),
+  geoLookupUrlTemplate:
+    process.env.GEO_LOOKUP_URL_TEMPLATE
+    || 'https://ipwho.is/{ip}?fields=success,country_code,country,region,city',
   corsOrigins,
   frontendDir: path.resolve(__dirname, '../../../frontend'),
   uploadsDir: path.resolve(__dirname, '../../uploads'),

@@ -81,6 +81,9 @@ function createPgMemPool() {
       failed_login_attempts INTEGER NOT NULL DEFAULT 0,
       locked_until TIMESTAMP,
       last_login_at TIMESTAMP,
+      last_seen_at TIMESTAMP,
+      last_seen_ip VARCHAR(64),
+      last_seen_location VARCHAR(160),
       created_at TIMESTAMP NOT NULL DEFAULT NOW()
     );
 
