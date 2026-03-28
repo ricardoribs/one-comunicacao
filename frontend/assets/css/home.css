@@ -831,17 +831,13 @@ section[id] {
 
 .marquee {
   margin-top: 28px;
-  overflow: auto hidden;
+  overflow: hidden;
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.05);
   cursor: grab;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
   user-select: none;
-  touch-action: pan-x;
-  scroll-snap-type: x proximity;
-  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 .marquee-track {
@@ -851,10 +847,7 @@ section[id] {
   width: max-content;
   min-width: max-content;
   padding: 20px 26px 20px 20px;
-}
-
-.marquee::-webkit-scrollbar {
-  display: none;
+  will-change: transform;
 }
 
 .marquee.dragging {
@@ -871,7 +864,6 @@ section[id] {
   padding: 18px 24px;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.96);
-  scroll-snap-align: start;
 }
 
 .client-logo img {
