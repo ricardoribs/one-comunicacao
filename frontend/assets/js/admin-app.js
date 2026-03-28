@@ -187,6 +187,7 @@ const notificationRuntime = {
 };
 const kanbanRuntime = {
   movingTaskId: null,
+  dragPreviewEl: null,
 };
 
 const TASK_TYPE_OPTIONS = [
@@ -315,6 +316,46 @@ const UI = {
           { length: cols },
           () => `<td><div class="skeleton skeleton-text" style="width:${60 + ((Math.random() * 30) | 0)}%"></div></td>`
         ).join("")}</tr>
+      `
+    ).join(""),
+
+  skeletonClientCards: (count = 4) =>
+    Array.from(
+      { length: count },
+      () => `
+        <article class="crm-client-card crm-client-card-skeleton" aria-hidden="true">
+          <div class="crm-client-card-head">
+            <div class="cell-stack crm-client-primary" style="flex:1">
+              <div class="skeleton skeleton-title"></div>
+              <div class="skeleton skeleton-text" style="width:52%"></div>
+              <div class="skeleton skeleton-text" style="width:58%"></div>
+            </div>
+            <div class="skeleton skeleton-badge"></div>
+          </div>
+          <div class="crm-client-facts">
+            <div class="crm-client-fact">
+              <div class="skeleton skeleton-text" style="width:40%"></div>
+              <div class="skeleton skeleton-text" style="width:72%"></div>
+            </div>
+            <div class="crm-client-fact">
+              <div class="skeleton skeleton-text" style="width:36%"></div>
+              <div class="skeleton skeleton-badge" style="width:84px"></div>
+            </div>
+            <div class="crm-client-fact">
+              <div class="skeleton skeleton-text" style="width:34%"></div>
+              <div class="skeleton skeleton-text" style="width:64%"></div>
+            </div>
+            <div class="crm-client-fact">
+              <div class="skeleton skeleton-text" style="width:28%"></div>
+              <div class="skeleton skeleton-text" style="width:56%"></div>
+            </div>
+          </div>
+          <div class="crm-client-actions">
+            <div class="skeleton skeleton-text" style="height:34px;width:100%"></div>
+            <div class="skeleton skeleton-text" style="height:34px;width:100%"></div>
+            <div class="skeleton skeleton-text" style="height:34px;width:100%"></div>
+          </div>
+        </article>
       `
     ).join(""),
 
@@ -2615,9 +2656,30 @@ async function moveTaskToColumn(taskId, nextColumn) {
   }
 }
 
+function clearKanbanDragPreview() {
+  if (kanbanRuntime.dragPreviewEl) {
+    kanbanRuntime.dragPreviewEl.remove();
+    kanbanRuntime.dragPreviewEl = null;
+  }
+}
+
+function createKanbanDragPreview(card) {
+  clearKanbanDragPreview();
+
+  const preview = card.cloneNode(true);
+  preview.classList.remove("is-dragging", "is-highlighted");
+  preview.classList.add("kanban-drag-ghost");
+  preview.removeAttribute("id");
+  preview.style.width = `${Math.ceil(card.getBoundingClientRect().width)}px`;
+  document.body.appendChild(preview);
+  kanbanRuntime.dragPreviewEl = preview;
+  return preview;
+}
+
 function bindKanbanBoardInteractions() {
   const board = document.getElementById("kanban-board");
   if (!board) {
+    clearKanbanDragPreview();
     return;
   }
 
@@ -2636,12 +2698,15 @@ function bindKanbanBoardInteractions() {
       if (event.dataTransfer) {
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", card.dataset.taskId);
+        const preview = createKanbanDragPreview(card);
+        event.dataTransfer.setDragImage(preview, 28, 24);
       }
     });
 
     card.addEventListener("dragend", () => {
       card.classList.remove("is-dragging");
       clearDropTargets();
+      clearKanbanDragPreview();
       kanbanRuntime.movingTaskId = null;
     });
 
@@ -2671,6 +2736,7 @@ function bindKanbanBoardInteractions() {
       event.preventDefault();
       const taskId = Number(event.dataTransfer?.getData("text/plain") || kanbanRuntime.movingTaskId || 0);
       clearDropTargets();
+      clearKanbanDragPreview();
       kanbanRuntime.movingTaskId = null;
 
       if (!taskId) {
@@ -2764,39 +2830,47 @@ function renderCRM() {
         const mrrSub = Number(client.mrr || 0) > 0 ? "receita mensal recorrente" : "MRR ainda não informado";
 
         return `
-        <tr>
-          <td class="cell-stack crm-client-primary">
-            <span class="cell-title" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span>
-            <span class="cell-sub" title="${escapeHtml(client.company || "Sem empresa")}">${escapeHtml(client.company || "Sem empresa")}</span>
-            <span class="cell-sub" title="${escapeHtml(campaignsLabel)}">${escapeHtml(campaignsLabel)}</span>
-          </td>
-          <td class="cell-stack crm-cell-muted">
-            <span class="crm-cell-copy" title="${escapeHtml(segmentLabel)}">${escapeHtml(segmentLabel)}</span>
-          </td>
-          <td class="cell-stack crm-plan-cell">
-            <span class="badge ${getClientPlanBadgeClass(client.plan)}" title="${escapeHtml(planLabel)}">${escapeHtml(planLabel)}</span>
-            ${onDemandService && planLabel === "Sob demanda" ? `<span class="cell-sub" title="${escapeHtml(onDemandService)}">${escapeHtml(onDemandService)}</span>` : ""}
-          </td>
-          <td class="cell-stack crm-cell-muted">
-            <span class="crm-cell-copy" title="${escapeHtml(startedAtLabel)}">${escapeHtml(startedAtLabel)}</span>
-          </td>
-          <td><span class="badge badge-green">Ativo</span></td>
-          <td class="cell-stack crm-mrr-cell" data-align="right">
-            <span class="${getValueToneClass(client.mrr)}">${mrrValue}</span>
-            <span class="cell-sub" title="${escapeHtml(mrrSub)}">${escapeHtml(mrrSub)}</span>
-          </td>
-          <td class="cell-actions">
-            <div class="table-actions crm-client-actions">
-              <button type="button" class="btn btn-outline btn-sm" onclick="openModal('novo-cliente', ${client.id})">Editar</button>
-              <button type="button" class="btn btn-ghost btn-sm" onclick="openChargeModalForClient(${client.id})">Cobrar</button>
-              <button type="button" class="btn btn-danger btn-sm" onclick="deleteClient(${client.id})">Excluir</button>
+        <article class="crm-client-card">
+          <div class="crm-client-card-head">
+            <div class="cell-stack crm-client-primary">
+              <span class="cell-title" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span>
+              <span class="cell-sub" title="${escapeHtml(client.company || "Sem empresa")}">${escapeHtml(client.company || "Sem empresa")}</span>
+              <span class="cell-sub" title="${escapeHtml(campaignsLabel)}">${escapeHtml(campaignsLabel)}</span>
             </div>
-          </td>
-        </tr>
+            <span class="badge badge-green">Ativo</span>
+          </div>
+          <div class="crm-client-facts">
+            <div class="crm-client-fact">
+              <span class="crm-client-fact-label">Segmento</span>
+              <span class="crm-client-fact-value" title="${escapeHtml(segmentLabel)}">${escapeHtml(segmentLabel)}</span>
+            </div>
+            <div class="crm-client-fact">
+              <span class="crm-client-fact-label">Plano</span>
+              <div class="cell-stack crm-plan-cell">
+                <span class="badge ${getClientPlanBadgeClass(client.plan)}" title="${escapeHtml(planLabel)}">${escapeHtml(planLabel)}</span>
+                ${onDemandService && planLabel === "Sob demanda" ? `<span class="cell-sub" title="${escapeHtml(onDemandService)}">${escapeHtml(onDemandService)}</span>` : ""}
+              </div>
+            </div>
+            <div class="crm-client-fact">
+              <span class="crm-client-fact-label">Desde</span>
+              <span class="crm-client-fact-value" title="${escapeHtml(startedAtLabel)}">${escapeHtml(startedAtLabel)}</span>
+            </div>
+            <div class="crm-client-fact crm-client-fact-mrr">
+              <span class="crm-client-fact-label">MRR</span>
+              <span class="crm-client-fact-value ${getValueToneClass(client.mrr)}">${mrrValue}</span>
+              <span class="cell-sub" title="${escapeHtml(mrrSub)}">${escapeHtml(mrrSub)}</span>
+            </div>
+          </div>
+          <div class="crm-client-actions">
+            <button type="button" class="btn btn-outline btn-sm" onclick="openModal('novo-cliente', ${client.id})">Editar</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="openChargeModalForClient(${client.id})">Cobrar</button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="deleteClient(${client.id})">Excluir</button>
+          </div>
+        </article>
       `;
       }
     )
-    .join("") || UI.tableEmpty(7, "Nenhum cliente cadastrado", "Cadastre o primeiro cliente para iniciar o acompanhamento comercial.");
+    .join("") || UI.empty("Nenhum cliente cadastrado", "Cadastre o primeiro cliente para iniciar o acompanhamento comercial.");
 
   document.getElementById("historico-list").innerHTML = [...state.reports, ...state.materials, ...state.charges]
     .slice(0, 8)
@@ -3458,7 +3532,7 @@ async function refreshData() {
 
   const clientsBody = document.getElementById("clientes-tbody");
   if (clientsBody) {
-    clientsBody.innerHTML = UI.skeletonRows(7, 4);
+    clientsBody.innerHTML = UI.skeletonClientCards(4);
   }
 
   const filesBody = document.getElementById("copy-tbody");
