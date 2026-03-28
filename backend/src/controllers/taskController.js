@@ -1,7 +1,9 @@
 const asyncHandler = require('../utils/asyncHandler');
 const taskModel = require('../models/taskModel');
-const messageModel = require('../models/messageModel');
+const userModel = require('../models/userModel');
+const notificationService = require('../services/notificationService');
 const { ensureClientAccess } = require('../utils/access');
+const { normalizeTaskTypeValue } = require('../utils/taskTypes');
 const { sendPaginated } = require('../utils/response');
 
 const TASK_COLUMN_STATUS_MAP = {
@@ -51,6 +53,7 @@ function buildTaskPayload(input = {}, fallback = {}) {
 
   return {
     ...input,
+    type: normalizeTaskTypeValue(input.type ?? fallback.type),
     column_name: nextColumnName,
     status: nextStatus,
   };
@@ -64,43 +67,28 @@ async function notifyTaskAssignment(task, previousAssignedTo, actor) {
     return;
   }
 
-  await messageModel.create(
-    {
-      sender_id: actor.id,
-      receiver_id: nextAssignedTo,
-      context_type: 'task_assignment',
-      context_id: task.id,
-      content: `Uma nova tarefa foi atribuida a voce: "${task.title}" por ${actor.name || 'Equipe ONE'}.`,
-    },
-    actor
-  );
+  const assignedTo = await userModel.findById(nextAssignedTo);
+  if (!assignedTo) {
+    return;
+  }
+
+  await notificationService.notifyTaskAssigned({ task, assignedTo });
 }
 
 async function notifyTaskCompletion(task, previousTask, actor) {
   const previousStatus = normalizeTaskStatus(previousTask?.status, previousTask?.column_name);
   const nextStatus = normalizeTaskStatus(task?.status, task?.column_name);
+  const notifyUserId = Number(task?.created_by || previousTask?.created_by || 0);
 
-  if (nextStatus !== 'Concluido' || previousStatus === 'Concluido') {
+  if (nextStatus !== 'Concluido' || previousStatus === 'Concluido' || !notifyUserId || notifyUserId === Number(actor?.id || 0)) {
     return;
   }
 
-  const recipients = await messageModel.listAssignmentSendersForTask(task.id, actor);
-  const uniqueRecipients = [...new Set(recipients)].filter((receiverId) => receiverId && receiverId !== Number(actor?.id || 0));
-
-  await Promise.all(
-    uniqueRecipients.map((receiverId) =>
-      messageModel.create(
-        {
-          sender_id: actor.id,
-          receiver_id: receiverId,
-          context_type: 'task_completed',
-          context_id: task.id,
-          content: `${actor.name || 'Alguem da equipe'} concluiu a tarefa "${task.title}".`,
-        },
-        actor
-      )
-    )
-  );
+  await notificationService.notifyTaskCompleted({
+    task,
+    completedBy: actor,
+    notifyUserId,
+  });
 }
 
 exports.list = asyncHandler(async (req, res) => {
@@ -113,6 +101,7 @@ exports.create = asyncHandler(async (req, res) => {
   }
 
   const payload = buildTaskPayload(req.body);
+  payload.created_by = req.user.id;
   const task = await taskModel.create(payload, req.user);
   await notifyTaskAssignment(task, null, req.user);
   res.status(201).json(task);

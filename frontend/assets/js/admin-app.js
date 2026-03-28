@@ -177,15 +177,13 @@ const ROLE_DATA_ACCESS = {
   }
 };
 
-const NON_BLOCKING_MODULE_FAILURES = new Set(["arquivos", "integrações"]);
-const TASK_NOTIFICATION_CONTEXT_TYPES = new Set(["task_assignment", "task_completed"]);
-const NOTIFICATION_POLL_MS = 8000;
+const NON_BLOCKING_MODULE_FAILURES = new Set(["arquivos", "integrações", "clientes", "métricas"]);
+const NOTIFICATION_POLL_MS = 30000;
 const notificationRuntime = {
   pollHandle: null,
-  bootstrapped: false,
-  seenIds: new Set(),
   syncingRead: false,
   open: false,
+  unread: 0,
 };
 const kanbanRuntime = {
   movingTaskId: null,
@@ -1178,7 +1176,7 @@ function sortNotifications(items = []) {
 }
 
 function isUnreadNotification(item) {
-  return Boolean(item) && !item.read_at && Number(item.receiver_id || 0) === Number(state.session?.user?.id || 0);
+  return Boolean(item) && !item.read_at;
 }
 
 function formatNotificationTime(value) {
@@ -1213,22 +1211,28 @@ function formatNotificationTime(value) {
 }
 
 function buildNotificationPanelHtml() {
-  const notifications = sortNotifications(state.notifications).slice(0, 12);
-  const unreadCount = notifications.filter(isUnreadNotification).length;
+  const notifications = sortNotifications(state.notifications).slice(0, 30);
+  const unreadCount = Number(notificationRuntime.unread || 0);
   const itemsHtml = notifications.length
     ? notifications
         .map((item) => {
           const unreadClass = isUnreadNotification(item) ? " is-unread" : "";
-          const action = TASK_NOTIFICATION_CONTEXT_TYPES.has(item.context_type) && item.context_id ? "Abrir tarefa" : "Abrir";
+          const action = item.entity_type === "task" && item.entity_id ? "Abrir tarefa" : "Abrir";
 
           return `
-            <button type="button" class="notification-item${unreadClass}" data-notification-item="1" data-notification-id="${item.id}" data-notification-context="${escapeHtml(
-              item.context_type || ""
-            )}" data-notification-context-id="${item.context_id || ""}">
+            <button
+              type="button"
+              class="notification-item${unreadClass}"
+              data-notification-item="1"
+              data-notification-id="${item.id}"
+              data-notification-entity-type="${escapeHtml(item.entity_type || "")}"
+              data-notification-entity-id="${item.entity_id || ""}"
+            >
               <div class="notification-item-head">
-                <strong class="notification-item-title">${escapeHtml(item.content || "Nova notificação")}</strong>
+                <strong class="notification-item-title">${escapeHtml(item.title || "Nova notificação")}</strong>
                 ${isUnreadNotification(item) ? '<span class="notification-status">Novo</span>' : ""}
               </div>
+              ${item.body ? `<div class="notification-item-body">${escapeHtml(item.body)}</div>` : ""}
               <div class="notification-item-meta">
                 <span>${escapeHtml(formatNotificationTime(item.created_at))}</span>
                 <span>${action}</span>
@@ -1261,6 +1265,7 @@ function buildNotificationPanelHtml() {
           <strong>Notificações</strong>
           <span>${unreadCount ? `${unreadCount} nova${unreadCount > 1 ? "s" : ""}` : "Tudo em dia"}</span>
         </div>
+        <button type="button" class="notification-mark-all" data-notification-mark-all="1">Marcar todas</button>
       </div>
       <div class="notification-list">${itemsHtml}</div>
     </div>
@@ -1284,30 +1289,21 @@ function closeNotifications() {
 }
 
 async function markNotificationsRead() {
-  const unreadIds = state.notifications.filter(isUnreadNotification).map((item) => item.id);
-  if (!unreadIds.length || notificationRuntime.syncingRead) {
+  if (notificationRuntime.syncingRead || !state.session?.user?.id) {
     return;
   }
 
   notificationRuntime.syncingRead = true;
 
   try {
-    await apiFetch("/messages/read", {
-      method: "PATCH",
-      body: JSON.stringify({
-        ids: unreadIds,
-      }),
-    });
+    await apiFetch("/notifications/read-all", { method: "PATCH" });
 
     const readAt = new Date().toISOString();
-    state.notifications = state.notifications.map((item) =>
-      unreadIds.includes(item.id)
-        ? {
-            ...item,
-            read_at: item.read_at || readAt,
-          }
-        : item
-    );
+    state.notifications = state.notifications.map((item) => ({
+      ...item,
+      read_at: item.read_at || readAt,
+    }));
+    notificationRuntime.unread = 0;
     renderNotifications();
   } catch (error) {
     console.warn("[notifications] Falha ao marcar notificações como lidas:", error);
@@ -1338,8 +1334,16 @@ function ensureNotificationUi() {
         notificationRuntime.open = !notificationRuntime.open;
         renderNotifications();
         if (notificationRuntime.open) {
-          await markNotificationsRead();
+          await refreshNotifications({ suppressErrors: true });
         }
+        return;
+      }
+
+      const markAllButton = event.target.closest("[data-notification-mark-all]");
+      if (markAllButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        await markNotificationsRead();
         return;
       }
 
@@ -1350,11 +1354,11 @@ function ensureNotificationUi() {
 
       event.preventDefault();
       event.stopPropagation();
-      closeNotifications();
-
-      if (TASK_NOTIFICATION_CONTEXT_TYPES.has(item.dataset.notificationContext)) {
-        goTo("kanban");
-      }
+      await handleNotificationClick(
+        Number(item.dataset.notificationId),
+        item.dataset.notificationEntityType || "",
+        Number(item.dataset.notificationEntityId || 0)
+      );
     });
 
     shell.dataset.notificationBound = "1";
@@ -1385,29 +1389,20 @@ async function refreshNotifications({ silent = false, suppressErrors = false } =
   }
 
   try {
-    const notifications = await apiFetch("/messages?limit=20", {
-      cache: "no-store",
-    });
-    const normalized = sortNotifications(
-      toArray(notifications).filter((item) => TASK_NOTIFICATION_CONTEXT_TYPES.has(String(item?.context_type || "")))
-    );
-    const newUnread = notificationRuntime.bootstrapped
-      ? normalized.filter((item) => isUnreadNotification(item) && !notificationRuntime.seenIds.has(item.id))
-      : [];
-
+    const [notifications, unreadCount] = await Promise.all([
+      apiFetch("/notifications?limit=30", { cache: "no-store" }),
+      apiFetch("/notifications/unread-count", { cache: "no-store" }),
+    ]);
+    const normalized = sortNotifications(toArray(notifications));
     state.notifications = normalized;
-    normalized.forEach((item) => notificationRuntime.seenIds.add(item.id));
-    notificationRuntime.bootstrapped = true;
+    notificationRuntime.unread = Number(unreadCount?.total || 0);
     ensureNotificationUi();
-
-    if (!silent && newUnread.length) {
-      showToast(newUnread[0].content || "Você recebeu uma nova notificação.");
-    }
 
     return normalized;
   } catch (error) {
     console.warn("[notifications] Falha ao carregar notificações:", error);
-    if (!suppressErrors) {
+    ensureNotificationUi();
+    if (!silent && !suppressErrors) {
       showToast("Não foi possível atualizar as notificações agora.");
     }
     return [];
@@ -1420,40 +1415,105 @@ function stopNotificationPolling() {
     notificationRuntime.pollHandle = null;
   }
 
-  notificationRuntime.bootstrapped = false;
-  notificationRuntime.seenIds = new Set();
   notificationRuntime.syncingRead = false;
   notificationRuntime.open = false;
+  notificationRuntime.unread = 0;
   state.notifications = [];
   renderNotifications();
 }
 
 function startNotificationPolling() {
   stopNotificationPolling();
+  ensureNotificationUi();
 
   if (document.body.dataset.notificationRefreshBound !== "1") {
     window.addEventListener("focus", () => {
-      refreshNotifications({ silent: true, suppressErrors: true }).catch(() => {});
+      refreshNotificationUnreadCount({ suppressErrors: true }).catch(() => {});
     });
 
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) {
-        refreshNotifications({ silent: true, suppressErrors: true }).catch(() => {});
+        refreshNotificationUnreadCount({ suppressErrors: true }).catch(() => {});
       }
     });
 
     document.body.dataset.notificationRefreshBound = "1";
   }
 
-  refreshNotifications({ silent: true, suppressErrors: true }).catch(() => {});
+  refreshNotificationUnreadCount({ suppressErrors: true }).catch(() => {});
 
   notificationRuntime.pollHandle = window.setInterval(() => {
     if (document.hidden) {
       return;
     }
 
-    refreshNotifications({ suppressErrors: true }).catch(() => {});
+    refreshNotificationUnreadCount({ suppressErrors: true }).catch(() => {});
   }, NOTIFICATION_POLL_MS);
+}
+
+async function refreshNotificationUnreadCount({ suppressErrors = false } = {}) {
+  if (!state.session?.user?.id) {
+    return 0;
+  }
+
+  try {
+    const data = await apiFetch("/notifications/unread-count", {
+      cache: "no-store",
+    });
+    notificationRuntime.unread = Number(data?.total || 0);
+    renderNotifications();
+    return notificationRuntime.unread;
+  } catch (error) {
+    console.warn("[notifications] Falha ao carregar contagem:", error);
+    if (!suppressErrors) {
+      showToast("Não foi possível atualizar a contagem de notificações agora.");
+    }
+    return 0;
+  }
+}
+
+function focusTaskCard(taskId) {
+  if (!taskId) {
+    return;
+  }
+
+  window.requestAnimationFrame(() => {
+    const card = document.querySelector(`[data-task-card][data-task-id="${taskId}"]`);
+    if (!card) {
+      return;
+    }
+
+    card.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+    card.classList.add("is-highlighted");
+    window.setTimeout(() => card.classList.remove("is-highlighted"), 2200);
+  });
+}
+
+async function handleNotificationClick(id, entityType, entityId) {
+  if (id && isUnreadNotification(state.notifications.find((item) => Number(item.id) === Number(id)))) {
+    try {
+      await apiFetch(`/notifications/${id}/read`, { method: "PATCH" });
+      state.notifications = state.notifications.map((item) =>
+        Number(item.id) === Number(id)
+          ? {
+              ...item,
+              read_at: item.read_at || new Date().toISOString(),
+            }
+          : item
+      );
+      notificationRuntime.unread = Math.max(0, Number(notificationRuntime.unread || 0) - 1);
+    } catch (error) {
+      console.warn("[notifications] Falha ao marcar item como lido:", error);
+    }
+  }
+
+  closeNotifications();
+  renderNotifications();
+
+  if (entityType === "task" && entityId) {
+    goTo("kanban");
+    focusTaskCard(entityId);
+  }
 }
 
 function escapeInlineMessage(value) {
@@ -2534,7 +2594,7 @@ async function moveTaskToColumn(taskId, nextColumn) {
 
 function bindKanbanBoardInteractions() {
   const board = document.getElementById("kanban-board");
-  if (!board || board.dataset.kanbanBound === "1") {
+  if (!board) {
     return;
   }
 
@@ -2542,54 +2602,63 @@ function bindKanbanBoardInteractions() {
     board.querySelectorAll("[data-kanban-column]").forEach((column) => column.classList.remove("is-drop-target"));
   };
 
-  board.addEventListener("dragstart", (event) => {
-    const card = event.target.closest("[data-task-card]");
-    if (!card || !card.draggable) {
+  board.querySelectorAll("[data-task-card][draggable='true']").forEach((card) => {
+    if (card.dataset.boundKanbanDrag === "1") {
       return;
     }
 
-    kanbanRuntime.movingTaskId = Number(card.dataset.taskId);
-    card.classList.add("is-dragging");
-    event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/plain", card.dataset.taskId);
+    card.addEventListener("dragstart", (event) => {
+      kanbanRuntime.movingTaskId = Number(card.dataset.taskId);
+      card.classList.add("is-dragging");
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", card.dataset.taskId);
+      }
+    });
+
+    card.addEventListener("dragend", () => {
+      card.classList.remove("is-dragging");
+      clearDropTargets();
+      kanbanRuntime.movingTaskId = null;
+    });
+
+    card.dataset.boundKanbanDrag = "1";
   });
 
-  board.addEventListener("dragend", () => {
-    clearDropTargets();
-    board.querySelectorAll("[data-task-card]").forEach((card) => card.classList.remove("is-dragging"));
-    kanbanRuntime.movingTaskId = null;
-  });
-
-  board.addEventListener("dragover", (event) => {
-    const column = event.target.closest("[data-kanban-column]");
-    if (!column) {
+  board.querySelectorAll("[data-kanban-column]").forEach((column) => {
+    if (column.dataset.boundKanbanColumn === "1") {
       return;
     }
 
-    event.preventDefault();
-    clearDropTargets();
-    column.classList.add("is-drop-target");
+    const activateColumn = (event) => {
+      event.preventDefault();
+      clearDropTargets();
+      column.classList.add("is-drop-target");
+    };
+
+    column.addEventListener("dragenter", activateColumn);
+    column.addEventListener("dragover", activateColumn);
+    column.addEventListener("dragleave", (event) => {
+      if (event.relatedTarget && column.contains(event.relatedTarget)) {
+        return;
+      }
+      column.classList.remove("is-drop-target");
+    });
+    column.addEventListener("drop", async (event) => {
+      event.preventDefault();
+      const taskId = Number(event.dataTransfer?.getData("text/plain") || kanbanRuntime.movingTaskId || 0);
+      clearDropTargets();
+      kanbanRuntime.movingTaskId = null;
+
+      if (!taskId) {
+        return;
+      }
+
+      await moveTaskToColumn(taskId, column.dataset.kanbanColumn);
+    });
+
+    column.dataset.boundKanbanColumn = "1";
   });
-
-  board.addEventListener("drop", async (event) => {
-    const column = event.target.closest("[data-kanban-column]");
-    if (!column) {
-      return;
-    }
-
-    event.preventDefault();
-    const taskId = Number(event.dataTransfer.getData("text/plain") || kanbanRuntime.movingTaskId);
-    clearDropTargets();
-    kanbanRuntime.movingTaskId = null;
-
-    if (!taskId) {
-      return;
-    }
-
-    await moveTaskToColumn(taskId, column.dataset.kanbanColumn);
-  });
-
-  board.dataset.kanbanBound = "1";
 }
 
 function renderCRM() {
@@ -3262,6 +3331,7 @@ function renderAll() {
   });
 
   bindLegacyInlineHandlers();
+  ensureNotificationUi();
 }
 
 function renderAccessV2() {
@@ -3390,14 +3460,14 @@ async function refreshData() {
     loadResource("dashboard", () => apiFetch("/dashboard"), () => createEmptyDashboard()),
     roleDataAccess.homeTeam ? loadResource("equipe", () => apiFetch("/users/team", { cache: "no-store" }), []) : Promise.resolve([]),
     roleDataAccess.assignableUsers ? loadResource("responsáveis", () => apiFetch("/users/assignable", { cache: "no-store" }), []) : Promise.resolve([]),
-    roleDataAccess.clients ? loadResource("clientes", () => apiFetch("/clients"), []) : Promise.resolve([]),
+    roleDataAccess.clients ? loadResource("clientes", () => apiFetch("/clients", { cache: "no-store" }), []) : Promise.resolve([]),
     roleDataAccess.campaigns ? loadResource("campanhas", () => apiFetch("/campaigns"), []) : Promise.resolve([]),
     roleDataAccess.tasks ? loadResource("tarefas", () => apiFetch("/tasks"), []) : Promise.resolve([]),
     roleDataAccess.tasks ? loadResource("checklist", () => apiFetch("/checklists/daily", { cache: "no-store" }), () => createEmptyChecklistSnapshot()) : Promise.resolve(createEmptyChecklistSnapshot()),
     roleDataAccess.users ? loadResource("usuários", () => apiFetch("/users"), []) : Promise.resolve([]),
     roleDataAccess.contacts ? loadResource("CRM", () => apiFetch("/contacts"), []) : Promise.resolve([]),
     roleDataAccess.invoices ? loadResource("faturas", () => apiFetch("/invoices"), []) : Promise.resolve([]),
-    roleDataAccess.metrics ? loadResource("métricas", () => apiFetch("/metrics"), []) : Promise.resolve([]),
+    roleDataAccess.metrics ? loadResource("métricas", () => apiFetch("/metrics", { cache: "no-store" }), []) : Promise.resolve([]),
     roleDataAccess.reports ? loadResource("relatórios", () => apiFetch("/reports"), []) : Promise.resolve([]),
     roleDataAccess.materials ? loadResource("produção", () => apiFetch("/materials"), []) : Promise.resolve([]),
     roleDataAccess.files ? loadResource("arquivos", () => apiFetch("/files"), []) : Promise.resolve([]),
@@ -4028,6 +4098,7 @@ function openModal(type, id = null) {
 
   if (type === "novo-cliente") {
     const client = state.clients.find((item) => item.id === id) || {};
+    const selectedPlan = client.id ? client.plan || "" : "One Start";
     html = modalFormWrapper(
       client.id ? "Editar cliente" : "Novo cliente",
       `
@@ -4036,8 +4107,7 @@ function openModal(type, id = null) {
         <div class="field">
           <label>Plano</label>
           <select name="plan">
-            <option value="">Selecione</option>
-            ${clientPlanOptions(client.plan || "")}
+            ${clientPlanOptions(selectedPlan)}
           </select>
           <div class="field-help">Planos válidos: One Ideal, One Start, One Master e Sob demanda. Em Sob demanda, entram Cobertura de Eventos, Releases (Imprensa), Newsletter, Fotografia e Tráfego Pago como serviço isolado.</div>
         </div>
@@ -4065,7 +4135,7 @@ function openModal(type, id = null) {
         <div class="field form-full"><label>Título</label><input name="title" value="${escapeHtml(task.title || "")}" required></div>
         <div class="field"><label>Cliente</label><select name="client_id"><option value="">Interno</option>${clientOptions(task.client_id)}</select></div>
         <div class="field"><label>Responsável</label><select name="assigned_to"><option value="">Todos da equipe</option>${userOptions(task.assigned_to)}</select><div class="field-help">Deixe em "Todos da equipe" quando a tarefa puder ser acompanhada e concluída por qualquer pessoa do time.</div></div>
-        <div class="field"><label>Tipo</label><select name="type">${taskTypeOptions(task.type || "planejamento")}</select></div>
+        <div class="field"><label>Tipo</label><select name="type">${taskTypeOptions(task.type || "planejamento")}</select><div class="field-help">Tipos disponíveis: Design Gráfico, Copywriting, Edição de Vídeo, Captação, Fotografia, Planejamento, Social Media, Tráfego Pago, Cobertura, Releases, Newsletter, Reunião, Aprovação Cliente, Refação e Urgente.</div></div>
         <div class="field"><label>Status</label><select name="status">${taskStatusOptions(task.status || getTaskStatusValue(task))}</select></div>
         <div class="field"><label>Coluna</label><select name="column_name">${taskColumnOptions(task.column_name || getTaskColumnName(task))}</select></div>
         <div class="field"><label>Prazo</label><input type="date" name="deadline" value="${(task.deadline || task.due_date) ? String(task.deadline || task.due_date).slice(0, 10) : ""}"></div>

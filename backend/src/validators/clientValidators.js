@@ -1,6 +1,7 @@
 const { z } = require('zod');
+const { CLIENT_PLAN_OPTIONS, normalizeClientPlan } = require('../utils/clientPlans');
 
-const planEnum = z.enum(['starter', 'growth', 'scale']);
+const planEnum = z.enum(CLIENT_PLAN_OPTIONS);
 const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/;
 const zipCodeRegex = /^\d{5}-?\d{3}$/;
 
@@ -14,11 +15,18 @@ const emptyToNullDate = () =>
   emptyToNullString(z.string().regex(isoDateRegex, 'Informe uma data valida no formato AAAA-MM-DD'));
 
 const emptyToNullEmail = () => emptyToNullString(z.string().email('Informe um e-mail valido').max(160));
+const clientPlanSchema = z.preprocess((value) => {
+  if (value === '' || value === undefined || value === null) {
+    return undefined;
+  }
+
+  return normalizeClientPlan(value);
+}, planEnum.optional());
 
 exports.clientSchema = z.object({
   name: z.string().trim().min(2, 'Nome obrigatorio').max(120),
   company: z.string().trim().min(2, 'Empresa obrigatoria').max(160),
-  plan: planEnum.default('growth').optional(),
+  plan: clientPlanSchema,
   mrr: z.coerce.number().min(0).max(9999999).default(0).optional(),
   segment: emptyToNullString(z.string().max(120)).optional(),
   manager_id: emptyToNullNumber().optional(),
