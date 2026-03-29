@@ -1,10 +1,12 @@
 const asyncHandler = require('../utils/asyncHandler');
+const logger = require('../config/logger');
 const contactModel = require('../models/contactModel');
 const clientModel = require('../models/clientModel');
 const { withTransaction } = require('../utils/db');
 const { sendPaginated } = require('../utils/response');
 const AppError = require('../utils/AppError');
 const { normalizeClientPlan } = require('../utils/clientPlans');
+const isRecoverableSchemaError = require('../utils/isRecoverableSchemaError');
 
 exports.create = asyncHandler(async (req, res) => {
   const contact = await contactModel.create(req.body);
@@ -15,7 +17,24 @@ exports.create = asyncHandler(async (req, res) => {
 });
 
 exports.list = asyncHandler(async (req, res) => {
-  return sendPaginated(res, req, await contactModel.list(req.user, req.query));
+  try {
+    return sendPaginated(res, req, await contactModel.list(req.user, req.query));
+  } catch (error) {
+    if (!isRecoverableSchemaError(error)) {
+      throw error;
+    }
+
+    logger.warn(
+      {
+        err: error,
+        user_id: req.user?.id || null,
+        route: req.originalUrl,
+      },
+      'Falha recuperavel ao listar CRM. Retornando lista vazia.'
+    );
+
+    return sendPaginated(res, req, []);
+  }
 });
 
 exports.update = asyncHandler(async (req, res) => {

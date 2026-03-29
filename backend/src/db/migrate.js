@@ -90,6 +90,125 @@ async function reconcileSchemaDrift(databaseConfig) {
 
   try {
     await client.query(`
+      CREATE SCHEMA IF NOT EXISTS app;
+
+      CREATE OR REPLACE FUNCTION app.current_role()
+      RETURNS TEXT
+      LANGUAGE SQL
+      STABLE
+      AS $$
+        SELECT NULLIF(current_setting('app.current_role', true), '');
+      $$;
+
+      CREATE OR REPLACE FUNCTION app.current_user_id()
+      RETURNS INTEGER
+      LANGUAGE SQL
+      STABLE
+      AS $$
+        SELECT NULLIF(current_setting('app.current_user_id', true), '')::INTEGER;
+      $$;
+
+      CREATE OR REPLACE FUNCTION app.current_client_id()
+      RETURNS INTEGER
+      LANGUAGE SQL
+      STABLE
+      AS $$
+        SELECT NULLIF(current_setting('app.current_client_id', true), '')::INTEGER;
+      $$;
+
+      CREATE OR REPLACE FUNCTION app.is_admin()
+      RETURNS BOOLEAN
+      LANGUAGE SQL
+      STABLE
+      AS $$
+        SELECT app.current_role() = 'admin';
+      $$;
+
+      CREATE OR REPLACE FUNCTION app.is_client()
+      RETURNS BOOLEAN
+      LANGUAGE SQL
+      STABLE
+      AS $$
+        SELECT app.current_role() = 'client';
+      $$;
+
+      CREATE OR REPLACE FUNCTION app.is_internal()
+      RETURNS BOOLEAN
+      LANGUAGE SQL
+      STABLE
+      AS $$
+        SELECT app.current_role() IN ('designer', 'gestor', 'comercial', 'dev');
+      $$;
+
+      CREATE OR REPLACE FUNCTION app.can_access_client(target_client_id INTEGER)
+      RETURNS BOOLEAN
+      LANGUAGE SQL
+      STABLE
+      AS $$
+        SELECT
+          app.is_admin()
+          OR (app.is_client() AND target_client_id = app.current_client_id())
+          OR (
+            app.is_internal()
+            AND EXISTS (
+              SELECT 1
+              FROM clients c
+              WHERE c.id = target_client_id
+                AND c.manager_id = app.current_user_id()
+            )
+          );
+      $$;
+
+      CREATE OR REPLACE FUNCTION app.can_access_contact(owner_user_id INTEGER, assigned_user_id INTEGER)
+      RETURNS BOOLEAN
+      LANGUAGE SQL
+      STABLE
+      AS $$
+        SELECT
+          app.is_admin()
+          OR (
+            app.is_internal()
+            AND (
+              owner_user_id = app.current_user_id()
+              OR assigned_user_id = app.current_user_id()
+            )
+          );
+      $$;
+
+      CREATE OR REPLACE FUNCTION app.can_write_contact(owner_user_id INTEGER, assigned_user_id INTEGER)
+      RETURNS BOOLEAN
+      LANGUAGE SQL
+      STABLE
+      AS $$
+        SELECT
+          app.is_admin()
+          OR (
+            app.is_internal()
+            AND (
+              owner_user_id = app.current_user_id()
+              OR assigned_user_id = app.current_user_id()
+              OR (owner_user_id IS NULL AND assigned_user_id IS NULL)
+            )
+          );
+      $$;
+
+      CREATE OR REPLACE FUNCTION app.can_access_charge_row(target_client_id INTEGER, created_by_user_id INTEGER)
+      RETURNS BOOLEAN
+      LANGUAGE SQL
+      STABLE
+      AS $$
+        SELECT
+          app.is_admin()
+          OR (app.is_client() AND target_client_id = app.current_client_id())
+          OR (
+            app.is_internal()
+            AND (
+              created_by_user_id = app.current_user_id()
+              OR app.can_access_client(target_client_id)
+            )
+          );
+      $$;
+
       ALTER TABLE users
         ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER NOT NULL DEFAULT 0,
         ADD COLUMN IF NOT EXISTS locked_until TIMESTAMP NULL,
@@ -167,6 +286,22 @@ async function reconcileSchemaDrift(databaseConfig) {
          END
        WHERE plan IS NOT NULL;
 
+      ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE clients FORCE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS clients_tenant_isolation ON clients;
+      CREATE POLICY clients_tenant_isolation ON clients
+        FOR ALL
+        USING (
+          app.is_admin()
+          OR (app.is_client() AND id = app.current_client_id())
+          OR (app.is_internal() AND manager_id = app.current_user_id())
+        )
+        WITH CHECK (
+          app.is_admin()
+          OR (app.is_client() AND id = app.current_client_id())
+          OR (app.is_internal() AND manager_id = app.current_user_id())
+        );
+
       CREATE TABLE IF NOT EXISTS campaigns (
         id SERIAL PRIMARY KEY,
         client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
@@ -197,6 +332,14 @@ async function reconcileSchemaDrift(databaseConfig) {
       CREATE INDEX IF NOT EXISTS idx_campaigns_client_id_created_at ON campaigns(client_id, created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_campaigns_client_id_status ON campaigns(client_id, status);
 
+      ALTER TABLE campaigns ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE campaigns FORCE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS campaigns_tenant_isolation ON campaigns;
+      CREATE POLICY campaigns_tenant_isolation ON campaigns
+        FOR ALL
+        USING (app.can_access_client(client_id))
+        WITH CHECK (app.can_access_client(client_id));
+
       CREATE TABLE IF NOT EXISTS metrics (
         id SERIAL PRIMARY KEY,
         campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
@@ -218,6 +361,30 @@ async function reconcileSchemaDrift(databaseConfig) {
         ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
 
       CREATE INDEX IF NOT EXISTS idx_metrics_campaign_id_period ON metrics(campaign_id, period DESC);
+
+      ALTER TABLE metrics ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE metrics FORCE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS metrics_tenant_isolation ON metrics;
+      CREATE POLICY metrics_tenant_isolation ON metrics
+        FOR ALL
+        USING (
+          app.is_admin()
+          OR EXISTS (
+            SELECT 1
+            FROM campaigns cam
+            WHERE cam.id = metrics.campaign_id
+              AND app.can_access_client(cam.client_id)
+          )
+        )
+        WITH CHECK (
+          app.is_admin()
+          OR EXISTS (
+            SELECT 1
+            FROM campaigns cam
+            WHERE cam.id = metrics.campaign_id
+              AND app.can_access_client(cam.client_id)
+          )
+        );
 
       CREATE TABLE IF NOT EXISTS invoices (
         id SERIAL PRIMARY KEY,
@@ -243,6 +410,56 @@ async function reconcileSchemaDrift(databaseConfig) {
         FOR ALL
         USING (app.can_access_client(client_id))
         WITH CHECK (app.can_access_client(client_id));
+
+      CREATE TABLE IF NOT EXISTS contacts (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(120) NOT NULL,
+        phone VARCHAR(40) NOT NULL,
+        email VARCHAR(160) NOT NULL,
+        company VARCHAR(160),
+        service VARCHAR(120),
+        lead_stage VARCHAR(40) NOT NULL DEFAULT 'Prospeccao',
+        estimated_value NUMERIC(12,2) DEFAULT 0,
+        message TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+
+      ALTER TABLE contacts
+        ADD COLUMN IF NOT EXISTS document VARCHAR(30),
+        ADD COLUMN IF NOT EXISTS whatsapp VARCHAR(40),
+        ADD COLUMN IF NOT EXISTS source VARCHAR(80),
+        ADD COLUMN IF NOT EXISTS owner_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        ADD COLUMN IF NOT EXISTS assigned_to INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        ADD COLUMN IF NOT EXISTS notes TEXT,
+        ADD COLUMN IF NOT EXISTS birth_date DATE,
+        ADD COLUMN IF NOT EXISTS address_line1 VARCHAR(180),
+        ADD COLUMN IF NOT EXISTS address_line2 VARCHAR(180),
+        ADD COLUMN IF NOT EXISTS neighborhood VARCHAR(120),
+        ADD COLUMN IF NOT EXISTS city VARCHAR(120),
+        ADD COLUMN IF NOT EXISTS state VARCHAR(80),
+        ADD COLUMN IF NOT EXISTS zip_code VARCHAR(20),
+        ADD COLUMN IF NOT EXISTS country VARCHAR(80),
+        ADD COLUMN IF NOT EXISTS converted_client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
+        ADD COLUMN IF NOT EXISTS asaas_customer_id VARCHAR(80),
+        ADD COLUMN IF NOT EXISTS last_contact_at TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
+
+      CREATE INDEX IF NOT EXISTS idx_contacts_owner_id_created_at ON contacts(owner_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_contacts_assigned_to_created_at ON contacts(assigned_to, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_contacts_converted_client_id ON contacts(converted_client_id);
+      CREATE INDEX IF NOT EXISTS idx_contacts_lead_stage ON contacts(lead_stage);
+      CREATE INDEX IF NOT EXISTS idx_contacts_assigned_to_lead_stage_created_at
+        ON contacts(assigned_to, lead_stage, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_contacts_converted_client_id_created_at
+        ON contacts(converted_client_id, created_at DESC);
+
+      ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE contacts FORCE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS contacts_tenant_isolation ON contacts;
+      CREATE POLICY contacts_tenant_isolation ON contacts
+        FOR ALL
+        USING (app.can_access_contact(owner_id, assigned_to))
+        WITH CHECK (app.can_write_contact(owner_id, assigned_to));
 
       CREATE TABLE IF NOT EXISTS reports (
         id SERIAL PRIMARY KEY,
@@ -321,6 +538,38 @@ async function reconcileSchemaDrift(databaseConfig) {
       CREATE INDEX IF NOT EXISTS idx_files_client_id_created_at ON files(client_id, created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_files_uploaded_by_created_at ON files(uploaded_by, created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_files_stored_name ON files(stored_name);
+
+      CREATE TABLE IF NOT EXISTS charges (
+        id SERIAL PRIMARY KEY,
+        client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
+        contact_id INTEGER REFERENCES contacts(id) ON DELETE SET NULL,
+        created_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        provider VARCHAR(40) NOT NULL DEFAULT 'manual',
+        provider_customer_id VARCHAR(120),
+        provider_charge_id VARCHAR(120),
+        payment_method VARCHAR(30) NOT NULL,
+        description TEXT NOT NULL,
+        amount NUMERIC(12,2) NOT NULL,
+        due_date DATE,
+        status VARCHAR(40) NOT NULL DEFAULT 'pending',
+        payment_link TEXT,
+        boleto_url TEXT,
+        boleto_barcode TEXT,
+        pix_copy_paste TEXT,
+        pix_qr_base64 TEXT,
+        external_reference VARCHAR(120),
+        external_payload JSONB,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+
+      ALTER TABLE charges ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE charges FORCE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS charges_tenant_isolation ON charges;
+      CREATE POLICY charges_tenant_isolation ON charges
+        FOR ALL
+        USING (app.can_access_charge_row(client_id, created_by))
+        WITH CHECK (app.can_access_charge_row(client_id, created_by));
 
       CREATE TABLE IF NOT EXISTS client_integrations (
         id SERIAL PRIMARY KEY,
