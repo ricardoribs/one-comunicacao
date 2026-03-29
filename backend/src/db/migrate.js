@@ -102,6 +102,50 @@ async function reconcileSchemaDrift(databaseConfig) {
       CREATE INDEX IF NOT EXISTS idx_users_last_seen_at
         ON users(last_seen_at DESC);
 
+      CREATE TABLE IF NOT EXISTS refresh_tokens (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        token_hash VARCHAR(128) NOT NULL UNIQUE,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        revoked_at TIMESTAMP NULL,
+        replaced_by_token_hash VARCHAR(128) NULL,
+        created_by_ip VARCHAR(80) NULL,
+        revoked_by_ip VARCHAR(80) NULL,
+        user_agent TEXT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+      CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token_hash ON refresh_tokens(token_hash);
+
+      CREATE TABLE IF NOT EXISTS email_verification_tokens (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        token_hash VARCHAR(128) NOT NULL UNIQUE,
+        expires_at TIMESTAMP NOT NULL,
+        used_at TIMESTAMP NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_user_id
+        ON email_verification_tokens(user_id);
+      CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_hash
+        ON email_verification_tokens(token_hash);
+
+      CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        token_hash VARCHAR(128) NOT NULL UNIQUE,
+        expires_at TIMESTAMP NOT NULL,
+        used_at TIMESTAMP NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id
+        ON password_reset_tokens(user_id);
+      CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_hash
+        ON password_reset_tokens(token_hash);
+
       ALTER TABLE clients
         ALTER COLUMN plan TYPE VARCHAR(120),
         ALTER COLUMN plan SET DEFAULT 'One Start';

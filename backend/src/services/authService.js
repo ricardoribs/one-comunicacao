@@ -47,6 +47,10 @@ function buildCookieOptions() {
   };
 }
 
+function isLikelyBcryptHash(value) {
+  return typeof value === 'string' && /^\$2[aby]\$\d{2}\$/.test(value);
+}
+
 function buildAuthResponse(user) {
   const accessToken = signAccessToken(user);
   return {
@@ -170,7 +174,32 @@ async function login({ email, password }, metadata = {}) {
     throw new AppError('Conta temporariamente bloqueada. Tente novamente mais tarde.', 423);
   }
 
-  const passwordMatches = await bcrypt.compare(password, user.password);
+  if (!isLikelyBcryptHash(user.password)) {
+    logger.warn(
+      {
+        user_id: user.id,
+        email: user.email,
+      },
+      'Usuario com hash de senha invalido ou ausente durante login.'
+    );
+    throw new AppError('E-mail ou senha invalidos', 401);
+  }
+
+  let passwordMatches = false;
+  try {
+    passwordMatches = await bcrypt.compare(password, user.password);
+  } catch (error) {
+    logger.warn(
+      {
+        user_id: user.id,
+        email: user.email,
+        error: error.message,
+      },
+      'Falha ao validar hash de senha durante login.'
+    );
+    throw new AppError('E-mail ou senha invalidos', 401);
+  }
+
   if (!passwordMatches) {
     await userModel.recordFailedLogin(user.id, env.loginLockThreshold, env.loginLockMinutes);
     throw new AppError('E-mail ou senha invalidos', 401);
@@ -185,7 +214,12 @@ async function login({ email, password }, metadata = {}) {
   }
 
   await userModel.resetLoginFailures(user.id, metadata);
-  const freshUser = await userModel.findById(user.id);
+  const freshUser = (await userModel.findById(user.id)) || {
+    ...user,
+    failed_login_attempts: 0,
+    locked_until: null,
+    last_login_at: new Date(),
+  };
   const refresh = await issueRefreshToken(freshUser, metadata);
 
   return {
