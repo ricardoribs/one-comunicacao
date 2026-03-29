@@ -155,10 +155,59 @@ async function remove(id, user = null) {
   });
 }
 
+async function listPendingAssignmentsWithoutNotification(userId, limit = 20) {
+  const actor = {
+    id: userId,
+    role: 'designer',
+  };
+
+  const { rows } = await tenantDb.query(actor, {
+    table: 'tasks',
+    scopeConfig: {
+      internal: 't.assigned_to = $TENANT',
+    },
+    prefix: 'WHERE',
+    startIndex: 2,
+    sql: `SELECT
+       t.id,
+       t.client_id,
+       t.created_by,
+       t.assigned_to,
+       t.status,
+       t.type,
+       t.column_name,
+       t.title,
+       t.description,
+       t.deadline,
+       t.created_at,
+       creator.name AS created_by_name,
+       c.name AS client_name
+     FROM tasks t
+     LEFT JOIN users creator ON creator.id = t.created_by
+     LEFT JOIN clients c ON c.id = t.client_id
+     LEFT JOIN notifications n
+       ON n.user_id = $1
+      AND n.entity_type = 'task'
+      AND n.entity_id = t.id
+      AND n.type = 'task_assigned'
+     __TENANT_SCOPE__
+       AND COALESCE(t.column_name, '') <> 'done'
+       AND LOWER(COALESCE(t.status, '')) NOT IN ('concluido', 'concluído', 'done')
+       AND n.id IS NULL
+     ORDER BY t.created_at DESC
+     LIMIT $3`,
+    params: [userId],
+    suffixParams: [limit],
+  });
+
+  return rows;
+}
+
 module.exports = {
   list,
   findById,
   create,
   update,
   remove,
+  listPendingAssignmentsWithoutNotification,
 };

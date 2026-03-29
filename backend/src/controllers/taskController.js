@@ -72,7 +72,11 @@ async function notifyTaskAssignment(task, previousAssignedTo, actor) {
     return;
   }
 
-  await notificationService.notifyTaskAssigned({ task, assignedTo });
+  await notificationService.notifyTaskAssigned({
+    task,
+    assignedTo,
+    assignedByName: actor?.name || '',
+  });
 }
 
 async function notifyTaskCompletion(task, previousTask, actor) {

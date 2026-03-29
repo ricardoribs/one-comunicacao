@@ -720,6 +720,7 @@ test('atribuicao e conclusao de tarefa geram notificacoes para os envolvidos', {
   assert.equal(notificationsResponse.body[0].type, 'task_assigned');
   assert.equal(notificationsResponse.body[0].read_at, null);
   assert.match(notificationsResponse.body[0].body, /Landing page institucional/);
+  assert.match(notificationsResponse.body[0].body, new RegExp(gestor.name));
 
   const markReadResponse = await request(app)
     .patch(`/api/notifications/${notificationsResponse.body[0].id}/read`)
@@ -757,6 +758,54 @@ test('atribuicao e conclusao de tarefa geram notificacoes para os envolvidos', {
   assert.equal(gestorNotificationsResponse.body[0].entity_id, createTaskResponse.body.id);
   assert.equal(gestorNotificationsResponse.body[0].type, 'task_completed');
   assert.match(gestorNotificationsResponse.body[0].body, /conclu/i);
+
+  await pool.query('DELETE FROM notifications');
+  await pool.query('DELETE FROM tasks');
+  await userModel.remove(thalisson.id);
+  await userModel.remove(gestor.id);
+  await pool.query('DELETE FROM clients');
+});
+
+test('tarefas antigas ja atribuidas fazem backfill de notificacao ao abrir o painel', { concurrency: false }, async () => {
+  const suffix = Date.now() + 21;
+  const gestor = await createUser({
+    name: `Gabriel ${suffix}`,
+    email: `gabriel.backfill.${suffix}@one.test`,
+    role: 'gestor',
+  });
+  const thalisson = await createUser({
+    name: `Thalisson Backfill ${suffix}`,
+    email: `thalisson.backfill.${suffix}@one.test`,
+    role: 'designer',
+  });
+
+  const clientId = await createClient(`Cliente Backfill ${suffix}`, `Empresa Backfill ${suffix}`, gestor.id);
+
+  const insertedTask = await pool.query(
+    `INSERT INTO tasks (client_id, created_by, assigned_to, status, type, column_name, title, description, deadline)
+     VALUES ($1, $2, $3, 'Backlog', 'copywriting', 'todo', $4, $5, CURRENT_DATE)
+     RETURNING id`,
+    [clientId, gestor.id, thalisson.id, 'Ajustar copies da campanha', 'Tarefa sem notificacao previa']
+  );
+
+  const thalissonAuth = await login(thalisson.email);
+  const unreadCountResponse = await request(app)
+    .get('/api/notifications/unread-count')
+    .set('Authorization', `Bearer ${thalissonAuth.body.accessToken}`);
+
+  assert.equal(unreadCountResponse.status, 200);
+  assert.equal(unreadCountResponse.body.total, 1);
+
+  const notificationsResponse = await request(app)
+    .get('/api/notifications')
+    .set('Authorization', `Bearer ${thalissonAuth.body.accessToken}`);
+
+  assert.equal(notificationsResponse.status, 200);
+  assert.equal(notificationsResponse.body.length, 1);
+  assert.equal(notificationsResponse.body[0].entity_id, insertedTask.rows[0].id);
+  assert.equal(notificationsResponse.body[0].type, 'task_assigned');
+  assert.match(notificationsResponse.body[0].body, /Gabriel/);
+  assert.match(notificationsResponse.body[0].body, /Ajustar copies da campanha/);
 
   await pool.query('DELETE FROM notifications');
   await pool.query('DELETE FROM tasks');
