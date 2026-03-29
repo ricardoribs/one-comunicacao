@@ -67,21 +67,23 @@ const PIPELINE_STAGE_LABELS = {
 };
 
 const PAGE_ACCESS = {
-  admin: ["home", "kanban", "crm", "campanhas", "producao", "trafego", "analytics", "financeiro", "acesso"],
-  gestor: ["home", "kanban", "crm", "campanhas", "producao", "trafego", "analytics"],
-  designer: ["home", "kanban", "producao"],
-  comercial: ["home", "kanban", "crm", "campanhas", "producao", "financeiro"],
-  dev: ["home", "kanban", "producao", "analytics"]
+  admin: ["home", "kanban", "calendario", "crm", "campanhas", "producao", "trafego", "analytics", "financeiro", "acesso"],
+  gestor: ["home", "kanban", "calendario", "crm", "campanhas", "producao", "trafego", "analytics"],
+  designer: ["home", "kanban", "calendario", "producao"],
+  comercial: ["home", "kanban", "calendario", "crm", "campanhas", "producao", "financeiro"],
+  dev: ["home", "kanban", "calendario", "producao", "analytics"]
 };
 
 const ROLE_DATA_ACCESS = {
   admin: {
     manageTasks: true,
+    manageCalendarEvents: true,
     manageClients: true,
     manageMaterials: true,
     homeFinancial: true,
     homeTeam: true,
     assignableUsers: true,
+    calendarEvents: true,
     clients: true,
     contacts: true,
     campaigns: true,
@@ -97,11 +99,13 @@ const ROLE_DATA_ACCESS = {
   },
   gestor: {
     manageTasks: true,
+    manageCalendarEvents: true,
     manageClients: true,
     manageMaterials: true,
     homeFinancial: false,
     homeTeam: true,
     assignableUsers: true,
+    calendarEvents: true,
     clients: true,
     contacts: true,
     campaigns: true,
@@ -117,11 +121,13 @@ const ROLE_DATA_ACCESS = {
   },
   designer: {
     manageTasks: true,
+    manageCalendarEvents: false,
     manageClients: false,
     manageMaterials: true,
     homeFinancial: false,
     homeTeam: false,
     assignableUsers: true,
+    calendarEvents: true,
     clients: true,
     contacts: false,
     campaigns: true,
@@ -137,11 +143,13 @@ const ROLE_DATA_ACCESS = {
   },
   comercial: {
     manageTasks: true,
+    manageCalendarEvents: false,
     manageClients: true,
     manageMaterials: false,
     homeFinancial: true,
     homeTeam: false,
     assignableUsers: true,
+    calendarEvents: true,
     clients: true,
     contacts: true,
     campaigns: true,
@@ -157,11 +165,13 @@ const ROLE_DATA_ACCESS = {
   },
   dev: {
     manageTasks: true,
+    manageCalendarEvents: false,
     manageClients: false,
     manageMaterials: false,
     homeFinancial: false,
     homeTeam: false,
     assignableUsers: true,
+    calendarEvents: true,
     clients: true,
     contacts: false,
     campaigns: false,
@@ -273,6 +283,16 @@ const CLIENT_PLAN_GROUPS = [
   },
 ];
 
+const CALENDAR_COLOR_OPTIONS = [
+  { value: "pink", label: "Rosa ONE" },
+  { value: "blue", label: "Azul" },
+  { value: "green", label: "Verde" },
+  { value: "gold", label: "Dourado" },
+];
+const CALENDAR_VIEW_START_HOUR = 7;
+const CALENDAR_VIEW_END_HOUR = 22;
+const CALENDAR_SLOT_HEIGHT = 58;
+
 const state = {
   session: null,
   dashboard: null,
@@ -291,9 +311,15 @@ const state = {
   reports: [],
   materials: [],
   files: [],
+  calendarEvents: [],
   notifications: [],
   checklist: null,
   activePage: "home",
+  calendar: {
+    weekStart: null,
+    loadedWeekKey: "",
+    loading: false,
+  },
   filters: {
     kanbanClient: "",
     analyticsClient: "",
@@ -493,6 +519,8 @@ function executeInlineAction(action, event, element) {
     doLogout,
     goTo,
     goToTab,
+    shiftCalendarWeek,
+    goToCalendarToday,
     openModal,
     setTab,
     filterKanban,
@@ -510,6 +538,7 @@ function executeInlineAction(action, event, element) {
     deleteLead,
     convertLead,
     openChargeModalForClient,
+    deleteCalendarEvent,
     deleteCampaign,
     deleteTask,
     deleteMaterial,
@@ -560,6 +589,10 @@ function hasRoleDataAccess(capability) {
 
 function canManageTasks() {
   return hasRoleDataAccess("manageTasks");
+}
+
+function canManageCalendarEvents() {
+  return hasRoleDataAccess("manageCalendarEvents");
 }
 
 function canManageClients() {
@@ -669,6 +702,12 @@ function saveSession(session) {
 function clearSession() {
   APP.clearSession();
   state.session = null;
+  state.calendarEvents = [];
+  state.calendar = {
+    weekStart: null,
+    loadedWeekKey: "",
+    loading: false,
+  };
 }
 
 function loadInternalHandoff() {
@@ -1053,6 +1092,423 @@ function campaignChannelOptions(selected = "") {
   return knownOptions;
 }
 
+function padNumber(value) {
+  return String(value).padStart(2, "0");
+}
+
+function startOfCalendarWeek(value = new Date()) {
+  const source = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+  if (Number.isNaN(source.getTime())) {
+    return startOfCalendarWeek(new Date());
+  }
+
+  source.setHours(0, 0, 0, 0);
+  const day = source.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  source.setDate(source.getDate() + diff);
+  return source;
+}
+
+function addCalendarDays(value, days) {
+  const next = new Date(value.getTime());
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function getCalendarWeekStartDate(value = state.calendar.weekStart) {
+  return startOfCalendarWeek(value || new Date());
+}
+
+function getCalendarWeekKey(value = state.calendar.weekStart) {
+  const date = getCalendarWeekStartDate(value);
+  return `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}-${padNumber(date.getDate())}`;
+}
+
+function formatCalendarMonthDay(value, options = {}) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: options.withMonth === false ? undefined : "short",
+    weekday: options.weekday || undefined,
+  }).format(date);
+}
+
+function formatCalendarWeekday(value) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    weekday: "short",
+  }).format(date);
+}
+
+function formatCalendarTime(value) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function formatCalendarTimeRange(startsAt, endsAt) {
+  const startLabel = formatCalendarTime(startsAt);
+  const endLabel = formatCalendarTime(endsAt);
+  if (!startLabel && !endLabel) {
+    return "";
+  }
+  if (!endLabel) {
+    return startLabel;
+  }
+  return `${startLabel} - ${endLabel}`;
+}
+
+function formatCalendarWeekLabel(weekStart) {
+  const start = getCalendarWeekStartDate(weekStart);
+  const end = addCalendarDays(start, 6);
+  const sameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
+
+  if (sameMonth) {
+    return `${padNumber(start.getDate())} - ${padNumber(end.getDate())} ${new Intl.DateTimeFormat("pt-BR", {
+      month: "long",
+      year: "numeric",
+    }).format(end)}`;
+  }
+
+  return `${formatCalendarMonthDay(start)} - ${formatCalendarMonthDay(end)} ${end.getFullYear()}`;
+}
+
+function getCalendarColorConfig(value) {
+  const normalized = String(value || "pink").trim().toLowerCase();
+  const config = {
+    pink: { className: "is-pink", badgeClass: "badge-pink", label: "Rosa ONE" },
+    blue: { className: "is-blue", badgeClass: "badge-blue", label: "Azul" },
+    green: { className: "is-green", badgeClass: "badge-green", label: "Verde" },
+    gold: { className: "is-gold", badgeClass: "badge-yellow", label: "Dourado" },
+  };
+
+  return config[normalized] || config.pink;
+}
+
+function calendarColorOptions(selected = "pink") {
+  const normalized = String(selected || "pink").trim().toLowerCase();
+  return CALENDAR_COLOR_OPTIONS.map(
+    (option) =>
+      `<option value="${option.value}" ${option.value === normalized ? "selected" : ""}>${escapeHtml(option.label)}</option>`
+  ).join("");
+}
+
+function getCalendarQueryRange(weekStart) {
+  const start = getCalendarWeekStartDate(weekStart);
+  const end = addCalendarDays(start, 7);
+  return {
+    start,
+    end,
+    from: start.toISOString(),
+    to: end.toISOString(),
+  };
+}
+
+function getCalendarEventsForWeek() {
+  return [...state.calendarEvents].sort(
+    (left, right) => new Date(left.starts_at || 0).getTime() - new Date(right.starts_at || 0).getTime()
+  );
+}
+
+function canRenderCalendarPage() {
+  return hasRoleDataAccess("calendarEvents");
+}
+
+async function loadCalendarEvents(anchorDate = null, { force = false, silent = false } = {}) {
+  if (!canRenderCalendarPage()) {
+    return [];
+  }
+
+  const weekStart = getCalendarWeekStartDate(anchorDate || state.calendar.weekStart || new Date());
+  const weekKey = getCalendarWeekKey(weekStart);
+  if (!force && state.calendar.loadedWeekKey === weekKey && state.calendarEvents.length) {
+    state.calendar.weekStart = weekStart.toISOString();
+    renderCalendar();
+    return state.calendarEvents;
+  }
+
+  state.calendar.weekStart = weekStart.toISOString();
+  state.calendar.loading = true;
+  renderCalendar();
+
+  try {
+    const range = getCalendarQueryRange(weekStart);
+    const events = await apiFetch(
+      `/calendar-events?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`,
+      { cache: "no-store" }
+    );
+    state.calendarEvents = toArray(events);
+    state.calendar.loadedWeekKey = weekKey;
+    return state.calendarEvents;
+  } catch (error) {
+    console.warn("[calendar] Falha ao carregar eventos:", error);
+    state.calendarEvents = [];
+    state.calendar.loadedWeekKey = weekKey;
+    if (!silent) {
+      showToast("Não foi possível carregar o calendário agora.");
+    }
+    return [];
+  } finally {
+    state.calendar.loading = false;
+    renderCalendar();
+  }
+}
+
+function buildCalendarSegments(events, weekStart) {
+  const daySegments = Array.from({ length: 7 }, () => []);
+
+  events.forEach((event) => {
+    const eventStart = new Date(event.starts_at);
+    const eventEnd = new Date(event.ends_at);
+    if (Number.isNaN(eventStart.getTime()) || Number.isNaN(eventEnd.getTime()) || eventEnd <= eventStart) {
+      return;
+    }
+
+    for (let dayIndex = 0; dayIndex < 7; dayIndex += 1) {
+      const dayStart = addCalendarDays(weekStart, dayIndex);
+      const trackStart = new Date(dayStart);
+      trackStart.setHours(CALENDAR_VIEW_START_HOUR, 0, 0, 0);
+      const trackEnd = new Date(dayStart);
+      trackEnd.setHours(CALENDAR_VIEW_END_HOUR, 0, 0, 0);
+
+      const segmentStart = new Date(Math.max(eventStart.getTime(), trackStart.getTime()));
+      const segmentEnd = new Date(Math.min(eventEnd.getTime(), trackEnd.getTime()));
+      if (segmentEnd <= segmentStart) {
+        continue;
+      }
+
+      const top = ((segmentStart.getTime() - trackStart.getTime()) / 3600000) * CALENDAR_SLOT_HEIGHT;
+      const height = Math.max(42, ((segmentEnd.getTime() - segmentStart.getTime()) / 3600000) * CALENDAR_SLOT_HEIGHT);
+
+      daySegments[dayIndex].push({
+        ...event,
+        top,
+        height,
+      });
+    }
+  });
+
+  return daySegments;
+}
+
+function buildCalendarGridHtml(events, weekStart) {
+  const hours = Array.from(
+    { length: CALENDAR_VIEW_END_HOUR - CALENDAR_VIEW_START_HOUR },
+    (_, index) => CALENDAR_VIEW_START_HOUR + index
+  );
+  const daySegments = buildCalendarSegments(events, weekStart);
+  const trackHeight = hours.length * CALENDAR_SLOT_HEIGHT;
+  const todayKey = getCalendarWeekKey(new Date());
+
+  const timeColumnHtml = `
+    <div class="calendar-time-column">
+      <div class="calendar-time-head">Hora</div>
+      <div class="calendar-time-track" style="height:${trackHeight}px">
+        ${hours
+          .map(
+            (hour, index) => `
+              <div class="calendar-hour-label" style="top:${index * CALENDAR_SLOT_HEIGHT}px">${padNumber(hour)}:00</div>
+            `
+          )
+          .join("")}
+      </div>
+    </div>
+  `;
+
+  const dayColumnsHtml = Array.from({ length: 7 }, (_, dayIndex) => {
+    const dayDate = addCalendarDays(weekStart, dayIndex);
+    const dayKey = getCalendarWeekKey(dayDate);
+    const isToday = dayKey === todayKey;
+    const segmentsHtml = daySegments[dayIndex]
+      .map((event) => {
+        const color = getCalendarColorConfig(event.color);
+        const manageAction = canManageCalendarEvents() ? ` onclick="openModal('novo-evento', ${event.id})"` : "";
+        const interactiveClass = canManageCalendarEvents() ? " is-clickable" : "";
+        return `
+          <article
+            class="calendar-event-block ${color.className}${interactiveClass}"
+            data-calendar-event-id="${event.id}"
+            style="top:${event.top}px;height:${event.height}px"
+            title="${escapeHtml(`${event.title} · ${formatCalendarTimeRange(event.starts_at, event.ends_at)}`)}"${manageAction}
+          >
+            <strong>${escapeHtml(event.title)}</strong>
+            <span>${escapeHtml(formatCalendarTimeRange(event.starts_at, event.ends_at))}</span>
+            ${event.location ? `<small>${escapeHtml(event.location)}</small>` : ""}
+          </article>
+        `;
+      })
+      .join("");
+
+    return `
+      <div class="calendar-day-column ${isToday ? "is-today" : ""}">
+        <div class="calendar-day-head">
+          <span>${escapeHtml(formatCalendarWeekday(dayDate))}</span>
+          <strong>${padNumber(dayDate.getDate())}</strong>
+        </div>
+        <div class="calendar-day-track" style="height:${trackHeight}px">
+          ${hours
+            .map(
+              (_, hourIndex) =>
+                `<div class="calendar-hour-slot" style="top:${hourIndex * CALENDAR_SLOT_HEIGHT}px;height:${CALENDAR_SLOT_HEIGHT}px"></div>`
+            )
+            .join("")}
+          ${segmentsHtml}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  return `
+    <div class="calendar-week-grid">
+      ${timeColumnHtml}
+      <div class="calendar-week-columns">${dayColumnsHtml}</div>
+    </div>
+  `;
+}
+
+function buildCalendarUpcomingHtml(events) {
+  const items = events.slice(0, 8);
+  if (!items.length) {
+    return UI.empty("Nenhum evento nesta semana", "Crie o primeiro compromisso da equipe para começar a agenda compartilhada.");
+  }
+
+  return items
+    .map((event) => {
+      const color = getCalendarColorConfig(event.color);
+      const canManage = canManageCalendarEvents();
+      return `
+        <article class="calendar-upcoming-card" data-calendar-event-id="${event.id}">
+          <div class="calendar-upcoming-head">
+            <div class="cell-stack">
+              <strong class="cell-title">${escapeHtml(event.title)}</strong>
+              <span class="cell-sub">${escapeHtml(
+                `${formatCalendarMonthDay(event.starts_at, { weekday: "short" })} · ${formatCalendarTimeRange(
+                  event.starts_at,
+                  event.ends_at
+                )}`
+              )}</span>
+            </div>
+            <span class="badge ${color.badgeClass}">${escapeHtml(color.label)}</span>
+          </div>
+          ${event.location ? `<div class="calendar-upcoming-meta">${escapeHtml(event.location)}</div>` : ""}
+          ${event.description ? `<div class="calendar-upcoming-note">${escapeHtml(event.description)}</div>` : ""}
+          ${
+            canManage
+              ? `<div class="calendar-upcoming-actions">
+                  <button type="button" class="btn btn-ghost btn-sm" onclick="openModal('novo-evento', ${event.id})">Editar</button>
+                  <button type="button" class="btn btn-danger btn-sm" onclick="deleteCalendarEvent(${event.id})">Excluir</button>
+                </div>`
+              : ""
+          }
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function renderCalendar() {
+  const page = document.getElementById("page-calendario");
+  const grid = document.getElementById("calendar-week-grid");
+  const upcoming = document.getElementById("calendar-upcoming-list");
+  const weekLabel = document.getElementById("calendar-week-label");
+  const weekSub = document.getElementById("calendar-week-sub");
+  const newEventButton = document.getElementById("btn-new-calendar-event");
+
+  if (!grid || !upcoming || !weekLabel || !weekSub) {
+    return;
+  }
+
+  const weekStart = getCalendarWeekStartDate(state.calendar.weekStart || new Date());
+  state.calendar.weekStart = weekStart.toISOString();
+  weekLabel.textContent = `Semana de ${formatCalendarWeekLabel(weekStart)}`;
+  weekSub.textContent = "Agenda compartilhada da equipe. Os lembretes automáticos saem quando o evento entra na janela de 24h e 1h.";
+
+  if (newEventButton) {
+    newEventButton.style.display = canManageCalendarEvents() ? "" : "none";
+  }
+
+  if (!canRenderCalendarPage()) {
+    grid.innerHTML = UI.empty("Calendário indisponível", "Este perfil não possui acesso ao calendário interno.");
+    upcoming.innerHTML = "";
+    return;
+  }
+
+  if (state.calendar.loading) {
+    grid.innerHTML = UI.empty("Carregando agenda...", "Buscando os eventos da semana.");
+    upcoming.innerHTML = UI.empty("Carregando próximos eventos...", "");
+    return;
+  }
+
+  const events = getCalendarEventsForWeek();
+  grid.innerHTML = buildCalendarGridHtml(events, weekStart);
+  upcoming.innerHTML = buildCalendarUpcomingHtml(events);
+  if (page) {
+    bindLegacyInlineHandlers(page);
+  }
+}
+
+function focusCalendarEvent(eventId) {
+  if (!eventId) {
+    return;
+  }
+
+  window.requestAnimationFrame(() => {
+    const targets = document.querySelectorAll(`[data-calendar-event-id="${eventId}"]`);
+    if (!targets.length) {
+      return;
+    }
+
+    const [firstTarget] = targets;
+    firstTarget.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+    targets.forEach((node) => node.classList.add("is-highlighted"));
+    window.setTimeout(() => targets.forEach((node) => node.classList.remove("is-highlighted")), 2200);
+  });
+}
+
+async function openCalendarEventById(eventId) {
+  if (!eventId || !goTo("calendario")) {
+    return;
+  }
+
+  try {
+    const localEvent = state.calendarEvents.find((item) => Number(item.id) === Number(eventId));
+    const eventRecord = localEvent || (await apiFetch(`/calendar-events/${eventId}`, { cache: "no-store" }));
+    if (eventRecord?.starts_at) {
+      await loadCalendarEvents(eventRecord.starts_at, { force: true, silent: true });
+    } else {
+      await loadCalendarEvents(state.calendar.weekStart || new Date(), { force: true, silent: true });
+    }
+  } catch (_error) {
+    await loadCalendarEvents(state.calendar.weekStart || new Date(), { force: true, silent: true });
+  }
+
+  focusCalendarEvent(eventId);
+}
+
+function shiftCalendarWeek(offset) {
+  const currentWeek = getCalendarWeekStartDate(state.calendar.weekStart || new Date());
+  const targetWeek = addCalendarDays(currentWeek, Number(offset || 0) * 7);
+  loadCalendarEvents(targetWeek, { force: true }).catch(() => {});
+}
+
+function goToCalendarToday() {
+  loadCalendarEvents(new Date(), { force: true }).catch(() => {});
+}
+
 function invoiceStatusOptions(selected = "") {
   const normalized = String(selected || "").trim();
   const knownOptions = INVOICE_STATUS_OPTIONS.map(
@@ -1323,7 +1779,12 @@ function buildNotificationPanelHtml() {
     ? notifications
         .map((item) => {
           const unreadClass = isUnreadNotification(item) ? " is-unread" : "";
-          const action = item.entity_type === "task" && item.entity_id ? "Abrir tarefa" : "Abrir";
+          const action =
+            item.entity_type === "task" && item.entity_id
+              ? "Abrir tarefa"
+              : item.entity_type === "calendar_event" && item.entity_id
+                ? "Abrir calendário"
+                : "Abrir";
 
           return `
             <button
@@ -1350,7 +1811,7 @@ function buildNotificationPanelHtml() {
     : `
         <div class="notification-empty">
           <strong>Nenhuma notificação</strong>
-          <span>As novas movimentações de tarefa aparecerão aqui.</span>
+          <span>As novas tarefas e lembretes de agenda aparecerão aqui.</span>
         </div>
       `;
 
@@ -1404,6 +1865,7 @@ function showNewNotificationToast(delta = 0) {
 
   const unreadItems = sortNotifications(state.notifications).filter(isUnreadNotification);
   const taskAssignedItems = unreadItems.filter((item) => item.type === "task_assigned");
+  const calendarReminderItems = unreadItems.filter((item) => String(item.type || "").startsWith("calendar_event_reminder"));
   const titles = taskAssignedItems
     .slice(0, Math.max(1, Math.min(delta, 3)))
     .map((item) => extractNotificationTaskTitle(item))
@@ -1414,6 +1876,10 @@ function showNewNotificationToast(delta = 0) {
   } else if (titles.length > 1) {
     const suffix = delta > titles.length ? " ..." : "";
     showToast(`Novas tarefas para você: ${titles.join(" · ")}${suffix}`);
+  } else if (calendarReminderItems.length === 1) {
+    showToast(`Evento próximo: ${extractNotificationTaskTitle(calendarReminderItems[0])}`);
+  } else if (calendarReminderItems.length > 1) {
+    showToast(`Você recebeu ${calendarReminderItems.length} lembretes de agenda.`);
   } else if (delta === 1) {
     showToast("Você recebeu 1 nova notificação.");
   } else {
@@ -1682,6 +2148,11 @@ async function handleNotificationClick(id, entityType, entityId) {
   if (entityType === "task" && entityId) {
     goTo("kanban");
     focusTaskCard(entityId);
+    return;
+  }
+
+  if (entityType === "calendar_event" && entityId) {
+    await openCalendarEventById(entityId);
   }
 }
 
@@ -1924,6 +2395,9 @@ function goTo(page) {
   state.activePage = page;
   syncNavigation();
   closeSidebar();
+  if (page === "calendario") {
+    loadCalendarEvents(state.calendar.weekStart || new Date(), { silent: true }).catch(() => {});
+  }
   return true;
 }
 
@@ -3548,6 +4022,7 @@ function renderAll() {
     ["contadores", renderSidebarCounts],
     ["home", renderHome],
     ["kanban", renderKanban],
+    ["calendario", renderCalendar],
     ["crm", renderCRM],
     ["campanhas", renderCampaigns],
     ["producao", renderProduction],
@@ -4397,6 +4872,38 @@ function openModal(type, id = null) {
     );
   }
 
+  if (type === "novo-evento") {
+    if (!canManageCalendarEvents()) {
+      showToast("Somente admin e gestor podem cadastrar eventos.");
+      return;
+    }
+
+    const eventRecord = state.calendarEvents.find((item) => item.id === id) || {};
+    const defaultStart = new Date();
+    defaultStart.setMinutes(0, 0, 0);
+    defaultStart.setHours(defaultStart.getHours() + 1);
+    const defaultEnd = new Date(defaultStart.getTime());
+    defaultEnd.setHours(defaultEnd.getHours() + 1);
+    html = modalFormWrapper(
+      eventRecord.id ? "Editar evento" : "Novo evento",
+      `
+        <div class="field form-full"><label>Título</label><input name="title" value="${escapeHtml(eventRecord.title || "")}" required></div>
+        <div class="field"><label>Início</label><input type="datetime-local" name="starts_at" value="${formatDateTimeLocalValue(
+          eventRecord.starts_at || defaultStart
+        )}" required></div>
+        <div class="field"><label>Fim</label><input type="datetime-local" name="ends_at" value="${formatDateTimeLocalValue(
+          eventRecord.ends_at || defaultEnd
+        )}" required></div>
+        <div class="field"><label>Local</label><input name="location" value="${escapeHtml(eventRecord.location || "")}" placeholder="Ex.: reunião online, estúdio, cliente, auditório"></div>
+        <div class="field"><label>Cor</label><select name="color">${calendarColorOptions(eventRecord.color || "pink")}</select></div>
+        <div class="field form-full"><label>Descrição</label><textarea name="description" placeholder="Contexto do evento, entregas esperadas, pauta ou observações.">${escapeHtml(
+          eventRecord.description || ""
+        )}</textarea></div>
+      `,
+      eventRecord.id ? "Atualizar" : "Salvar"
+    );
+  }
+
   if (type === "novo-lead") {
     const contact = state.contacts.find((item) => item.id === id) || {};
     html = modalFormWrapper(
@@ -4560,6 +5067,19 @@ function openModal(type, id = null) {
     if (type === "nova-tarefa") {
       initTaskStatusAssist(form);
     }
+    if (type === "novo-evento") {
+      window.setTimeout(() => {
+        const startInput = form.querySelector('[name="starts_at"]');
+        const endInput = form.querySelector('[name="ends_at"]');
+        if (startInput && endInput && !endInput.value && startInput.value) {
+          const startDate = new Date(startInput.value);
+          if (!Number.isNaN(startDate.getTime())) {
+            startDate.setHours(startDate.getHours() + 1);
+            endInput.value = formatDateTimeLocalValue(startDate);
+          }
+        }
+      }, 0);
+    }
     window.setTimeout(() => {
       form.querySelector("input, select, textarea, button")?.focus();
     }, 0);
@@ -4597,6 +5117,20 @@ async function submitModal(event, type, id) {
         method: id ? "PUT" : "POST",
         body: JSON.stringify(payload)
       });
+    }
+
+    if (type === "novo-evento") {
+      const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["description", "location"]);
+      payload.starts_at = payload.starts_at ? new Date(payload.starts_at).toISOString() : payload.starts_at;
+      payload.ends_at = payload.ends_at ? new Date(payload.ends_at).toISOString() : payload.ends_at;
+      await apiFetch(id ? `/calendar-events/${id}` : "/calendar-events", {
+        method: id ? "PUT" : "POST",
+        body: JSON.stringify(payload)
+      });
+      closeModal();
+      await loadCalendarEvents(state.calendar.weekStart || new Date(), { force: true });
+      showToast("Evento salvo com sucesso.");
+      return;
     }
 
     if (type === "novo-lead") {
@@ -4706,6 +5240,16 @@ async function deleteClient(id) {
     await apiFetch(`/clients/${id}`, { method: "DELETE" });
     await refreshData();
     showToast("Cliente removido com sucesso.");
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function deleteCalendarEvent(id) {
+  try {
+    await apiFetch(`/calendar-events/${id}`, { method: "DELETE" });
+    await loadCalendarEvents(state.calendar.weekStart || new Date(), { force: true });
+    showToast("Evento removido com sucesso.");
   } catch (error) {
     showToast(error.message);
   }
