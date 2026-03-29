@@ -1,6 +1,50 @@
 const logger = require('../config/logger');
+const calendarEventModel = require('../models/calendarEventModel');
 const notificationModel = require('../models/notificationModel');
 const taskModel = require('../models/taskModel');
+
+const CALENDAR_REMINDER_WINDOWS = [
+  {
+    reminderType: '24h',
+    notificationType: 'calendar_event_reminder_24h',
+    title: 'Evento se aproximando',
+    offsetFromNowMs: 60 * 60 * 1000,
+    offsetToNowMs: 24 * 60 * 60 * 1000,
+  },
+  {
+    reminderType: '1h',
+    notificationType: 'calendar_event_reminder_1h',
+    title: 'Evento em breve',
+    offsetFromNowMs: 0,
+    offsetToNowMs: 60 * 60 * 1000,
+  },
+];
+
+function formatCalendarEventMoment(value) {
+  const date = value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) {
+    return 'em breve';
+  }
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+    timeZone: 'America/Sao_Paulo',
+  }).format(date);
+}
+
+function buildCalendarReminderBody(event, reminderWindow) {
+  const title = String(event?.title || 'Evento').trim();
+  const location = String(event?.location || '').trim();
+  const when = formatCalendarEventMoment(event?.starts_at);
+  const suffix = location ? ` · ${location}` : '';
+
+  if (reminderWindow.reminderType === '1h') {
+    return `"${title}" começa ${when}.${suffix ? ` Local: ${location}.` : ''}`;
+  }
+
+  return `"${title}" está agendado para ${when}.${suffix ? ` Local: ${location}.` : ''}`;
+}
 
 function buildTaskAssignedBody(task, assignedByName = '') {
   const taskTitle = String(task?.title || 'Nova tarefa').trim();
@@ -68,6 +112,55 @@ async function notifyTaskCompleted({ task, completedBy, notifyUserId }) {
   });
 }
 
+async function syncUpcomingCalendarReminders(user) {
+  if (!user?.id || user.role === 'client') {
+    return [];
+  }
+
+  try {
+    const now = Date.now();
+    const createdNotifications = [];
+
+    for (const reminderWindow of CALENDAR_REMINDER_WINDOWS) {
+      const events = await calendarEventModel.listDueReminderCandidates(user.id, {
+        from: new Date(now + reminderWindow.offsetFromNowMs).toISOString(),
+        to: new Date(now + reminderWindow.offsetToNowMs).toISOString(),
+        reminderType: reminderWindow.reminderType,
+      });
+
+      for (const event of events) {
+        const delivery = await calendarEventModel.registerReminderDelivery({
+          eventId: event.id,
+          userId: user.id,
+          reminderType: reminderWindow.reminderType,
+        });
+
+        if (!delivery) {
+          continue;
+        }
+
+        const notification = await notify({
+          userId: user.id,
+          type: reminderWindow.notificationType,
+          title: reminderWindow.title,
+          body: buildCalendarReminderBody(event, reminderWindow),
+          entityType: 'calendar_event',
+          entityId: event.id,
+        });
+
+        if (notification) {
+          createdNotifications.push(notification);
+        }
+      }
+    }
+
+    return createdNotifications;
+  } catch (error) {
+    logger.error({ err: error, user_id: user.id }, 'Falha ao sincronizar lembretes do calendario');
+    return [];
+  }
+}
+
 async function backfillPendingTaskAssignments(userId) {
   if (!userId) {
     return [];
@@ -99,4 +192,5 @@ module.exports = {
   notifyTaskAssigned,
   notifyTaskCompleted,
   backfillPendingTaskAssignments,
+  syncUpcomingCalendarReminders,
 };
