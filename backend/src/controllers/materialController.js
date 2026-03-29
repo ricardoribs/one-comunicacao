@@ -1,10 +1,29 @@
 const asyncHandler = require('../utils/asyncHandler');
+const logger = require('../config/logger');
 const materialModel = require('../models/materialModel');
 const { ensureClientAccess } = require('../utils/access');
 const { sendPaginated } = require('../utils/response');
+const isRecoverableSchemaError = require('../utils/isRecoverableSchemaError');
 
 exports.list = asyncHandler(async (req, res) => {
-  return sendPaginated(res, req, await materialModel.list(req.user, req.query));
+  try {
+    return sendPaginated(res, req, await materialModel.list(req.user, req.query));
+  } catch (error) {
+    if (!isRecoverableSchemaError(error)) {
+      throw error;
+    }
+
+    logger.warn(
+      {
+        err: error,
+        user_id: req.user?.id || null,
+        route: req.originalUrl,
+      },
+      'Falha recuperavel ao listar materiais. Retornando lista vazia.'
+    );
+
+    return sendPaginated(res, req, []);
+  }
 });
 
 exports.create = asyncHandler(async (req, res) => {

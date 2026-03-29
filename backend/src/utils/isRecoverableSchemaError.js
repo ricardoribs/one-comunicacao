@@ -2,6 +2,7 @@ const RECOVERABLE_PG_CODES = new Set([
   '42P01',
   '42703',
   '42883',
+  '42501',
 ]);
 
 function isRecoverableSchemaError(error) {
@@ -14,13 +15,17 @@ function isRecoverableSchemaError(error) {
   }
 
   const message = String(error.message || '').toLowerCase();
+  const normalizedMessage = message.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
   return (
-    message.includes('does not exist')
-    || message.includes('nao existe')
-    || message.includes('não existe')
-    || message.includes('undefined column')
-    || message.includes('undefined table')
-    || message.includes('undefined function')
+    normalizedMessage.includes('does not exist')
+    || normalizedMessage.includes('nao existe')
+    || normalizedMessage.includes('undefined column')
+    || normalizedMessage.includes('undefined table')
+    || normalizedMessage.includes('undefined function')
+    || normalizedMessage.includes('permission denied')
+    || normalizedMessage.includes('row-level security')
+    || normalizedMessage.includes('policy')
   );
 }
 
