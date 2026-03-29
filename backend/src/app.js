@@ -45,6 +45,7 @@ const checklistRoutes = require('./routes/checklistRoutes');
 
 const app = express();
 const htmlCache = new Map();
+const assetVersionCache = new Map();
 
 sentry.initSentry();
 
@@ -191,11 +192,42 @@ function injectNonce(html, nonce) {
     .replace(/<script(?![^>]*\bsrc=)(\s[^>]*)?>/g, (_match, attrs = '') => `<script${attrs} nonce="${nonce}">`);
 }
 
+function getAssetVersion(assetPath) {
+  const normalizedPath = assetPath.split('?')[0];
+  if (assetVersionCache.has(normalizedPath)) {
+    return assetVersionCache.get(normalizedPath);
+  }
+
+  const relativePath = normalizedPath.replace(/^\/+/, '');
+  const absolutePath = path.join(env.frontendDir, relativePath);
+
+  try {
+    const { mtimeMs } = fs.statSync(absolutePath);
+    const version = String(Math.floor(mtimeMs));
+    assetVersionCache.set(normalizedPath, version);
+    return version;
+  } catch (_error) {
+    return null;
+  }
+}
+
+function injectAssetVersions(html) {
+  return html.replace(/((?:src|href)=["'])(\/?assets\/[^"'?#>]+)(\?[^"'>]*)?(["'])/g, (_match, prefix, assetPath, query = '', suffix) => {
+    const version = getAssetVersion(assetPath);
+    if (!version) {
+      return `${prefix}${assetPath}${query}${suffix}`;
+    }
+
+    const separator = query ? '&' : '?';
+    return `${prefix}${assetPath}${query}${separator}v=${version}${suffix}`;
+  });
+}
+
 function sendHtmlPage(res, fileName, status = 200) {
   res.status(status);
   res.setHeader('Cache-Control', 'no-store');
   res.type('html');
-  res.send(injectNonce(loadHtmlTemplate(fileName), res.locals.cspNonce));
+  res.send(injectAssetVersions(injectNonce(loadHtmlTemplate(fileName), res.locals.cspNonce)));
 }
 
 app.use((req, res, next) => {
