@@ -104,6 +104,124 @@ test('listagem de usuarios omite metadados sensiveis no endpoint principal', { c
   await userModel.remove(admin.id);
 });
 
+test('calendario interno permite leitura para a equipe e escrita apenas para admin ou gestor', { concurrency: false }, async () => {
+  const suffix = Date.now() + 205;
+  const admin = await createUser({
+    name: `Admin Calendar ${suffix}`,
+    email: `admin.calendar.${suffix}@one.test`,
+    role: 'admin',
+  });
+  const designer = await createUser({
+    name: `Designer Calendar ${suffix}`,
+    email: `designer.calendar.${suffix}@one.test`,
+    role: 'designer',
+  });
+
+  const adminAuth = await login(admin.email);
+  const startsAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
+  const endsAt = new Date(startsAt.getTime() + 60 * 60 * 1000);
+
+  const created = await request(app)
+    .post('/api/calendar-events')
+    .set('Authorization', `Bearer ${adminAuth.body.accessToken}`)
+    .send({
+      title: 'Alinhamento de pauta semanal',
+      starts_at: startsAt.toISOString(),
+      ends_at: endsAt.toISOString(),
+      location: 'Sala principal',
+      color: 'pink',
+      description: 'Definição das entregas da semana.',
+    });
+
+  assert.equal(created.status, 201);
+  assert.equal(created.body.title, 'Alinhamento de pauta semanal');
+
+  const designerAuth = await login(designer.email);
+  const listed = await request(app)
+    .get('/api/calendar-events')
+    .query({
+      from: new Date(startsAt.getTime() - 24 * 60 * 60 * 1000).toISOString(),
+      to: new Date(endsAt.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+    })
+    .set('Authorization', `Bearer ${designerAuth.body.accessToken}`);
+
+  assert.equal(listed.status, 200);
+  assert.equal(Array.isArray(listed.body), true);
+  assert.equal(listed.body.some((event) => Number(event.id) === Number(created.body.id)), true);
+
+  const forbiddenCreate = await request(app)
+    .post('/api/calendar-events')
+    .set('Authorization', `Bearer ${designerAuth.body.accessToken}`)
+    .send({
+      title: 'Tentativa sem permissão',
+      starts_at: startsAt.toISOString(),
+      ends_at: endsAt.toISOString(),
+    });
+
+  assert.equal(forbiddenCreate.status, 403);
+
+  await pool.query('DELETE FROM notifications');
+  await pool.query('DELETE FROM calendar_event_reminders');
+  await pool.query('DELETE FROM calendar_events');
+  await userModel.remove(designer.id);
+  await userModel.remove(admin.id);
+});
+
+test('notificacoes criam lembrete de evento quando a agenda entra na janela de aviso', { concurrency: false }, async () => {
+  const suffix = Date.now() + 206;
+  const admin = await createUser({
+    name: `Admin Reminder ${suffix}`,
+    email: `admin.reminder.${suffix}@one.test`,
+    role: 'admin',
+  });
+  const designer = await createUser({
+    name: `Designer Reminder ${suffix}`,
+    email: `designer.reminder.${suffix}@one.test`,
+    role: 'designer',
+  });
+
+  const adminAuth = await login(admin.email);
+  const startsAt = new Date(Date.now() + 30 * 60 * 1000);
+  const endsAt = new Date(startsAt.getTime() + 60 * 60 * 1000);
+
+  const created = await request(app)
+    .post('/api/calendar-events')
+    .set('Authorization', `Bearer ${adminAuth.body.accessToken}`)
+    .send({
+      title: 'Cobertura externa da equipe',
+      starts_at: startsAt.toISOString(),
+      ends_at: endsAt.toISOString(),
+      color: 'blue',
+    });
+
+  assert.equal(created.status, 201);
+
+  const designerAuth = await login(designer.email);
+  const unreadCount = await request(app)
+    .get('/api/notifications/unread-count')
+    .set('Authorization', `Bearer ${designerAuth.body.accessToken}`);
+
+  assert.equal(unreadCount.status, 200);
+  assert.equal(unreadCount.body.total >= 1, true);
+
+  const notifications = await request(app)
+    .get('/api/notifications')
+    .set('Authorization', `Bearer ${designerAuth.body.accessToken}`);
+
+  assert.equal(notifications.status, 200);
+  const reminder = notifications.body.find(
+    (item) => item.type === 'calendar_event_reminder_1h' && Number(item.entity_id) === Number(created.body.id)
+  );
+  assert.ok(reminder);
+  assert.equal(reminder.entity_type, 'calendar_event');
+
+  await pool.query('DELETE FROM notifications');
+  await pool.query('DELETE FROM calendar_event_reminders');
+  await pool.query('DELETE FROM calendar_events');
+  await userModel.remove(designer.id);
+  await userModel.remove(admin.id);
+});
+
 test('cliente nao envia mensagem para outro cliente fora do canal interno permitido', { concurrency: false }, async () => {
   const suffix = Date.now() + 202;
   const gestor = await createUser({

@@ -302,6 +302,54 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 .pipe-lead-company{font-size:var(--text-xs);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pipe-lead-val{font-family:var(--font-d);font-size:var(--text-lg);font-weight:700;color:var(--pink);letter-spacing:-.03em;margin-top:var(--space-2)}
 
+/* CALENDARIO */
+#page-calendario{--calendar-slot:58px}
+#page-calendario .calendar-shell{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,340px);gap:var(--space-4);align-items:start}
+#page-calendario .calendar-main-card{padding:var(--space-5);overflow:hidden}
+#page-calendario .calendar-sidebar-stack{display:flex;flex-direction:column;gap:var(--space-4)}
+#page-calendario .calendar-scroll{overflow:auto;padding-bottom:var(--space-2)}
+#page-calendario .calendar-week-grid{display:grid;grid-template-columns:72px minmax(760px,1fr);gap:var(--space-4);align-items:start;min-width:860px}
+#page-calendario .calendar-time-column{display:flex;flex-direction:column}
+#page-calendario .calendar-time-head,#page-calendario .calendar-day-head{min-height:54px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--border);background:#fcfbf9}
+#page-calendario .calendar-time-head{justify-content:flex-start;padding-left:var(--space-2);font-size:var(--text-2xs);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+#page-calendario .calendar-time-track{position:relative}
+#page-calendario .calendar-hour-label{position:absolute;left:0;right:0;padding-right:var(--space-2);font-size:var(--text-xs);line-height:1;color:var(--muted);text-align:right}
+#page-calendario .calendar-week-columns{display:grid;grid-template-columns:repeat(7,minmax(120px,1fr));border-left:1px solid var(--border)}
+#page-calendario .calendar-day-column{border-right:1px solid var(--border)}
+#page-calendario .calendar-day-head{flex-direction:column;gap:2px;font-size:var(--text-xs);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+#page-calendario .calendar-day-head strong{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;padding:0 var(--space-2);font-family:var(--font-d);font-size:var(--text-lg);font-weight:700;letter-spacing:-.03em;color:var(--ink)}
+#page-calendario .calendar-day-column.is-today .calendar-day-head strong{background:var(--pink);color:#fff}
+#page-calendario .calendar-day-track{position:relative;background:
+  linear-gradient(to right, rgba(13,13,15,.06) 1px, transparent 1px),
+  repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--calendar-slot) - 1px), rgba(13,13,15,.08) calc(var(--calendar-slot) - 1px), rgba(13,13,15,.08) var(--calendar-slot));
+  background-size:100% 100%,100% var(--calendar-slot);
+  background-color:#fff}
+#page-calendario .calendar-day-column.is-today .calendar-day-track{background-color:#fff8fb}
+#page-calendario .calendar-hour-slot{position:absolute;left:0;right:0}
+#page-calendario .calendar-event-block{position:absolute;left:8px;right:8px;border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;border:1px solid transparent;box-shadow:0 12px 24px rgba(13,13,15,.08);overflow:hidden;transition:transform var(--tr),box-shadow var(--tr),border-color var(--tr)}
+#page-calendario .calendar-event-block strong{font-size:var(--text-sm);line-height:1.3;color:var(--ink)}
+#page-calendario .calendar-event-block span,#page-calendario .calendar-event-block small{font-size:var(--text-xs);line-height:1.35;color:rgba(13,13,15,.74)}
+#page-calendario .calendar-event-block.is-clickable{cursor:pointer}
+#page-calendario .calendar-event-block.is-clickable:hover{transform:translateY(-2px);box-shadow:0 16px 28px rgba(13,13,15,.14)}
+#page-calendario .calendar-event-block.is-pink{background:rgba(232,52,105,.14);border-color:rgba(232,52,105,.32)}
+#page-calendario .calendar-event-block.is-blue{background:rgba(26,86,176,.14);border-color:rgba(26,86,176,.24)}
+#page-calendario .calendar-event-block.is-green{background:rgba(26,122,64,.14);border-color:rgba(26,122,64,.22)}
+#page-calendario .calendar-event-block.is-gold{background:rgba(154,125,10,.16);border-color:rgba(154,125,10,.24)}
+#page-calendario .calendar-event-block.is-highlighted,#page-calendario .calendar-upcoming-card.is-highlighted{box-shadow:0 0 0 3px rgba(232,52,105,.18);border-color:var(--pink)}
+#page-calendario .calendar-upcoming-card{display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-4);border:1px solid var(--border);background:#fff}
+#page-calendario .calendar-upcoming-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3)}
+#page-calendario .calendar-upcoming-meta{font-size:var(--text-xs);font-weight:600;letter-spacing:.04em;color:var(--muted);text-transform:uppercase}
+#page-calendario .calendar-upcoming-note{font-size:var(--text-sm);line-height:1.5;color:var(--muted)}
+#page-calendario .calendar-upcoming-actions{display:flex;flex-wrap:wrap;gap:var(--space-2);padding-top:var(--space-2);border-top:1px solid var(--border)}
+#page-calendario .calendar-upcoming-actions .btn{flex:1 1 132px;justify-content:center}
+#page-calendario .calendar-legend-list{display:grid;grid-template-columns:1fr;gap:var(--space-3)}
+#page-calendario .calendar-legend-item{display:flex;align-items:center;gap:var(--space-3);font-size:var(--text-sm);color:var(--muted)}
+#page-calendario .calendar-legend-swatch{width:14px;height:14px;border-radius:999px;flex-shrink:0}
+#page-calendario .calendar-legend-swatch.is-pink{background:var(--pink)}
+#page-calendario .calendar-legend-swatch.is-blue{background:var(--info)}
+#page-calendario .calendar-legend-swatch.is-green{background:var(--success)}
+#page-calendario .calendar-legend-swatch.is-gold{background:#c59d2a}
+
 /* CHART BARS */
 .chart-bar-wrap{display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-2) 0}
 .bar-item{display:flex;flex-direction:column;gap:var(--space-2);transition:transform var(--tr)}
@@ -559,6 +607,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .fin-grid{grid-template-columns:1fr 1fr}
   .pipeline{grid-template-columns:repeat(5,minmax(220px,1fr))}
   .kanban{grid-auto-columns:minmax(260px,260px)}
+  #page-calendario .calendar-shell{grid-template-columns:1fr}
   .table-wrap table{min-width:760px}
 }
 @media(max-width:900px){
@@ -599,6 +648,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .finance-header-grid,.fin-row{grid-template-columns:1fr}
   .fin-row{gap:var(--space-2)}
   .table-actions,.item-actions,.modal-actions{flex-wrap:wrap}
+  #page-calendario .calendar-week-grid{min-width:820px}
   #page-crm #crm-clientes .crm-client-list{grid-template-columns:1fr}
   #page-acesso #acesso-membros .access-member-list{grid-template-columns:1fr}
 }
@@ -656,6 +706,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .login-benefits{padding:var(--space-6) var(--space-4)}
   .login-footer{padding:var(--space-4)}
   .login-footer-links{flex-wrap:wrap;gap:var(--space-4)}
+  #page-calendario .calendar-upcoming-actions .btn{flex:1 1 100%}
   #page-crm #crm-clientes .crm-client-facts{grid-template-columns:1fr}
   #page-crm #crm-clientes .crm-client-actions .btn{flex:1 1 100%}
   #page-acesso #acesso-membros .access-member-meta{grid-template-columns:1fr}
@@ -800,6 +851,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 
     <div class="sb-section">Operações</div>
     <div class="sb-link" data-page="kanban" onclick="goTo('kanban')"><span class="icon"></span> Kanban <span class="count" data-count-for="kanban" style="display:none">0</span></div>
+    <div class="sb-link" data-page="calendario" onclick="goTo('calendario')"><span class="icon"></span> Calendário</div>
     <div class="sb-link" data-page="crm" onclick="goTo('crm')"><span class="icon"></span> CRM / Leads</div>
     <div class="sb-link" data-page="campanhas" onclick="goTo('campanhas')"><span class="icon"></span> Campanhas</div>
 
@@ -917,6 +969,59 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
       </div>
     </div>
     <div class="kanban mt-5" id="kanban-board"></div>
+  </div>
+</section>
+
+<!-- CALENDARIO -->
+<section id="page-calendario" class="app-screen">
+  <div class="topbar">
+    <div><div class="topbar-title">Calendário da Equipe</div><div class="topbar-sub">Agenda semanal compartilhada com lembretes automáticos para os próximos eventos.</div></div>
+    <div class="topbar-actions">
+      <button class="btn btn-outline btn-sm" onclick="shiftCalendarWeek(-1)">Semana anterior</button>
+      <button class="btn btn-outline btn-sm" onclick="goToCalendarToday()">Hoje</button>
+      <button class="btn btn-outline btn-sm" onclick="shiftCalendarWeek(1)">Próxima semana</button>
+      <button id="btn-new-calendar-event" class="btn btn-pink btn-sm" onclick="openModal('novo-evento')">+ Novo evento</button>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="calendar-shell">
+      <div class="card calendar-main-card">
+        <div class="section-header">
+          <div>
+            <div class="section-title" id="calendar-week-label">Semana de —</div>
+            <div class="section-sub" id="calendar-week-sub">Agenda compartilhada da equipe.</div>
+          </div>
+        </div>
+        <div class="calendar-scroll">
+          <div id="calendar-week-grid"></div>
+        </div>
+      </div>
+      <div class="calendar-sidebar-stack">
+        <div class="card">
+          <div class="section-header">
+            <div>
+              <div class="section-title">Próximos eventos</div>
+              <div class="section-sub">Compromissos da semana em ordem cronológica.</div>
+            </div>
+          </div>
+          <div id="calendar-upcoming-list" class="stack-sm"></div>
+        </div>
+        <div class="card">
+          <div class="section-header">
+            <div>
+              <div class="section-title">Legenda da agenda</div>
+              <div class="section-sub">Todos visualizam. Admin e gestor organizam a pauta.</div>
+            </div>
+          </div>
+          <div class="calendar-legend-list">
+            <div class="calendar-legend-item"><span class="calendar-legend-swatch is-pink"></span><span>Pauta principal, reunião, alinhamento ou entrega estratégica.</span></div>
+            <div class="calendar-legend-item"><span class="calendar-legend-swatch is-blue"></span><span>Produção, gravação, captação ou ação de campo.</span></div>
+            <div class="calendar-legend-item"><span class="calendar-legend-swatch is-green"></span><span>Comemorações, validações positivas e eventos institucionais.</span></div>
+            <div class="calendar-legend-item"><span class="calendar-legend-swatch is-gold"></span><span>Marcos comerciais, aprovações e alertas importantes.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
