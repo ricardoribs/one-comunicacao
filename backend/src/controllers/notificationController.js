@@ -1,7 +1,9 @@
 const asyncHandler = require('../utils/asyncHandler');
 const notificationModel = require('../models/notificationModel');
+const notificationService = require('../services/notificationService');
 
 exports.list = asyncHandler(async (req, res) => {
+  await notificationService.backfillPendingTaskAssignments(req.user.id);
   const notifications = await notificationModel.listForUser(req.user.id, {
     limit: Number(req.query.limit || 30),
     unreadOnly: req.query.unread === 'true',
@@ -11,6 +13,7 @@ exports.list = asyncHandler(async (req, res) => {
 });
 
 exports.countUnread = asyncHandler(async (req, res) => {
+  await notificationService.backfillPendingTaskAssignments(req.user.id);
   const total = await notificationModel.countUnread(req.user.id);
   res.json({ total });
 });

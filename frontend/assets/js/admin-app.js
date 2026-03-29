@@ -178,12 +178,13 @@ const ROLE_DATA_ACCESS = {
 };
 
 const NON_BLOCKING_MODULE_FAILURES = new Set(["arquivos", "integrações", "clientes", "métricas"]);
-const NOTIFICATION_POLL_MS = 30000;
+const NOTIFICATION_POLL_MS = 10000;
 const notificationRuntime = {
   pollHandle: null,
   syncingRead: false,
   open: false,
   unread: 0,
+  lastToastUnread: 0,
 };
 const kanbanRuntime = {
   movingTaskId: null,
@@ -1374,6 +1375,44 @@ function renderNotifications() {
   });
 }
 
+function extractNotificationTaskTitle(item) {
+  const body = String(item?.body || "");
+  const bodyMatch = body.match(/"([^"]+)"/);
+  if (bodyMatch?.[1]) {
+    return bodyMatch[1].trim();
+  }
+
+  return String(item?.title || "").trim();
+}
+
+function showNewNotificationToast(delta = 0) {
+  const nextUnread = Number(notificationRuntime.unread || 0);
+  if (delta <= 0 || nextUnread <= notificationRuntime.lastToastUnread) {
+    notificationRuntime.lastToastUnread = nextUnread;
+    return;
+  }
+
+  const unreadItems = sortNotifications(state.notifications).filter(isUnreadNotification);
+  const taskAssignedItems = unreadItems.filter((item) => item.type === "task_assigned");
+  const titles = taskAssignedItems
+    .slice(0, Math.max(1, Math.min(delta, 3)))
+    .map((item) => extractNotificationTaskTitle(item))
+    .filter(Boolean);
+
+  if (titles.length === 1) {
+    showToast(`Nova tarefa para você: ${titles[0]}`);
+  } else if (titles.length > 1) {
+    const suffix = delta > titles.length ? " ..." : "";
+    showToast(`Novas tarefas para você: ${titles.join(" · ")}${suffix}`);
+  } else if (delta === 1) {
+    showToast("Você recebeu 1 nova notificação.");
+  } else {
+    showToast(`Você recebeu ${delta} novas notificações.`);
+  }
+
+  notificationRuntime.lastToastUnread = nextUnread;
+}
+
 function closeNotifications() {
   if (!notificationRuntime.open) {
     return;
@@ -1399,6 +1438,7 @@ async function markNotificationsRead() {
       read_at: item.read_at || readAt,
     }));
     notificationRuntime.unread = 0;
+    notificationRuntime.lastToastUnread = 0;
     renderNotifications();
   } catch (error) {
     console.warn("[notifications] Falha ao marcar notificações como lidas:", error);
@@ -1491,7 +1531,13 @@ async function refreshNotifications({ silent = false, suppressErrors = false } =
     const normalized = sortNotifications(toArray(notifications));
     state.notifications = normalized;
     notificationRuntime.unread = Number(unreadCount?.total || 0);
+    if (notificationRuntime.unread < notificationRuntime.lastToastUnread) {
+      notificationRuntime.lastToastUnread = notificationRuntime.unread;
+    }
     ensureNotificationUi();
+    if (!notificationRuntime.open && notificationRuntime.lastToastUnread === 0 && notificationRuntime.unread > 0) {
+      showNewNotificationToast(notificationRuntime.unread);
+    }
 
     return normalized;
   } catch (error) {
@@ -1513,6 +1559,7 @@ function stopNotificationPolling() {
   notificationRuntime.syncingRead = false;
   notificationRuntime.open = false;
   notificationRuntime.unread = 0;
+  notificationRuntime.lastToastUnread = 0;
   state.notifications = [];
   renderNotifications();
 }
@@ -1535,7 +1582,7 @@ function startNotificationPolling() {
     document.body.dataset.notificationRefreshBound = "1";
   }
 
-  refreshNotificationUnreadCount({ suppressErrors: true }).catch(() => {});
+  refreshNotifications({ silent: true, suppressErrors: true }).catch(() => {});
 
   notificationRuntime.pollHandle = window.setInterval(() => {
     if (document.hidden) {
@@ -1552,11 +1599,27 @@ async function refreshNotificationUnreadCount({ suppressErrors = false } = {}) {
   }
 
   try {
+    const previousUnread = Number(notificationRuntime.unread || 0);
     const data = await apiFetch("/notifications/unread-count", {
       cache: "no-store",
     });
     notificationRuntime.unread = Number(data?.total || 0);
+    if (notificationRuntime.unread < notificationRuntime.lastToastUnread) {
+      notificationRuntime.lastToastUnread = notificationRuntime.unread;
+    }
     renderNotifications();
+    const unreadIncreased = notificationRuntime.unread > previousUnread;
+
+    if (notificationRuntime.open || unreadIncreased || !state.notifications.length) {
+      const notifications = await apiFetch("/notifications?limit=30", { cache: "no-store" });
+      state.notifications = sortNotifications(toArray(notifications));
+      renderNotifications();
+    }
+
+    if (unreadIncreased) {
+      showNewNotificationToast(notificationRuntime.unread - previousUnread);
+    }
+
     return notificationRuntime.unread;
   } catch (error) {
     console.warn("[notifications] Falha ao carregar contagem:", error);
@@ -1597,6 +1660,7 @@ async function handleNotificationClick(id, entityType, entityId) {
           : item
       );
       notificationRuntime.unread = Math.max(0, Number(notificationRuntime.unread || 0) - 1);
+      notificationRuntime.lastToastUnread = Math.min(notificationRuntime.lastToastUnread, notificationRuntime.unread);
     } catch (error) {
       console.warn("[notifications] Falha ao marcar item como lido:", error);
     }
