@@ -15,6 +15,10 @@ const corsOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')
   .map((item) => item.trim())
   .filter(Boolean);
+const requestedDbPoolMax = Number(process.env.DB_POOL_MAX || (isProduction ? 8 : 20));
+const dbPoolMax = Number.isFinite(requestedDbPoolMax)
+  ? Math.max(1, isProduction ? Math.min(requestedDbPoolMax, 8) : requestedDbPoolMax)
+  : (isProduction ? 8 : 20);
 
 module.exports = {
   nodeEnv,
@@ -30,7 +34,7 @@ module.exports = {
   loginLockMinutes: Number(process.env.LOGIN_LOCK_MINUTES || 15),
   refreshCookieName: process.env.REFRESH_COOKIE_NAME || 'one_refresh_token',
   uploadMaxFileSizeMb: Number(process.env.UPLOAD_MAX_FILE_SIZE_MB || 10),
-  dbPoolMax: Number(process.env.DB_POOL_MAX || 20),
+  dbPoolMax,
   dbConnectionTimeoutMs: Number(process.env.DB_CONNECTION_TIMEOUT_MS || 5000),
   dbIdleTimeoutMs: Number(process.env.DB_IDLE_TIMEOUT_MS || 10000),
   dbQueryTimeoutMs: Number(process.env.DB_QUERY_TIMEOUT_MS || 10000),
