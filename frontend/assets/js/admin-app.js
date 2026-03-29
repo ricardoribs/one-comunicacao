@@ -191,6 +191,16 @@ const kanbanRuntime = {
   dragPreviewEl: null,
 };
 
+async function runAsyncTasksInBatches(taskFactories, batchSize = 4) {
+  const results = [];
+  for (let index = 0; index < taskFactories.length; index += batchSize) {
+    const batch = taskFactories.slice(index, index + batchSize);
+    const batchResults = await Promise.all(batch.map((factory) => factory()));
+    results.push(...batchResults);
+  }
+  return results;
+}
+
 const TASK_TYPE_OPTIONS = [
   { value: "design_grafico", label: "DESIGN GRÁFICO" },
   { value: "copywriting", label: "COPYWRITING" },
@@ -3695,25 +3705,27 @@ async function refreshData() {
     platformBreakdown.innerHTML = UI.empty("Carregando tráfego...", "Buscando métricas e campanhas.");
   }
 
-  const [dashboard, team, assignableUsers, clients, campaigns, tasks, checklist, users, accessMembers, contacts, invoices, metrics, reports, materials, files, charges, integrations] = await Promise.all([
-    loadResource("dashboard", () => apiFetch("/dashboard"), () => createEmptyDashboard()),
-    roleDataAccess.homeTeam ? loadResource("equipe", () => apiFetch("/users/team", { cache: "no-store" }), []) : Promise.resolve([]),
-    roleDataAccess.assignableUsers ? loadResource("responsáveis", () => apiFetch("/users/assignable", { cache: "no-store" }), []) : Promise.resolve([]),
-    roleDataAccess.clients ? loadResource("clientes", () => apiFetch("/clients", { cache: "no-store" }), []) : Promise.resolve([]),
-    roleDataAccess.campaigns ? loadResource("campanhas", () => apiFetch("/campaigns"), []) : Promise.resolve([]),
-    roleDataAccess.tasks ? loadResource("tarefas", () => apiFetch("/tasks"), []) : Promise.resolve([]),
-    roleDataAccess.tasks ? loadResource("checklist", () => apiFetch("/checklists/daily", { cache: "no-store" }), () => createEmptyChecklistSnapshot()) : Promise.resolve(createEmptyChecklistSnapshot()),
-    roleDataAccess.users ? loadResource("usuários", () => apiFetch("/users", { cache: "no-store" }), []) : Promise.resolve([]),
-    roleDataAccess.users ? loadResource("controle de acesso", () => apiFetch("/users/access-overview", { cache: "no-store" }), []) : Promise.resolve([]),
-    roleDataAccess.contacts ? loadResource("CRM", () => apiFetch("/contacts"), []) : Promise.resolve([]),
-    roleDataAccess.invoices ? loadResource("faturas", () => apiFetch("/invoices"), []) : Promise.resolve([]),
-    roleDataAccess.metrics ? loadResource("métricas", () => apiFetch("/metrics", { cache: "no-store" }), []) : Promise.resolve([]),
-    roleDataAccess.reports ? loadResource("relatórios", () => apiFetch("/reports"), []) : Promise.resolve([]),
-    roleDataAccess.materials ? loadResource("produção", () => apiFetch("/materials"), []) : Promise.resolve([]),
-    roleDataAccess.files ? loadResource("arquivos", () => apiFetch("/files"), []) : Promise.resolve([]),
-    roleDataAccess.charges ? loadResource("cobranças", () => apiFetch("/charges"), []) : Promise.resolve([]),
-    roleDataAccess.integrations ? loadResource("integrações", () => apiFetch("/integrations"), []) : Promise.resolve([])
-  ]);
+  const resourceLoaders = [
+    () => loadResource("dashboard", () => apiFetch("/dashboard"), () => createEmptyDashboard()),
+    () => (roleDataAccess.homeTeam ? loadResource("equipe", () => apiFetch("/users/team", { cache: "no-store" }), []) : Promise.resolve([])),
+    () => (roleDataAccess.assignableUsers ? loadResource("responsáveis", () => apiFetch("/users/assignable", { cache: "no-store" }), []) : Promise.resolve([])),
+    () => (roleDataAccess.clients ? loadResource("clientes", () => apiFetch("/clients", { cache: "no-store" }), []) : Promise.resolve([])),
+    () => (roleDataAccess.campaigns ? loadResource("campanhas", () => apiFetch("/campaigns"), []) : Promise.resolve([])),
+    () => (roleDataAccess.tasks ? loadResource("tarefas", () => apiFetch("/tasks"), []) : Promise.resolve([])),
+    () => (roleDataAccess.tasks ? loadResource("checklist", () => apiFetch("/checklists/daily", { cache: "no-store" }), () => createEmptyChecklistSnapshot()) : Promise.resolve(createEmptyChecklistSnapshot())),
+    () => (roleDataAccess.users ? loadResource("usuários", () => apiFetch("/users", { cache: "no-store" }), []) : Promise.resolve([])),
+    () => (roleDataAccess.users ? loadResource("controle de acesso", () => apiFetch("/users/access-overview", { cache: "no-store" }), []) : Promise.resolve([])),
+    () => (roleDataAccess.contacts ? loadResource("CRM", () => apiFetch("/contacts"), []) : Promise.resolve([])),
+    () => (roleDataAccess.invoices ? loadResource("faturas", () => apiFetch("/invoices"), []) : Promise.resolve([])),
+    () => (roleDataAccess.metrics ? loadResource("métricas", () => apiFetch("/metrics", { cache: "no-store" }), []) : Promise.resolve([])),
+    () => (roleDataAccess.reports ? loadResource("relatórios", () => apiFetch("/reports"), []) : Promise.resolve([])),
+    () => (roleDataAccess.materials ? loadResource("produção", () => apiFetch("/materials"), []) : Promise.resolve([])),
+    () => (roleDataAccess.files ? loadResource("arquivos", () => apiFetch("/files"), []) : Promise.resolve([])),
+    () => (roleDataAccess.charges ? loadResource("cobranças", () => apiFetch("/charges"), []) : Promise.resolve([])),
+    () => (roleDataAccess.integrations ? loadResource("integrações", () => apiFetch("/integrations"), []) : Promise.resolve([])),
+  ];
+
+  const [dashboard, team, assignableUsers, clients, campaigns, tasks, checklist, users, accessMembers, contacts, invoices, metrics, reports, materials, files, charges, integrations] = await runAsyncTasksInBatches(resourceLoaders, 4);
 
   state.dashboard = dashboard && typeof dashboard === "object" ? dashboard : createEmptyDashboard();
   state.team = mergeInternalUsers(toArray(team), toArray(assignableUsers), toArray(state.dashboard?.team), toArray(users));
