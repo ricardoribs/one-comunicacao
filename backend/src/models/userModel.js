@@ -352,11 +352,8 @@ async function resetLoginFailures(id, metadata = {}) {
            locked_until = NULL,
            last_login_at = NOW(),
            last_seen_at = NOW(),
-           last_seen_ip = COALESCE($2, last_seen_ip),
-           last_seen_location = CASE
-             WHEN $3 IS NULL OR $3 = '' THEN last_seen_location
-             ELSE $3
-           END
+           last_seen_ip = COALESCE(NULLIF($2::VARCHAR, ''), last_seen_ip),
+           last_seen_location = COALESCE(NULLIF($3::VARCHAR, ''), last_seen_location)
        WHERE id = $1`,
       [id, metadata.ip || null, metadata.location || null]
     );
@@ -381,11 +378,8 @@ async function recordPresence(id, metadata = {}) {
     await pool.query(
       `UPDATE users
        SET last_seen_at = NOW(),
-           last_seen_ip = COALESCE($2, last_seen_ip),
-           last_seen_location = CASE
-             WHEN $3 IS NULL OR $3 = '' THEN last_seen_location
-             ELSE $3
-           END
+           last_seen_ip = COALESCE(NULLIF($2::VARCHAR, ''), last_seen_ip),
+           last_seen_location = COALESCE(NULLIF($3::VARCHAR, ''), last_seen_location)
        WHERE id = $1`,
       [id, metadata.ip || null, metadata.location || null]
     );
