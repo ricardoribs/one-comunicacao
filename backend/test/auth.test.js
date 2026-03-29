@@ -6,6 +6,7 @@ const app = require('../src/app');
 const userModel = require('../src/models/userModel');
 const pool = require('../src/config/db');
 const env = require('../src/config/env');
+let testIpCounter = 10;
 
 async function createVerifiedUser(email) {
   const password = await bcrypt.hash('Valid@Test123', 12);
@@ -24,6 +25,11 @@ function findRefreshCookie(setCookie = []) {
   return cookie ? cookie.split(';')[0] : null;
 }
 
+function nextTestIp() {
+  testIpCounter += 1;
+  return `198.51.100.${testIpCounter}`;
+}
+
 test('login valido retorna access token e cookie de refresh', async () => {
   const email = `auth.valid.${Date.now()}@one.com`;
   const user = await createVerifiedUser(email);
@@ -31,7 +37,7 @@ test('login valido retorna access token e cookie de refresh', async () => {
   const response = await request(app).post('/api/auth/login').send({
     email,
     password: 'Valid@Test123',
-  });
+  }).set('X-Forwarded-For', nextTestIp());
 
   assert.equal(response.status, 200);
   assert.ok(response.body.accessToken);
@@ -47,7 +53,27 @@ test('senha errada retorna 401', async () => {
   const response = await request(app).post('/api/auth/login').send({
     email,
     password: 'Errada@Test123',
+  }).set('X-Forwarded-For', nextTestIp());
+
+  assert.equal(response.status, 401);
+  await userModel.remove(user.id);
+});
+
+test('hash de senha invalido nao derruba login com 500', async () => {
+  const email = `auth.bad-hash.${Date.now()}@one.com`;
+  const user = await userModel.create({
+    name: 'Broken Hash',
+    email,
+    password: 'hash-legado-invalido',
+    role: 'client',
+    is_active: true,
+    email_verified_at: new Date().toISOString(),
   });
+
+  const response = await request(app).post('/api/auth/login').send({
+    email,
+    password: 'Valid@Test123',
+  }).set('X-Forwarded-For', nextTestIp());
 
   assert.equal(response.status, 401);
   await userModel.remove(user.id);
@@ -64,7 +90,7 @@ test('cliente nao acessa rota de admin', async () => {
   const login = await request(app).post('/api/auth/login').send({
     email,
     password: 'Valid@Test123',
-  });
+  }).set('X-Forwarded-For', nextTestIp());
 
   const response = await request(app).get('/api/users').set('Authorization', `Bearer ${login.body.accessToken}`);
   assert.equal(response.status, 403);
@@ -79,7 +105,7 @@ test('refresh token rotativo invalida o token anterior e revoga todas as sessoes
   const login = await request(app).post('/api/auth/login').send({
     email,
     password: 'Valid@Test123',
-  });
+  }).set('X-Forwarded-For', nextTestIp());
 
   const originalRefreshCookie = findRefreshCookie(login.headers['set-cookie']);
   assert.ok(originalRefreshCookie);
@@ -131,7 +157,7 @@ test('usuario de um cliente nao recebe invoices de outro cliente', async () => {
   const login = await request(app).post('/api/auth/login').send({
     email: userA.email,
     password: 'Valid@Test123',
-  });
+  }).set('X-Forwarded-For', nextTestIp());
 
   const response = await request(app).get('/api/invoices').set('Authorization', `Bearer ${login.body.accessToken}`);
   assert.equal(response.status, 200);

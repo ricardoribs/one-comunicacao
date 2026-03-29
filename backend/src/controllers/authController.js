@@ -1,10 +1,23 @@
 const asyncHandler = require('../utils/asyncHandler');
 const authService = require('../services/authService');
 const env = require('../config/env');
-const { resolveRequestAccessMetadata } = require('../utils/requestMetadata');
+const logger = require('../config/logger');
+const { buildRequestAccessMetadata, resolveRequestAccessMetadata } = require('../utils/requestMetadata');
 
-function tokenMetadata(req) {
-  return resolveRequestAccessMetadata(req);
+async function tokenMetadata(req) {
+  try {
+    return await resolveRequestAccessMetadata(req);
+  } catch (error) {
+    logger.warn(
+      {
+        request_id: req.requestId,
+        route: req.originalUrl,
+        error: error.message,
+      },
+      'Falha ao resolver metadata de acesso. Seguindo com metadata basica.'
+    );
+    return buildRequestAccessMetadata(req);
+  }
 }
 
 function setRefreshCookie(res, refreshToken, cookieOptions) {
