@@ -3425,8 +3425,8 @@ function renderFinance() {
   const openRevenue = state.invoices.filter((invoice) => invoice.status !== "Pago").reduce((acc, invoice) => acc + Number(invoice.amount || 0), 0);
   const generatedCharges = state.charges.reduce((acc, charge) => acc + Number(charge.amount || 0), 0);
   const mediaCost = state.campaigns.reduce((acc, campaign) => acc + Number(campaign.budget || 0), 0);
-  const productionCost = state.materials.length * 180;
-  const operationsCost = state.tasks.length * 95;
+  const productionCost = state.materials.reduce((acc, material) => acc + Number(material.cost || 0), 0);
+  const operationsCost = state.tasks.reduce((acc, task) => acc + Number(task.cost || 0), 0);
   const netProfit = totalRevenue - mediaCost - productionCost - operationsCost;
   const financeGrid = document.querySelector("#page-financeiro .kpi-grid");
 
