@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const { normalizePagination, paginationClause } = require('../utils/pagination');
+const isRecoverableSchemaError = require('../utils/isRecoverableSchemaError');
 
 const USER_UPDATE_COLUMNS = new Set([
   'client_id',
@@ -67,6 +68,30 @@ const safeSelect = `
   LEFT JOIN clients c ON c.id = u.client_id
 `;
 
+const legacyBaseSelect = `
+  SELECT
+    u.id,
+    u.client_id,
+    u.name,
+    u.email,
+    u.password,
+    u.role,
+    u.is_active,
+    u.email_verified_at,
+    u.failed_login_attempts,
+    u.locked_until,
+    u.last_login_at,
+    NULL::TIMESTAMP AS last_seen_at,
+    NULL::VARCHAR(64) AS last_seen_ip,
+    NULL::VARCHAR(160) AS last_seen_location,
+    false AS is_online,
+    u.created_at,
+    c.name AS client_name,
+    c.company AS client_company
+  FROM users u
+  LEFT JOIN clients c ON c.id = u.client_id
+`;
+
 const accessOverviewSelect = `
   SELECT
     u.id,
@@ -93,16 +118,55 @@ const accessOverviewSelect = `
   LEFT JOIN clients c ON c.id = u.client_id
 `;
 
+const legacyAccessOverviewSelect = `
+  SELECT
+    u.id,
+    u.client_id,
+    u.name,
+    u.email,
+    u.role,
+    u.is_active,
+    u.email_verified_at,
+    u.last_login_at,
+    NULL::TIMESTAMP AS last_seen_at,
+    NULL::VARCHAR(160) AS last_seen_location,
+    false AS is_online,
+    u.created_at,
+    c.name AS client_name,
+    c.company AS client_company
+  FROM users u
+  LEFT JOIN clients c ON c.id = u.client_id
+`;
+
 const INTERNAL_ROLE_FILTER = "LOWER(u.role) IN ('admin', 'gestor', 'designer', 'comercial', 'dev')";
 const ACTIVE_INTERNAL_FILTER = 'COALESCE(u.is_active, true) = true';
 
+async function queryWithSchemaFallback(executor, primarySql, fallbackSql, params = []) {
+  try {
+    return await getExecutor(executor).query(primarySql, params);
+  } catch (error) {
+    if (!fallbackSql || !isRecoverableSchemaError(error)) {
+      throw error;
+    }
+
+    return getExecutor(executor).query(fallbackSql, params);
+  }
+}
+
 async function findByEmail(email, executor = pool) {
-  const { rows } = await getExecutor(executor).query(`${baseSelect} WHERE LOWER(u.email) = LOWER($1)`, [email]);
+  const { rows } = await queryWithSchemaFallback(
+    executor,
+    `${baseSelect} WHERE LOWER(u.email) = LOWER($1)`,
+    `${legacyBaseSelect} WHERE LOWER(u.email) = LOWER($1)`,
+    [email]
+  );
   return rows[0] || null;
 }
 
 async function findById(id, executor = pool) {
-  const { rows } = await getExecutor(executor).query(`${baseSelect} WHERE u.id = $1`, [id]);
+  const { rows } = await queryWithSchemaFallback(executor, `${baseSelect} WHERE u.id = $1`, `${legacyBaseSelect} WHERE u.id = $1`, [
+    id,
+  ]);
   return rows[0] || null;
 }
 
@@ -116,7 +180,12 @@ async function list(query = {}) {
 async function listAccessOverview(query = {}) {
   const { limit, offset } = normalizePagination(query);
   const page = paginationClause(limit, offset, 1);
-  const { rows } = await pool.query(`${accessOverviewSelect} ORDER BY u.created_at DESC${page.clause}`, page.values);
+  const { rows } = await queryWithSchemaFallback(
+    pool,
+    `${accessOverviewSelect} ORDER BY u.created_at DESC${page.clause}`,
+    `${legacyAccessOverviewSelect} ORDER BY u.created_at DESC${page.clause}`,
+    page.values
+  );
   return rows;
 }
 
@@ -276,34 +345,55 @@ async function recordFailedLogin(id, lockThreshold, lockMinutes) {
 }
 
 async function resetLoginFailures(id, metadata = {}) {
-  await pool.query(
-    `UPDATE users
-     SET failed_login_attempts = 0,
-         locked_until = NULL,
-         last_login_at = NOW(),
-         last_seen_at = NOW(),
-         last_seen_ip = COALESCE($2, last_seen_ip),
-         last_seen_location = CASE
-           WHEN $3 IS NULL OR $3 = '' THEN last_seen_location
-           ELSE $3
-         END
-     WHERE id = $1`,
-    [id, metadata.ip || null, metadata.location || null]
-  );
+  try {
+    await pool.query(
+      `UPDATE users
+       SET failed_login_attempts = 0,
+           locked_until = NULL,
+           last_login_at = NOW(),
+           last_seen_at = NOW(),
+           last_seen_ip = COALESCE($2, last_seen_ip),
+           last_seen_location = CASE
+             WHEN $3 IS NULL OR $3 = '' THEN last_seen_location
+             ELSE $3
+           END
+       WHERE id = $1`,
+      [id, metadata.ip || null, metadata.location || null]
+    );
+  } catch (error) {
+    if (!isRecoverableSchemaError(error)) {
+      throw error;
+    }
+
+    await pool.query(
+      `UPDATE users
+       SET failed_login_attempts = 0,
+           locked_until = NULL,
+           last_login_at = NOW()
+       WHERE id = $1`,
+      [id]
+    );
+  }
 }
 
 async function recordPresence(id, metadata = {}) {
-  await pool.query(
-    `UPDATE users
-     SET last_seen_at = NOW(),
-         last_seen_ip = COALESCE($2, last_seen_ip),
-         last_seen_location = CASE
-           WHEN $3 IS NULL OR $3 = '' THEN last_seen_location
-           ELSE $3
-         END
-     WHERE id = $1`,
-    [id, metadata.ip || null, metadata.location || null]
-  );
+  try {
+    await pool.query(
+      `UPDATE users
+       SET last_seen_at = NOW(),
+           last_seen_ip = COALESCE($2, last_seen_ip),
+           last_seen_location = CASE
+             WHEN $3 IS NULL OR $3 = '' THEN last_seen_location
+             ELSE $3
+           END
+       WHERE id = $1`,
+      [id, metadata.ip || null, metadata.location || null]
+    );
+  } catch (error) {
+    if (!isRecoverableSchemaError(error)) {
+      throw error;
+    }
+  }
 }
 
 async function createRefreshToken(data, executor = pool) {
