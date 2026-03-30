@@ -4,22 +4,22 @@
 
 Garantir RPO e RTO claros para o banco de dados antes e depois do go-live.
 
-## Frequencia minima
+## Frequência mínima
 
-- backup automatizado diario
-- retencao minima de 7 dias
-- alerta se o ultimo backup tiver mais de 26 horas
+- backup automático diário
+- retenção mínima de 7 dias
+- alerta se o último backup tiver mais de 26 horas
 
-## Antes de abrir producao
+## Antes de abrir produção
 
-1. Confirmar que o provedor do PostgreSQL possui backup automatico habilitado.
+1. Confirmar que o provedor do PostgreSQL possui backup automático habilitado.
 2. Registrar onde o backup fica armazenado.
-3. Validar quem possui permissao para restaurar.
+3. Validar quem possui permissão para restaurar.
 4. Executar um restore drill real em ambiente separado.
 
-## Restore drill minimo
+## Restore drill mínimo
 
-1. Criar um banco temporario.
+1. Criar um banco temporário.
 2. Restaurar o backup mais recente nesse banco.
 3. Rodar:
 
@@ -37,17 +37,17 @@ npm run db:migrate
 5. Medir:
 
 - tempo total de restore
-- tempo total ate aplicacao responder pronta
+- tempo até a aplicação responder como pronta
 
-## Metricas para registrar
+## Métricas para registrar
 
 - RPO real atingido
 - RTO real atingido
-- data e hora do ultimo drill
+- data e hora do último drill
 - nome de quem executou
 
 ## Critério de aceite
 
-- restore concluido sem erro
-- aplicacao sobe normalmente apos restore
+- restore concluído sem erro
+- aplicação sobe normalmente após o restore
 - RTO e RPO atendem o combinado com o cliente

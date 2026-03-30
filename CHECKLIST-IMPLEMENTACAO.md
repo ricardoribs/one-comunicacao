@@ -1,103 +1,86 @@
 # Checklist de Implementação
 
-## Decisões adotadas
+Este checklist consolida as entregas estruturais que já entraram no projeto e os pontos que ainda dependem de operação, infraestrutura ou publicação.
 
-- Perfis finais:
-  - `client` para área do cliente
-  - `admin`, `designer`, `gestor`, `comercial`, `dev` para área interna
-- Regra de escopo:
-  - `admin` vê tudo
-  - `client` vê apenas o próprio `client_id`
-  - perfis internos não-admin usam escopo principal por `clients.manager_id`
-  - tarefas e arquivos também consideram vínculo direto por `assigned_to` / `uploaded_by`
-- JWT:
-  - access token único com expiração de `1h`
-  - refresh token não implementado nesta etapa
-- Uploads:
-  - base local com `multer` para desenvolvimento
-  - decisão de produção documentada para migrar para Cloudinary
-- Banco em produção:
-  - Supabase PostgreSQL recomendado
+## Decisões consolidadas
+
+- Perfis internos ativos:
+  - `admin`
+  - `gestor`
+  - `designer`
+  - `comercial`
+  - `dev`
+- O painel interno concentra:
+  - visão geral;
+  - Kanban;
+  - checklist diário;
+  - calendário;
+  - CRM;
+  - campanhas;
+  - produção;
+  - analytics;
+  - financeiro;
+  - controle de acesso;
+  - notificações;
+  - Meu Perfil.
+- Tarefas podem ter:
+  - um responsável;
+  - múltiplos responsáveis;
+  - `Todos da equipe`.
+- Refresh token é persistido em cookie `HttpOnly`.
+- Uploads em produção devem usar Cloudinary.
 
 ## Status
 
-### Decisões antes de codar
+### Estrutura e banco
 
-- [x] Definir perfis finais
-- [x] Documentar regra de acesso por perfil e por cliente
-- [x] Definir estratégia JWT
-- [x] Definir direção de uploads
-- [x] Definir banco de produção recomendado
-
-### Schema e banco
-
-- [x] Corrigir `users` com perfis finais
-- [x] Corrigir `clients` com `plan`, `mrr`, `segment`, `manager_id`, `started_at`
-- [x] Corrigir `tasks` com `client_id`, `deadline`, `type`, `column_name`
-- [x] Corrigir `messages` com `context_type` e `context_id`
-- [x] Corrigir `metrics` com `period`
-- [x] Corrigir `materials` com `campaign_id`, `uploaded_by`, `filename`, `url`, `status`, `feedback`
-- [x] Escrever migration SQL inicial
-- [ ] Rodar migrations no banco real e validar estrutura
+- [x] Migrations versionadas
+- [x] Reconciliação de schema no boot
+- [x] Tabela de notificações
+- [x] Tabelas de calendário e lembretes
+- [x] Relação `task_assignees` para múltiplos responsáveis
+- [x] Campos de presença e último acesso do usuário
+- [x] Campos adicionais de perfil do usuário
 
 ### Backend
 
-- [x] Estrutura em camadas
-- [x] Express com `cors`, `helmet`, `dotenv`, `morgan`
-- [x] PostgreSQL com `pg`
-- [x] `POST /auth/login`
-- [x] `POST /auth/register`
-- [x] Middleware de autenticação
-- [x] Middleware RBAC
-- [x] Rate limit no login
-- [x] Validação de inputs com Zod
-- [ ] Testar com Insomnia/Postman
-
-### Endpoints
-
-- [x] `GET /dashboard`
-- [x] CRUD de `clients`
-- [x] CRUD de `campaigns`
-- [x] CRUD de `tasks`
-- [x] `GET /metrics?campaign_id=&period=`
-- [x] `POST /materials`
-- [x] `PATCH /materials/:id/status`
-- [x] `GET /invoices`
-- [x] `PATCH /invoices/:id/status`
-- [x] `GET /messages` com filtro de contexto
-- [x] `POST /messages`
-- [x] `GET /users`
-- [x] `PATCH /users/:id`
+- [x] Autenticação com access token e refresh token
+- [x] RBAC no backend
+- [x] Validação com Zod
+- [x] Rate limiting em autenticação
+- [x] Checklist diário com histórico e limpeza
+- [x] Notificações internas
+- [x] Calendário da equipe
+- [x] Meu Perfil com edição e troca de senha
+- [x] Geolocalização por headers de borda e fallback por IP
 
 ### Frontend
 
 - [x] Login real via API
-- [x] JWT em `localStorage`
-- [x] Dashboard do cliente consumindo API
-- [x] Kanban consumindo API
-- [x] CRM consumindo API
-- [x] Campanhas consumindo API
-- [x] Produção consumindo API
-- [x] Analytics consumindo API
-- [x] Financeiro consumindo API
-- [x] Controle de acesso consumindo API
-- [x] Logout real
-- [x] Modais com POST/PUT/PATCH
-- [x] Tratamento básico de erros com feedback visual
+- [x] Painel interno conectado à API
+- [x] Kanban com drag and drop
+- [x] Checklist diário com histórico
+- [x] Calendário interno
+- [x] CRM e campanhas
+- [x] Controle de acesso
+- [x] Meu Perfil
+- [x] Notificações no topo do painel
+- [x] Seleção de múltiplos responsáveis em tarefa
 
-### Qualidade e segurança
+### Segurança e qualidade
 
-- [x] Não retornar `password`
-- [x] Variáveis de ambiente para segredos
-- [x] Filtragem por perfil aplicada nas queries principais
-- [ ] Testar manualmente com pelo menos 2 perfis
+- [x] Queries parametrizadas
+- [x] Tenant guard
+- [x] Validação de upload por magic bytes
+- [x] Cabeçalhos de segurança com `helmet`
+- [x] CORS por allowlist
+- [x] Erros genéricos em produção
+- [x] Logs estruturados
 
-### Deploy
+### Pendente operacional
 
-- [ ] Criar projeto no Supabase
-- [ ] Rodar migrations em produção
-- [ ] Deploy do backend no Render
-- [ ] Configurar variáveis no Render
-- [ ] Deploy do frontend no Vercel/Render Static
-- [ ] Ajustar URL da API para produção
-- [ ] Testar fluxo completo em produção
+- [ ] Validar tudo em produção com dados reais
+- [ ] Confirmar backup automático do banco
+- [ ] Confirmar DSN real do Sentry
+- [ ] Confirmar domínio de e-mail e DNS transacional
+- [ ] Executar smoke test formal pós-deploy

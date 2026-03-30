@@ -1,12 +1,12 @@
 # Mapeamento da Equipe e Acessos
 
-Este documento registra o mapeamento entre a equipe operacional da ONE e os perfis existentes no sistema. Ele serve como referencia para cadastro, revisao de acesso e onboarding.
+Este documento registra como a equipe da ONE está mapeada dentro do painel interno. Ele serve como referência para cadastro, revisão de acesso, onboarding e auditoria operacional.
 
-Data de referencia: 2026-03-27
+Data de referência: `2026-03-30`
 
-## 1. Objetivo
+## Objetivo
 
-O sistema hoje trabalha com estes perfis internos:
+O sistema trabalha hoje com cinco perfis internos:
 
 - `admin`
 - `gestor`
@@ -14,117 +14,59 @@ O sistema hoje trabalha com estes perfis internos:
 - `comercial`
 - `dev`
 
-Como o modelo atual nao suporta multi-role por usuario, o enquadramento abaixo usa o perfil mais aderente a responsabilidade principal de cada pessoa.
+Como o modelo atual ainda não usa múltiplos papéis por usuário, cada pessoa deve ser enquadrada no perfil que melhor representa sua responsabilidade principal.
 
-## 2. Mapeamento atual
+## Mapeamento atual
 
-| Pessoa | Funcao operacional | Perfil no sistema | Acesso pratico principal | Status |
-| --- | --- | --- | --- | --- |
-| Pedro Henrique | Diretor de Comunicacao, delegacao, rotina diaria, reunioes estrategicas, financeiro e ADM | `admin` | Dashboard interno, CRM, Campanhas, Kanban, Producao, Analytics, Financeiro e Controle de Acesso | Perfil definido; criar ou confirmar cadastro quando entrar na base |
-| Gabriel Jordan | Diretor de Marketing, direcionamento das demandas, relacionamento com clientes, comercial, atendimento e apoio financeiro | `admin` | Dashboard interno, CRM, Campanhas, Kanban, Producao, Analytics, Financeiro e Controle de Acesso | Ativo |
-| Janayna Sousa | Auxiliar de Marketing, organizacao da entrega, delegacao, agenda externa, comunicacao entre equipe e clientes | `gestor` | Dashboard interno, Kanban, CRM, Campanhas, Producao e Analytics | Ativa |
-| Thalisson | Captacao e edicao, agenda de gravacao, checagem de roteiro e correcoes | `designer` | Kanban, Producao, arquivos, relatorios, clientes do escopo e manual da marca | Ativo |
-| Valeria | Captacao e edicao, agenda de gravacao, checagem de roteiro e correcoes | `designer` | Kanban, Producao, arquivos, relatorios, clientes do escopo e manual da marca | Ativa |
-| Elizangela | Social media, pesquisa, checagem de informacoes, ideias, planejamento e postagem | `designer` | Kanban, Producao, arquivos, relatorios, clientes do escopo e manual da marca | Ativa |
-| Camyle | Social media, pesquisa, checagem de informacoes, ideias, planejamento e postagem | `designer` | Kanban, Producao, arquivos, relatorios, clientes do escopo e manual da marca | Ativa |
-| Lorena Sousa | Designer, desenvolvimento de material, entrega e ajustes | `designer` | Kanban, Producao, arquivos, relatorios, clientes do escopo e manual da marca | Ativa |
+| Pessoa         | Função operacional                                                                           | Perfil no sistema | Módulos principais                                                                                                | Situação                                                     |
+| -------------- | -------------------------------------------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Pedro Henrique | Direção de comunicação, financeiro, administração, priorização e governança                  | `admin`           | Visão Geral, CRM, Campanhas, Kanban, Calendário, Produção, Analytics, Financeiro, Controle de Acesso e Meu Perfil | Cadastro deve ser criado ou confirmado quando entrar na base |
+| Gabriel Jordan | Direção de marketing, relacionamento com clientes, comercial, atendimento e apoio financeiro | `admin`           | Visão Geral, CRM, Campanhas, Kanban, Calendário, Produção, Analytics, Financeiro, Controle de Acesso e Meu Perfil | Ativo                                                        |
+| Janayna Sousa  | Coordenação operacional, agenda, delegação e interface com clientes                          | `gestor`          | Visão Geral, CRM, Campanhas, Kanban, Calendário, Produção, Analytics, notificações e Meu Perfil                   | Ativa                                                        |
+| Thalisson      | Captação, edição e rotina audiovisual                                                        | `designer`        | Kanban, Calendário, Produção, Arquivos, Relatórios, notificações e Meu Perfil                                     | Ativo                                                        |
+| Valéria        | Captação, edição e rotina audiovisual                                                        | `designer`        | Kanban, Calendário, Produção, Arquivos, Relatórios, notificações e Meu Perfil                                     | Ativa                                                        |
+| Elizângela     | Social media, pesquisa, planejamento e postagem                                              | `designer`        | Kanban, Calendário, Produção, Arquivos, Relatórios, notificações e Meu Perfil                                     | Ativa                                                        |
+| Camyle         | Social media, pesquisa, planejamento e postagem                                              | `designer`        | Kanban, Calendário, Produção, Arquivos, Relatórios, notificações e Meu Perfil                                     | Ativa                                                        |
+| Lorena Sousa   | Design, materiais visuais, ajustes e entrega                                                 | `designer`        | Kanban, Calendário, Produção, Arquivos, Relatórios, notificações e Meu Perfil                                     | Ativa                                                        |
 
-## 3. Racional do mapeamento
+## Critérios de enquadramento
 
-### `admin` para Pedro e Gabriel
+### `admin`
 
-- O sistema ainda nao tem perfil combinado, por exemplo `admin + financeiro` ou `admin + comercial`.
-- `admin` ja cobre financeiro, administracao, CRM, campanhas, operacao e governanca de acesso.
-- Isso evita criar gambiarras de permissao fora do modelo atual.
+- controla operação, financeiro e governança de acesso;
+- visualiza todos os módulos internos;
+- gerencia membros, permissões, clientes, campanhas, tarefas, cobranças, faturas, calendário e notificações.
 
-### `gestor` para Janayna
+### `gestor`
 
-- O papel dela e mais de coordenacao operacional do que de execucao isolada.
-- O perfil `gestor` permite acompanhar a carteira, organizar a fila, distribuir tarefas e acompanhar entregas.
-- Esse perfil nao abre o controle completo de usuarios nem o financeiro administrativo total.
+- coordena carteira e prioridades do time;
+- acompanha CRM, calendário, campanhas, Kanban e produção;
+- não administra usuários nem o financeiro administrativo completo.
 
-### `designer` para audiovisual, social media e design
+### `designer`
 
-- O sistema atual nao separa `captacao`, `edicao`, `social media` e `designer` em roles diferentes.
-- O perfil `designer` e o melhor encaixe para execucao operacional.
-- A especialidade de cada pessoa passa a ser organizada pelo tipo da tarefa no Kanban, nao pelo role.
+- executa tarefas operacionais;
+- atua em Kanban, Produção, Arquivos, Relatórios, Checklist diário, Calendário e Meu Perfil;
+- o tipo de entrega deve ser organizado pelo tipo da tarefa, não pelo papel fixo.
 
-## 4. Regras operacionais
+## Regras operacionais
 
-- Usuarios internos multi-conta devem permanecer com `client_id = NULL`, salvo excecao realmente intencional.
-- O escopo operacional passa a ser construido pelo relacionamento com tarefas, materiais, arquivos e contas do trabalho.
-- O Kanban deve usar os tipos de tarefa para especializar a execucao:
-- `design`
-- `revisao_design`
-- `captacao`
-- `edicao`
-- `social_media`
-- `atendimento`
-- `financeiro`
-- `adm`
-- `reuniao_estrategica`
+- Usuários internos devem permanecer com `client_id = NULL`, salvo exceção formalmente aprovada.
+- O escopo de leitura e operação é definido no backend por papel, cliente, tarefa, vínculo direto e regras de acesso.
+- Tarefas podem ter um responsável, múltiplos responsáveis ou ficar como `Todos da equipe`.
+- Eventos do calendário são visíveis para toda a equipe interna, mas só `admin` e `gestor` podem criá-los ou editá-los.
+- Notificações de tarefa, calendário e operação devem ser usadas como canal padrão dentro do painel.
 
-## 5. Uso esperado por pessoa
+## Diretrizes para cadastro e revisão
 
-### Pedro Henrique
-
-- Receber demandas e priorizar o dia.
-- Delegar a execucao.
-- Acompanhar a demanda diaria.
-- Organizar reunioes estrategicas.
-- Apoiar financeiro e administracao.
-
-### Gabriel Jordan
-
-- Direcionar demandas.
-- Acompanhar andamento dos projetos.
-- Cuidar do relacionamento com clientes.
-- Atuar em comercial e atendimento.
-- Apoiar financeiro e administracao.
-
-### Janayna Sousa
-
-- Receber direcionamento.
-- Organizar execucao e entrega.
-- Delegar tarefas operacionais.
-- Agendar gravacoes externas.
-- Garantir comunicacao entre equipe e cliente.
-
-### Thalisson e Valeria
-
-- Acompanhar agenda de gravacao.
-- Executar captacao de video.
-- Editar material.
-- Conferir roteiros antes da gravacao.
-- Aplicar ajustes e correcoes.
-
-### Elizangela e Camyle
-
-- Pesquisar ideias.
-- Validar informacoes.
-- Montar planejamento.
-- Repassar demanda aprovada para o audiovisual.
-- Publicar conteudo.
-
-### Lorena Sousa
-
-- Receber demanda aprovada.
-- Desenvolver o material.
-- Entregar no prazo.
-- Ajustar quando necessario.
-
-## 6. Diretrizes de cadastro
-
-Ao cadastrar ou revisar usuarios dessa equipe:
-
-1. Confirmar nome e e-mail final.
-2. Aplicar o role conforme esta matriz.
+1. Confirmar nome completo e e-mail corporativo.
+2. Aplicar o perfil conforme esta matriz.
 3. Garantir `is_active = true`.
-4. Manter `client_id = NULL` para equipe interna multi-conta.
-5. Validar o acesso real no painel interno depois do primeiro login.
+4. Manter `client_id = NULL` para membros internos.
+5. Validar o primeiro login.
+6. Pedir que a pessoa complete `Meu Perfil` logo no primeiro acesso.
+7. Confirmar se a visualização de tarefas, calendário e notificações está coerente com o papel atribuído.
 
-## 7. Manutencao futura
+## Revisão futura
 
-Se a ONE passar a precisar de separacao mais fina entre operacao, social media, audiovisual e design, o proximo passo ideal e evoluir o modelo para capacidades mais granulares, sem depender apenas do role fixo.
-
-Enquanto esse modelo nao existe, esta matriz deve ser tratada como a fonte oficial para cadastro da equipe.
+Se a ONE passar a exigir separação mais fina entre audiovisual, design, social media, operação e suporte técnico, o próximo passo recomendado é evoluir a matriz para capacidades mais granulares, sem depender apenas do campo `role`.
