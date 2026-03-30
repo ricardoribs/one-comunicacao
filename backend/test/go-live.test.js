@@ -621,6 +621,40 @@ test('gestor consegue atribuir a mesma tarefa para mais de uma pessoa', { concur
   await pool.query('DELETE FROM clients');
 });
 
+test('usuario interno limpa o historico do checklist sem afetar os itens ativos do dia', { concurrency: false }, async () => {
+  const suffix = Date.now() + 132;
+  const gestor = await createUser({
+    name: `Gestor Checklist ${suffix}`,
+    email: `gestor.checklist.${suffix}@one.test`,
+    role: 'gestor',
+  });
+
+  await pool.query(
+    `INSERT INTO user_daily_checklists (user_id, checklist_date, items, completed_at)
+     VALUES
+       ($1, CURRENT_DATE - 1, $2::jsonb, NOW()),
+       ($1, CURRENT_DATE, $3::jsonb, NULL)`,
+    [
+      gestor.id,
+      JSON.stringify([{ id: 'hist_1', label: 'Item antigo', done: true }]),
+      JSON.stringify([{ id: 'active_1', label: 'Item de hoje', done: false }]),
+    ]
+  );
+
+  const auth = await login(gestor.email);
+  const response = await request(app)
+    .delete('/api/checklists/daily/history')
+    .set('Authorization', `Bearer ${auth.body.accessToken}`);
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(response.body.history, []);
+  assert.equal(response.body.activeItems.length, 1);
+  assert.equal(response.body.activeItems[0].label, 'Item de hoje');
+
+  await pool.query('DELETE FROM user_daily_checklists WHERE user_id = $1', [gestor.id]);
+  await userModel.remove(gestor.id);
+});
+
 test('tarefa compartilhada fica visivel para equipe interna e nao aparece no dashboard do cliente', { concurrency: false }, async () => {
   const suffix = Date.now() + 14;
   const gestor = await createUser({

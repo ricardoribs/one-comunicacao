@@ -235,7 +235,10 @@ const notificationRuntime = {
 };
 const kanbanRuntime = {
   movingTaskId: null,
+  dragTaskId: null,
   dragPreviewEl: null,
+  dragSourceEl: null,
+  dragPlaceholderEl: null,
   scrollSyncBound: false,
 };
 
@@ -1850,7 +1853,11 @@ function escapeHtmlWithBreaks(value) {
 
 function getDeadlineClass(task) {
   const dueDateValue = task.due_date || task.deadline;
-  if (normalizeTaskStatusLabel(task.status) === "Concluido" || !dueDateValue) {
+  if (normalizeTaskStatusLabel(task.status) === "Concluido") {
+    return "deadline-done";
+  }
+
+  if (!dueDateValue) {
     return "deadline-ok";
   }
 
@@ -1889,6 +1896,11 @@ function getTaskDeadlineLabel(task) {
   today.setHours(0, 0, 0, 0);
   const diffDays = Math.round((dueDate - today) / 86400000);
   const dateLabel = formatDate(dueDateValue);
+  const isDone = normalizeTaskStatusLabel(task?.status) === "Concluido";
+
+  if (isDone) {
+    return `Concluída · ${dateLabel}`;
+  }
 
   if (diffDays < 0) {
     return `Atrasada · ${dateLabel}`;
@@ -3389,6 +3401,13 @@ async function clearChecklistHistory() {
     return;
   }
 
+  const currentStore = getChecklistStore();
+  state.checklist = {
+    ...currentStore,
+    history: []
+  };
+  renderKanban();
+
   try {
     const snapshot = await apiFetch("/checklists/daily/history", {
       method: "DELETE",
@@ -3398,6 +3417,8 @@ async function clearChecklistHistory() {
     renderKanban();
     showToast("Histórico do checklist limpo.");
   } catch (error) {
+    state.checklist = currentStore;
+    renderKanban();
     showToast(error.message);
   }
 }
@@ -3839,6 +3860,20 @@ function clearKanbanDragPreview() {
   }
 }
 
+function clearKanbanDragArtifacts() {
+  clearKanbanDragPreview();
+
+  if (kanbanRuntime.dragPlaceholderEl) {
+    kanbanRuntime.dragPlaceholderEl.remove();
+    kanbanRuntime.dragPlaceholderEl = null;
+  }
+
+  if (kanbanRuntime.dragSourceEl) {
+    kanbanRuntime.dragSourceEl.classList.remove("is-dragging", "is-drag-source");
+    kanbanRuntime.dragSourceEl = null;
+  }
+}
+
 function createKanbanDragPreview(card) {
   clearKanbanDragPreview();
 
@@ -3901,7 +3936,7 @@ function setupKanbanScrollSync() {
 function bindKanbanBoardInteractions() {
   const board = document.getElementById("kanban-board");
   if (!board) {
-    clearKanbanDragPreview();
+    clearKanbanDragArtifacts();
     return;
   }
 
@@ -3915,76 +3950,95 @@ function bindKanbanBoardInteractions() {
     }
 
     card.addEventListener("dragstart", (event) => {
-      kanbanRuntime.movingTaskId = Number(card.dataset.taskId);
+      kanbanRuntime.dragTaskId = Number(card.dataset.taskId);
+      kanbanRuntime.dragSourceEl = card;
       card.classList.add("is-dragging");
       document.body.classList.add("kanban-drag-active");
+      const placeholder = card.cloneNode(true);
+      placeholder.classList.remove("is-dragging", "is-highlighted");
+      placeholder.classList.add("k-card-placeholder");
+      placeholder.removeAttribute("draggable");
+      placeholder.removeAttribute("data-task-card");
+      placeholder.removeAttribute("data-task-id");
+      placeholder.setAttribute("aria-hidden", "true");
+      card.insertAdjacentElement("afterend", placeholder);
+      kanbanRuntime.dragPlaceholderEl = placeholder;
       if (event.dataTransfer) {
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", card.dataset.taskId);
         const preview = createKanbanDragPreview(card);
         event.dataTransfer.setDragImage(preview, 28, 24);
       }
+      window.requestAnimationFrame(() => {
+        card.classList.add("is-drag-source");
+      });
     });
 
     card.addEventListener("dragend", () => {
-      card.classList.remove("is-dragging");
       document.body.classList.remove("kanban-drag-active");
       clearDropTargets();
-      clearKanbanDragPreview();
-      kanbanRuntime.movingTaskId = null;
+      clearKanbanDragArtifacts();
+      kanbanRuntime.dragTaskId = null;
     });
 
     card.dataset.boundKanbanDrag = "1";
   });
 
-  board.querySelectorAll("[data-kanban-column]").forEach((column) => {
-    if (column.dataset.boundKanbanColumn === "1") {
+  if (board.dataset.boundKanbanBoard === "1") {
+    return;
+  }
+
+  board.addEventListener("dragover", (event) => {
+    if (!kanbanRuntime.dragTaskId) {
       return;
     }
 
-    const activateColumn = (event) => {
-      event.preventDefault();
-      clearDropTargets();
-      column.classList.add("is-drop-target");
-      if (event.dataTransfer) {
-        event.dataTransfer.dropEffect = "move";
-      }
-    };
+    const column = event.target.closest("[data-kanban-column]");
+    if (!column) {
+      return;
+    }
 
-    column.addEventListener("dragenter", activateColumn);
-    column.addEventListener("dragover", activateColumn);
-    column.querySelectorAll("[data-kanban-dropzone]").forEach((dropzone) => {
-      dropzone.addEventListener("dragenter", activateColumn);
-      dropzone.addEventListener("dragover", activateColumn);
-    });
-    column.addEventListener("dragleave", (event) => {
-      if (event.relatedTarget && column.contains(event.relatedTarget)) {
-        return;
-      }
-      column.classList.remove("is-drop-target");
-    });
-    const handleDrop = async (event) => {
-      event.preventDefault();
-      const taskId = Number(event.dataTransfer?.getData("text/plain") || kanbanRuntime.movingTaskId || 0);
-      document.body.classList.remove("kanban-drag-active");
-      clearDropTargets();
-      clearKanbanDragPreview();
-      kanbanRuntime.movingTaskId = null;
-
-      if (!taskId) {
-        return;
-      }
-
-      await moveTaskToColumn(taskId, column.dataset.kanbanColumn);
-    };
-
-    column.addEventListener("drop", handleDrop);
-    column.querySelectorAll("[data-kanban-dropzone]").forEach((dropzone) => {
-      dropzone.addEventListener("drop", handleDrop);
-    });
-
-    column.dataset.boundKanbanColumn = "1";
+    event.preventDefault();
+    clearDropTargets();
+    column.classList.add("is-drop-target");
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = "move";
+    }
   });
+
+  board.addEventListener("dragleave", (event) => {
+    if (!kanbanRuntime.dragTaskId) {
+      return;
+    }
+
+    if (event.relatedTarget && board.contains(event.relatedTarget)) {
+      return;
+    }
+
+    clearDropTargets();
+  });
+
+  board.addEventListener("drop", async (event) => {
+    if (!kanbanRuntime.dragTaskId) {
+      return;
+    }
+
+    const column = event.target.closest("[data-kanban-column]");
+    event.preventDefault();
+    document.body.classList.remove("kanban-drag-active");
+    clearDropTargets();
+    const taskId = Number(event.dataTransfer?.getData("text/plain") || kanbanRuntime.dragTaskId || 0);
+    clearKanbanDragArtifacts();
+    kanbanRuntime.dragTaskId = null;
+
+    if (!taskId || !column?.dataset.kanbanColumn) {
+      return;
+    }
+
+    await moveTaskToColumn(taskId, column.dataset.kanbanColumn);
+  });
+
+  board.dataset.boundKanbanBoard = "1";
 }
 
 function renderCRM() {
@@ -5154,9 +5208,14 @@ function formatAssigneeOptionLabel(name) {
     return "Equipe interna";
   }
 
-  return words
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-    .join(" ");
+  const normalized = words
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase());
+
+  if (normalized.length === 1) {
+    return normalized[0];
+  }
+
+  return normalized.slice(0, 2).join(" ");
 }
 
 function taskAssigneeCheckboxes(selectedIds = []) {
