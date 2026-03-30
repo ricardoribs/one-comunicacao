@@ -199,6 +199,7 @@ const notificationRuntime = {
 const kanbanRuntime = {
   movingTaskId: null,
   dragPreviewEl: null,
+  scrollSyncBound: false,
 };
 
 async function runAsyncTasksInBatches(taskFactories, batchSize = 4) {
@@ -3052,6 +3053,24 @@ async function persistChecklistItems(items) {
   return state.checklist;
 }
 
+async function clearChecklistHistory() {
+  if (!window.confirm("Limpar todo o histórico concluído do checklist?")) {
+    return;
+  }
+
+  try {
+    const snapshot = await apiFetch("/checklists/daily/history", {
+      method: "DELETE",
+      cache: "no-store",
+    });
+    state.checklist = normalizeChecklistSnapshot(snapshot);
+    renderKanban();
+    showToast("Histórico do checklist limpo.");
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
 function createChecklistItem(label) {
   const nextLabel = String(label || "").trim();
   if (!nextLabel) {
@@ -3196,7 +3215,7 @@ function renderKanbanChecklist(filteredTasks) {
         class="checklist-input"
         maxlength="120"
         placeholder="Adicionar item"
-        autocomplete="off"
+        autocomplete="new-password"
         autocorrect="off"
         autocapitalize="none"
         spellcheck="false"
@@ -3255,7 +3274,10 @@ function renderKanbanChecklist(filteredTasks) {
             className: "is-plain"
           })
     }
-    <div class="section-header checklist-history-head"><div class="section-title">Histórico do checklist</div></div>
+    <div class="section-header checklist-history-head">
+      <div class="section-title">Histórico do checklist</div>
+      ${historyGroups.length ? '<button type="button" class="btn btn-ghost btn-sm" onclick="clearChecklistHistory()">Limpar histórico</button>' : ""}
+    </div>
     <div class="checklist-history">
       ${
         historyGroups.length
@@ -3384,39 +3406,46 @@ function renderKanban() {
       return `
         <div class="kanban-col" data-kanban-column="${column.key}">
           <div class="kanban-col-title">${column.label} <span class="col-count">${tasks.length}</span></div>
-          ${tasks
-            .map(
-              (task) => `
-                <div class="k-card" data-task-card="1" data-task-id="${task.id}" ${canEditTasks ? 'draggable="true"' : ""}>
-                  <div class="k-card-client" title="${escapeHtml(task.client_name || "Interno")}">${escapeHtml(task.client_name || "Interno")}</div>
-                  <div class="k-card-title" title="${escapeHtml(task.title)}">${escapeHtml(task.title)}</div>
-                  <div class="k-card-desc" title="${escapeHtml(task.description || "")}">${escapeHtml(task.description || "Sem descrição.")}</div>
-                  <div class="status-gap-top"><span class="badge badge-blue">${escapeHtml(formatTaskTypeLabel(task.type))}</span></div>
-                  <div class="k-card-meta">
-                    <span class="k-card-assignee" title="${escapeHtml(getTaskAssigneeTitle(task))}">${escapeHtml(getTaskAssigneeLabel(task))}</span>
-                    <span class="k-card-deadline ${getDeadlineClass(task)}">${escapeHtml(getTaskDeadlineLabel(task))}</span>
-                  </div>
-                  ${
-                    canEditTasks || canRemoveTasks
-                      ? `<div class="actions-gap-top">
-                          ${canEditTasks ? `<button class="btn btn-ghost btn-sm" onclick="openModal('nova-tarefa', ${task.id})">Editar</button>` : ""}
-                          ${canRemoveTasks ? `<button class="btn btn-danger-soft btn-sm" onclick="deleteTask(${task.id})">Excluir</button>` : ""}
-                        </div>`
-                      : ""
-                  }
-                </div>
-              `
-            )
-            .join("") || UI.empty("Coluna sem tarefas.", "As próximas entregas desta etapa aparecem aqui.", {
-              icon: false,
-              className: "is-plain is-compact"
-            })}
+          <div class="kanban-col-body" data-kanban-dropzone="${column.key}">
+            ${
+              tasks
+                .map(
+                  (task) => `
+                    <div class="k-card" data-task-card="1" data-task-id="${task.id}" ${canEditTasks ? 'draggable="true"' : ""}>
+                      <div class="k-card-client" title="${escapeHtml(task.client_name || "Interno")}">${escapeHtml(task.client_name || "Interno")}</div>
+                      <div class="k-card-title" title="${escapeHtml(task.title)}">${escapeHtml(task.title)}</div>
+                      <div class="k-card-desc" title="${escapeHtml(task.description || "")}">${escapeHtml(task.description || "Sem descrição.")}</div>
+                      <div class="status-gap-top"><span class="badge badge-blue">${escapeHtml(formatTaskTypeLabel(task.type))}</span></div>
+                      <div class="k-card-meta">
+                        <span class="k-card-assignee" title="${escapeHtml(getTaskAssigneeTitle(task))}">${escapeHtml(getTaskAssigneeLabel(task))}</span>
+                        <span class="k-card-deadline ${getDeadlineClass(task)}">${escapeHtml(getTaskDeadlineLabel(task))}</span>
+                      </div>
+                      ${
+                        canEditTasks || canRemoveTasks
+                          ? `<div class="actions-gap-top">
+                              ${canEditTasks ? `<button class="btn btn-ghost btn-sm" onclick="openModal('nova-tarefa', ${task.id})">Editar</button>` : ""}
+                              ${canRemoveTasks ? `<button class="btn btn-danger-soft btn-sm" onclick="deleteTask(${task.id})">Excluir</button>` : ""}
+                            </div>`
+                          : ""
+                      }
+                    </div>
+                  `
+                )
+                .join("")
+                || UI.empty("Coluna sem tarefas.", "As próximas entregas desta etapa aparecem aqui.", {
+                  icon: false,
+                  className: "is-plain is-compact"
+                })
+            }
+            <div class="kanban-col-dropzone" data-kanban-dropzone="${column.key}" aria-hidden="true"></div>
+          </div>
         </div>
       `;
     })
     .join("");
 
   bindKanbanBoardInteractions();
+  setupKanbanScrollSync();
 }
 
 async function moveTaskToColumn(taskId, nextColumn) {
@@ -3492,6 +3521,52 @@ function createKanbanDragPreview(card) {
   return preview;
 }
 
+function setupKanbanScrollSync() {
+  const board = document.getElementById("kanban-board");
+  const topScroll = document.getElementById("kanban-top-scroll");
+  const topTrack = document.getElementById("kanban-top-scroll-track");
+
+  if (!board || !topScroll || !topTrack) {
+    return;
+  }
+
+  const syncWidths = () => {
+    topTrack.style.width = `${Math.max(board.scrollWidth, board.clientWidth)}px`;
+    topScroll.classList.toggle("is-hidden", board.scrollWidth <= board.clientWidth + 4);
+    if (Math.abs(topScroll.scrollLeft - board.scrollLeft) > 1) {
+      topScroll.scrollLeft = board.scrollLeft;
+    }
+  };
+
+  if (!kanbanRuntime.scrollSyncBound) {
+    let syncingFromTop = false;
+    let syncingFromBoard = false;
+
+    board.addEventListener("scroll", () => {
+      if (syncingFromTop) {
+        return;
+      }
+      syncingFromBoard = true;
+      topScroll.scrollLeft = board.scrollLeft;
+      syncingFromBoard = false;
+    });
+
+    topScroll.addEventListener("scroll", () => {
+      if (syncingFromBoard) {
+        return;
+      }
+      syncingFromTop = true;
+      board.scrollLeft = topScroll.scrollLeft;
+      syncingFromTop = false;
+    });
+
+    window.addEventListener("resize", () => window.requestAnimationFrame(syncWidths));
+    kanbanRuntime.scrollSyncBound = true;
+  }
+
+  window.requestAnimationFrame(syncWidths);
+}
+
 function bindKanbanBoardInteractions() {
   const board = document.getElementById("kanban-board");
   if (!board) {
@@ -3540,17 +3615,24 @@ function bindKanbanBoardInteractions() {
       event.preventDefault();
       clearDropTargets();
       column.classList.add("is-drop-target");
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = "move";
+      }
     };
 
     column.addEventListener("dragenter", activateColumn);
     column.addEventListener("dragover", activateColumn);
+    column.querySelectorAll("[data-kanban-dropzone]").forEach((dropzone) => {
+      dropzone.addEventListener("dragenter", activateColumn);
+      dropzone.addEventListener("dragover", activateColumn);
+    });
     column.addEventListener("dragleave", (event) => {
       if (event.relatedTarget && column.contains(event.relatedTarget)) {
         return;
       }
       column.classList.remove("is-drop-target");
     });
-    column.addEventListener("drop", async (event) => {
+    const handleDrop = async (event) => {
       event.preventDefault();
       const taskId = Number(event.dataTransfer?.getData("text/plain") || kanbanRuntime.movingTaskId || 0);
       document.body.classList.remove("kanban-drag-active");
@@ -3563,6 +3645,11 @@ function bindKanbanBoardInteractions() {
       }
 
       await moveTaskToColumn(taskId, column.dataset.kanbanColumn);
+    };
+
+    column.addEventListener("drop", handleDrop);
+    column.querySelectorAll("[data-kanban-dropzone]").forEach((dropzone) => {
+      dropzone.addEventListener("drop", handleDrop);
     });
 
     column.dataset.boundKanbanColumn = "1";
@@ -4725,6 +4812,21 @@ function userOptions(selectedId) {
     .join("");
 }
 
+function formatAssigneeOptionLabel(name) {
+  const words = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (!words.length) {
+    return "Equipe interna";
+  }
+
+  return words
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
 function taskAssigneeCheckboxes(selectedIds = []) {
   const selected = new Set(selectedIds.map((value) => String(value)));
   const source = getAssignableUserSource();
@@ -4738,9 +4840,9 @@ function taskAssigneeCheckboxes(selectedIds = []) {
       ${source
         .map(
           (user) => `
-            <label class="assignee-check-option">
+            <label class="assignee-check-option" title="${escapeHtml(user.name)}">
               <input type="checkbox" name="assigned_to_ids" value="${user.id}" ${selected.has(String(user.id)) ? "checked" : ""}>
-              <span class="assignee-check-text">${escapeHtml(user.name)}</span>
+              <span class="assignee-check-text">${escapeHtml(formatAssigneeOptionLabel(user.name))}</span>
             </label>
           `
         )
@@ -5111,7 +5213,7 @@ function hardenInputPrivacy(root = document) {
   }
 
   root.querySelectorAll("form").forEach((form) => {
-    form.setAttribute("autocomplete", "off");
+    form.setAttribute("autocomplete", "new-password");
     form.setAttribute("data-form-type", "other");
   });
 
@@ -5119,14 +5221,16 @@ function hardenInputPrivacy(root = document) {
     const type = String(field.getAttribute("type") || "").toLowerCase();
     const isTextualField = !["checkbox", "radio", "file", "hidden", "date", "datetime-local", "number", "time"].includes(type);
     if (!["checkbox", "radio", "file", "hidden"].includes(type)) {
-      field.setAttribute("autocomplete", "off");
+      field.setAttribute("autocomplete", isTextualField ? "new-password" : "off");
       field.setAttribute("autocorrect", "off");
       field.setAttribute("autocapitalize", "none");
       field.setAttribute("spellcheck", "false");
+      field.setAttribute("aria-autocomplete", "none");
       field.setAttribute("data-lpignore", "true");
       field.setAttribute("data-1p-ignore", "true");
       field.setAttribute("data-bwignore", "true");
       field.setAttribute("data-form-type", "other");
+      field.setAttribute("list", "");
     }
 
     if (isTextualField && field.dataset.privacyReady !== "1") {
@@ -5198,7 +5302,6 @@ function openModal(type, id = null) {
         <div class="field form-full">
           <label>Responsáveis</label>
           ${taskAssigneeCheckboxes(selectedAssigneeIds)}
-          <div class="field-help">Se ninguém for marcado, a tarefa fica como Todos da equipe.</div>
         </div>
         <div class="field"><label>Tipo</label><select name="type">${taskTypeOptions(task.type || "")}</select></div>
         <div class="field"><label>Status</label><select name="status">${taskStatusOptions(task.status || getTaskStatusValue(task))}</select></div>
@@ -5793,6 +5896,7 @@ window.deleteTask = deleteTask;
 window.deleteMaterial = deleteMaterial;
 window.deleteUser = deleteUser;
 window.openProtectedResource = openProtectedResource;
+window.clearChecklistHistory = clearChecklistHistory;
 window.showToast = showToast;
 window.toggleSidebar = toggleSidebar;
 window.closeSidebar = closeSidebar;
