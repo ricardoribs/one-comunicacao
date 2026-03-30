@@ -2192,12 +2192,38 @@ function renderResourceAction(
   )}')">${escapeHtml(label)}</button>`;
 }
 
+const ACCESS_COUNTRY_LABELS = {
+  BR: "Brasil",
+  US: "Estados Unidos",
+  PT: "Portugal",
+  ES: "Espanha",
+  AR: "Argentina",
+  CA: "Canadá",
+  FR: "França",
+  DE: "Alemanha",
+  IT: "Itália",
+  GB: "Reino Unido",
+};
+
+function formatAccessLocationLabel(value) {
+  const normalized = String(value || "").trim();
+  if (!normalized) {
+    return "Localização não identificada";
+  }
+
+  if (/^[A-Z]{2}$/.test(normalized)) {
+    return ACCESS_COUNTRY_LABELS[normalized] || normalized;
+  }
+
+  return normalized;
+}
+
 function renderMemberRow(user, currentUserId) {
   const lastAccess = user.last_seen_at || user.last_login_at;
   const lastAccessLabel = lastAccess ? formatDateTime(lastAccess) : "Sem registro de acesso";
   const presenceLabel = !user.is_active ? "Inativo" : user.is_online ? "Online" : "Ativo";
   const presenceBadgeClass = !user.is_active ? "badge-gray" : user.is_online ? "badge-blue" : "badge-green";
-  const locationLabel = String(user.last_seen_location || "").trim() || "Localização não identificada";
+  const locationLabel = formatAccessLocationLabel(user.last_seen_location);
   return `
     <article class="access-member-card">
       <div class="access-member-head">
@@ -2214,11 +2240,14 @@ function renderMemberRow(user, currentUserId) {
         <div class="access-member-meta-item">
           <span class="access-member-meta-label">Último acesso</span>
           <span class="access-member-meta-value" title="${escapeHtml(lastAccessLabel)}">${lastAccessLabel}</span>
-          <span class="cell-sub" title="${escapeHtml(locationLabel)}">${escapeHtml(locationLabel)}</span>
         </div>
         <div class="access-member-meta-item">
           <span class="access-member-meta-label">Presença</span>
           <span class="badge ${presenceBadgeClass}">${presenceLabel}</span>
+        </div>
+        <div class="access-member-meta-item access-member-meta-item-full">
+          <span class="access-member-meta-label">Localização</span>
+          <span class="access-member-meta-value" title="${escapeHtml(locationLabel)}">${escapeHtml(locationLabel)}</span>
         </div>
       </div>
       <div class="access-member-actions">
@@ -3221,7 +3250,8 @@ function renderKanban() {
 }
 
 async function moveTaskToColumn(taskId, nextColumn) {
-  const task = state.tasks.find((item) => Number(item.id) === Number(taskId));
+  const taskIndex = state.tasks.findIndex((item) => Number(item.id) === Number(taskId));
+  const task = taskIndex >= 0 ? state.tasks[taskIndex] : null;
   const nextConfig = getTaskColumnConfig(nextColumn);
 
   if (!task || kanbanRuntime.movingTaskId === Number(taskId)) {
@@ -3233,19 +3263,39 @@ async function moveTaskToColumn(taskId, nextColumn) {
   }
 
   kanbanRuntime.movingTaskId = Number(taskId);
+  const previousTask = { ...task };
+  state.tasks[taskIndex] = {
+    ...task,
+    column_name: nextConfig.key,
+    status: nextConfig.status,
+  };
+  renderKanban();
+  renderSidebarCounts();
 
   try {
-    await apiFetch(`/tasks/${taskId}`, {
+    const updatedTask = await apiFetch(`/tasks/${taskId}`, {
       method: "PUT",
       body: JSON.stringify({
         column_name: nextConfig.key,
         status: nextConfig.status,
       }),
     });
-    await refreshData();
-    await refreshNotifications({ silent: true, suppressErrors: true });
+
+    if (updatedTask) {
+      state.tasks[taskIndex] = {
+        ...state.tasks[taskIndex],
+        ...updatedTask,
+      };
+      renderKanban();
+      renderSidebarCounts();
+    }
+
+    refreshNotifications({ silent: true, suppressErrors: true }).catch(() => {});
     showToast(`Tarefa movida para ${nextConfig.label}.`);
   } catch (error) {
+    state.tasks[taskIndex] = previousTask;
+    renderKanban();
+    renderSidebarCounts();
     showToast(error.message);
   } finally {
     kanbanRuntime.movingTaskId = null;
@@ -3291,6 +3341,7 @@ function bindKanbanBoardInteractions() {
     card.addEventListener("dragstart", (event) => {
       kanbanRuntime.movingTaskId = Number(card.dataset.taskId);
       card.classList.add("is-dragging");
+      document.body.classList.add("kanban-drag-active");
       if (event.dataTransfer) {
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", card.dataset.taskId);
@@ -3301,6 +3352,7 @@ function bindKanbanBoardInteractions() {
 
     card.addEventListener("dragend", () => {
       card.classList.remove("is-dragging");
+      document.body.classList.remove("kanban-drag-active");
       clearDropTargets();
       clearKanbanDragPreview();
       kanbanRuntime.movingTaskId = null;
@@ -3331,6 +3383,7 @@ function bindKanbanBoardInteractions() {
     column.addEventListener("drop", async (event) => {
       event.preventDefault();
       const taskId = Number(event.dataTransfer?.getData("text/plain") || kanbanRuntime.movingTaskId || 0);
+      document.body.classList.remove("kanban-drag-active");
       clearDropTargets();
       clearKanbanDragPreview();
       kanbanRuntime.movingTaskId = null;

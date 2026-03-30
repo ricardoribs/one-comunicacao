@@ -1,5 +1,18 @@
 const { lookupIpLocation } = require('../services/geoLookupService');
 
+const COUNTRY_CODE_LABELS = {
+  BR: 'Brasil',
+  US: 'Estados Unidos',
+  PT: 'Portugal',
+  ES: 'Espanha',
+  AR: 'Argentina',
+  CA: 'Canadá',
+  FR: 'França',
+  DE: 'Alemanha',
+  IT: 'Itália',
+  GB: 'Reino Unido',
+};
+
 function pickHeaderValue(value) {
   if (Array.isArray(value)) {
     return pickHeaderValue(value[0]);
@@ -48,6 +61,34 @@ function getRequestLocation(req) {
   return country || '';
 }
 
+function normalizeLocationLabel(value) {
+  const normalized = pickHeaderValue(value);
+  if (!normalized) {
+    return '';
+  }
+
+  const upperValue = normalized.toUpperCase();
+  if (/^[A-Z]{2}$/.test(upperValue)) {
+    return COUNTRY_CODE_LABELS[upperValue] || upperValue;
+  }
+
+  return normalized;
+}
+
+function isWeakLocation(value) {
+  const normalized = pickHeaderValue(value);
+  if (!normalized) {
+    return true;
+  }
+
+  const upperValue = normalized.toUpperCase();
+  if (/^[A-Z]{2}$/.test(upperValue)) {
+    return true;
+  }
+
+  return Object.values(COUNTRY_CODE_LABELS).includes(normalized);
+}
+
 function buildRequestAccessMetadata(req) {
   return {
     ip: getRequestIp(req),
@@ -58,14 +99,19 @@ function buildRequestAccessMetadata(req) {
 
 async function resolveRequestAccessMetadata(req) {
   const metadata = buildRequestAccessMetadata(req);
-  if (metadata.location || !metadata.ip) {
-    return metadata;
+  const normalizedLocation = normalizeLocationLabel(metadata.location);
+
+  if (!metadata.ip || (normalizedLocation && !isWeakLocation(normalizedLocation))) {
+    return {
+      ...metadata,
+      location: normalizedLocation,
+    };
   }
 
   const fallbackLocation = await lookupIpLocation(metadata.ip);
   return {
     ...metadata,
-    location: fallbackLocation || metadata.location,
+    location: fallbackLocation || normalizedLocation,
   };
 }
 
@@ -74,4 +120,5 @@ module.exports = {
   resolveRequestAccessMetadata,
   getRequestIp,
   getRequestLocation,
+  normalizeLocationLabel,
 };

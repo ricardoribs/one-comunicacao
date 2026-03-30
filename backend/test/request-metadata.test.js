@@ -60,3 +60,37 @@ test('resolveRequestAccessMetadata nao consulta geolocalizacao para IP privado',
   assert.equal(fetchCalls, 0);
   assert.equal(metadata.location, '');
 });
+
+test('resolveRequestAccessMetadata enriquece pais isolado com lookup por IP publico', async (t) => {
+  const originalFetch = global.fetch;
+  let fetchCalls = 0;
+
+  t.after(() => {
+    global.fetch = originalFetch;
+  });
+
+  global.fetch = async () => {
+    fetchCalls += 1;
+    return {
+      ok: true,
+      json: async () => ({
+        success: true,
+        city: 'Imperatriz',
+        region: 'MA',
+        country_code: 'BR',
+      }),
+    };
+  };
+
+  const metadata = await resolveRequestAccessMetadata({
+    headers: {
+      'x-forwarded-for': '8.8.4.4',
+      'x-country-code': 'BR',
+      'user-agent': 'node-test',
+    },
+    ip: '8.8.4.4',
+  });
+
+  assert.equal(fetchCalls, 1);
+  assert.equal(metadata.location, 'Imperatriz, MA');
+});
