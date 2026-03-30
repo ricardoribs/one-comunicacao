@@ -532,7 +532,7 @@ section[id] {
   gap: 12px;
   align-content: start;
   align-self: start;
-  padding-top: clamp(52px, 5vw, 72px);
+  padding-top: clamp(24px, 2.7vw, 40px);
 }
 
 .hero-video-shell,
