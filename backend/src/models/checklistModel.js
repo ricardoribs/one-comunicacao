@@ -97,6 +97,19 @@ async function getSnapshot(userId, executor = pool) {
   return buildChecklistSnapshot(rows);
 }
 
+async function clearHistory(userId, executor = pool) {
+  await executor.query(
+    `
+      DELETE FROM user_daily_checklists
+      WHERE user_id = $1
+        AND completed_at IS NOT NULL
+    `,
+    [userId]
+  );
+
+  return getSnapshot(userId, executor);
+}
+
 async function replaceToday(userId, items, executor = pool) {
   const normalizedItems = normalizeChecklistItems(items);
   const todayKey = normalizeChecklistDate(new Date());
@@ -131,6 +144,7 @@ async function replaceToday(userId, items, executor = pool) {
 }
 
 module.exports = {
+  clearHistory,
   getSnapshot,
   replaceToday,
 };
