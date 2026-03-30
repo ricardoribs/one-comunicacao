@@ -43,9 +43,21 @@ const emptyToNullDate = () =>
     z.string().regex(isoDateRegex, 'Informe uma data valida no formato AAAA-MM-DD').nullable()
   );
 
+const assignedToIdsSchema = z.preprocess(
+  (value) => {
+    if (value === '' || value === undefined || value === null) {
+      return [];
+    }
+
+    return Array.isArray(value) ? value : [value];
+  },
+  z.array(z.coerce.number().int().positive()).max(20)
+);
+
 exports.taskSchema = z.object({
   client_id: emptyToNullNumber().optional(),
   assigned_to: emptyToNullNumber().optional(),
+  assigned_to_ids: assignedToIdsSchema.optional(),
   status: taskStatusEnum,
   type: z.preprocess((value) => {
     if (value === '' || value === undefined || value === null) {

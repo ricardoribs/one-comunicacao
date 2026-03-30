@@ -1026,12 +1026,51 @@ function taskColumnOptions(selected = "") {
     .join("");
 }
 
-function getTaskAssigneeLabel(taskOrName) {
+function getTaskAssigneeIds(task = {}) {
+  const ids = toArray(task.assigned_user_ids).length ? toArray(task.assigned_user_ids) : [task.assigned_to];
+  return [...new Set(ids.map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0))];
+}
+
+function getTaskAssigneeNames(taskOrName) {
   if (typeof taskOrName === "object" && taskOrName) {
-    return String(taskOrName.assigned_to_name || "").trim() || "Todos da equipe";
+    const names = toArray(taskOrName.assigned_user_names).map((value) => String(value || "").trim()).filter(Boolean);
+    if (names.length) {
+      return names;
+    }
+    const fallback = String(taskOrName.assigned_to_name || "").trim();
+    return fallback ? [fallback] : [];
   }
 
-  return String(taskOrName || "").trim() || "Todos da equipe";
+  const fallback = String(taskOrName || "").trim();
+  return fallback ? [fallback] : [];
+}
+
+function formatHumanNameList(names = []) {
+  if (!names.length) {
+    return "Todos da equipe";
+  }
+  if (names.length === 1) {
+    return names[0];
+  }
+  if (names.length === 2) {
+    return `${names[0]} e ${names[1]}`;
+  }
+  return `${names.slice(0, -1).join(", ")} e ${names[names.length - 1]}`;
+}
+
+function getTaskAssigneeTitle(taskOrName) {
+  return formatHumanNameList(getTaskAssigneeNames(taskOrName));
+}
+
+function getTaskAssigneeLabel(taskOrName) {
+  const names = getTaskAssigneeNames(taskOrName);
+  if (!names.length) {
+    return "Todos da equipe";
+  }
+  if (names.length <= 2) {
+    return formatHumanNameList(names);
+  }
+  return `${names[0]} +${names.length - 1}`;
 }
 
 function normalizeDateKey(value) {
@@ -3044,7 +3083,10 @@ function getChecklistHistoryGroups(history) {
 
 function getKanbanTasksForToday(filteredTasks) {
   const currentUserId = Number(state.session?.user?.id || 0);
-  const scopedTasks = filteredTasks.filter((task) => Number(task.assigned_to || 0) === currentUserId || task.assigned_to == null);
+  const scopedTasks = filteredTasks.filter((task) => {
+    const assigneeIds = getTaskAssigneeIds(task);
+    return !assigneeIds.length || assigneeIds.includes(currentUserId);
+  });
   const source = scopedTasks.length ? scopedTasks : filteredTasks;
 
   return source
@@ -3193,7 +3235,7 @@ function renderKanbanChecklist(filteredTasks) {
                 <div class="item-row">
                   <div>
                     <div class="block-title-sm">${escapeHtml(task.title)}</div>
-                    <div class="block-text-xs">${escapeHtml(task.client_name || "Interno")} · ${escapeHtml(getTaskAssigneeLabel(task))}</div>
+                    <div class="block-text-xs" title="${escapeHtml(getTaskAssigneeTitle(task))}">${escapeHtml(task.client_name || "Interno")} · ${escapeHtml(getTaskAssigneeLabel(task))}</div>
                   </div>
                   <span class="badge ${isOverdueDate(task.due_date || task.deadline) ? "badge-pink" : "badge-today"}">${isOverdueDate(task.due_date || task.deadline) ? "Atrasada" : "Hoje"}</span>
                 </div>
@@ -3348,7 +3390,7 @@ function renderKanban() {
                   <div class="k-card-desc" title="${escapeHtml(task.description || "")}">${escapeHtml(task.description || "Sem descrição.")}</div>
                   <div class="status-gap-top"><span class="badge badge-blue">${escapeHtml(formatTaskTypeLabel(task.type))}</span></div>
                   <div class="k-card-meta">
-                    <span class="k-card-assignee" title="${escapeHtml(getTaskAssigneeLabel(task))}">${escapeHtml(getTaskAssigneeLabel(task))}</span>
+                    <span class="k-card-assignee" title="${escapeHtml(getTaskAssigneeTitle(task))}">${escapeHtml(getTaskAssigneeLabel(task))}</span>
                     <span class="k-card-deadline ${getDeadlineClass(task)}">${escapeHtml(getTaskDeadlineLabel(task))}</span>
                   </div>
                   ${
@@ -4661,13 +4703,40 @@ function clientOptions(selectedId) {
     .join("");
 }
 
-function userOptions(selectedId) {
-  const source = state.assignableUsers.length ? state.assignableUsers : state.team.length ? state.team : state.users;
-  return source
+function getAssignableUserSource() {
+  return (state.assignableUsers.length ? state.assignableUsers : state.team.length ? state.team : state.users)
     .filter((user) => user && user.is_active !== false)
-    .filter((user) => user.role !== "client")
+    .filter((user) => user.role !== "client");
+}
+
+function userOptions(selectedId) {
+  return getAssignableUserSource()
     .map((user) => `<option value="${user.id}" ${String(selectedId) === String(user.id) ? "selected" : ""}>${escapeHtml(user.name)}</option>`)
     .join("");
+}
+
+function taskAssigneeCheckboxes(selectedIds = []) {
+  const selected = new Set(selectedIds.map((value) => String(value)));
+  const source = getAssignableUserSource();
+
+  if (!source.length) {
+    return `<div class="field-help">Nenhum responsável interno disponível no momento.</div>`;
+  }
+
+  return `
+    <div class="assignee-checklist">
+      ${source
+        .map(
+          (user) => `
+            <label class="assignee-check-option">
+              <input type="checkbox" name="assigned_to_ids" value="${user.id}" ${selected.has(String(user.id)) ? "checked" : ""}>
+              <span class="assignee-check-text">${escapeHtml(user.name)}</span>
+            </label>
+          `
+        )
+        .join("")}
+    </div>
+  `;
 }
 
 function contactOptions(selectedId) {
@@ -5063,12 +5132,17 @@ function openModal(type, id = null) {
 
   if (type === "nova-tarefa") {
     const task = state.tasks.find((item) => item.id === id) || {};
+    const selectedAssigneeIds = getTaskAssigneeIds(task);
     html = modalFormWrapper(
       task.id ? "Editar tarefa" : "Nova tarefa",
       `
         <div class="field form-full"><label>Título</label><input name="title" value="${escapeHtml(task.title || "")}" required></div>
         <div class="field"><label>Cliente</label><select name="client_id"><option value="">Interno</option>${clientOptions(task.client_id)}</select></div>
-        <div class="field"><label>Responsável</label><select name="assigned_to"><option value="">Todos da equipe</option>${userOptions(task.assigned_to)}</select></div>
+        <div class="field form-full">
+          <label>Responsáveis</label>
+          ${taskAssigneeCheckboxes(selectedAssigneeIds)}
+          <div class="field-help">Se ninguém for marcado, a tarefa fica como Todos da equipe.</div>
+        </div>
         <div class="field"><label>Tipo</label><select name="type">${taskTypeOptions(task.type || "")}</select></div>
         <div class="field"><label>Status</label><select name="status">${taskStatusOptions(task.status || getTaskStatusValue(task))}</select></div>
         <div class="field"><label>Coluna</label><select name="column_name">${taskColumnOptions(task.column_name || getTaskColumnName(task))}</select></div>
@@ -5315,7 +5389,11 @@ async function submitModal(event, type, id) {
     }
 
     if (type === "nova-tarefa") {
-      const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["client_id", "assigned_to", "deadline"]);
+      const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["client_id", "deadline"]);
+      payload.assigned_to_ids = formData
+        .getAll("assigned_to_ids")
+        .map((value) => Number(value))
+        .filter((value) => Number.isInteger(value) && value > 0);
       payload.type = normalizeTaskTypeValue(payload.type);
       payload.column_name = getTaskColumnConfig(payload.column_name || payload.status).key;
       payload.status = getTaskStatusValue(payload.status || payload.column_name, payload.column_name);

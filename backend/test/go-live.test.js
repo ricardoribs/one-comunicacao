@@ -557,6 +557,70 @@ test('gestor cria tarefa para cliente do proprio escopo sem erro interno', { con
   await pool.query('DELETE FROM clients');
 });
 
+test('gestor consegue atribuir a mesma tarefa para mais de uma pessoa', { concurrency: false }, async () => {
+  const suffix = Date.now() + 131;
+  const gestor = await createUser({
+    name: `Gestor Multi ${suffix}`,
+    email: `gestor.multi.${suffix}@one.test`,
+    role: 'gestor',
+  });
+  const designerA = await createUser({
+    name: `Designer A ${suffix}`,
+    email: `designer.a.${suffix}@one.test`,
+    role: 'designer',
+  });
+  const designerB = await createUser({
+    name: `Designer B ${suffix}`,
+    email: `designer.b.${suffix}@one.test`,
+    role: 'designer',
+  });
+
+  const clientId = await createClient(`Cliente Multi ${suffix}`, `Empresa Multi ${suffix}`, gestor.id);
+  const gestorAuth = await login(gestor.email);
+
+  const createResponse = await request(app)
+    .post('/api/tasks')
+    .set('Authorization', `Bearer ${gestorAuth.body.accessToken}`)
+    .send({
+      client_id: clientId,
+      assigned_to_ids: [designerA.id, designerB.id],
+      status: 'Backlog',
+      type: 'planejamento',
+      column_name: 'todo',
+      title: 'Tarefa com dois responsáveis',
+      description: 'Executada em conjunto por mais de uma pessoa.',
+    });
+
+  assert.equal(createResponse.status, 201);
+  assert.equal(createResponse.body.assigned_to, designerA.id);
+  assert.deepEqual(
+    createResponse.body.assigned_user_ids.map((value) => Number(value)).sort((left, right) => left - right),
+    [designerA.id, designerB.id].sort((left, right) => left - right)
+  );
+  assert.deepEqual(
+    createResponse.body.assigned_user_names.sort(),
+    [designerA.name, designerB.name].sort()
+  );
+
+  const [designerAAuth, designerBAuth] = await Promise.all([login(designerA.email), login(designerB.email)]);
+  const [designerAUnread, designerBUnread] = await Promise.all([
+    request(app).get('/api/notifications/unread-count').set('Authorization', `Bearer ${designerAAuth.body.accessToken}`),
+    request(app).get('/api/notifications/unread-count').set('Authorization', `Bearer ${designerBAuth.body.accessToken}`),
+  ]);
+
+  assert.equal(designerAUnread.status, 200);
+  assert.equal(designerBUnread.status, 200);
+  assert.equal(designerAUnread.body.total, 1);
+  assert.equal(designerBUnread.body.total, 1);
+
+  await pool.query('DELETE FROM notifications');
+  await pool.query('DELETE FROM tasks');
+  await userModel.remove(designerB.id);
+  await userModel.remove(designerA.id);
+  await userModel.remove(gestor.id);
+  await pool.query('DELETE FROM clients');
+});
+
 test('tarefa compartilhada fica visivel para equipe interna e nao aparece no dashboard do cliente', { concurrency: false }, async () => {
   const suffix = Date.now() + 14;
   const gestor = await createUser({

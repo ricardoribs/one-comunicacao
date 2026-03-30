@@ -1,10 +1,12 @@
 const asyncHandler = require('../utils/asyncHandler');
+const AppError = require('../utils/AppError');
 const taskModel = require('../models/taskModel');
 const userModel = require('../models/userModel');
 const notificationService = require('../services/notificationService');
 const { ensureClientAccess } = require('../utils/access');
 const { normalizeTaskTypeValue } = require('../utils/taskTypes');
 const { sendPaginated } = require('../utils/response');
+const { normalizeAssignedUserIds } = require('../utils/taskAssignments');
 
 const TASK_COLUMN_STATUS_MAP = {
   backlog: 'Backlog',
@@ -50,33 +52,67 @@ function normalizeTaskStatus(status, columnName) {
 function buildTaskPayload(input = {}, fallback = {}) {
   const nextColumnName = normalizeTaskColumnName(input.column_name ?? fallback.column_name, input.status ?? fallback.status);
   const nextStatus = normalizeTaskStatus(input.status ?? fallback.status, nextColumnName);
+  const hasAssignedToIds = Object.prototype.hasOwnProperty.call(input, 'assigned_to_ids');
+  const hasAssignedTo = Object.prototype.hasOwnProperty.call(input, 'assigned_to');
+  const assignedToIds = hasAssignedToIds || hasAssignedTo
+    ? normalizeAssignedUserIds(hasAssignedToIds ? input.assigned_to_ids : undefined, hasAssignedTo ? input.assigned_to : null)
+    : normalizeAssignedUserIds(fallback.assigned_user_ids || fallback.assigned_to_ids, fallback.assigned_to);
 
   return {
     ...input,
+    assigned_to: assignedToIds[0] || null,
+    assigned_to_ids: assignedToIds,
     type: normalizeTaskTypeValue(input.type ?? fallback.type),
     column_name: nextColumnName,
     status: nextStatus,
   };
 }
 
-async function notifyTaskAssignment(task, previousAssignedTo, actor) {
-  const nextAssignedTo = Number(task?.assigned_to || 0);
-  const lastAssignedTo = Number(previousAssignedTo || 0);
+function getAssignedUserIds(task) {
+  return normalizeAssignedUserIds(task?.assigned_user_ids || task?.assigned_to_ids, task?.assigned_to);
+}
 
-  if (!nextAssignedTo || nextAssignedTo === Number(actor?.id || 0) || nextAssignedTo === lastAssignedTo) {
+async function ensureValidTaskAssignees(userIds = []) {
+  if (!userIds.length) {
+    return [];
+  }
+
+  const assignees = await Promise.all(userIds.map((userId) => userModel.findById(userId)));
+  const invalidIndex = assignees.findIndex(
+    (user) => !user || user.role === 'client' || user.is_active === false
+  );
+
+  if (invalidIndex >= 0) {
+    throw new AppError('Selecione apenas responsáveis internos ativos para a tarefa.', 400);
+  }
+
+  return assignees;
+}
+
+async function notifyTaskAssignment(task, previousTask, actor) {
+  const nextAssignedToIds = getAssignedUserIds(task);
+  const previousAssignedToIds = getAssignedUserIds(previousTask);
+  const actorId = Number(actor?.id || 0);
+  const newAssigneeIds = nextAssignedToIds.filter(
+    (userId) => userId !== actorId && !previousAssignedToIds.includes(userId)
+  );
+
+  if (!newAssigneeIds.length) {
     return;
   }
 
-  const assignedTo = await userModel.findById(nextAssignedTo);
-  if (!assignedTo) {
-    return;
-  }
-
-  await notificationService.notifyTaskAssigned({
-    task,
-    assignedTo,
-    assignedByName: actor?.name || '',
-  });
+  const assignees = await Promise.all(newAssigneeIds.map((userId) => userModel.findById(userId)));
+  await Promise.all(
+    assignees
+      .filter(Boolean)
+      .map((assignedTo) =>
+        notificationService.notifyTaskAssigned({
+          task,
+          assignedTo,
+          assignedByName: actor?.name || '',
+        })
+      )
+  );
 }
 
 async function notifyTaskCompletion(task, previousTask, actor) {
@@ -105,6 +141,7 @@ exports.create = asyncHandler(async (req, res) => {
   }
 
   const payload = buildTaskPayload(req.body);
+  await ensureValidTaskAssignees(payload.assigned_to_ids);
   payload.created_by = req.user.id;
   const task = await taskModel.create(payload, req.user);
   await notifyTaskAssignment(task, null, req.user);
@@ -118,8 +155,9 @@ exports.update = asyncHandler(async (req, res) => {
 
   const previousTask = await taskModel.findById(req.params.id, req.user);
   const payload = buildTaskPayload(req.body, previousTask || {});
+  await ensureValidTaskAssignees(payload.assigned_to_ids);
   const task = await taskModel.update(req.params.id, payload, req.user);
-  await notifyTaskAssignment(task, previousTask?.assigned_to, req.user);
+  await notifyTaskAssignment(task, previousTask, req.user);
   await notifyTaskCompletion(task, previousTask, req.user);
   res.json(task);
 });
