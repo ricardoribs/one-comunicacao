@@ -7,6 +7,7 @@ const USER_UPDATE_COLUMNS = new Set([
   'name',
   'email',
   'phone',
+  'job_title',
   'avatar_url',
   'password',
   'role',
@@ -18,7 +19,25 @@ const USER_UPDATE_COLUMNS = new Set([
   'last_seen_at',
   'last_seen_ip',
   'last_seen_location',
+  'notify_task_assigned',
+  'notify_task_completed',
+  'notify_calendar_24h',
+  'notify_calendar_1h',
 ]);
+
+const DEFAULT_NOTIFICATION_PREFERENCES = Object.freeze({
+  task_assigned: true,
+  task_completed: true,
+  calendar_24h: true,
+  calendar_1h: true,
+});
+
+const NOTIFICATION_TYPE_PREFERENCE_MAP = Object.freeze({
+  task_assigned: 'task_assigned',
+  task_completed: 'task_completed',
+  calendar_event_reminder_24h: 'calendar_24h',
+  calendar_event_reminder_1h: 'calendar_1h',
+});
 
 function getExecutor(executor = pool) {
   return executor;
@@ -31,6 +50,7 @@ const baseSelect = `
     u.name,
     u.email,
     u.phone,
+    u.job_title,
     u.avatar_url,
     u.password,
     u.role,
@@ -42,6 +62,10 @@ const baseSelect = `
     u.last_seen_at,
     u.last_seen_ip,
     u.last_seen_location,
+    u.notify_task_assigned,
+    u.notify_task_completed,
+    u.notify_calendar_24h,
+    u.notify_calendar_1h,
     CASE
       WHEN COALESCE(u.is_active, true) = true
         AND u.last_seen_at IS NOT NULL
@@ -63,6 +87,7 @@ const safeSelect = `
     u.name,
     u.email,
     u.phone,
+    u.job_title,
     u.avatar_url,
     u.role,
     u.is_active,
@@ -81,6 +106,7 @@ const legacySafeSelect = `
     u.name,
     u.email,
     NULL::VARCHAR(40) AS phone,
+    NULL::VARCHAR(120) AS job_title,
     NULL::VARCHAR(500) AS avatar_url,
     u.role,
     u.is_active,
@@ -99,6 +125,7 @@ const legacyBaseSelect = `
     u.name,
     u.email,
     NULL::VARCHAR(40) AS phone,
+    NULL::VARCHAR(120) AS job_title,
     NULL::VARCHAR(500) AS avatar_url,
     u.password,
     u.role,
@@ -110,6 +137,10 @@ const legacyBaseSelect = `
     NULL::TIMESTAMP AS last_seen_at,
     NULL::VARCHAR(64) AS last_seen_ip,
     NULL::VARCHAR(160) AS last_seen_location,
+    true::BOOLEAN AS notify_task_assigned,
+    true::BOOLEAN AS notify_task_completed,
+    true::BOOLEAN AS notify_calendar_24h,
+    true::BOOLEAN AS notify_calendar_1h,
     false AS is_online,
     u.created_at,
     c.name AS client_name,
@@ -124,6 +155,7 @@ const accessOverviewSelect = `
     u.client_id,
     u.name,
     u.email,
+    u.job_title,
     u.role,
     u.is_active,
     u.email_verified_at,
@@ -150,6 +182,7 @@ const legacyAccessOverviewSelect = `
     u.client_id,
     u.name,
     u.email,
+    NULL::VARCHAR(120) AS job_title,
     u.role,
     u.is_active,
     u.email_verified_at,
@@ -218,6 +251,19 @@ async function listAccessOverview(query = {}) {
     page.values
   );
   return rows;
+}
+
+function extractNotificationPreferences(record = {}) {
+  return {
+    task_assigned:
+      record.notify_task_assigned === undefined ? DEFAULT_NOTIFICATION_PREFERENCES.task_assigned : Boolean(record.notify_task_assigned),
+    task_completed:
+      record.notify_task_completed === undefined ? DEFAULT_NOTIFICATION_PREFERENCES.task_completed : Boolean(record.notify_task_completed),
+    calendar_24h:
+      record.notify_calendar_24h === undefined ? DEFAULT_NOTIFICATION_PREFERENCES.calendar_24h : Boolean(record.notify_calendar_24h),
+    calendar_1h:
+      record.notify_calendar_1h === undefined ? DEFAULT_NOTIFICATION_PREFERENCES.calendar_1h : Boolean(record.notify_calendar_1h),
+  };
 }
 
 async function listActiveInternalTeam(actor = null) {
@@ -309,14 +355,15 @@ async function listAssignableInternalUsers(actor = null) {
 
 async function create(data, executor = pool) {
   const { rows } = await getExecutor(executor).query(
-    `INSERT INTO users (client_id, name, email, phone, avatar_url, password, role, is_active, email_verified_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, true), $9)
+    `INSERT INTO users (client_id, name, email, phone, job_title, avatar_url, password, role, is_active, email_verified_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, true), $10)
      RETURNING id`,
     [
       data.client_id || null,
       data.name,
       data.email,
       data.phone || null,
+      data.job_title || null,
       data.avatar_url || null,
       data.password,
       data.role,
@@ -350,6 +397,56 @@ async function update(id, data, executor = pool) {
 
 async function remove(id) {
   await pool.query('DELETE FROM users WHERE id = $1', [id]);
+}
+
+async function findNotificationPreferencesById(id, executor = pool) {
+  const { rows } = await queryWithSchemaFallback(
+    executor,
+    `SELECT
+       id,
+       notify_task_assigned,
+       notify_task_completed,
+       notify_calendar_24h,
+       notify_calendar_1h
+     FROM users
+     WHERE id = $1`,
+    `SELECT
+       id,
+       true::BOOLEAN AS notify_task_assigned,
+       true::BOOLEAN AS notify_task_completed,
+       true::BOOLEAN AS notify_calendar_24h,
+       true::BOOLEAN AS notify_calendar_1h
+     FROM users
+     WHERE id = $1`,
+    [id]
+  );
+  return rows[0] || null;
+}
+
+async function updateNotificationPreferences(id, preferences, executor = pool) {
+  const payload = {
+    notify_task_assigned: preferences.task_assigned,
+    notify_task_completed: preferences.task_completed,
+    notify_calendar_24h: preferences.calendar_24h,
+    notify_calendar_1h: preferences.calendar_1h,
+  };
+
+  await update(id, payload, executor);
+  return findNotificationPreferencesById(id, executor);
+}
+
+async function isNotificationTypeEnabled(userId, type, executor = pool) {
+  const preferenceKey = NOTIFICATION_TYPE_PREFERENCE_MAP[type];
+  if (!preferenceKey) {
+    return true;
+  }
+
+  const record = await findNotificationPreferencesById(userId, executor);
+  if (!record) {
+    return true;
+  }
+
+  return extractNotificationPreferences(record)[preferenceKey] !== false;
 }
 
 async function findSecurityById(id, executor = pool) {
@@ -606,6 +703,8 @@ async function anonymizeUser(id, hashedPassword) {
 }
 
 module.exports = {
+  DEFAULT_NOTIFICATION_PREFERENCES,
+  extractNotificationPreferences,
   findByEmail,
   findById,
   list,
@@ -614,6 +713,9 @@ module.exports = {
   listAssignableInternalUsers,
   create,
   update,
+  findNotificationPreferencesById,
+  updateNotificationPreferences,
+  isNotificationTypeEnabled,
   remove,
   findSecurityById,
   recordFailedLogin,
