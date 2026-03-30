@@ -78,17 +78,17 @@ button,.btn,.sb-link,.tab,a{touch-action:manipulation}
 .login-brand-title span{color:var(--pink)}
 .login-brand-sub{width:100%;font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.72);text-align:center}
 .login-brand-image{display:block;width:146px;height:auto}
-.login-stage{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(388px,420px);gap:72px;align-items:center;padding:56px 72px 88px;min-height:620px;overflow:visible}
+.login-stage{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(388px,420px);gap:72px;align-items:start;padding:72px 72px 88px;min-height:620px;overflow:visible}
 .login-stage::before{display:none;content:none}
 .login-stage::after{display:none;content:none}
-.login-hero{position:relative;z-index:1;min-width:0;padding:0 0 0 6px;display:flex}
-.login-hero-frame{position:relative;border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08);padding:44px 0 44px;min-height:auto;width:100%;max-width:700px}
+.login-hero{position:relative;z-index:1;min-width:0;padding:24px 0 0 6px;display:flex;align-self:start}
+.login-hero-frame{position:relative;border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08);padding:28px 0 36px;min-height:auto;width:100%;max-width:700px}
 .login-hero-frame::before{display:none;content:none}
 .login-hero-kicker{font-family:var(--font-login);font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.56)}
-.login-hero-title{max-width:540px;margin-top:var(--space-3);font-family:var(--font-login);font-size:48px;font-weight:800;line-height:1.02;letter-spacing:-.05em;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.45)}
+.login-hero-title{max-width:540px;margin-top:0;font-family:var(--font-login);font-size:48px;font-weight:800;line-height:1.02;letter-spacing:-.05em;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.45)}
 .login-hero-copy{max-width:560px;margin-top:var(--space-5);font-family:var(--font-login);font-size:18px;font-weight:500;line-height:1.48;color:rgba(255,255,255,.82);text-shadow:0 1px 0 rgba(0,0,0,.4)}
 .login-hero-note{max-width:480px;margin-top:var(--space-6);padding-left:var(--space-4);border-left:2px solid rgba(232,52,105,.52);font-family:var(--font-login);font-size:14px;font-weight:600;line-height:1.55;color:rgba(255,255,255,.62)}
-.login-box{position:relative;z-index:1;background:var(--white);width:100%;padding:34px 34px 34px;border-radius:4px;display:flex;flex-direction:column;justify-content:center;border:1px solid rgba(13,13,15,.3);border-top:4px solid var(--pink);box-shadow:0 30px 68px rgba(0,0,0,.28);align-self:center}
+.login-box{position:relative;z-index:1;background:var(--white);width:100%;padding:34px 34px 34px;border-radius:4px;display:flex;flex-direction:column;justify-content:center;border:1px solid rgba(13,13,15,.3);border-top:4px solid var(--pink);box-shadow:0 30px 68px rgba(0,0,0,.28);align-self:start;margin-top:24px}
 .login-logo{display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-8)}
 .login-logo-image{display:block;width:138px;height:auto}
 .login-logo-text{font-family:var(--font-login);font-size:var(--text-lg);font-weight:800;letter-spacing:-.03em}
@@ -476,7 +476,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 .analytics-side-item{display:flex;align-items:center;justify-content:space-between;padding:var(--space-3);background:var(--gray);font-size:var(--text-sm)}
 .progress-stack{display:flex;flex-direction:column;gap:var(--space-3)}
 .progress-item-head{display:flex;justify-content:space-between;font-size:var(--text-sm);margin-bottom:var(--space-1)}
-.finance-header-grid{display:grid;grid-template-columns:minmax(220px,1.35fr) minmax(120px,.8fr) minmax(120px,.8fr) minmax(120px,.8fr) minmax(92px,.58fr) auto;gap:var(--space-3);padding:0 0 var(--space-2)}
+.finance-header-grid{display:grid;grid-template-columns:minmax(260px,1.45fr) minmax(120px,.7fr) minmax(120px,.7fr) minmax(120px,.7fr) minmax(96px,.5fr) minmax(96px,.5fr);gap:var(--space-4);padding:0 0 var(--space-2)}
 .item-row{display:flex;justify-content:space-between;align-items:center;padding:var(--space-2) 0;border-bottom:1px solid var(--border)}
 .item-row:last-child{border-bottom:none}
 .item-row-main{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3)}
@@ -533,9 +533,12 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 
 /* FINANCEIRO */
 .fin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-4);margin-bottom:var(--space-5);align-items:stretch}
-.finance-header-grid,.fin-row{display:grid;grid-template-columns:minmax(220px,1.35fr) minmax(120px,.8fr) minmax(120px,.8fr) minmax(120px,.8fr) minmax(92px,.58fr) auto;gap:var(--space-3)}
+.finance-header-grid,.fin-row{display:grid;grid-template-columns:minmax(260px,1.45fr) minmax(120px,.7fr) minmax(120px,.7fr) minmax(120px,.7fr) minmax(96px,.5fr) minmax(96px,.5fr);gap:var(--space-4)}
 .fin-row{align-items:center;padding:var(--space-3) 0;border-bottom:1px solid var(--border);font-size:var(--text-sm)}
 .fin-row:last-child{border-bottom:none}
+.finance-header-grid > *, .fin-row > *{display:flex;align-items:center;min-width:0}
+.fin-cell-client strong{display:block;white-space:normal;line-height:1.45}
+.fin-cell-value,.fin-cell-margin,.fin-cell-action{justify-content:flex-end;font-variant-numeric:tabular-nums}
 .fin-label{font-size:var(--text-2xs);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;padding-bottom:var(--space-2);border-bottom:1px solid var(--border);margin-bottom:var(--space-1)}
 .margin-good{color:var(--success);font-weight:600}
 .margin-warn{color:var(--warn);font-weight:600}
@@ -611,7 +614,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-financeiro .fin-row > :nth-child(4),
 #page-financeiro .fin-row > :nth-child(5){text-align:right}
 #page-financeiro .finance-header-grid > :nth-child(6),
-#page-financeiro .fin-row > :nth-child(6){justify-self:end;text-align:right}
+#page-financeiro .fin-row > :nth-child(6){justify-content:flex-end;text-align:right}
 #page-financeiro .fin-row .metric-note{display:block;white-space:normal;line-height:1.45}
 #page-analytics #analytics-tbody td[colspan]{padding:0}
 #page-analytics #analytics-tbody .empty-state{min-height:198px;max-width:none}
