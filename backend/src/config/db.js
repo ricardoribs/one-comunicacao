@@ -74,6 +74,8 @@ function createPgMemPool() {
       client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
       name VARCHAR(255) NOT NULL,
       email VARCHAR(255) NOT NULL UNIQUE,
+      phone VARCHAR(40),
+      avatar_url VARCHAR(500),
       password TEXT NOT NULL,
       role VARCHAR(32) NOT NULL,
       is_active BOOLEAN NOT NULL DEFAULT TRUE,

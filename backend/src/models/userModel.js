@@ -6,6 +6,8 @@ const USER_UPDATE_COLUMNS = new Set([
   'client_id',
   'name',
   'email',
+  'phone',
+  'avatar_url',
   'password',
   'role',
   'is_active',
@@ -28,6 +30,8 @@ const baseSelect = `
     u.client_id,
     u.name,
     u.email,
+    u.phone,
+    u.avatar_url,
     u.password,
     u.role,
     u.is_active,
@@ -58,6 +62,26 @@ const safeSelect = `
     u.client_id,
     u.name,
     u.email,
+    u.phone,
+    u.avatar_url,
+    u.role,
+    u.is_active,
+    u.email_verified_at,
+    u.created_at,
+    c.name AS client_name,
+    c.company AS client_company
+  FROM users u
+  LEFT JOIN clients c ON c.id = u.client_id
+`;
+
+const legacySafeSelect = `
+  SELECT
+    u.id,
+    u.client_id,
+    u.name,
+    u.email,
+    NULL::VARCHAR(40) AS phone,
+    NULL::VARCHAR(500) AS avatar_url,
     u.role,
     u.is_active,
     u.email_verified_at,
@@ -74,6 +98,8 @@ const legacyBaseSelect = `
     u.client_id,
     u.name,
     u.email,
+    NULL::VARCHAR(40) AS phone,
+    NULL::VARCHAR(500) AS avatar_url,
     u.password,
     u.role,
     u.is_active,
@@ -173,7 +199,12 @@ async function findById(id, executor = pool) {
 async function list(query = {}) {
   const { limit, offset } = normalizePagination(query);
   const page = paginationClause(limit, offset, 1);
-  const { rows } = await pool.query(`${safeSelect} ORDER BY u.created_at DESC${page.clause}`, page.values);
+  const { rows } = await queryWithSchemaFallback(
+    pool,
+    `${safeSelect} ORDER BY u.created_at DESC${page.clause}`,
+    `${legacySafeSelect} ORDER BY u.created_at DESC${page.clause}`,
+    page.values
+  );
   return rows;
 }
 
@@ -278,13 +309,15 @@ async function listAssignableInternalUsers(actor = null) {
 
 async function create(data, executor = pool) {
   const { rows } = await getExecutor(executor).query(
-    `INSERT INTO users (client_id, name, email, password, role, is_active, email_verified_at)
-     VALUES ($1, $2, $3, $4, $5, COALESCE($6, true), $7)
+    `INSERT INTO users (client_id, name, email, phone, avatar_url, password, role, is_active, email_verified_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, true), $9)
      RETURNING id`,
     [
       data.client_id || null,
       data.name,
       data.email,
+      data.phone || null,
+      data.avatar_url || null,
       data.password,
       data.role,
       data.is_active,
