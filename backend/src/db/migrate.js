@@ -739,7 +739,7 @@ async function reconcileSchemaDrift(databaseConfig) {
               OR EXISTS (
                 SELECT 1
                 FROM task_assignees task_assignee
-                WHERE task_assignee.task_id = app.can_access_task.task_id
+                WHERE task_assignee.task_id = task_id
               )
             )
           )
@@ -750,7 +750,7 @@ async function reconcileSchemaDrift(databaseConfig) {
               OR EXISTS (
                 SELECT 1
                 FROM task_assignees task_assignee
-                WHERE task_assignee.task_id = app.can_access_task.task_id
+                WHERE task_assignee.task_id = task_id
                   AND task_assignee.user_id = app.current_user_id()
               )
               OR created_user_id = app.current_user_id()
@@ -759,7 +759,7 @@ async function reconcileSchemaDrift(databaseConfig) {
                 AND NOT EXISTS (
                   SELECT 1
                   FROM task_assignees task_assignee
-                  WHERE task_assignee.task_id = app.can_access_task.task_id
+                  WHERE task_assignee.task_id = task_id
                 )
               )
               OR app.can_access_client(task_client_id)
