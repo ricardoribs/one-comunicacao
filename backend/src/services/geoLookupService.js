@@ -76,6 +76,10 @@ function buildLookupUrl(ip) {
   return env.geoLookupUrlTemplate.replace('{ip}', encodeURIComponent(ip));
 }
 
+function buildSecondaryLookupUrl(ip) {
+  return `https://ipapi.co/${encodeURIComponent(ip)}/json/`;
+}
+
 function buildLocationLabel(payload = {}) {
   const city = normalizeString(payload.city || payload.town);
   const region = normalizeString(
@@ -101,16 +105,26 @@ function buildLocationLabel(payload = {}) {
   return normalizedCountry;
 }
 
-async function fetchLookup(ip) {
-  if (!env.geoLookupEnabled || !env.geoLookupUrlTemplate || !isPublicIp(ip)) {
-    return '';
+function isWeakLocationLabel(value) {
+  const normalized = normalizeString(value);
+  if (!normalized) {
+    return true;
   }
 
+  const upperValue = normalized.toUpperCase();
+  if (/^[A-Z]{2}$/.test(upperValue)) {
+    return true;
+  }
+
+  return Object.values(COUNTRY_CODE_LABELS).includes(normalized);
+}
+
+async function requestLookup(url) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), env.geoLookupTimeoutMs);
 
   try {
-    const response = await fetch(buildLookupUrl(ip), {
+    const response = await fetch(url, {
       headers: {
         Accept: 'application/json',
         'User-Agent': 'one-comunicacao-geo-lookup/1.0',
@@ -119,30 +133,54 @@ async function fetchLookup(ip) {
     });
 
     if (!response.ok) {
-      return '';
+      return null;
     }
 
     const payload = await response.json().catch(() => null);
     if (!payload || payload.success === false) {
-      return '';
+      return null;
     }
 
-    return buildLocationLabel(payload);
+    return payload;
   } catch (error) {
     if (error.name !== 'AbortError') {
       logger.debug?.(
         {
-          ip,
+          url,
           error: error.message,
         },
         'Falha ao consultar geolocalizacao por IP.'
       );
     }
 
-    return '';
+    return null;
   } finally {
     clearTimeout(timeout);
   }
+}
+
+async function fetchLookup(ip) {
+  if (!env.geoLookupEnabled || !env.geoLookupUrlTemplate || !isPublicIp(ip)) {
+    return '';
+  }
+
+  const primaryPayload = await requestLookup(buildLookupUrl(ip));
+  const primaryLocation = primaryPayload ? buildLocationLabel(primaryPayload) : '';
+  if (primaryLocation && !isWeakLocationLabel(primaryLocation)) {
+    return primaryLocation;
+  }
+
+  const secondaryPayload = await requestLookup(buildSecondaryLookupUrl(ip));
+  const secondaryLocation = secondaryPayload
+    ? buildLocationLabel({
+        city: secondaryPayload.city,
+        region: secondaryPayload.region || secondaryPayload.region_code || secondaryPayload.region_name,
+        country: secondaryPayload.country_name || secondaryPayload.country,
+        country_code: secondaryPayload.country_code,
+      })
+    : '';
+
+  return secondaryLocation || primaryLocation;
 }
 
 async function lookupIpLocation(ip) {

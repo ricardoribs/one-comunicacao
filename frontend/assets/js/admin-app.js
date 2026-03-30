@@ -1428,7 +1428,7 @@ function buildCalendarGridHtml(events, weekStart) {
 function buildCalendarUpcomingHtml(events) {
   const items = events.slice(0, 8);
   if (!items.length) {
-    return UI.empty("Nenhum evento nesta semana", "Crie o primeiro compromisso da equipe para começar a agenda compartilhada.");
+    return UI.empty("Nenhum evento nesta semana", "");
   }
 
   return items
@@ -1480,7 +1480,7 @@ function renderCalendar() {
   const weekStart = getCalendarWeekStartDate(state.calendar.weekStart || new Date());
   state.calendar.weekStart = weekStart.toISOString();
   weekLabel.textContent = `Semana de ${formatCalendarWeekLabel(weekStart)}`;
-  weekSub.textContent = "Agenda compartilhada da equipe. Os lembretes automáticos saem quando o evento entra na janela de 24h e 1h.";
+  weekSub.textContent = "";
 
   if (newEventButton) {
     newEventButton.style.display = canManageCalendarEvents() ? "" : "none";
@@ -1664,7 +1664,7 @@ function renderKpiCards(container, cards) {
         <div class="kpi-card">
           <div class="kpi-label">${escapeHtml(item.label)}</div>
           <div class="kpi-val">${escapeHtml(item.value)}</div>
-          <div class="kpi-sub${item.subClass ? ` ${item.subClass}` : ""}">${escapeHtml(item.sub)}</div>
+          <div class="kpi-sub${item.sub ? "" : " is-empty"}${item.subClass ? ` ${item.subClass}` : ""}">${escapeHtml(item.sub || "")}</div>
         </div>
       `
     )
@@ -2328,7 +2328,11 @@ function formatAccessLocationLabel(value) {
   }
 
   if (/^[A-Z]{2}$/.test(normalized)) {
-    return ACCESS_COUNTRY_LABELS[normalized] || normalized;
+    return `Cidade não identificada · ${ACCESS_COUNTRY_LABELS[normalized] || normalized}`;
+  }
+
+  if (normalized === "Brasil") {
+    return "Cidade não identificada · Brasil";
   }
 
   return normalized;
@@ -2361,9 +2365,9 @@ function renderMemberRow(user, currentUserId) {
           <span class="access-member-meta-label">Presença</span>
           <span class="badge ${presenceBadgeClass}">${presenceLabel}</span>
         </div>
-        <div class="access-member-meta-item access-member-meta-item-full">
+        <div class="access-member-meta-item">
           <span class="access-member-meta-label">Localização</span>
-          <span class="access-member-meta-value" title="${escapeHtml(locationLabel)}">${escapeHtml(locationLabel)}</span>
+          <span class="access-member-meta-value access-member-location" title="${escapeHtml(locationLabel)}">${escapeHtml(locationLabel)}</span>
         </div>
       </div>
       <div class="access-member-actions">
@@ -3298,11 +3302,6 @@ function resolveKanbanClient(filteredTasks) {
     return state.clients.find((client) => String(client.id) === String(selectedClientId)) || null;
   }
 
-  const clientIds = [...new Set(filteredTasks.map((task) => task.client_id).filter(Boolean))];
-  if (clientIds.length === 1) {
-    return state.clients.find((client) => String(client.id) === String(clientIds[0])) || null;
-  }
-
   return null;
 }
 
@@ -3580,27 +3579,27 @@ function renderCRM() {
     {
       label: "Total no Funil",
       value: formatNumber(activeContacts.length),
-      sub: activeContacts.length ? `${formatLeadCount(activeContacts.length)}` : "Adicione o primeiro lead"
+      sub: activeContacts.length ? `${formatLeadCount(activeContacts.length)}` : ""
     },
     {
       label: "Valor Potencial",
       value: formatCurrency(activePipelineValue),
-      sub: activeContacts.length ? "no pipeline" : "sem oportunidades abertas"
+      sub: activeContacts.length ? "no pipeline" : ""
     },
     {
       label: "Taxa de Conversão",
       value: `${conversionRate.toFixed(0)}%`,
-      sub: closedContacts.length ? `${formatNumber(closedContacts.length)} conversões` : "Aguardando primeira conversão"
+      sub: closedContacts.length ? `${formatNumber(closedContacts.length)} conversões` : ""
     },
     {
       label: "Ticket Médio",
       value: formatCurrency(averageTicket),
-      sub: closedContacts.length ? "por lead convertido" : "Aparece após a primeira venda"
+      sub: closedContacts.length ? "por lead convertido" : ""
     },
     {
       label: "Ciclo de Venda",
       value: closedContacts.length ? `${formatNumber(averageCycle)}d` : "—",
-      sub: closedContacts.length ? "em média" : "Disponível com histórico real"
+      sub: closedContacts.length ? "em média" : ""
     }
   ]);
 
@@ -3627,13 +3626,7 @@ function renderCRM() {
               `
             )
             .join("")
-            || `<div class="pipe-empty">
-                 <div class="pipe-empty-title">${stage === "Prospecção" ? "Nenhum lead por aqui ainda." : "Etapa vazia no momento."}</div>
-                 <div class="pipe-empty-sub">${
-                   stage === "Prospecção"
-                     ? "Use o botão + Novo lead para começar o funil comercial."
-                     : `Os leads movidos para ${stage.toLowerCase()} aparecem nesta coluna.`
-                 }</div>
+            || `<div class="pipe-empty pipe-empty-minimal">
                  ${
                    stage === "Prospecção" && hasRoleDataAccess("contacts")
                      ? `<button type="button" class="btn btn-pink btn-sm" onclick="openModal('novo-lead')">Adicionar primeiro lead</button>`
@@ -3734,7 +3727,7 @@ function renderCampaigns() {
       value: formatNumber(activeCampaigns.length),
       sub: activeCampaigns.length
         ? `${formatNumber(clientsCount)} ${clientsCount === 1 ? "cliente em mídia" : "clientes em mídia"}`
-        : "Nenhuma campanha em andamento"
+        : ""
     },
     {
       label: "Orçamento Total",
@@ -3782,7 +3775,7 @@ function renderCampaigns() {
     || UI.tableEmpty(
       8,
       "Nenhuma campanha cadastrada.",
-      "Crie a primeira campanha para começar o planejamento e acompanhar os resultados daqui.",
+      "",
       {
         icon: false,
         className: "campaign-empty-panel",
@@ -4178,7 +4171,8 @@ function renderFinance() {
         <div class="fin-row">
           <span><strong>${escapeHtml(client.name)}</strong></span>
           <span>${formatCurrency(revenue)}</span>
-          <span class="metric-note">${formatCurrency(campaignCost)} · Cobrado ${formatCurrency(chargeVolume)}</span>
+          <span>${formatCurrency(campaignCost)}</span>
+          <span>${formatCurrency(chargeVolume)}</span>
           <span class="${margin >= 50 ? "margin-good" : margin >= 20 ? "margin-warn" : "margin-bad"}">${margin}%</span>
           <button class="btn btn-ghost btn-sm" onclick="openChargeModalForClient(${client.id})">Cobrar</button>
         </div>
@@ -4290,6 +4284,7 @@ function renderAll() {
   });
 
   bindLegacyInlineHandlers();
+  hardenInputPrivacy(document);
   ensureNotificationUi();
 }
 
@@ -4683,7 +4678,7 @@ function exportFinanceCsv() {
 
 function modalFormWrapper(title, body, submitLabel = "Salvar") {
   return `
-    <form id="modal-form">
+    <form id="modal-form" autocomplete="off">
       <div class="modal-title" id="modal-dialog-title">${escapeHtml(title)}</div>
       <div class="form-grid">${body}</div>
       <div class="modal-actions">
@@ -4800,7 +4795,7 @@ function buildClientAddressFields(client) {
     <div class="field">
       <label>CEP</label>
       <div class="field-inline">
-        <input name="zip_code" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000" value="${escapeHtml(formatZipCodeInput(client.zip_code || ""))}">
+        <input name="zip_code" inputmode="numeric" autocomplete="off" maxlength="9" placeholder="00000-000" value="${escapeHtml(formatZipCodeInput(client.zip_code || ""))}">
         <button type="button" class="btn btn-outline btn-sm" data-action="lookup-cep">Buscar CEP</button>
       </div>
       <div class="field-help" data-cep-feedback>Informe o CEP para sugerir estado, cidade, bairro e rua. Todos os campos continuam editáveis manualmente.</div>
@@ -5095,6 +5090,27 @@ function initTaskStatusAssist(form) {
   form.dataset.boundTaskStatusAssist = "1";
 }
 
+function hardenInputPrivacy(root = document) {
+  if (!root?.querySelectorAll) {
+    return;
+  }
+
+  root.querySelectorAll("form").forEach((form) => {
+    form.setAttribute("autocomplete", "off");
+  });
+
+  root.querySelectorAll("input, textarea").forEach((field) => {
+    const type = String(field.getAttribute("type") || "").toLowerCase();
+    if (!["checkbox", "radio", "file", "hidden"].includes(type)) {
+      field.setAttribute("autocomplete", "off");
+      field.setAttribute("autocorrect", "off");
+      field.setAttribute("autocapitalize", "none");
+      field.setAttribute("spellcheck", "false");
+      field.setAttribute("data-lpignore", "true");
+    }
+  });
+}
+
 function openModal(type, id = null) {
   const modal = document.getElementById("modal-content");
   lastFocusedElement = document.activeElement;
@@ -5124,7 +5140,7 @@ function openModal(type, id = null) {
         <div class="field"><label>Telefone contato</label><input name="contact_phone" value="${escapeHtml(client.contact_phone || "")}"></div>
         <div class="field"><label>Email financeiro</label><input type="email" name="billing_email" value="${escapeHtml(client.billing_email || "")}"></div>
         ${buildClientAddressFields(client)}
-        <div class="field form-full"><label>Manual da marca</label><textarea name="brand_manual" placeholder="Tom de voz, referências, restrições, roteiro da marca, orientações de gravação, edição, design e postagem.">${escapeHtml(client.brand_manual || "")}</textarea><div class="field-help">Use este campo para registrar o jeito certo de falar, criar, revisar e publicar para esta marca.</div></div>
+        <div class="field form-full"><label>Manual da marca</label><textarea name="brand_manual" placeholder="Tom de voz, referências, restrições, roteiro da marca, orientações de gravação, edição, design e postagem.">${escapeHtml(client.brand_manual || "")}</textarea></div>
         <div class="field form-full"><label>Observações</label><textarea name="notes">${escapeHtml(client.notes || "")}</textarea></div>
       `
     );
@@ -5341,6 +5357,7 @@ function openModal(type, id = null) {
   const form = document.getElementById("modal-form");
   if (form) {
     form.onsubmit = (event) => submitModal(event, type, id);
+    hardenInputPrivacy(form);
     if (type === "novo-cliente") {
       initClientAddressAssist(form);
     }
@@ -5366,6 +5383,7 @@ function openModal(type, id = null) {
   }
 
   bindLegacyInlineHandlers(document.getElementById("modal-overlay"));
+  hardenInputPrivacy(document.getElementById("modal-overlay"));
 }
 
 async function submitModal(event, type, id) {
