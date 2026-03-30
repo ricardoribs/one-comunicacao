@@ -1930,8 +1930,9 @@ function ensureNotificationUi() {
       shell = document.createElement("div");
       shell.className = "notification-shell";
       shell.dataset.notificationShell = "1";
-      actions.prepend(shell);
     }
+
+    actions.append(shell);
 
     if (shell.dataset.notificationBound === "1") {
       return;
@@ -2474,11 +2475,6 @@ function renderBarChart(containerId, values, labels, formatter) {
 }
 
 function renderHome() {
-  const newTaskButton = document.querySelector("#page-home .topbar-actions .btn-pink");
-  if (newTaskButton) {
-    newTaskButton.style.display = hasRoleDataAccess("manageTasks") ? "" : "none";
-  }
-
   const grid = document.querySelector("#page-home .kpi-grid");
   if (grid && state.dashboard) {
     const openTasks = state.tasks.filter((task) => normalizeTaskStatusLabel(task.status) !== "Concluido").length;
@@ -4837,7 +4833,6 @@ function openModal(type, id = null) {
           <select name="plan">
             ${clientPlanOptions(selectedPlan)}
           </select>
-          <div class="field-help">Planos válidos: One Ideal, One Start, One Master e Sob demanda. Em Sob demanda, entram Cobertura de Eventos, Releases (Imprensa), Newsletter, Fotografia e Tráfego Pago como serviço isolado.</div>
         </div>
         <div class="field"><label>MRR</label><input type="number" step="0.01" name="mrr" value="${client.mrr || ""}"></div>
         <div class="field"><label>Segmento</label><input name="segment" value="${escapeHtml(client.segment || "")}"></div>
