@@ -163,6 +163,7 @@ body.sidebar-open #sidebar-backdrop{display:block;opacity:1}
 .topbar-sub{font-size:var(--text-sm);line-height:1.4;color:var(--muted);margin-top:var(--space-1)}
 .topbar-actions{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .topbar-actions > *{min-width:0}
+.topbar-actions > .notification-shell{margin-left:auto}
 .page-body{flex:1;padding:var(--space-8);overflow-x:hidden}
 
 /* NOTIFICATIONS */
@@ -304,7 +305,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 
 /* CALENDARIO */
 #page-calendario{--calendar-slot:58px}
-#page-calendario .calendar-shell{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,340px);gap:var(--space-4);align-items:start}
+#page-calendario .calendar-shell{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--space-4);align-items:start}
 #page-calendario .calendar-main-card{padding:var(--space-5);overflow:hidden}
 #page-calendario .calendar-sidebar-stack{display:flex;flex-direction:column;gap:var(--space-4)}
 #page-calendario .calendar-scroll{overflow:auto;padding-bottom:var(--space-2)}
@@ -882,7 +883,6 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
     </div>
     <div class="topbar-actions">
       <span id="home-date" class="text-meta"></span>
-      <button class="btn btn-pink btn-sm" onclick="openModal('nova-tarefa')">+ Nova tarefa</button>
     </div>
   </div>
   <div class="page-body">
@@ -1005,20 +1005,6 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
             </div>
           </div>
           <div id="calendar-upcoming-list" class="stack-sm"></div>
-        </div>
-        <div class="card">
-          <div class="section-header">
-            <div>
-              <div class="section-title">Legenda da agenda</div>
-              <div class="section-sub">Todos visualizam. Admin e gestor organizam a pauta.</div>
-            </div>
-          </div>
-          <div class="calendar-legend-list">
-            <div class="calendar-legend-item"><span class="calendar-legend-swatch is-pink"></span><span>Pauta principal, reunião, alinhamento ou entrega estratégica.</span></div>
-            <div class="calendar-legend-item"><span class="calendar-legend-swatch is-blue"></span><span>Produção, gravação, captação ou ação de campo.</span></div>
-            <div class="calendar-legend-item"><span class="calendar-legend-swatch is-green"></span><span>Comemorações, validações positivas e eventos institucionais.</span></div>
-            <div class="calendar-legend-item"><span class="calendar-legend-swatch is-gold"></span><span>Marcos comerciais, aprovações e alertas importantes.</span></div>
-          </div>
         </div>
       </div>
     </div>
