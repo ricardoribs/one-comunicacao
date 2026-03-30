@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const PLACEHOLDER_LABELS = new Set(['fazer isso', 'fazer aquilo', 'depois isso']);
 
 function normalizeChecklistDate(value) {
   if (!value) {
@@ -10,7 +11,7 @@ function normalizeChecklistDate(value) {
 
 function normalizeChecklistItem(item, index = 0) {
   const label = String(item?.label || item?.text || '').trim();
-  if (!label) {
+  if (!label || PLACEHOLDER_LABELS.has(label.toLowerCase())) {
     return null;
   }
 
