@@ -94,3 +94,40 @@ test('resolveRequestAccessMetadata enriquece pais isolado com lookup por IP publ
   assert.equal(fetchCalls, 1);
   assert.equal(metadata.location, 'Imperatriz, MA');
 });
+
+test('resolveRequestAccessMetadata usa fallback secundario quando o provedor primario devolve apenas pais', async (t) => {
+  const originalFetch = global.fetch;
+  const responses = [
+    {
+      ok: true,
+      json: async () => ({
+        success: true,
+        country_code: 'BR',
+      }),
+    },
+    {
+      ok: true,
+      json: async () => ({
+        city: 'São Luís',
+        region: 'MA',
+        country_code: 'BR',
+      }),
+    },
+  ];
+
+  t.after(() => {
+    global.fetch = originalFetch;
+  });
+
+  global.fetch = async () => responses.shift();
+
+  const metadata = await resolveRequestAccessMetadata({
+    headers: {
+      'x-forwarded-for': '1.1.1.1',
+      'user-agent': 'node-test',
+    },
+    ip: '1.1.1.1',
+  });
+
+  assert.equal(metadata.location, 'São Luís, MA');
+});
