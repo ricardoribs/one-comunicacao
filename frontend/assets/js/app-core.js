@@ -98,7 +98,7 @@
         clearSession();
         notifyLogout("session-expired");
         redirectToLogin();
-        throw new Error("Sua sessao expirou. Faca login novamente.");
+        throw new Error("Sua sessão expirou. Faça login novamente.");
       }
 
       const session = await response.json();
@@ -173,13 +173,13 @@
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data.message || "Nao foi possivel concluir a solicitacao.");
+        throw new Error(data.message || "Não foi possível concluir a solicitação.");
       }
 
       return data;
     } catch (error) {
       if (error.name === "AbortError") {
-        throw new Error("A requisicao demorou mais do que o esperado. Tente novamente.");
+        throw new Error("A requisição demorou mais do que o esperado. Tente novamente.");
       }
 
       throw error;
@@ -190,7 +190,7 @@
 
   async function openAuthorizedUrl(url) {
     if (!url) {
-      throw new Error("Arquivo ainda nao disponivel.");
+      throw new Error("Arquivo ainda não disponível.");
     }
 
     if (url.startsWith("/api/files/")) {
@@ -199,7 +199,7 @@
       try {
         const response = await fetchJson(url, { method: "GET" });
         if (!response?.url) {
-          throw new Error("Nao foi possivel preparar o arquivo para download.");
+          throw new Error("Não foi possível preparar o arquivo para download.");
         }
 
         if (downloadWindow) {
@@ -220,7 +220,7 @@
       const accessToken = session?.accessToken || session?.token;
 
       if (!accessToken) {
-        throw new Error("Sua sessao expirou. Faca login novamente.");
+        throw new Error("Sua sessão expirou. Faça login novamente.");
       }
 
       const response = await fetch(url, {
@@ -232,7 +232,7 @@
       });
 
       if (!response.ok) {
-        throw new Error("Nao foi possivel abrir o arquivo solicitado.");
+        throw new Error("Não foi possível abrir o arquivo solicitado.");
       }
 
       const blob = await response.blob();
