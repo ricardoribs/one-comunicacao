@@ -154,7 +154,7 @@ async function register(payload) {
     }
 
     throw new AppError(
-      `Nao foi possivel enviar o e-mail de verificacao. ${error.message || 'Confira a configuracao do Resend e tente novamente.'}`,
+      `Não foi possível enviar o e-mail de verificação. ${error.message || 'Confira a configuração do Resend e tente novamente.'}`,
       502
     );
   }
@@ -167,7 +167,7 @@ async function register(payload) {
 async function login({ email, password }, metadata = {}) {
   const user = await userModel.findByEmail(email);
   if (!user) {
-    throw new AppError('E-mail ou senha invalidos', 401);
+    throw new AppError('E-mail ou senha inválidos.', 401);
   }
 
   if (user.locked_until && new Date(user.locked_until) > new Date()) {
@@ -180,9 +180,9 @@ async function login({ email, password }, metadata = {}) {
         user_id: user.id,
         email: user.email,
       },
-      'Usuario com hash de senha invalido ou ausente durante login.'
+      'Usuário com hash de senha inválido ou ausente durante login.'
     );
-    throw new AppError('E-mail ou senha invalidos', 401);
+    throw new AppError('E-mail ou senha inválidos.', 401);
   }
 
   let passwordMatches = false;
@@ -195,18 +195,18 @@ async function login({ email, password }, metadata = {}) {
         email: user.email,
         error: error.message,
       },
-      'Falha ao validar hash de senha durante login.'
+      'Falha ao validar hash de senha durante o login.'
     );
-    throw new AppError('E-mail ou senha invalidos', 401);
+    throw new AppError('E-mail ou senha inválidos.', 401);
   }
 
   if (!passwordMatches) {
     await userModel.recordFailedLogin(user.id, env.loginLockThreshold, env.loginLockMinutes);
-    throw new AppError('E-mail ou senha invalidos', 401);
+    throw new AppError('E-mail ou senha inválidos.', 401);
   }
 
   if (!user.is_active) {
-    throw new AppError('Usuario inativo', 401);
+    throw new AppError('Usuário inativo.', 401);
   }
 
   if (!user.email_verified_at) {
