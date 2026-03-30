@@ -8,10 +8,20 @@ const strongPassword = z
   .regex(/[0-9]/, 'Senha deve conter ao menos um numero')
   .regex(/[^A-Za-z0-9]/, 'Senha deve conter ao menos um simbolo');
 
-exports.loginSchema = z.object({
-  email: z.string().email('Informe um e-mail valido'),
-  password: z.string().min(1, 'Senha obrigatoria'),
-});
+exports.loginSchema = z
+  .object({
+    email: z.string().trim(),
+    password: z.string(),
+  })
+  .superRefine((data, ctx) => {
+    if (!String(data.email || '').trim() || !String(data.password || '').trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['email'],
+        message: 'Digite um e-mail e senha',
+      });
+    }
+  });
 
 exports.registerSchema = z.object({
   client_id: z.coerce.number().int().positive().nullable().optional(),

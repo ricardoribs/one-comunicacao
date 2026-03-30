@@ -2766,7 +2766,7 @@ function renderHome() {
     if (hasRoleDataAccess("homeFinancial")) {
       const revenueSeries = getInvoiceRevenueSeries(6);
       topCards[1].innerHTML = `
-        <div class="section-header"><div><div class="section-title">Faturamento — Últimos 6 meses</div><div class="section-sub">Leitura mensal pronta para receber lançamentos reais.</div></div></div>
+        <div class="section-header"><div><div class="section-title">Faturamento — Últimos 6 meses</div></div></div>
         <div class="chart-bar-wrap" id="home-chart"></div>
       `;
       renderBarChart(
@@ -3196,6 +3196,10 @@ function renderKanbanChecklist(filteredTasks) {
         class="checklist-input"
         maxlength="120"
         placeholder="Adicionar item"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="none"
+        spellcheck="false"
         aria-label="Novo item do checklist"
       >
       <button type="submit" class="btn btn-outline btn-sm">Adicionar</button>
@@ -3285,7 +3289,7 @@ function renderKanbanChecklist(filteredTasks) {
                 `
               )
               .join("")
-          : UI.empty("Nenhum checklist concluído ainda.", "Os itens finalizados aparecem aqui por período.", {
+          : UI.empty("Nenhum checklist concluído ainda.", "", {
               icon: false,
               className: "is-plain"
             })
@@ -3595,13 +3599,18 @@ function renderCRM() {
       label: "Ticket Médio",
       value: formatCurrency(averageTicket),
       sub: closedContacts.length ? "por lead convertido" : ""
-    },
-    {
-      label: "Ciclo de Venda",
-      value: closedContacts.length ? `${formatNumber(averageCycle)}d` : "—",
-      sub: closedContacts.length ? "em média" : ""
     }
-  ]);
+  ].concat(
+    closedContacts.length
+      ? [
+          {
+            label: "Ciclo de Venda",
+            value: `${formatNumber(averageCycle)}d`,
+            sub: "em média"
+          }
+        ]
+      : []
+  ));
 
   const pipelineStages = ["Prospecção", "Contato feito", "Proposta", "Negociação", "Fechado"];
   document.getElementById("pipeline-board").innerHTML = pipelineStages
@@ -4075,7 +4084,7 @@ function renderAnalytics() {
         </tr>
       `
     )
-    .join("") || UI.tableEmpty(7, "Nenhuma métrica consolidada.", "Ajuste o período ou aguarde a primeira leitura das campanhas.", {
+    .join("") || UI.tableEmpty(7, "Nenhuma métrica consolidada.", "", {
       icon: false,
       className: "is-analytics-empty",
     });
@@ -4114,11 +4123,7 @@ function renderAnalytics() {
       || UI.tableEmpty(
         7,
         hasScopedClients() ? "Nenhuma integração registrada" : "Nenhum cliente cadastrado",
-        hasScopedClients()
-          ? state.filters.analyticsClient
-            ? "Cadastre a primeira integração para o cliente selecionado."
-            : "Cadastre integrações por cliente para consolidar os conectores do analytics."
-          : "Cadastre o primeiro cliente para começar a registrar integrações reais."
+        ""
       );
   }
 }
@@ -4169,12 +4174,12 @@ function renderFinance() {
     .map(
       ({ client, revenue, chargeVolume, campaignCost, margin }) => `
         <div class="fin-row">
-          <span><strong>${escapeHtml(client.name)}</strong></span>
-          <span>${formatCurrency(revenue)}</span>
-          <span>${formatCurrency(campaignCost)}</span>
-          <span>${formatCurrency(chargeVolume)}</span>
-          <span class="${margin >= 50 ? "margin-good" : margin >= 20 ? "margin-warn" : "margin-bad"}">${margin}%</span>
-          <button class="btn btn-ghost btn-sm" onclick="openChargeModalForClient(${client.id})">Cobrar</button>
+          <div class="fin-cell fin-cell-client"><strong>${escapeHtml(client.name)}</strong></div>
+          <div class="fin-cell fin-cell-value">${formatCurrency(revenue)}</div>
+          <div class="fin-cell fin-cell-value">${formatCurrency(campaignCost)}</div>
+          <div class="fin-cell fin-cell-value">${formatCurrency(chargeVolume)}</div>
+          <div class="fin-cell fin-cell-margin ${margin >= 50 ? "margin-good" : margin >= 20 ? "margin-warn" : "margin-bad"}">${margin}%</div>
+          <div class="fin-cell fin-cell-action"><button class="btn btn-ghost btn-sm" onclick="openChargeModalForClient(${client.id})">Cobrar</button></div>
         </div>
       `
     )
@@ -5107,16 +5112,42 @@ function hardenInputPrivacy(root = document) {
 
   root.querySelectorAll("form").forEach((form) => {
     form.setAttribute("autocomplete", "off");
+    form.setAttribute("data-form-type", "other");
   });
 
   root.querySelectorAll("input, textarea").forEach((field) => {
     const type = String(field.getAttribute("type") || "").toLowerCase();
+    const isTextualField = !["checkbox", "radio", "file", "hidden", "date", "datetime-local", "number", "time"].includes(type);
     if (!["checkbox", "radio", "file", "hidden"].includes(type)) {
       field.setAttribute("autocomplete", "off");
       field.setAttribute("autocorrect", "off");
       field.setAttribute("autocapitalize", "none");
       field.setAttribute("spellcheck", "false");
       field.setAttribute("data-lpignore", "true");
+      field.setAttribute("data-1p-ignore", "true");
+      field.setAttribute("data-bwignore", "true");
+      field.setAttribute("data-form-type", "other");
+    }
+
+    if (isTextualField && field.dataset.privacyReady !== "1") {
+      const unlockField = () => {
+        field.removeAttribute("readonly");
+      };
+
+      field.setAttribute("readonly", "readonly");
+      field.addEventListener("focus", unlockField, { once: true });
+      field.addEventListener("pointerdown", unlockField, { once: true });
+      field.dataset.privacyReady = "1";
+    }
+
+    if (isTextualField && !String(field.value || "").trim()) {
+      [0, 150, 500].forEach((delay) => {
+        window.setTimeout(() => {
+          if (document.activeElement !== field) {
+            field.value = "";
+          }
+        }, delay);
+      });
     }
   });
 }
