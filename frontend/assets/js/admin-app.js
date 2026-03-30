@@ -2395,18 +2395,42 @@ const ACCESS_COUNTRY_LABELS = {
   GB: "Reino Unido",
 };
 
-function formatAccessLocationLabel(value) {
+const ROLE_PROFILE_DESCRIPTIONS = {
+  admin: "Administração, governança e visão completa do painel.",
+  gestor: "Coordenação operacional e acompanhamento de entregas.",
+  designer: "Execução de tarefas, produção e rotina operacional.",
+  comercial: "Relacionamento, CRM, campanhas e receita.",
+  dev: "Suporte técnico, integrações e analytics.",
+};
+
+const PROFILE_ACTIVITY_PLACEHOLDERS = ["fxfxcvxv"];
+
+function hasMeaningfulAccessLocation(value) {
   const normalized = String(value || "").trim();
   if (!normalized) {
-    return "Localização não identificada";
+    return false;
+  }
+
+  const lowerValue = normalized.toLowerCase();
+  if (lowerValue.includes("não identificada") || lowerValue.includes("nao identificada")) {
+    return false;
   }
 
   if (/^[A-Z]{2}$/.test(normalized)) {
-    return `Cidade não identificada · ${ACCESS_COUNTRY_LABELS[normalized] || normalized}`;
+    return false;
   }
 
-  if (normalized === "Brasil") {
-    return "Cidade não identificada · Brasil";
+  if (normalized === "Brasil" || normalized === ACCESS_COUNTRY_LABELS.BR) {
+    return false;
+  }
+
+  return true;
+}
+
+function formatAccessLocationLabel(value) {
+  const normalized = String(value || "").trim();
+  if (!hasMeaningfulAccessLocation(normalized)) {
+    return "";
   }
 
   return normalized;
@@ -2418,6 +2442,14 @@ function renderMemberRow(user, currentUserId) {
   const presenceLabel = !user.is_active ? "Inativo" : user.is_online ? "Online" : "Ativo";
   const presenceBadgeClass = !user.is_active ? "badge-gray" : user.is_online ? "badge-blue" : "badge-green";
   const locationLabel = formatAccessLocationLabel(user.last_seen_location);
+  const locationHtml = locationLabel
+    ? `
+        <div class="access-member-meta-item is-full">
+          <span class="access-member-meta-label">Localização</span>
+          <span class="access-member-meta-value access-member-location" title="${escapeHtml(locationLabel)}">${escapeHtml(locationLabel)}</span>
+        </div>
+      `
+    : "";
   return `
     <article class="access-member-card">
       <div class="access-member-head">
@@ -2439,10 +2471,7 @@ function renderMemberRow(user, currentUserId) {
           <span class="access-member-meta-label">Presença</span>
           <span class="badge ${presenceBadgeClass}">${presenceLabel}</span>
         </div>
-        <div class="access-member-meta-item">
-          <span class="access-member-meta-label">Localização</span>
-          <span class="access-member-meta-value access-member-location" title="${escapeHtml(locationLabel)}">${escapeHtml(locationLabel)}</span>
-        </div>
+        ${locationHtml}
       </div>
       <div class="access-member-actions">
         <button class="btn btn-ghost btn-sm" onclick="openModal('novo-membro', ${user.id})">Editar</button>
@@ -2479,7 +2508,7 @@ function renderRoleCard(role, permissions) {
 
 function formatPhoneDisplay(value) {
   const normalized = String(value || "").trim();
-  return normalized || "Não informado";
+  return normalized;
 }
 
 function renderProfileAvatar(profile) {
@@ -2508,17 +2537,57 @@ function getProfileCapabilityLabels(role) {
 
 function renderProfileSummaryCard(profile) {
   const roleLabel = ROLE_LABELS[profile.role] || profile.role || "Membro";
-  const clientLabel = profile.client_name || profile.client_company || "Operação interna";
+  const roleDescription = ROLE_PROFILE_DESCRIPTIONS[profile.role] || "Acesso interno da equipe.";
+  const clientLabel = profile.client_name || profile.client_company || "Equipe interna";
   const emailVerifiedLabel = profile.email_verified_at ? "Verificado" : "Pendente";
   const lastAccessLabel = profile.last_seen_at || profile.last_login_at ? formatDateTime(profile.last_seen_at || profile.last_login_at) : "Sem registro";
   const locationLabel = formatAccessLocationLabel(profile.last_seen_location);
   const createdLabel = profile.created_at ? formatDate(profile.created_at) : "Não informado";
+  const phoneLabel = formatPhoneDisplay(profile.phone);
+  const metaItems = [
+    {
+      label: "Vínculo",
+      value: clientLabel,
+    },
+    {
+      label: "Função no painel",
+      value: roleDescription,
+      wide: true,
+    },
+    {
+      label: "E-mail verificado",
+      value: emailVerifiedLabel,
+    },
+    {
+      label: "Último acesso",
+      value: lastAccessLabel,
+    },
+    {
+      label: "Membro desde",
+      value: createdLabel,
+    },
+  ];
+
+  if (phoneLabel) {
+    metaItems.splice(3, 0, {
+      label: "Telefone",
+      value: phoneLabel,
+    });
+  }
+
+  if (locationLabel) {
+    metaItems.splice(4, 0, {
+      label: "Localização",
+      value: locationLabel,
+      wide: true,
+    });
+  }
 
   return `
     <div class="section-header">
       <div>
         <div class="section-title">Dados pessoais</div>
-        <div class="section-sub">Informações do seu acesso interno na ONE.</div>
+        <div class="section-sub">Resumo do seu acesso interno e dos seus dados principais.</div>
       </div>
     </div>
     <div class="profile-hero">
@@ -2527,37 +2596,21 @@ function renderProfileSummaryCard(profile) {
         <div class="profile-summary-name">${escapeHtml(profile.name || "Usuário interno")}</div>
         <div class="profile-badge-row">
           <span class="sb-role-badge ${getRoleBadgeClass(profile.role)}">${escapeHtml(roleLabel)}</span>
-          <span class="badge ${profile.is_online ? "badge-blue" : "badge-green"}">${profile.is_online ? "Online" : "Ativo"}</span>
         </div>
         <div class="profile-summary-copy">${escapeHtml(profile.email || "Sem e-mail cadastrado")}</div>
-        <div class="profile-summary-copy">${escapeHtml(formatPhoneDisplay(profile.phone))}</div>
       </div>
     </div>
     <div class="profile-meta-grid">
-      <div class="profile-meta-item">
-        <span class="profile-meta-label">Cliente vinculado</span>
-        <span class="profile-meta-value">${escapeHtml(clientLabel)}</span>
-      </div>
-      <div class="profile-meta-item">
-        <span class="profile-meta-label">E-mail verificado</span>
-        <span class="profile-meta-value">${escapeHtml(emailVerifiedLabel)}</span>
-      </div>
-      <div class="profile-meta-item">
-        <span class="profile-meta-label">Último acesso</span>
-        <span class="profile-meta-value">${escapeHtml(lastAccessLabel)}</span>
-      </div>
-      <div class="profile-meta-item">
-        <span class="profile-meta-label">Localização</span>
-        <span class="profile-meta-value">${escapeHtml(locationLabel)}</span>
-      </div>
-      <div class="profile-meta-item">
-        <span class="profile-meta-label">Membro desde</span>
-        <span class="profile-meta-value">${escapeHtml(createdLabel)}</span>
-      </div>
-      <div class="profile-meta-item">
-        <span class="profile-meta-label">Foto</span>
-        <span class="profile-meta-value">${profile.avatar_url ? "URL configurada" : "Usando iniciais"}</span>
-      </div>
+      ${metaItems
+        .map(
+          (item) => `
+            <div class="profile-meta-item${item.wide ? " is-wide" : ""}">
+              <span class="profile-meta-label">${escapeHtml(item.label)}</span>
+              <span class="profile-meta-value${item.value ? "" : " is-empty"}">${escapeHtml(item.value || "—")}</span>
+            </div>
+          `
+        )
+        .join("")}
     </div>
     <div class="profile-actions">
       <button type="button" class="btn btn-pink btn-sm" onclick="openModal('editar-perfil')">Editar perfil</button>
@@ -2574,17 +2627,17 @@ function renderProfilePermissionsCard(profile) {
     <div class="section-header">
       <div>
         <div class="section-title">Permissões atuais</div>
-        <div class="section-sub">Acessos liberados para o seu perfil hoje.</div>
+        <div class="section-sub">Separação entre áreas disponíveis e ações permitidas no seu perfil.</div>
       </div>
     </div>
     <div class="profile-permission-list">
-      <div class="profile-permission-group">
+      <div class="profile-permission-group profile-permission-panel is-modules">
         <div class="profile-permission-group-title">Módulos disponíveis</div>
         <div class="profile-chip-grid">
           ${modules.length ? modules.map((label) => `<span class="badge badge-gray">${escapeHtml(label)}</span>`).join("") : '<span class="text-meta">Sem módulos disponíveis.</span>'}
         </div>
       </div>
-      <div class="profile-permission-group">
+      <div class="profile-permission-group profile-permission-panel is-actions">
         <div class="profile-permission-group-title">Ações liberadas</div>
         <div class="profile-chip-grid">
           ${
@@ -2603,7 +2656,7 @@ function renderProfileSecurityCard(profile) {
     {
       title: "Status da conta",
       value: profile.is_active === false ? "Inativa" : "Ativa",
-      meta: profile.is_online ? "Com atividade recente no painel." : "Sem atividade nos últimos minutos.",
+      meta: profile.is_online ? "Há atividade recente no painel." : "",
     },
     {
       title: "Último acesso confirmado",
@@ -2621,7 +2674,7 @@ function renderProfileSecurityCard(profile) {
     <div class="section-header">
       <div>
         <div class="section-title">Acesso e segurança</div>
-        <div class="section-sub">Resumo rápido da sua conta atual.</div>
+        <div class="section-sub">Estado atual da sua conta e do seu acesso.</div>
       </div>
     </div>
     <div class="profile-security-list">
@@ -2633,7 +2686,7 @@ function renderProfileSecurityCard(profile) {
                 <strong class="profile-security-title">${escapeHtml(item.title)}</strong>
                 <span class="profile-security-meta">${escapeHtml(item.value)}</span>
               </div>
-              <div class="profile-security-meta">${escapeHtml(item.meta)}</div>
+              ${item.meta ? `<div class="profile-security-meta">${escapeHtml(item.meta)}</div>` : ""}
             </div>
           `
         )
@@ -2642,18 +2695,32 @@ function renderProfileSecurityCard(profile) {
   `;
 }
 
+function isMeaningfulProfileActivity(item) {
+  if (!item) {
+    return false;
+  }
+
+  const text = `${item.title || ""} ${item.body || ""}`.toLowerCase();
+  return !PROFILE_ACTIVITY_PLACEHOLDERS.some((placeholder) => text.includes(placeholder));
+}
+
 function renderProfileActivityCard() {
   const container = document.getElementById("profile-activity-card");
   if (!container) {
     return;
   }
 
-  const items = sortNotifications(state.notifications).slice(0, 6);
+  const items = sortNotifications(state.notifications).filter(isMeaningfulProfileActivity).slice(0, 4);
+  const secondaryGrid = container.parentElement;
+  if (secondaryGrid) {
+    secondaryGrid.classList.toggle("is-single-column", items.length === 0);
+  }
+  container.style.display = items.length === 0 ? "none" : "";
   container.innerHTML = `
     <div class="section-header">
       <div>
-        <div class="section-title">Atividade recente</div>
-        <div class="section-sub">Últimas notificações recebidas no seu painel.</div>
+        <div class="section-title">Últimas notificações</div>
+        <div class="section-sub">Atualizações recentes do seu painel interno.</div>
       </div>
     </div>
     ${
@@ -2673,12 +2740,10 @@ function renderProfileActivityCard() {
               )
               .join("")}
           </div>`
-        : UI.empty("Sem atividade recente", "As novas tarefas e os lembretes da agenda aparecerão aqui.", {
-            icon: false,
-            className: "profile-plain-empty is-plain",
-          })
+        : ""
     }
   `;
+  bindLegacyInlineHandlers(container);
 }
 
 function renderProfile() {
@@ -2713,6 +2778,7 @@ function renderProfile() {
   permissionsCard.innerHTML = renderProfilePermissionsCard(profile);
   securityCard.innerHTML = renderProfileSecurityCard(profile);
   renderProfileActivityCard();
+  bindLegacyInlineHandlers(document.getElementById("page-perfil"));
 }
 
 async function loadMyProfile({ force = false, silent = false } = {}) {
