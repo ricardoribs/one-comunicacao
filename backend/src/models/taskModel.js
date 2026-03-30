@@ -121,15 +121,23 @@ async function hydrateTaskRows(rows, client = null) {
   return rows.map((row) => normalizeTaskRow(row, assigneeMap));
 }
 
-async function syncTaskAssignees(client, taskId, assignedUserIds = []) {
-  await client.query('DELETE FROM task_assignees WHERE task_id = $1', [taskId]);
+async function syncTaskAssignees(user, client, taskId, assignedUserIds = []) {
+  await tenantDb.queryWithClient(user, client, {
+    table: 'task_assignees',
+    sql: 'DELETE FROM task_assignees WHERE task_id = $1',
+    params: [taskId],
+  });
 
   if (!assignedUserIds.length) {
     return;
   }
 
   const placeholders = assignedUserIds.map((_, index) => `($1, $${index + 2})`).join(', ');
-  await client.query(`INSERT INTO task_assignees (task_id, user_id) VALUES ${placeholders}`, [taskId, ...assignedUserIds]);
+  await tenantDb.queryWithClient(user, client, {
+    table: 'task_assignees',
+    sql: `INSERT INTO task_assignees (task_id, user_id) VALUES ${placeholders}`,
+    params: [taskId, ...assignedUserIds],
+  });
 }
 
 async function findById(id, user = null, client = null) {
@@ -191,7 +199,7 @@ async function create(data, user = null) {
       ],
     });
 
-    await syncTaskAssignees(client, rows[0].id, assignedUserIds);
+    await syncTaskAssignees(actor, client, rows[0].id, assignedUserIds);
     return findById(rows[0].id, actor, client);
   });
 }
@@ -250,7 +258,7 @@ async function update(id, data, user = null) {
     }
 
     if (hasAssignedField) {
-      await syncTaskAssignees(client, rows[0].id, assignedUserIds);
+      await syncTaskAssignees(user, client, rows[0].id, assignedUserIds);
     }
 
     return findById(rows[0].id, user, client);
