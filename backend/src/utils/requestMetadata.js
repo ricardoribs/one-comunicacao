@@ -93,7 +93,7 @@ function buildRequestAccessMetadata(req) {
   return {
     ip: getRequestIp(req),
     userAgent: pickHeaderValue(req.headers['user-agent']),
-    location: getRequestLocation(req),
+    location: normalizeLocationLabel(getRequestLocation(req)),
   };
 }
 
