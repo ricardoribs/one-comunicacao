@@ -289,6 +289,11 @@ const CALENDAR_COLOR_OPTIONS = [
   { value: "green", label: "Verde" },
   { value: "gold", label: "Dourado" },
 ];
+const CHECKLIST_PLACEHOLDER_LABELS = new Set([
+  "fazer isso",
+  "fazer aquilo",
+  "depois isso",
+]);
 const CALENDAR_VIEW_START_HOUR = 7;
 const CALENDAR_VIEW_END_HOUR = 22;
 const CALENDAR_SLOT_HEIGHT = 58;
@@ -328,21 +333,18 @@ const state = {
 };
 
 const UI = {
-  empty: (msg = "Nenhum registro disponível", sub = "") => `
-    <div class="empty-state">
-      <div class="empty-state-icon">○</div>
+  empty: (msg = "Nenhum registro disponível", sub = "", options = {}) => `
+    <div class="empty-state${options.className ? ` ${options.className}` : ""}${options.icon === false ? " is-no-icon" : ""}">
+      ${options.icon === false ? "" : `<div class="empty-state-icon">${escapeHtml(options.icon || "○")}</div>`}
       <div class="empty-state-title">${escapeHtml(msg)}</div>
       ${sub ? `<div class="empty-state-sub">${escapeHtml(sub)}</div>` : ""}
+      ${options.actionHtml || ""}
     </div>`,
 
-  tableEmpty: (cols, msg = "Nenhum registro disponível", sub = "") => `
+  tableEmpty: (cols, msg = "Nenhum registro disponível", sub = "", options = {}) => `
     <tr>
       <td colspan="${cols}">
-        <div class="empty-state">
-          <div class="empty-state-icon">○</div>
-          <div class="empty-state-title">${escapeHtml(msg)}</div>
-          ${sub ? `<div class="empty-state-sub">${escapeHtml(sub)}</div>` : ""}
-        </div>
+        ${UI.empty(msg, sub, options)}
       </td>
     </tr>`,
 
@@ -803,6 +805,10 @@ function normalizeLooseText(value) {
     .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toLowerCase();
+}
+
+function isChecklistPlaceholderLabel(value) {
+  return CHECKLIST_PLACEHOLDER_LABELS.has(normalizeLooseText(value));
 }
 
 function normalizeClientPlanLabel(value) {
@@ -1567,6 +1573,47 @@ function getTrafficMetricsForCampaigns(campaigns) {
   return state.metrics.filter((metric) => campaignIds.has(Number(metric.campaign_id)));
 }
 
+function getRecentMonthBuckets(count = 6) {
+  const reference = new Date();
+  reference.setDate(1);
+  reference.setHours(0, 0, 0, 0);
+
+  return Array.from({ length: count }, (_value, index) => {
+    const date = new Date(reference.getTime());
+    date.setMonth(reference.getMonth() - (count - index - 1));
+    return {
+      key: `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}`,
+      label: new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(date).replace(".", ""),
+      value: 0,
+    };
+  });
+}
+
+function getInvoiceRevenueSeries(count = 6) {
+  const buckets = getRecentMonthBuckets(count);
+  const totals = new Map(buckets.map((bucket) => [bucket.key, 0]));
+
+  state.invoices.forEach((invoice) => {
+    const referenceDate = invoice.paid_at || invoice.due_date || invoice.created_at;
+    const date = new Date(referenceDate);
+    if (Number.isNaN(date.getTime())) {
+      return;
+    }
+
+    const key = `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}`;
+    if (!totals.has(key)) {
+      return;
+    }
+
+    totals.set(key, totals.get(key) + Number(invoice.amount || 0));
+  });
+
+  return {
+    labels: buckets.map((bucket) => bucket.label),
+    values: buckets.map((bucket) => totals.get(bucket.key) || 0),
+  };
+}
+
 function renderKpiCards(container, cards) {
   if (!container) {
     return;
@@ -1724,6 +1771,36 @@ function getDeadlineClass(task) {
     return "deadline-soon";
   }
   return "deadline-ok";
+}
+
+function getTaskDeadlineLabel(task) {
+  const dueDateValue = task?.due_date || task?.deadline;
+  if (!dueDateValue) {
+    return "Sem prazo";
+  }
+
+  const dueDate = new Date(dueDateValue);
+  if (Number.isNaN(dueDate.getTime())) {
+    return `Prazo · ${formatDate(dueDateValue)}`;
+  }
+
+  dueDate.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((dueDate - today) / 86400000);
+  const dateLabel = formatDate(dueDateValue);
+
+  if (diffDays < 0) {
+    return `Atrasada · ${dateLabel}`;
+  }
+  if (diffDays === 0) {
+    return `Hoje · ${dateLabel}`;
+  }
+  if (diffDays === 1) {
+    return `Amanhã · ${dateLabel}`;
+  }
+
+  return `Prazo · ${dateLabel}`;
 }
 
 function showToast(message) {
@@ -2486,6 +2563,7 @@ function renderBarChart(containerId, values, labels, formatter) {
   }
 
   const max = Math.max(...values, 1);
+  const hasAnyValue = values.some((value) => Number(value || 0) > 0);
   container.innerHTML = values
     .map(
       (value, index) => `
@@ -2495,7 +2573,7 @@ function renderBarChart(containerId, values, labels, formatter) {
             <div class="bar-val">${escapeHtml(formatter(value))}</div>
           </div>
           <div class="bar-track">
-            <div class="bar-fill" style="width:${((value / max) * 100).toFixed(1)}%"></div>
+            <div class="bar-fill${hasAnyValue ? "" : " is-zero"}" style="width:${hasAnyValue ? ((value / max) * 100).toFixed(1) : 100}%"></div>
           </div>
         </div>
       `
@@ -2503,10 +2581,33 @@ function renderBarChart(containerId, values, labels, formatter) {
     .join("");
 }
 
+function renderHomeQuickActions() {
+  const container = document.getElementById("home-quick-actions");
+  if (!container) {
+    return;
+  }
+
+  const actions = [];
+  if (canManageClients()) {
+    actions.push(`<button class="btn btn-outline btn-sm" onclick="openModal('novo-cliente')">+ Novo cliente</button>`);
+  }
+  if (hasRoleDataAccess("contacts")) {
+    actions.push(`<button class="btn btn-pink btn-sm" onclick="openModal('novo-lead')">+ Novo lead</button>`);
+  }
+  if (canManageCalendarEvents()) {
+    actions.push(`<button class="btn btn-outline btn-sm" onclick="openModal('novo-evento')">+ Novo evento</button>`);
+  }
+
+  container.innerHTML = actions.join("");
+  container.style.display = actions.length ? "flex" : "none";
+}
+
 function renderHome() {
   const grid = document.querySelector("#page-home .kpi-grid");
   if (grid && state.dashboard) {
     const openTasks = state.tasks.filter((task) => normalizeTaskStatusLabel(task.status) !== "Concluido").length;
+    const activeCampaignCount = getActiveCampaigns().length;
+    const campaignClientCount = new Set(state.campaigns.map((campaign) => Number(campaign.client_id || 0)).filter(Boolean)).size;
     const scopedClientsCount = hasRoleDataAccess("clients") && state.clients.length
       ? state.clients.length
       : Number(state.dashboard.summary.clients_count || 0);
@@ -2514,21 +2615,17 @@ function renderHome() {
       {
         label: "Clientes Ativos",
         value: scopedClientsCount,
-        sub: hasRoleDataAccess("clients")
-          ? `${
-              scopedClientsCount
-                ? `${scopedClientsCount} cadastrados`
-                : "0 no escopo atual"
-            }`
-          : "escopo atual do perfil",
+        sub: hasRoleDataAccess("clients") ? `${scopedClientsCount} cadastrados` : "escopo atual do perfil",
         page: "crm",
         tabGroup: "crm",
         tab: "clientes"
       },
       {
         label: "Campanhas",
-        value: state.dashboard.summary.campaigns_count,
-        sub: `${state.campaigns.length} registradas`,
+        value: Number(state.dashboard.summary.campaigns_count || activeCampaignCount),
+        sub: activeCampaignCount
+          ? `${formatNumber(campaignClientCount)} ${campaignClientCount === 1 ? "cliente em mídia" : "clientes em mídia"}`
+          : "Nenhuma campanha em andamento",
         page: "campanhas"
       }
     ];
@@ -2537,7 +2634,7 @@ function renderHome() {
       homeCards.push({
         label: "Leads",
         value: state.dashboard.summary.leads,
-        sub: `${state.contacts.length} contatos capturados`,
+        sub: state.contacts.length ? `${state.contacts.length} contatos capturados` : "Nenhum lead capturado",
         page: "crm",
         tabGroup: "crm",
         tab: "pipeline"
@@ -2555,7 +2652,7 @@ function renderHome() {
       homeCards.push({
         label: "Faturamento",
         value: formatCurrency(state.dashboard.summary.revenue),
-        sub: `${state.invoices.length} faturas no sistema`,
+        sub: state.invoices.length ? `${state.invoices.length} faturas no sistema` : "Sem faturas lançadas",
         page: "financeiro"
       });
     } else if (hasRoleDataAccess("materials")) {
@@ -2597,6 +2694,8 @@ function renderHome() {
     bindHomeCardInteractions(grid);
   }
 
+  renderHomeQuickActions();
+
   const topCards = document.querySelectorAll("#page-home .two-col .card");
   if (topCards[0]) {
     const urgentTasks = state.tasks
@@ -2622,15 +2721,16 @@ function renderHome() {
 
   if (topCards[1]) {
     if (hasRoleDataAccess("homeFinancial")) {
+      const revenueSeries = getInvoiceRevenueSeries(6);
       topCards[1].innerHTML = `
-        <div class="section-header"><div><div class="section-title">Faturamento — Últimos 6 meses</div></div></div>
+        <div class="section-header"><div><div class="section-title">Faturamento — Últimos 6 meses</div><div class="section-sub">Leitura mensal pronta para receber lançamentos reais.</div></div></div>
         <div class="chart-bar-wrap" id="home-chart"></div>
       `;
       renderBarChart(
         "home-chart",
-        state.invoices.slice(0, 6).map((invoice) => Number(invoice.amount)),
-        state.invoices.slice(0, 6).map((invoice) => invoice.client_name),
-        (value) => `R$${Math.round(value / 1000)}k`
+        revenueSeries.values,
+        revenueSeries.labels,
+        (value) => formatCurrencyValue(value)
       );
     } else if (hasRoleDataAccess("materials")) {
       const statusBuckets = ["Pendente", "Revisao", "Aprovado"].map((status) => ({
@@ -2812,7 +2912,7 @@ function getChecklistTodayKey() {
 
 function normalizeChecklistItem(item, index = 0) {
   const label = String(item?.label || item?.text || "").trim();
-  if (!label) {
+  if (!label || isChecklistPlaceholderLabel(label)) {
     return null;
   }
 
@@ -3049,7 +3149,7 @@ function renderKanbanChecklist(filteredTasks) {
         name="checklist-item"
         class="checklist-input"
         maxlength="120"
-        placeholder="Adicionar item do seu checklist diário"
+        placeholder="Adicionar item"
         aria-label="Novo item do checklist"
       >
       <button type="submit" class="btn btn-outline btn-sm">Adicionar</button>
@@ -3078,7 +3178,10 @@ function renderKanbanChecklist(filteredTasks) {
                 `
               )
               .join("")
-          : UI.empty("Seu checklist está vazio", "Adicione os itens que você quer acompanhar hoje. Quando todos forem concluídos, a lista vai para o histórico.")
+          : UI.empty("Comece pela primeira prioridade do dia.", "Adicione o primeiro item para acompanhar daqui.", {
+              icon: false,
+              className: "is-plain"
+            })
       }
     </div>
     <div class="section-header"><div class="section-title">Entregas do dia</div></div>
@@ -3092,14 +3195,17 @@ function renderKanbanChecklist(filteredTasks) {
                     <div class="block-title-sm">${escapeHtml(task.title)}</div>
                     <div class="block-text-xs">${escapeHtml(task.client_name || "Interno")} · ${escapeHtml(getTaskAssigneeLabel(task))}</div>
                   </div>
-                  <span class="badge ${isOverdueDate(task.due_date || task.deadline) ? "badge-pink" : "badge-blue"}">${isOverdueDate(task.due_date || task.deadline) ? "Atrasada" : "Hoje"}</span>
+                  <span class="badge ${isOverdueDate(task.due_date || task.deadline) ? "badge-pink" : "badge-today"}">${isOverdueDate(task.due_date || task.deadline) ? "Atrasada" : "Hoje"}</span>
                 </div>
               `
             )
             .join("")
-        : UI.empty("Sem tarefas vencendo hoje", "Quando houver prioridade para hoje ou atrasada, ela aparecerá aqui.")
+        : UI.empty("Sem tarefas vencendo hoje.", "Quando houver prioridade imediata, ela aparece aqui.", {
+            icon: false,
+            className: "is-plain"
+          })
     }
-    <div class="section-header checklist-history-head"><div class="section-title">Histórico do checklist</div><div class="section-sub">Registros concluídos por período. Após 30 dias, eles são removidos.</div></div>
+    <div class="section-header checklist-history-head"><div class="section-title">Histórico do checklist</div></div>
     <div class="checklist-history">
       ${
         historyGroups.length
@@ -3133,7 +3239,10 @@ function renderKanbanChecklist(filteredTasks) {
                 `
               )
               .join("")
-          : UI.empty("Nenhum checklist concluído ainda", "Assim que você finalizar todos os itens do dia, o registro aparecerá aqui.")
+          : UI.empty("Nenhum checklist concluído ainda.", "Os itens finalizados aparecem aqui por período.", {
+              icon: false,
+              className: "is-plain"
+            })
       }
     </div>
   `;
@@ -3161,13 +3270,25 @@ function renderKanbanBrandManual(filteredTasks) {
     return;
   }
 
+  const manualCard = container.closest(".brand-manual-card");
+  const topGrid = container.closest(".kanban-top-grid");
   const client = resolveKanbanClient(filteredTasks);
   if (!client) {
-    container.innerHTML = UI.empty(
-      "Selecione um cliente no filtro do kanban",
-      "Quando um cliente estiver em foco, o manual da marca aparece aqui para orientar briefing, design, revisão e postagem."
-    );
+    if (manualCard) {
+      manualCard.classList.add("is-hidden");
+    }
+    if (topGrid) {
+      topGrid.classList.add("is-single-card");
+    }
+    container.innerHTML = "";
     return;
+  }
+
+  if (manualCard) {
+    manualCard.classList.remove("is-hidden");
+  }
+  if (topGrid) {
+    topGrid.classList.remove("is-single-card");
   }
 
   const brandManual = String(client.brand_manual || "").trim();
@@ -3186,7 +3307,11 @@ function renderKanbanBrandManual(filteredTasks) {
         ? `<div class="muted-panel">${escapeHtmlWithBreaks(brandManual)}</div>`
         : UI.empty(
             "Manual de marca ainda não cadastrado",
-            "Abra o cliente no CRM e preencha o campo de manual da marca com tom de voz, referências, restrições, roteiro e observações de execução."
+            "Abra o cliente no CRM e registre tom de voz, referências e orientações práticas da conta.",
+            {
+              icon: false,
+              className: "is-plain"
+            }
           )
     }
   `;
@@ -3222,25 +3347,25 @@ function renderKanban() {
                   <div class="k-card-title" title="${escapeHtml(task.title)}">${escapeHtml(task.title)}</div>
                   <div class="k-card-desc" title="${escapeHtml(task.description || "")}">${escapeHtml(task.description || "Sem descrição.")}</div>
                   <div class="status-gap-top"><span class="badge badge-blue">${escapeHtml(formatTaskTypeLabel(task.type))}</span></div>
-                  <div class="status-gap-top"><span class="badge ${getTaskStatusBadgeClass(task.status)}">${escapeHtml(
-                    getTaskStatusDisplayLabel(task)
-                  )}</span></div>
                   <div class="k-card-meta">
                     <span class="k-card-assignee" title="${escapeHtml(getTaskAssigneeLabel(task))}">${escapeHtml(getTaskAssigneeLabel(task))}</span>
-                    <span class="k-card-deadline ${getDeadlineClass(task)}">${formatDate(task.due_date || task.deadline)}</span>
+                    <span class="k-card-deadline ${getDeadlineClass(task)}">${escapeHtml(getTaskDeadlineLabel(task))}</span>
                   </div>
                   ${
                     canEditTasks || canRemoveTasks
                       ? `<div class="actions-gap-top">
                           ${canEditTasks ? `<button class="btn btn-ghost btn-sm" onclick="openModal('nova-tarefa', ${task.id})">Editar</button>` : ""}
-                          ${canRemoveTasks ? `<button class="btn btn-danger btn-sm" onclick="deleteTask(${task.id})">Excluir</button>` : ""}
+                          ${canRemoveTasks ? `<button class="btn btn-danger-soft btn-sm" onclick="deleteTask(${task.id})">Excluir</button>` : ""}
                         </div>`
                       : ""
                   }
                 </div>
               `
             )
-            .join("") || UI.empty("Nenhuma tarefa nesta etapa", "As próximas entregas desta coluna aparecerão aqui.")}
+            .join("") || UI.empty("Coluna sem tarefas.", "As próximas entregas desta etapa aparecem aqui.", {
+              icon: false,
+              className: "is-plain is-compact"
+            })}
         </div>
       `;
     })
@@ -3413,7 +3538,7 @@ function renderCRM() {
     {
       label: "Total no Funil",
       value: formatNumber(activeContacts.length),
-      sub: `${formatLeadCount(activeContacts.length)}`
+      sub: activeContacts.length ? `${formatLeadCount(activeContacts.length)}` : "Adicione o primeiro lead"
     },
     {
       label: "Valor Potencial",
@@ -3423,17 +3548,17 @@ function renderCRM() {
     {
       label: "Taxa de Conversão",
       value: `${conversionRate.toFixed(0)}%`,
-      sub: closedContacts.length ? `${formatNumber(closedContacts.length)} conversões` : "sem conversões ainda"
+      sub: closedContacts.length ? `${formatNumber(closedContacts.length)} conversões` : "Aguardando primeira conversão"
     },
     {
       label: "Ticket Médio",
       value: formatCurrency(averageTicket),
-      sub: closedContacts.length ? "por lead convertido" : "sem vendas fechadas"
+      sub: closedContacts.length ? "por lead convertido" : "Aparece após a primeira venda"
     },
     {
       label: "Ciclo de Venda",
-      value: `${formatNumber(averageCycle)}d`,
-      sub: closedContacts.length ? "em média" : "sem histórico suficiente"
+      value: closedContacts.length ? `${formatNumber(averageCycle)}d` : "—",
+      sub: closedContacts.length ? "em média" : "Disponível com histórico real"
     }
   ]);
 
@@ -3459,7 +3584,20 @@ function renderCRM() {
                 </div>
               `
             )
-            .join("") || UI.empty("Nenhum lead nesta etapa", "Os contatos desta fase do pipeline aparecerão aqui.")}
+            .join("")
+            || `<div class="pipe-empty">
+                 <div class="pipe-empty-title">${stage === "Prospecção" ? "Nenhum lead por aqui ainda." : "Etapa vazia no momento."}</div>
+                 <div class="pipe-empty-sub">${
+                   stage === "Prospecção"
+                     ? "Use o botão + Novo lead para começar o funil comercial."
+                     : `Os leads movidos para ${stage.toLowerCase()} aparecem nesta coluna.`
+                 }</div>
+                 ${
+                   stage === "Prospecção" && hasRoleDataAccess("contacts")
+                     ? `<button type="button" class="btn btn-pink btn-sm" onclick="openModal('novo-lead')">Adicionar primeiro lead</button>`
+                     : ""
+                 }
+               </div>`}
         </div>
       `;
     })
@@ -3552,7 +3690,9 @@ function renderCampaigns() {
     {
       label: "Campanhas Ativas",
       value: formatNumber(activeCampaigns.length),
-      sub: `${formatNumber(clientsCount)} ${clientsCount === 1 ? "cliente" : "clientes"}`
+      sub: activeCampaigns.length
+        ? `${formatNumber(clientsCount)} ${clientsCount === 1 ? "cliente em mídia" : "clientes em mídia"}`
+        : "Nenhuma campanha em andamento"
     },
     {
       label: "Orçamento Total",
@@ -3570,6 +3710,11 @@ function renderCampaigns() {
       sub: totalLeads ? `${formatNumber(totalLeads)} leads no período` : "sem leads registrados"
     }
   ]);
+
+  const campaignsWrap = document.querySelector("#page-campanhas .table-wrap");
+  if (campaignsWrap) {
+    campaignsWrap.classList.toggle("is-empty", state.campaigns.length === 0);
+  }
 
   document.getElementById("campanhas-tbody").innerHTML = state.campaigns
     .map(
@@ -3591,7 +3736,17 @@ function renderCampaigns() {
         </tr>
       `
     )
-    .join("") || UI.tableEmpty(8, "Nenhuma campanha cadastrada", "Crie a primeira campanha para iniciar o planejamento e o acompanhamento.");
+    .join("")
+    || UI.tableEmpty(
+      8,
+      "Nenhuma campanha cadastrada.",
+      "Crie a primeira campanha para começar o planejamento e acompanhar os resultados daqui.",
+      {
+        icon: false,
+        className: "campaign-empty-panel",
+        actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" onclick="openModal('nova-campanha')">Criar primeira campanha</button>`,
+      }
+    );
 }
 
 function renderProduction() {
@@ -3885,7 +4040,10 @@ function renderAnalytics() {
         </tr>
       `
     )
-    .join("") || UI.tableEmpty(7, "Nenhuma métrica encontrada", "Ajuste os filtros ou aguarde a consolidação dos dados das campanhas.");
+    .join("") || UI.tableEmpty(7, "Nenhuma métrica consolidada.", "Ajuste o período ou aguarde a primeira leitura das campanhas.", {
+      icon: false,
+      className: "is-analytics-empty",
+    });
 
   const integrationsBody = document.getElementById("integrations-tbody");
   if (integrationsBody) {
