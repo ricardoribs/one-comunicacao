@@ -241,6 +241,10 @@ const kanbanRuntime = {
   dragPlaceholderEl: null,
   scrollSyncBound: false,
 };
+const taskAssignState = {
+  selected: new Set(),
+  users: [],
+};
 
 async function runAsyncTasksInBatches(taskFactories, batchSize = 4) {
   const results = [];
@@ -5530,27 +5534,111 @@ function formatAssigneeOptionLabel(name) {
 }
 
 function taskAssigneeCheckboxes(selectedIds = []) {
-  const selected = new Set(selectedIds.map((value) => String(value)));
-  const source = getAssignableUserSource();
-
-  if (!source.length) {
-    return `<div class="field-help">Nenhum responsável interno disponível no momento.</div>`;
-  }
-
   return `
-    <div class="assignee-checklist">
-      ${source
-        .map(
-          (user) => `
-            <label class="assignee-check-option" title="${escapeHtml(user.name)}">
-              <input type="checkbox" name="assigned_to_ids" value="${user.id}" ${selected.has(String(user.id)) ? "checked" : ""}>
-              <span class="assignee-check-text">${escapeHtml(formatAssigneeOptionLabel(user.name))}</span>
-            </label>
-          `
-        )
-        .join("")}
+    <div class="task-assignee-picker" data-task-assignee-picker="1">
+      <div class="responsaveis-pills" id="responsaveis-pills"></div>
+      <p class="responsaveis-resumo" id="responsaveis-resumo">Nenhum responsável selecionado</p>
+      <input type="hidden" id="task-assigned-ids" name="assigned_ids" value="${escapeHtml(JSON.stringify(selectedIds.map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0)))}">
     </div>
   `;
+}
+
+function getResponsaveisIds() {
+  return [...taskAssignState.selected].map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0);
+}
+
+function renderResponsaveisPills() {
+  const wrap = document.getElementById("responsaveis-pills");
+  const resumo = document.getElementById("responsaveis-resumo");
+  const hidden = document.getElementById("task-assigned-ids");
+
+  if (!wrap) {
+    return;
+  }
+
+  const users = taskAssignState.users;
+  wrap.innerHTML = "";
+
+  if (!users.length) {
+    wrap.innerHTML = '<div class="field-help">Nenhum responsável interno disponível no momento.</div>';
+    if (resumo) {
+      resumo.textContent = "";
+    }
+    if (hidden) {
+      hidden.value = "[]";
+    }
+    return;
+  }
+
+  users.forEach((user) => {
+    const id = Number(user.id);
+    const isSelected = taskAssignState.selected.has(id);
+    const pill = document.createElement("button");
+    pill.type = "button";
+    pill.className = `resp-pill${isSelected ? " selected" : ""}`;
+    pill.dataset.id = String(user.id);
+    pill.setAttribute("aria-pressed", isSelected ? "true" : "false");
+    pill.innerHTML = `
+      <span class="resp-av">${escapeHtml(getInitials(user.name || ""))}</span>
+      <span class="resp-nome">${escapeHtml(formatAssigneeOptionLabel(user.name))}</span>
+    `;
+    pill.addEventListener("click", () => {
+      if (taskAssignState.selected.has(id)) {
+        taskAssignState.selected.delete(id);
+      } else {
+        taskAssignState.selected.add(id);
+      }
+      renderResponsaveisPills();
+    });
+    wrap.appendChild(pill);
+  });
+
+  const selectedUsers = users.filter((user) => taskAssignState.selected.has(Number(user.id)));
+  if (resumo) {
+    if (!selectedUsers.length) {
+      resumo.textContent = "Nenhum responsável selecionado";
+    } else if (selectedUsers.length === 1) {
+      resumo.textContent = `${formatAssigneeOptionLabel(selectedUsers[0].name)} selecionado`;
+    } else {
+      resumo.textContent = `${selectedUsers.map((user) => formatAssigneeOptionLabel(user.name).split(" ")[0]).join(", ")} selecionados`;
+    }
+  }
+
+  if (hidden) {
+    hidden.value = JSON.stringify(getResponsaveisIds());
+  }
+}
+
+function initResponsaveisPills(users, selectedIds = []) {
+  taskAssignState.users = users;
+  taskAssignState.selected = new Set(
+    selectedIds
+      .map((value) => Number(value))
+      .filter((value) => Number.isInteger(value) && value > 0)
+  );
+  renderResponsaveisPills();
+}
+
+function initTaskAssigneePicker(form) {
+  if (!form) {
+    return;
+  }
+
+  const hidden = form.querySelector("#task-assigned-ids");
+  let selectedIds = [];
+
+  if (hidden?.value) {
+    try {
+      const parsed = JSON.parse(hidden.value);
+      if (Array.isArray(parsed)) {
+        selectedIds = parsed;
+      }
+    } catch (_error) {
+      selectedIds = [];
+    }
+  }
+
+  initResponsaveisPills(getAssignableUserSource(), selectedIds);
 }
 
 function contactOptions(selectedId) {
@@ -6250,6 +6338,7 @@ function openModal(type, id = null) {
     }
     if (type === "nova-tarefa") {
       initTaskStatusAssist(form);
+      initTaskAssigneePicker(form);
     }
     if (type === "novo-evento") {
       window.setTimeout(() => {
@@ -6345,10 +6434,8 @@ async function submitModal(event, type, id) {
 
     if (type === "nova-tarefa") {
       const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["client_id", "deadline"]);
-      payload.assigned_to_ids = formData
-        .getAll("assigned_to_ids")
-        .map((value) => Number(value))
-        .filter((value) => Number.isInteger(value) && value > 0);
+      delete payload.assigned_ids;
+      payload.assigned_to_ids = getResponsaveisIds();
       payload.type = normalizeTaskTypeValue(payload.type);
       payload.column_name = getTaskColumnConfig(payload.column_name || payload.status).key;
       payload.status = getTaskStatusValue(payload.status || payload.column_name, payload.column_name);
