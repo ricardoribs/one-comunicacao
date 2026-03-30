@@ -269,6 +269,11 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 .field-inline .btn{flex:0 0 auto;min-height:44px}
 .field-help.is-error{color:#b91c1c}
 .field-help.is-success{color:var(--success)}
+.assignee-checklist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-2)}
+.assignee-check-option{display:flex;align-items:center;gap:10px;min-height:44px;padding:10px 12px;background:var(--gray);border:1px solid var(--border);cursor:pointer;transition:border-color .18s ease,background .18s ease}
+.assignee-check-option:hover{border-color:rgba(232,52,105,.28);background:#fff8fb}
+.assignee-check-option input{width:16px;height:16px;accent-color:var(--pink);flex:0 0 auto}
+.assignee-check-text{font-size:var(--text-sm);color:var(--text);line-height:1.35}
 
 /* KANBAN */
 .kanban{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(280px,280px);gap:var(--space-4);overflow-x:auto;padding-bottom:var(--space-2);align-items:start}
@@ -671,6 +676,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .team-list .item-row .badge{justify-self:start}
   .team-member-row,.charge-head,.invoice-head,.historic-card-head,.progress-item-head,.urgent-item,.item-row{flex-direction:column;align-items:flex-start}
   .checklist-composer,.checklist-row{grid-template-columns:1fr}
+  .assignee-checklist{grid-template-columns:1fr}
   .checklist-row{justify-items:start}
   .checklist-remove{padding:0}
   .team-member-row .badge{margin-left:0}

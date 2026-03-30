@@ -9,6 +9,7 @@ const taskModel = require('../models/taskModel');
 const userModel = require('../models/userModel');
 const { hasCapability, sanitizeDashboardSummary } = require('../utils/access');
 const { getInternalClientScope, getInternalClientAccessScope } = require('../utils/internalClientScope');
+const { taskAssigneeExistsSql, taskHasAnyAssigneeSql, taskHasNoAssigneeSql } = require('../utils/taskAssignments');
 
 async function safeDashboardLoad(label, loader, fallback) {
   try {
@@ -136,11 +137,12 @@ async function getInternalDashboard(user) {
     safeDashboardLoad('dashboard.internal.open_tasks', () => tenantDb.query(user, {
       table: 'tasks',
       scopeConfig: {
-        client: 't.client_id = $TENANT AND t.assigned_to IS NOT NULL',
+        client: `t.client_id = $TENANT AND ${taskHasAnyAssigneeSql('t')}`,
         internal: [
           't.assigned_to = $TENANT',
+          taskAssigneeExistsSql('t'),
           't.created_by = $TENANT',
-          't.assigned_to IS NULL',
+          taskHasNoAssigneeSql('t'),
           ...getInternalClientAccessScope('t.client_id'),
         ],
       },
