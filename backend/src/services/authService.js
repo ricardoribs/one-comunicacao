@@ -167,7 +167,7 @@ async function register(payload) {
 async function login({ email, password }, metadata = {}) {
   const user = await userModel.findByEmail(email);
   if (!user) {
-    throw new AppError('E-mail ou senha inválidos.', 401);
+    throw new AppError('Login ou senha incorretos.', 401);
   }
 
   if (user.locked_until && new Date(user.locked_until) > new Date()) {
@@ -182,7 +182,7 @@ async function login({ email, password }, metadata = {}) {
       },
       'Usuário com hash de senha inválido ou ausente durante login.'
     );
-    throw new AppError('E-mail ou senha inválidos.', 401);
+    throw new AppError('Login ou senha incorretos.', 401);
   }
 
   let passwordMatches = false;
@@ -197,12 +197,12 @@ async function login({ email, password }, metadata = {}) {
       },
       'Falha ao validar hash de senha durante o login.'
     );
-    throw new AppError('E-mail ou senha inválidos.', 401);
+    throw new AppError('Login ou senha incorretos.', 401);
   }
 
   if (!passwordMatches) {
     await userModel.recordFailedLogin(user.id, env.loginLockThreshold, env.loginLockMinutes);
-    throw new AppError('E-mail ou senha inválidos.', 401);
+    throw new AppError('Login ou senha incorretos.', 401);
   }
 
   if (!user.is_active) {

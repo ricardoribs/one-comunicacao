@@ -4550,6 +4550,10 @@ async function doLogin() {
   await FORM.submit(
     { querySelector: () => submitButton },
     async () => {
+      if (!email || !password) {
+        throw new Error("Digite um e-mail e senha");
+      }
+
       const session = await apiFetch("/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
@@ -4565,7 +4569,13 @@ async function doLogin() {
     },
     { loadingText: "Entrando...", button: submitButton }
   )().catch((error) => {
-    errorNode.textContent = error.message;
+    const message = String(error?.message || "").trim();
+    const normalizedMessage = /digite um e-mail e senha/i.test(message)
+      ? "Digite um e-mail e senha"
+      : /login ou senha incorretos|e-mail ou senha inv[aá]lidos|informe um e-mail valido|senha obrigatoria/i.test(message)
+        ? "Login ou senha incorretos"
+        : message || "Erro ao entrar no painel.";
+    errorNode.textContent = normalizedMessage;
     errorNode.style.display = "block";
   });
 }
