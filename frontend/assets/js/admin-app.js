@@ -3832,6 +3832,13 @@ function bindDailyChecklistInteractions(container) {
   });
 
   container.addEventListener("click", async (event) => {
+    const clearHistoryButton = event.target.closest("[data-checklist-clear-history]");
+    if (clearHistoryButton) {
+      event.preventDefault();
+      await clearChecklistHistory();
+      return;
+    }
+
     const removeButton = event.target.closest("[data-checklist-remove]");
     if (!removeButton) {
       return;
@@ -3931,7 +3938,7 @@ function renderKanbanChecklist(filteredTasks) {
     }
     <div class="section-header checklist-history-head">
       <div class="section-title">Histórico do checklist</div>
-      ${historyGroups.length ? '<button type="button" class="btn btn-ghost btn-sm" onclick="clearChecklistHistory()">Limpar histórico</button>' : ""}
+      ${historyGroups.length ? '<button type="button" class="btn btn-ghost btn-sm" data-checklist-clear-history="1">Limpar histórico</button>' : ""}
     </div>
     <div class="checklist-history">
       ${
@@ -4100,6 +4107,7 @@ function renderKanban() {
     .join("");
 
   bindKanbanBoardInteractions();
+  bindLegacyInlineHandlers(document.getElementById("page-kanban"));
   setupKanbanScrollSync();
 }
 
