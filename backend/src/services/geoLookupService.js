@@ -4,6 +4,18 @@ const logger = require('../config/logger');
 
 const lookupCache = new Map();
 const inFlightLookups = new Map();
+const COUNTRY_CODE_LABELS = {
+  BR: 'Brasil',
+  US: 'Estados Unidos',
+  PT: 'Portugal',
+  ES: 'Espanha',
+  AR: 'Argentina',
+  CA: 'Canadá',
+  FR: 'França',
+  DE: 'Alemanha',
+  IT: 'Itália',
+  GB: 'Reino Unido',
+};
 
 function normalizeString(value) {
   return String(value || '').trim();
@@ -79,13 +91,14 @@ function buildLocationLabel(payload = {}) {
       || payload.countryCodeIso
       || payload.country
   );
+  const normalizedCountry = COUNTRY_CODE_LABELS[country.toUpperCase?.() || ''] || country;
 
-  const locationParts = [city, region || country].filter(Boolean);
+  const locationParts = [city, region || normalizedCountry].filter(Boolean);
   if (locationParts.length) {
     return locationParts.join(', ');
   }
 
-  return country;
+  return normalizedCountry;
 }
 
 async function fetchLookup(ip) {
