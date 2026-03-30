@@ -75,6 +75,7 @@ function createPgMemPool() {
       name VARCHAR(255) NOT NULL,
       email VARCHAR(255) NOT NULL UNIQUE,
       phone VARCHAR(40),
+      job_title VARCHAR(120),
       avatar_url VARCHAR(500),
       password TEXT NOT NULL,
       role VARCHAR(32) NOT NULL,
@@ -86,6 +87,10 @@ function createPgMemPool() {
       last_seen_at TIMESTAMP,
       last_seen_ip VARCHAR(64),
       last_seen_location VARCHAR(160),
+      notify_task_assigned BOOLEAN NOT NULL DEFAULT TRUE,
+      notify_task_completed BOOLEAN NOT NULL DEFAULT TRUE,
+      notify_calendar_24h BOOLEAN NOT NULL DEFAULT TRUE,
+      notify_calendar_1h BOOLEAN NOT NULL DEFAULT TRUE,
       created_at TIMESTAMP NOT NULL DEFAULT NOW()
     );
 

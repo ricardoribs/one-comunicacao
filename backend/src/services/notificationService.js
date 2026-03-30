@@ -2,6 +2,7 @@ const logger = require('../config/logger');
 const calendarEventModel = require('../models/calendarEventModel');
 const notificationModel = require('../models/notificationModel');
 const taskModel = require('../models/taskModel');
+const userModel = require('../models/userModel');
 
 const CALENDAR_REMINDER_WINDOWS = [
   {
@@ -73,6 +74,11 @@ async function notify({ userId, type, title, body, entityType, entityId }) {
   }
 
   try {
+    const canReceive = await userModel.isNotificationTypeEnabled(userId, type);
+    if (!canReceive) {
+      return null;
+    }
+
     return await notificationModel.create({
       userId,
       type,

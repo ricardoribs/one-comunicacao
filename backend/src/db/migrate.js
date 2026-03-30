@@ -211,6 +211,7 @@ async function reconcileSchemaDrift(databaseConfig) {
 
       ALTER TABLE users
         ADD COLUMN IF NOT EXISTS phone VARCHAR(40),
+        ADD COLUMN IF NOT EXISTS job_title VARCHAR(120),
         ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(500),
         ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER NOT NULL DEFAULT 0,
         ADD COLUMN IF NOT EXISTS locked_until TIMESTAMP NULL,
@@ -218,6 +219,10 @@ async function reconcileSchemaDrift(databaseConfig) {
         ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMP NULL,
         ADD COLUMN IF NOT EXISTS last_seen_ip VARCHAR(64),
         ADD COLUMN IF NOT EXISTS last_seen_location VARCHAR(160),
+        ADD COLUMN IF NOT EXISTS notify_task_assigned BOOLEAN NOT NULL DEFAULT true,
+        ADD COLUMN IF NOT EXISTS notify_task_completed BOOLEAN NOT NULL DEFAULT true,
+        ADD COLUMN IF NOT EXISTS notify_calendar_24h BOOLEAN NOT NULL DEFAULT true,
+        ADD COLUMN IF NOT EXISTS notify_calendar_1h BOOLEAN NOT NULL DEFAULT true,
         ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMP NULL;
 
       CREATE INDEX IF NOT EXISTS idx_users_last_seen_at

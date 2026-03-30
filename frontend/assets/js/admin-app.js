@@ -335,6 +335,28 @@ const CHECKLIST_PLACEHOLDER_LABELS = new Set([
   "fazer aquilo",
   "depois isso",
 ]);
+const PROFILE_NOTIFICATION_PREFERENCE_OPTIONS = [
+  {
+    key: "task_assigned",
+    label: "Novas tarefas atribuídas",
+    description: "Receba avisos quando uma nova tarefa for direcionada a você."
+  },
+  {
+    key: "task_completed",
+    label: "Conclusão de tarefas delegadas",
+    description: "Receba avisos quando alguém concluir uma tarefa criada ou delegada por você."
+  },
+  {
+    key: "calendar_24h",
+    label: "Lembretes de agenda com 24h",
+    description: "Receba avisos um dia antes dos eventos da equipe."
+  },
+  {
+    key: "calendar_1h",
+    label: "Lembretes de agenda com 1h",
+    description: "Receba avisos uma hora antes dos eventos da equipe."
+  }
+];
 const CALENDAR_VIEW_START_HOUR = 7;
 const CALENDAR_VIEW_END_HOUR = 22;
 const CALENDAR_SLOT_HEIGHT = 58;
@@ -343,6 +365,12 @@ const state = {
   session: null,
   profile: null,
   profileLoading: false,
+  profileAvatarAsset: {
+    source: "",
+    url: "",
+    isObjectUrl: false,
+    loading: false,
+  },
   dashboard: null,
   team: [],
   assignableUsers: [],
@@ -744,6 +772,132 @@ function saveSession(session) {
   state.session = session;
 }
 
+function isProtectedAssetUrl(url) {
+  return String(url || "").startsWith("/api/files/") || String(url || "").startsWith("/uploads/");
+}
+
+function revokeProfileAvatarAsset() {
+  if (state.profileAvatarAsset.isObjectUrl && state.profileAvatarAsset.url) {
+    URL.revokeObjectURL(state.profileAvatarAsset.url);
+  }
+
+  state.profileAvatarAsset = {
+    source: "",
+    url: "",
+    isObjectUrl: false,
+    loading: false,
+  };
+}
+
+async function resolveProtectedMediaUrl(url) {
+  if (!url) {
+    return { url: "", isObjectUrl: false };
+  }
+
+  if (String(url).startsWith("/api/files/")) {
+    const response = await apiFetch(url, { cache: "no-store" });
+    if (!response?.url) {
+      return { url: "", isObjectUrl: false };
+    }
+
+    return resolveProtectedMediaUrl(response.url);
+  }
+
+  if (String(url).startsWith("/uploads/")) {
+    const session = await APP.ensureFreshSession();
+    const accessToken = session?.accessToken || session?.token;
+
+    if (!accessToken) {
+      throw new Error("Sua sessão expirou. Faça login novamente.");
+    }
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      },
+      credentials: "include"
+    });
+
+    if (!response.ok) {
+      throw new Error("Não foi possível carregar a foto do perfil.");
+    }
+
+    const blob = await response.blob();
+    return { url: URL.createObjectURL(blob), isObjectUrl: true };
+  }
+
+  return { url, isObjectUrl: false };
+}
+
+async function ensureProfileAvatarAsset({ force = false, silent = true } = {}) {
+  const rawUrl = String(state.profile?.avatar_url || state.session?.user?.avatar_url || "").trim();
+
+  if (!rawUrl) {
+    revokeProfileAvatarAsset();
+    return "";
+  }
+
+  if (!force && state.profileAvatarAsset.source === rawUrl && state.profileAvatarAsset.url) {
+    return state.profileAvatarAsset.url;
+  }
+
+  if (!force && state.profileAvatarAsset.source === rawUrl && state.profileAvatarAsset.loading) {
+    return "";
+  }
+
+  if (state.profileAvatarAsset.source && state.profileAvatarAsset.source !== rawUrl) {
+    revokeProfileAvatarAsset();
+  }
+
+  if (!isProtectedAssetUrl(rawUrl)) {
+    state.profileAvatarAsset = {
+      source: rawUrl,
+      url: rawUrl,
+      isObjectUrl: false,
+      loading: false,
+    };
+    return rawUrl;
+  }
+
+  state.profileAvatarAsset = {
+    source: rawUrl,
+    url: "",
+    isObjectUrl: false,
+    loading: true,
+  };
+
+  try {
+    const resolved = await resolveProtectedMediaUrl(rawUrl);
+    if (state.profileAvatarAsset.source !== rawUrl) {
+      if (resolved.isObjectUrl && resolved.url) {
+        URL.revokeObjectURL(resolved.url);
+      }
+      return "";
+    }
+
+    state.profileAvatarAsset = {
+      source: rawUrl,
+      url: resolved.url,
+      isObjectUrl: resolved.isObjectUrl,
+      loading: false,
+    };
+    renderProfile();
+    return resolved.url;
+  } catch (error) {
+    state.profileAvatarAsset = {
+      source: rawUrl,
+      url: "",
+      isObjectUrl: false,
+      loading: false,
+    };
+    if (!silent) {
+      showToast(error.message || "Não foi possível carregar a foto do perfil.");
+    }
+    return "";
+  }
+}
+
 function replaceCollectionRecord(items, record) {
   return toArray(items).map((item) => (Number(item?.id) === Number(record?.id) ? { ...item, ...record } : item));
 }
@@ -751,6 +905,10 @@ function replaceCollectionRecord(items, record) {
 function syncCurrentUserProfile(record) {
   if (!record || !state.session?.user || Number(record.id) !== Number(state.session.user.id)) {
     return;
+  }
+
+  if (record.avatar_url !== undefined && String(record.avatar_url || "") !== String(state.profile?.avatar_url || state.session.user.avatar_url || "")) {
+    revokeProfileAvatarAsset();
   }
 
   state.profile = { ...(state.profile || {}), ...record };
@@ -768,6 +926,7 @@ function clearSession() {
   state.session = null;
   state.profile = null;
   state.profileLoading = false;
+  revokeProfileAvatarAsset();
   state.calendarEvents = [];
   state.calendar = {
     weekStart: null,
@@ -2511,11 +2670,33 @@ function formatPhoneDisplay(value) {
   return normalized;
 }
 
+function normalizeProfileNotificationPreferences(preferences = {}) {
+  return {
+    task_assigned: preferences.task_assigned !== false,
+    task_completed: preferences.task_completed !== false,
+    calendar_24h: preferences.calendar_24h !== false,
+    calendar_1h: preferences.calendar_1h !== false,
+  };
+}
+
 function renderProfileAvatar(profile) {
   const avatarUrl = String(profile?.avatar_url || "").trim();
   const fallback = `<div class="profile-avatar-fallback">${escapeHtml(getInitials(profile?.name || "ONE"))}</div>`;
 
   if (!avatarUrl) {
+    return fallback;
+  }
+
+  if (state.profileAvatarAsset.source === avatarUrl && state.profileAvatarAsset.url) {
+    return `<img class="profile-avatar-image" src="${escapeHtml(state.profileAvatarAsset.url)}" alt="${escapeHtml(profile?.name || "Foto do perfil")}" loading="lazy" referrerpolicy="no-referrer">`;
+  }
+
+  if (isProtectedAssetUrl(avatarUrl)) {
+    if (!state.profileAvatarAsset.loading || state.profileAvatarAsset.source !== avatarUrl) {
+      window.setTimeout(() => {
+        ensureProfileAvatarAsset({ silent: true }).catch(() => {});
+      }, 0);
+    }
     return fallback;
   }
 
@@ -2538,6 +2719,7 @@ function getProfileCapabilityLabels(role) {
 function renderProfileSummaryCard(profile) {
   const roleLabel = ROLE_LABELS[profile.role] || profile.role || "Membro";
   const roleDescription = ROLE_PROFILE_DESCRIPTIONS[profile.role] || "Acesso interno da equipe.";
+  const jobTitle = String(profile.job_title || "").trim();
   const clientLabel = profile.client_name || profile.client_company || "Equipe interna";
   const emailVerifiedLabel = profile.email_verified_at ? "Verificado" : "Pendente";
   const lastAccessLabel = profile.last_seen_at || profile.last_login_at ? formatDateTime(profile.last_seen_at || profile.last_login_at) : "Sem registro";
@@ -2550,8 +2732,8 @@ function renderProfileSummaryCard(profile) {
       value: clientLabel,
     },
     {
-      label: "Função no painel",
-      value: roleDescription,
+      label: "Função",
+      value: jobTitle || roleDescription,
       wide: true,
     },
     {
@@ -2597,6 +2779,7 @@ function renderProfileSummaryCard(profile) {
         <div class="profile-badge-row">
           <span class="sb-role-badge ${getRoleBadgeClass(profile.role)}">${escapeHtml(roleLabel)}</span>
         </div>
+        ${jobTitle ? `<div class="profile-summary-copy">${escapeHtml(jobTitle)}</div>` : ""}
         <div class="profile-summary-copy">${escapeHtml(profile.email || "Sem e-mail cadastrado")}</div>
       </div>
     </div>
@@ -2648,6 +2831,33 @@ function renderProfilePermissionsCard(profile) {
         </div>
       </div>
     </div>
+  `;
+}
+
+function renderProfileNotificationCard(profile) {
+  const preferences = normalizeProfileNotificationPreferences(profile.notification_preferences);
+
+  return `
+    <div class="section-header">
+      <div>
+        <div class="section-title">Preferências de notificação</div>
+        <div class="section-sub">Escolha quais alertas devem chegar ao seu sino interno.</div>
+      </div>
+    </div>
+    <form class="profile-preferences-form" onsubmit="saveProfileNotificationPreferences(event)">
+      ${PROFILE_NOTIFICATION_PREFERENCE_OPTIONS.map((option) => `
+        <label class="profile-preference-row">
+          <div>
+            <div class="profile-preference-title">${escapeHtml(option.label)}</div>
+            <div class="profile-preference-copy">${escapeHtml(option.description)}</div>
+          </div>
+          <input type="checkbox" name="${escapeHtml(option.key)}" ${preferences[option.key] ? "checked" : ""}>
+        </label>
+      `).join("")}
+      <div class="profile-preferences-actions">
+        <button type="submit" class="btn btn-outline btn-sm">Salvar preferências</button>
+      </div>
+    </form>
   `;
 }
 
@@ -2749,9 +2959,10 @@ function renderProfileActivityCard() {
 function renderProfile() {
   const summaryCard = document.getElementById("profile-summary-card");
   const permissionsCard = document.getElementById("profile-permissions-card");
+  const notificationCard = document.getElementById("profile-notification-card");
   const securityCard = document.getElementById("profile-security-card");
   const activityCard = document.getElementById("profile-activity-card");
-  if (!summaryCard || !permissionsCard || !securityCard || !activityCard || !state.session?.user) {
+  if (!summaryCard || !permissionsCard || !notificationCard || !securityCard || !activityCard || !state.session?.user) {
     return;
   }
 
@@ -2768,6 +2979,7 @@ function renderProfile() {
       </div>
     `;
     permissionsCard.innerHTML = UI.empty("Carregando permissões...", "", { icon: false, className: "profile-plain-empty is-plain" });
+    notificationCard.innerHTML = UI.empty("Carregando preferências...", "", { icon: false, className: "profile-plain-empty is-plain" });
     securityCard.innerHTML = UI.empty("Carregando dados de acesso...", "", { icon: false, className: "profile-plain-empty is-plain" });
     activityCard.innerHTML = UI.empty("Carregando atividade...", "", { icon: false, className: "profile-plain-empty is-plain" });
     return;
@@ -2776,6 +2988,7 @@ function renderProfile() {
   const profile = state.profile || state.session.user;
   summaryCard.innerHTML = renderProfileSummaryCard(profile);
   permissionsCard.innerHTML = renderProfilePermissionsCard(profile);
+  notificationCard.innerHTML = renderProfileNotificationCard(profile);
   securityCard.innerHTML = renderProfileSecurityCard(profile);
   renderProfileActivityCard();
   bindLegacyInlineHandlers(document.getElementById("page-perfil"));
@@ -2798,6 +3011,7 @@ async function loadMyProfile({ force = false, silent = false } = {}) {
     const response = await apiFetch("/users/me/profile", { cache: "no-store" });
     const profile = response?.user || response;
     syncCurrentUserProfile(profile);
+    await ensureProfileAvatarAsset({ force, silent: true });
     return state.profile;
   } catch (error) {
     if (!silent) {
@@ -2807,6 +3021,29 @@ async function loadMyProfile({ force = false, silent = false } = {}) {
   } finally {
     state.profileLoading = false;
     renderProfile();
+  }
+}
+
+async function saveProfileNotificationPreferences(event) {
+  event.preventDefault();
+  const form = event.target;
+  const payload = Object.fromEntries(
+    PROFILE_NOTIFICATION_PREFERENCE_OPTIONS.map((option) => [option.key, form.elements[option.key]?.checked === true])
+  );
+
+  try {
+    const response = await apiFetch("/users/me/notification-preferences", {
+      method: "PATCH",
+      body: JSON.stringify(payload)
+    });
+    syncCurrentUserProfile({
+      id: state.session.user.id,
+      notification_preferences: response.preferences || payload
+    });
+    renderProfile();
+    showToast(response.message || "Preferências atualizadas com sucesso.");
+  } catch (error) {
+    showToast(error.message || "Não foi possível salvar suas preferências.");
   }
 }
 
@@ -5725,8 +5962,23 @@ function openModal(type, id = null) {
       `
         <div class="field"><label>Nome</label><input name="name" autocomplete="off" value="${escapeHtml(profile.name || "")}" required></div>
         <div class="field"><label>E-mail</label><input type="email" name="email" autocomplete="off" value="${escapeHtml(profile.email || "")}" required></div>
+        <div class="field"><label>Cargo / função</label><input name="job_title" autocomplete="off" value="${escapeHtml(profile.job_title || "")}" placeholder="Ex.: Diretor de Operações"></div>
         <div class="field"><label>Telefone</label><input name="phone" autocomplete="off" value="${escapeHtml(profile.phone || "")}" placeholder="+55 98 99999-0000"></div>
-        <div class="field"><label>URL da foto</label><input name="avatar_url" autocomplete="off" value="${escapeHtml(profile.avatar_url || "")}" placeholder="https://..."></div>
+        <div class="field form-full">
+          <label>Foto do perfil</label>
+          <div class="profile-avatar-upload">
+            <div class="profile-avatar">${renderProfileAvatar(profile)}</div>
+            <div class="profile-avatar-upload-copy">
+              <input type="file" name="avatar_file" accept="image/png,image/jpeg,image/webp,image/gif">
+              <div class="profile-avatar-upload-note">Envie uma imagem em JPG, PNG, WEBP ou GIF. A foto atual substitui as iniciais do seu perfil.</div>
+              ${
+                profile.avatar_url
+                  ? `<label class="profile-avatar-upload-remove"><input type="checkbox" name="remove_avatar" value="1">Remover foto atual</label>`
+                  : ""
+              }
+            </div>
+          </div>
+        </div>
       `,
       "Salvar alterações"
     );
@@ -5900,6 +6152,7 @@ function openModal(type, id = null) {
       `
         <div class="field"><label>Nome</label><input name="name" value="${escapeHtml(user.name || "")}" required></div>
         <div class="field"><label>E-mail</label><input type="email" name="email" value="${escapeHtml(user.email || "")}" required></div>
+        <div class="field"><label>Cargo / função</label><input name="job_title" value="${escapeHtml(user.job_title || "")}" placeholder="Ex.: Atendimento, Operações, Design"></div>
         <div class="field"><label>Perfil</label><select name="role"><option value="admin" ${user.role === "admin" ? "selected" : ""}>Admin</option><option value="gestor" ${user.role === "gestor" ? "selected" : ""}>Gestor</option><option value="designer" ${user.role === "designer" ? "selected" : ""}>Designer</option><option value="comercial" ${user.role === "comercial" ? "selected" : ""}>Comercial</option><option value="dev" ${user.role === "dev" ? "selected" : ""}>Dev</option><option value="client" ${user.role === "client" ? "selected" : ""}>Cliente</option></select></div>
         <div class="field"><label>Cliente vinculado</label><select name="client_id"><option value="">Nenhum</option>${clientOptions(user.client_id)}</select></div>
         <div class="field form-full"><label>Senha ${user.id ? "(opcional)" : ""}</label><input type="password" name="password" ${user.id ? "" : "required"}><div class="field-help">${passwordHelp}</div></div>
@@ -6021,12 +6274,38 @@ async function submitModal(event, type, id) {
     event.target,
     async () => {
     if (type === "editar-perfil") {
-      const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["phone", "avatar_url"]);
+      const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["phone", "job_title"]);
+      delete payload.avatar_file;
+      delete payload.remove_avatar;
+
       const response = await apiFetch("/users/me/profile", {
         method: "PATCH",
         body: JSON.stringify(payload)
       });
-      syncCurrentUserProfile(response.user);
+
+      let latestUser = response.user;
+      const removeAvatar = formData.get("remove_avatar") === "1";
+      const avatarFile = formData.get("avatar_file");
+
+      if (removeAvatar) {
+        const removeResponse = await apiFetch("/users/me/avatar", {
+          method: "DELETE"
+        });
+        latestUser = removeResponse.user || latestUser;
+      }
+
+      if (avatarFile instanceof File && avatarFile.size > 0) {
+        const uploadData = new FormData();
+        uploadData.append("file", avatarFile);
+        const uploadResponse = await apiFetch("/users/me/avatar", {
+          method: "POST",
+          body: uploadData
+        });
+        latestUser = uploadResponse.user || latestUser;
+      }
+
+      syncCurrentUserProfile(latestUser);
+      await ensureProfileAvatarAsset({ force: true, silent: true });
       closeModal();
       renderProfile();
       showToast(response.message || "Perfil atualizado com sucesso.");
@@ -6131,7 +6410,7 @@ async function submitModal(event, type, id) {
     }
 
     if (type === "novo-membro") {
-      const payload = Object.fromEntries(formData.entries());
+      const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["client_id", "job_title"]);
       if (!payload.password) {
         delete payload.password;
       }

@@ -101,6 +101,7 @@ exports.me = asyncHandler(async (req, res) => {
       name: req.user.name,
       email: req.user.email,
       phone: req.user.phone || null,
+      job_title: req.user.job_title || null,
       avatar_url: req.user.avatar_url || null,
       role: req.user.role,
       is_active: req.user.is_active,

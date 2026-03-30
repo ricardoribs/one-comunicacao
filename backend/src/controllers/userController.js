@@ -1,8 +1,12 @@
-const asyncHandler = require('../utils/asyncHandler');
+const path = require('path');
 const bcrypt = require('bcryptjs');
+const asyncHandler = require('../utils/asyncHandler');
 const env = require('../config/env');
 const userModel = require('../models/userModel');
 const authService = require('../services/authService');
+const fileModel = require('../models/fileModel');
+const uploadService = require('../services/uploadService');
+const { buildFileAccessPath } = require('../utils/fileAccess');
 const { sendPaginated } = require('../utils/response');
 const AppError = require('../utils/AppError');
 
@@ -27,6 +31,7 @@ function serializeUserProfile(user) {
     name: safeUser.name,
     email: safeUser.email,
     phone: safeUser.phone || null,
+    job_title: safeUser.job_title || null,
     avatar_url: safeUser.avatar_url || null,
     role: safeUser.role,
     is_active: safeUser.is_active,
@@ -38,7 +43,12 @@ function serializeUserProfile(user) {
     created_at: safeUser.created_at || null,
     client_name: safeUser.client_name || null,
     client_company: safeUser.client_company || null,
+    notification_preferences: userModel.extractNotificationPreferences(safeUser),
   };
+}
+
+function serializeNotificationPreferences(record) {
+  return userModel.extractNotificationPreferences(record);
 }
 
 function translateUserWriteError(error) {
@@ -47,6 +57,27 @@ function translateUserWriteError(error) {
   }
 
   throw error;
+}
+
+function extractAvatarFileId(avatarUrl) {
+  const match = String(avatarUrl || '').match(/\/api\/files\/(\d+)\/access-url/i);
+  return match ? Number(match[1]) : null;
+}
+
+async function removeStoredAvatar(user) {
+  const avatarFileId = extractAvatarFileId(user?.avatar_url);
+  if (!avatarFileId) {
+    return;
+  }
+
+  const file = await fileModel.findById(avatarFileId, user);
+  if (!file) {
+    return;
+  }
+
+  file.path = path.resolve(__dirname, '../../uploads', file.stored_name);
+  await uploadService.deleteUploadedFile(file);
+  await fileModel.remove(file.id, user);
 }
 
 exports.list = asyncHandler(async (req, res) => {
@@ -95,6 +126,89 @@ exports.updateMyProfile = asyncHandler(async (req, res) => {
   } catch (error) {
     translateUserWriteError(error);
   }
+});
+
+exports.updateMyNotificationPreferences = asyncHandler(async (req, res) => {
+  const currentPreferences = serializeNotificationPreferences(await userModel.findNotificationPreferencesById(req.user.id));
+  const nextPreferences = {
+    ...currentPreferences,
+    ...req.body,
+  };
+  const updatedPreferences = await userModel.updateNotificationPreferences(req.user.id, nextPreferences);
+
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({
+    message: 'Preferências de notificação atualizadas com sucesso.',
+    preferences: serializeNotificationPreferences(updatedPreferences),
+  });
+});
+
+exports.uploadMyAvatar = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw new AppError('Envie uma imagem para o perfil.', 400);
+  }
+
+  const uploaded = await uploadService.uploadFile(req.file);
+  if (!String(uploaded?.mimeType || '').startsWith('image/')) {
+    await uploadService.deleteUploadedFile({
+      path: req.file.path,
+      stored_name: uploaded?.storedName,
+    });
+    throw new AppError('Envie uma imagem em JPG, PNG, WEBP ou GIF.', 400);
+  }
+
+  const currentUser = await userModel.findById(req.user.id);
+  if (!currentUser) {
+    await uploadService.deleteUploadedFile({
+      path: req.file.path,
+      stored_name: uploaded?.storedName,
+    });
+    throw new AppError('Usuário não encontrado.', 404);
+  }
+
+  await removeStoredAvatar(currentUser);
+
+  const file = await fileModel.create(
+    {
+      client_id: currentUser.client_id || null,
+      uploaded_by: currentUser.id,
+      original_name: req.file.originalname,
+      stored_name: uploaded.storedName,
+      mime_type: uploaded.mimeType || req.file.mimetype,
+      size: req.file.size,
+      url: uploaded.url,
+    },
+    currentUser
+  );
+
+  const avatarUrl = buildFileAccessPath(file.id);
+  const user = await userModel.update(req.user.id, { avatar_url: avatarUrl });
+
+  res.status(201).json({
+    message: 'Foto atualizada com sucesso.',
+    user: serializeUserProfile(user),
+    file: {
+      id: file.id,
+      access_url: avatarUrl,
+      url: avatarUrl,
+    },
+  });
+});
+
+exports.removeMyAvatar = asyncHandler(async (req, res) => {
+  const currentUser = await userModel.findById(req.user.id);
+  if (!currentUser) {
+    throw new AppError('Usuário não encontrado.', 404);
+  }
+
+  await removeStoredAvatar(currentUser);
+  const user = await userModel.update(req.user.id, { avatar_url: null });
+
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({
+    message: 'Foto removida com sucesso.',
+    user: serializeUserProfile(user),
+  });
 });
 
 exports.updateMyPassword = asyncHandler(async (req, res) => {

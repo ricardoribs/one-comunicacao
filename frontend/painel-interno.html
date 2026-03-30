@@ -649,6 +649,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 
 /* PERFIL */
 #page-perfil .profile-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr);gap:var(--space-4);align-items:stretch}
+#page-perfil .profile-side-stack{display:grid;grid-template-columns:1fr;gap:var(--space-4);align-items:start}
 #page-perfil .profile-card{height:100%}
 #page-perfil .profile-hero{display:flex;align-items:flex-start;gap:var(--space-4)}
 #page-perfil .profile-avatar{width:88px;height:88px;border-radius:18px;background:var(--gray);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
@@ -674,6 +675,18 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-perfil .profile-permission-panel .profile-chip-grid .badge{min-height:24px}
 #page-perfil .profile-permission-panel.is-actions .badge{background:#eef4ff;color:#1a56b0}
 #page-perfil .profile-permission-panel.is-modules .badge{background:#f4f1ec;color:#5b554d}
+#page-perfil .profile-preferences-form{display:flex;flex-direction:column;gap:var(--space-3)}
+#page-perfil .profile-preference-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--space-3);align-items:center;padding:var(--space-3);background:var(--gray);border:1px solid var(--border)}
+#page-perfil .profile-preference-title{font-size:var(--text-sm);font-weight:600;line-height:1.4;color:var(--text)}
+#page-perfil .profile-preference-copy{margin-top:4px;font-size:var(--text-xs);line-height:1.5;color:var(--muted)}
+#page-perfil .profile-preference-row input[type="checkbox"]{width:18px;height:18px;accent-color:var(--pink);cursor:pointer}
+#page-perfil .profile-preferences-actions{display:flex;justify-content:flex-end;margin-top:var(--space-1)}
+#page-perfil .profile-avatar-upload{display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--space-4);align-items:start;padding:var(--space-3);background:var(--gray);border:1px solid var(--border)}
+#page-perfil .profile-avatar-upload .profile-avatar{width:72px;height:72px;border-radius:14px}
+#page-perfil .profile-avatar-upload-copy{display:flex;flex-direction:column;gap:var(--space-2);min-width:0}
+#page-perfil .profile-avatar-upload-note{font-size:var(--text-xs);line-height:1.5;color:var(--muted)}
+#page-perfil .profile-avatar-upload-remove{display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-xs);color:var(--muted)}
+#page-perfil .profile-avatar-upload-remove input{width:16px;height:16px;accent-color:var(--pink)}
 #page-perfil .profile-activity-item,#page-perfil .profile-security-item{padding:var(--space-4);background:var(--gray);border:1px solid var(--border)}
 #page-perfil .profile-activity-head,#page-perfil .profile-security-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3)}
 #page-perfil .profile-activity-title,#page-perfil .profile-security-title{font-size:var(--text-sm);font-weight:600;line-height:1.45;color:var(--text)}
@@ -743,6 +756,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   #page-crm #crm-clientes .crm-client-list{grid-template-columns:1fr}
   #page-acesso #acesso-membros .access-member-list{grid-template-columns:1fr}
   #page-perfil .profile-grid{grid-template-columns:1fr}
+  #page-perfil .profile-side-stack{grid-template-columns:1fr}
   #page-perfil .profile-secondary-grid{grid-template-columns:1fr}
 }
 @media(max-width:650px){
@@ -989,7 +1003,10 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   <div class="page-body">
     <div class="profile-grid">
       <div class="card profile-card" id="profile-summary-card"></div>
-      <div class="card profile-card" id="profile-permissions-card"></div>
+      <div class="profile-side-stack">
+        <div class="card profile-card" id="profile-permissions-card"></div>
+        <div class="card profile-card" id="profile-notification-card"></div>
+      </div>
     </div>
     <div class="profile-secondary-grid">
       <div class="card profile-card" id="profile-security-card"></div>

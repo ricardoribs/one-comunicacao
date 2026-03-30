@@ -1,5 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 const bcrypt = require('bcryptjs');
 const request = require('supertest');
 const app = require('../src/app');
@@ -131,18 +134,93 @@ test('usuario autenticado consulta e atualiza o proprio perfil', async () => {
     .send({
       name: 'Perfil Atualizado',
       phone: '+55 98 99999-0000',
+      job_title: 'Coordenacao de Projetos',
       avatar_url: 'https://cdn.one.test/avatar.png',
     });
 
   assert.equal(updated.status, 200);
   assert.equal(updated.body.user.name, 'Perfil Atualizado');
   assert.equal(updated.body.user.phone, '+55 98 99999-0000');
+  assert.equal(updated.body.user.job_title, 'Coordenacao de Projetos');
   assert.equal(updated.body.user.avatar_url, 'https://cdn.one.test/avatar.png');
 
   const me = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${login.body.accessToken}`);
   assert.equal(me.status, 200);
   assert.equal(me.body.user.name, 'Perfil Atualizado');
   assert.equal(me.body.user.phone, '+55 98 99999-0000');
+  assert.equal(me.body.user.job_title, 'Coordenacao de Projetos');
+
+  await userModel.remove(user.id);
+});
+
+test('usuario autenticado ajusta preferencias de notificacao e envia avatar real', async () => {
+  const email = `auth.profile-assets.${Date.now()}@one.com`;
+  const user = await userModel.create({
+    name: 'Perfil Midia',
+    email,
+    password: await bcrypt.hash('Valid@Test123', 12),
+    role: 'gestor',
+    is_active: true,
+    email_verified_at: new Date().toISOString(),
+  });
+
+  const login = await request(app)
+    .post('/api/auth/login')
+    .set('X-Forwarded-For', nextTestIp())
+    .send({
+      email,
+      password: 'Valid@Test123',
+    });
+
+  const preferencesResponse = await request(app)
+    .patch('/api/users/me/notification-preferences')
+    .set('Authorization', `Bearer ${login.body.accessToken}`)
+    .send({
+      task_assigned: true,
+      task_completed: false,
+      calendar_24h: true,
+      calendar_1h: false,
+    });
+
+  assert.equal(preferencesResponse.status, 200);
+  assert.equal(preferencesResponse.body.preferences.task_assigned, true);
+  assert.equal(preferencesResponse.body.preferences.task_completed, false);
+  assert.equal(preferencesResponse.body.preferences.calendar_24h, true);
+  assert.equal(preferencesResponse.body.preferences.calendar_1h, false);
+
+  const tempAvatarPath = path.join(os.tmpdir(), `one-avatar-${Date.now()}.png`);
+  fs.writeFileSync(
+    tempAvatarPath,
+    Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7Z0ioAAAAASUVORK5CYII=',
+      'base64'
+    )
+  );
+
+  const avatarResponse = await request(app)
+    .post('/api/users/me/avatar')
+    .set('Authorization', `Bearer ${login.body.accessToken}`)
+    .attach('file', tempAvatarPath);
+
+  fs.unlinkSync(tempAvatarPath);
+
+  assert.equal(avatarResponse.status, 201);
+  assert.match(avatarResponse.body.user.avatar_url, /^\/api\/files\/\d+\/access-url$/);
+
+  const profile = await request(app)
+    .get('/api/users/me/profile')
+    .set('Authorization', `Bearer ${login.body.accessToken}`);
+
+  assert.equal(profile.status, 200);
+  assert.equal(profile.body.user.notification_preferences.task_completed, false);
+  assert.match(profile.body.user.avatar_url, /^\/api\/files\/\d+\/access-url$/);
+
+  const removeAvatarResponse = await request(app)
+    .delete('/api/users/me/avatar')
+    .set('Authorization', `Bearer ${login.body.accessToken}`);
+
+  assert.equal(removeAvatarResponse.status, 200);
+  assert.equal(removeAvatarResponse.body.user.avatar_url, null);
 
   await userModel.remove(user.id);
 });

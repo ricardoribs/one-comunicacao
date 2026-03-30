@@ -30,10 +30,15 @@ CREATE TABLE users (
   name VARCHAR(120) NOT NULL,
   email VARCHAR(160) NOT NULL UNIQUE,
   phone VARCHAR(40),
+  job_title VARCHAR(120),
   avatar_url VARCHAR(500),
   password VARCHAR(255) NOT NULL,
   role VARCHAR(20) NOT NULL CHECK (role IN ('client', 'admin', 'designer', 'gestor', 'comercial', 'dev')),
   is_active BOOLEAN DEFAULT TRUE,
+  notify_task_assigned BOOLEAN NOT NULL DEFAULT TRUE,
+  notify_task_completed BOOLEAN NOT NULL DEFAULT TRUE,
+  notify_calendar_24h BOOLEAN NOT NULL DEFAULT TRUE,
+  notify_calendar_1h BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
