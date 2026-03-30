@@ -67,11 +67,48 @@ const PIPELINE_STAGE_LABELS = {
 };
 
 const PAGE_ACCESS = {
-  admin: ["home", "kanban", "calendario", "crm", "campanhas", "producao", "trafego", "analytics", "financeiro", "acesso"],
-  gestor: ["home", "kanban", "calendario", "crm", "campanhas", "producao", "trafego", "analytics"],
-  designer: ["home", "kanban", "calendario", "producao"],
-  comercial: ["home", "kanban", "calendario", "crm", "campanhas", "producao", "financeiro"],
-  dev: ["home", "kanban", "calendario", "producao", "analytics"]
+  admin: ["home", "perfil", "kanban", "calendario", "crm", "campanhas", "producao", "trafego", "analytics", "financeiro", "acesso"],
+  gestor: ["home", "perfil", "kanban", "calendario", "crm", "campanhas", "producao", "trafego", "analytics"],
+  designer: ["home", "perfil", "kanban", "calendario", "producao"],
+  comercial: ["home", "perfil", "kanban", "calendario", "crm", "campanhas", "producao", "financeiro"],
+  dev: ["home", "perfil", "kanban", "calendario", "producao", "analytics"]
+};
+
+const PAGE_LABELS = {
+  home: "Visão Geral",
+  perfil: "Meu Perfil",
+  kanban: "Kanban",
+  calendario: "Calendário",
+  crm: "CRM / Leads",
+  campanhas: "Campanhas",
+  producao: "Produção",
+  trafego: "Tráfego Pago",
+  analytics: "Analytics",
+  financeiro: "Financeiro",
+  acesso: "Controle de Acesso"
+};
+
+const PROFILE_CAPABILITY_LABELS = {
+  manageTasks: "Criar e editar tarefas",
+  manageCalendarEvents: "Criar eventos no calendário",
+  manageClients: "Gerenciar clientes",
+  manageMaterials: "Gerenciar entregas",
+  homeFinancial: "Ver financeiro na visão geral",
+  homeTeam: "Ver equipe na visão geral",
+  assignableUsers: "Delegar tarefas",
+  calendarEvents: "Visualizar agenda da equipe",
+  clients: "Visualizar clientes",
+  contacts: "Visualizar leads e CRM",
+  campaigns: "Visualizar campanhas",
+  tasks: "Visualizar tarefas",
+  users: "Gerenciar membros",
+  charges: "Visualizar cobranças",
+  invoices: "Visualizar faturas",
+  metrics: "Visualizar métricas",
+  reports: "Visualizar relatórios",
+  materials: "Visualizar produção",
+  files: "Visualizar arquivos",
+  integrations: "Visualizar integrações"
 };
 
 const ROLE_DATA_ACCESS = {
@@ -301,6 +338,8 @@ const CALENDAR_SLOT_HEIGHT = 58;
 
 const state = {
   session: null,
+  profile: null,
+  profileLoading: false,
   dashboard: null,
   team: [],
   assignableUsers: [],
@@ -702,9 +741,30 @@ function saveSession(session) {
   state.session = session;
 }
 
+function replaceCollectionRecord(items, record) {
+  return toArray(items).map((item) => (Number(item?.id) === Number(record?.id) ? { ...item, ...record } : item));
+}
+
+function syncCurrentUserProfile(record) {
+  if (!record || !state.session?.user || Number(record.id) !== Number(state.session.user.id)) {
+    return;
+  }
+
+  state.profile = { ...(state.profile || {}), ...record };
+  state.session.user = { ...state.session.user, ...record };
+  state.users = replaceCollectionRecord(state.users, record);
+  state.accessMembers = replaceCollectionRecord(state.accessMembers, record);
+  state.team = replaceCollectionRecord(state.team, record);
+  state.assignableUsers = replaceCollectionRecord(state.assignableUsers, record);
+  saveSession(state.session);
+  setRoleUI(state.session.user);
+}
+
 function clearSession() {
   APP.clearSession();
   state.session = null;
+  state.profile = null;
+  state.profileLoading = false;
   state.calendarEvents = [];
   state.calendar = {
     weekStart: null,
@@ -1961,6 +2021,7 @@ function renderNotifications() {
     shell.classList.toggle("open", notificationRuntime.open);
     shell.innerHTML = buildNotificationPanelHtml();
   });
+  renderProfileActivityCard();
 }
 
 function extractNotificationTaskTitle(item) {
@@ -2404,6 +2465,273 @@ function renderRoleCard(role, permissions) {
   `;
 }
 
+function formatPhoneDisplay(value) {
+  const normalized = String(value || "").trim();
+  return normalized || "Não informado";
+}
+
+function renderProfileAvatar(profile) {
+  const avatarUrl = String(profile?.avatar_url || "").trim();
+  const fallback = `<div class="profile-avatar-fallback">${escapeHtml(getInitials(profile?.name || "ONE"))}</div>`;
+
+  if (!avatarUrl) {
+    return fallback;
+  }
+
+  return `<img class="profile-avatar-image" src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(profile?.name || "Foto do perfil")}" loading="lazy" referrerpolicy="no-referrer">`;
+}
+
+function getProfileModuleLabels(role) {
+  return (PAGE_ACCESS[role] || [])
+    .map((page) => PAGE_LABELS[page])
+    .filter(Boolean);
+}
+
+function getProfileCapabilityLabels(role) {
+  return Object.entries(ROLE_DATA_ACCESS[role] || {})
+    .filter(([, allowed]) => Boolean(allowed))
+    .map(([key]) => PROFILE_CAPABILITY_LABELS[key] || key)
+    .filter(Boolean);
+}
+
+function renderProfileSummaryCard(profile) {
+  const roleLabel = ROLE_LABELS[profile.role] || profile.role || "Membro";
+  const clientLabel = profile.client_name || profile.client_company || "Operação interna";
+  const emailVerifiedLabel = profile.email_verified_at ? "Verificado" : "Pendente";
+  const lastAccessLabel = profile.last_seen_at || profile.last_login_at ? formatDateTime(profile.last_seen_at || profile.last_login_at) : "Sem registro";
+  const locationLabel = formatAccessLocationLabel(profile.last_seen_location);
+  const createdLabel = profile.created_at ? formatDate(profile.created_at) : "Não informado";
+
+  return `
+    <div class="section-header">
+      <div>
+        <div class="section-title">Dados pessoais</div>
+        <div class="section-sub">Informações do seu acesso interno na ONE.</div>
+      </div>
+    </div>
+    <div class="profile-hero">
+      <div class="profile-avatar" data-profile-avatar="1">${renderProfileAvatar(profile)}</div>
+      <div class="profile-summary">
+        <div class="profile-summary-name">${escapeHtml(profile.name || "Usuário interno")}</div>
+        <div class="profile-badge-row">
+          <span class="sb-role-badge ${getRoleBadgeClass(profile.role)}">${escapeHtml(roleLabel)}</span>
+          <span class="badge ${profile.is_online ? "badge-blue" : "badge-green"}">${profile.is_online ? "Online" : "Ativo"}</span>
+        </div>
+        <div class="profile-summary-copy">${escapeHtml(profile.email || "Sem e-mail cadastrado")}</div>
+        <div class="profile-summary-copy">${escapeHtml(formatPhoneDisplay(profile.phone))}</div>
+      </div>
+    </div>
+    <div class="profile-meta-grid">
+      <div class="profile-meta-item">
+        <span class="profile-meta-label">Cliente vinculado</span>
+        <span class="profile-meta-value">${escapeHtml(clientLabel)}</span>
+      </div>
+      <div class="profile-meta-item">
+        <span class="profile-meta-label">E-mail verificado</span>
+        <span class="profile-meta-value">${escapeHtml(emailVerifiedLabel)}</span>
+      </div>
+      <div class="profile-meta-item">
+        <span class="profile-meta-label">Último acesso</span>
+        <span class="profile-meta-value">${escapeHtml(lastAccessLabel)}</span>
+      </div>
+      <div class="profile-meta-item">
+        <span class="profile-meta-label">Localização</span>
+        <span class="profile-meta-value">${escapeHtml(locationLabel)}</span>
+      </div>
+      <div class="profile-meta-item">
+        <span class="profile-meta-label">Membro desde</span>
+        <span class="profile-meta-value">${escapeHtml(createdLabel)}</span>
+      </div>
+      <div class="profile-meta-item">
+        <span class="profile-meta-label">Foto</span>
+        <span class="profile-meta-value">${profile.avatar_url ? "URL configurada" : "Usando iniciais"}</span>
+      </div>
+    </div>
+    <div class="profile-actions">
+      <button type="button" class="btn btn-pink btn-sm" onclick="openModal('editar-perfil')">Editar perfil</button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="openModal('alterar-senha')">Alterar senha</button>
+    </div>
+  `;
+}
+
+function renderProfilePermissionsCard(profile) {
+  const modules = getProfileModuleLabels(profile.role);
+  const capabilities = getProfileCapabilityLabels(profile.role);
+
+  return `
+    <div class="section-header">
+      <div>
+        <div class="section-title">Permissões atuais</div>
+        <div class="section-sub">Acessos liberados para o seu perfil hoje.</div>
+      </div>
+    </div>
+    <div class="profile-permission-list">
+      <div class="profile-permission-group">
+        <div class="profile-permission-group-title">Módulos disponíveis</div>
+        <div class="profile-chip-grid">
+          ${modules.length ? modules.map((label) => `<span class="badge badge-gray">${escapeHtml(label)}</span>`).join("") : '<span class="text-meta">Sem módulos disponíveis.</span>'}
+        </div>
+      </div>
+      <div class="profile-permission-group">
+        <div class="profile-permission-group-title">Ações liberadas</div>
+        <div class="profile-chip-grid">
+          ${
+            capabilities.length
+              ? capabilities.map((label) => `<span class="badge badge-blue">${escapeHtml(label)}</span>`).join("")
+              : '<span class="text-meta">Sem permissões operacionais adicionais.</span>'
+          }
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderProfileSecurityCard(profile) {
+  const items = [
+    {
+      title: "Status da conta",
+      value: profile.is_active === false ? "Inativa" : "Ativa",
+      meta: profile.is_online ? "Com atividade recente no painel." : "Sem atividade nos últimos minutos.",
+    },
+    {
+      title: "Último acesso confirmado",
+      value: profile.last_seen_at || profile.last_login_at ? formatDateTime(profile.last_seen_at || profile.last_login_at) : "Sem registro",
+      meta: formatAccessLocationLabel(profile.last_seen_location),
+    },
+    {
+      title: "E-mail de acesso",
+      value: profile.email || "Não informado",
+      meta: profile.email_verified_at ? "Endereço verificado." : "Verificação pendente.",
+    },
+  ];
+
+  return `
+    <div class="section-header">
+      <div>
+        <div class="section-title">Acesso e segurança</div>
+        <div class="section-sub">Resumo rápido da sua conta atual.</div>
+      </div>
+    </div>
+    <div class="profile-security-list">
+      ${items
+        .map(
+          (item) => `
+            <div class="profile-security-item">
+              <div class="profile-security-head">
+                <strong class="profile-security-title">${escapeHtml(item.title)}</strong>
+                <span class="profile-security-meta">${escapeHtml(item.value)}</span>
+              </div>
+              <div class="profile-security-meta">${escapeHtml(item.meta)}</div>
+            </div>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function renderProfileActivityCard() {
+  const container = document.getElementById("profile-activity-card");
+  if (!container) {
+    return;
+  }
+
+  const items = sortNotifications(state.notifications).slice(0, 6);
+  container.innerHTML = `
+    <div class="section-header">
+      <div>
+        <div class="section-title">Atividade recente</div>
+        <div class="section-sub">Últimas notificações recebidas no seu painel.</div>
+      </div>
+    </div>
+    ${
+      items.length
+        ? `<div class="profile-activity-list">
+            ${items
+              .map(
+                (item) => `
+                  <article class="profile-activity-item">
+                    <div class="profile-activity-head">
+                      <strong class="profile-activity-title">${escapeHtml(item.title || "Nova notificação")}</strong>
+                      <span class="profile-activity-meta">${escapeHtml(formatNotificationTime(item.created_at))}</span>
+                    </div>
+                    ${item.body ? `<div class="profile-activity-body">${escapeHtml(item.body)}</div>` : ""}
+                  </article>
+                `
+              )
+              .join("")}
+          </div>`
+        : UI.empty("Sem atividade recente", "As novas tarefas e os lembretes da agenda aparecerão aqui.", {
+            icon: false,
+            className: "profile-plain-empty is-plain",
+          })
+    }
+  `;
+}
+
+function renderProfile() {
+  const summaryCard = document.getElementById("profile-summary-card");
+  const permissionsCard = document.getElementById("profile-permissions-card");
+  const securityCard = document.getElementById("profile-security-card");
+  const activityCard = document.getElementById("profile-activity-card");
+  if (!summaryCard || !permissionsCard || !securityCard || !activityCard || !state.session?.user) {
+    return;
+  }
+
+  if (state.profileLoading) {
+    summaryCard.innerHTML = `
+      <div class="section-header"><div><div class="section-title">Dados pessoais</div><div class="section-sub">Carregando seu perfil.</div></div></div>
+      <div class="profile-hero">
+        <div class="profile-avatar"><div class="profile-avatar-fallback">○</div></div>
+        <div class="profile-summary" style="flex:1">
+          <div class="skeleton skeleton-title"></div>
+          <div class="skeleton skeleton-text" style="width:52%"></div>
+          <div class="skeleton skeleton-text" style="width:46%"></div>
+        </div>
+      </div>
+    `;
+    permissionsCard.innerHTML = UI.empty("Carregando permissões...", "", { icon: false, className: "profile-plain-empty is-plain" });
+    securityCard.innerHTML = UI.empty("Carregando dados de acesso...", "", { icon: false, className: "profile-plain-empty is-plain" });
+    activityCard.innerHTML = UI.empty("Carregando atividade...", "", { icon: false, className: "profile-plain-empty is-plain" });
+    return;
+  }
+
+  const profile = state.profile || state.session.user;
+  summaryCard.innerHTML = renderProfileSummaryCard(profile);
+  permissionsCard.innerHTML = renderProfilePermissionsCard(profile);
+  securityCard.innerHTML = renderProfileSecurityCard(profile);
+  renderProfileActivityCard();
+}
+
+async function loadMyProfile({ force = false, silent = false } = {}) {
+  if (!state.session?.user?.id) {
+    return null;
+  }
+
+  if (state.profile && !force) {
+    renderProfile();
+    return state.profile;
+  }
+
+  state.profileLoading = true;
+  renderProfile();
+
+  try {
+    const response = await apiFetch("/users/me/profile", { cache: "no-store" });
+    const profile = response?.user || response;
+    syncCurrentUserProfile(profile);
+    return state.profile;
+  } catch (error) {
+    if (!silent) {
+      showToast(error.message || "Não foi possível carregar seu perfil agora.");
+    }
+    return null;
+  } finally {
+    state.profileLoading = false;
+    renderProfile();
+  }
+}
+
 function setRoleUI(user) {
   document.getElementById("sb-name").textContent = user.name;
   document.getElementById("sb-role-label").textContent = "";
@@ -2546,6 +2874,9 @@ function goTo(page) {
   state.activePage = page;
   syncNavigation();
   closeSidebar();
+  if (page === "perfil") {
+    loadMyProfile({ silent: true }).catch(() => {});
+  }
   if (page === "calendario") {
     loadCalendarEvents(state.calendar.weekStart || new Date(), { silent: true }).catch(() => {});
   }
@@ -4356,6 +4687,7 @@ function renderAll() {
   const sections = [
     ["contadores", renderSidebarCounts],
     ["home", renderHome],
+    ["perfil", renderProfile],
     ["kanban", renderKanban],
     ["calendario", renderCalendar],
     ["crm", renderCRM],
@@ -5261,6 +5593,31 @@ function openModal(type, id = null) {
   lastFocusedElement = document.activeElement;
   let html = "";
 
+  if (type === "editar-perfil") {
+    const profile = state.profile || state.session?.user || {};
+    html = modalFormWrapper(
+      "Editar perfil",
+      `
+        <div class="field"><label>Nome</label><input name="name" autocomplete="off" value="${escapeHtml(profile.name || "")}" required></div>
+        <div class="field"><label>E-mail</label><input type="email" name="email" autocomplete="off" value="${escapeHtml(profile.email || "")}" required></div>
+        <div class="field"><label>Telefone</label><input name="phone" autocomplete="off" value="${escapeHtml(profile.phone || "")}" placeholder="+55 98 99999-0000"></div>
+        <div class="field"><label>URL da foto</label><input name="avatar_url" autocomplete="off" value="${escapeHtml(profile.avatar_url || "")}" placeholder="https://..."></div>
+      `,
+      "Salvar alterações"
+    );
+  }
+
+  if (type === "alterar-senha") {
+    html = modalFormWrapper(
+      "Alterar senha",
+      `
+        <div class="field form-full"><label>Senha atual</label><input type="password" name="current_password" autocomplete="new-password" required></div>
+        <div class="field form-full"><label>Nova senha</label><input type="password" name="new_password" autocomplete="new-password" required><div class="field-help">Use no mínimo 12 caracteres, com letra maiúscula, letra minúscula, número e símbolo.</div></div>
+      `,
+      "Atualizar senha"
+    );
+  }
+
   if (type === "novo-cliente") {
     const client = state.clients.find((item) => item.id === id) || {};
     const selectedPlan = client.id ? client.plan || "" : "One Start";
@@ -5538,6 +5895,30 @@ async function submitModal(event, type, id) {
   await FORM.submit(
     event.target,
     async () => {
+    if (type === "editar-perfil") {
+      const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["phone", "avatar_url"]);
+      const response = await apiFetch("/users/me/profile", {
+        method: "PATCH",
+        body: JSON.stringify(payload)
+      });
+      syncCurrentUserProfile(response.user);
+      closeModal();
+      renderProfile();
+      showToast(response.message || "Perfil atualizado com sucesso.");
+      return;
+    }
+
+    if (type === "alterar-senha") {
+      const payload = Object.fromEntries(formData.entries());
+      const response = await apiFetch("/users/me/password", {
+        method: "PATCH",
+        body: JSON.stringify(payload)
+      });
+      closeModal();
+      showToast(response.message || "Senha atualizada com sucesso.");
+      return;
+    }
+
     if (type === "novo-cliente") {
       const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["manager_id", "started_at"]);
       payload.plan = payload.plan ? normalizeClientPlanValue(payload.plan) : null;

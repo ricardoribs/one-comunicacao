@@ -210,6 +210,8 @@ async function reconcileSchemaDrift(databaseConfig) {
       $$;
 
       ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS phone VARCHAR(40),
+        ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(500),
         ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER NOT NULL DEFAULT 0,
         ADD COLUMN IF NOT EXISTS locked_until TIMESTAMP NULL,
         ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP NULL,

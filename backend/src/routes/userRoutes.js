@@ -2,12 +2,15 @@ const express = require('express');
 const controller = require('../controllers/userController');
 const { authenticate, authorize, authorizeCapability } = require('../middlewares/authMiddleware');
 const validate = require('../middlewares/validateMiddleware');
-const { userSchema, userUpdateSchema } = require('../validators/userValidators');
+const { userSchema, userUpdateSchema, profileUpdateSchema, passwordChangeSchema } = require('../validators/userValidators');
 const { paginationQuerySchema, idParamSchema, emptyQuerySchema } = require('../validators/commonValidators');
 
 const router = express.Router();
 
 router.use(authenticate);
+router.get('/me/profile', validate(emptyQuerySchema, 'query'), controller.getMyProfile);
+router.patch('/me/profile', validate(profileUpdateSchema), controller.updateMyProfile);
+router.patch('/me/password', validate(passwordChangeSchema), controller.updateMyPassword);
 router.get('/team', authorizeCapability('view_dashboard_team'), validate(emptyQuerySchema, 'query'), controller.listInternalTeam);
 router.get(
   '/assignable',

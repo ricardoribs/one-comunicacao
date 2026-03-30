@@ -98,6 +98,106 @@ test('cliente nao acessa rota de admin', async () => {
   await userModel.remove(user.id);
 });
 
+test('usuario autenticado consulta e atualiza o proprio perfil', async () => {
+  const email = `auth.profile.${Date.now()}@one.com`;
+  const user = await userModel.create({
+    name: 'Perfil Atual',
+    email,
+    password: await bcrypt.hash('Valid@Test123', 12),
+    role: 'designer',
+    is_active: true,
+    email_verified_at: new Date().toISOString(),
+  });
+
+  const login = await request(app)
+    .post('/api/auth/login')
+    .set('X-Forwarded-For', nextTestIp())
+    .send({
+      email,
+      password: 'Valid@Test123',
+    });
+
+  const profile = await request(app)
+    .get('/api/users/me/profile')
+    .set('Authorization', `Bearer ${login.body.accessToken}`);
+
+  assert.equal(profile.status, 200);
+  assert.equal(profile.body.user.name, 'Perfil Atual');
+  assert.equal(profile.body.user.phone, null);
+
+  const updated = await request(app)
+    .patch('/api/users/me/profile')
+    .set('Authorization', `Bearer ${login.body.accessToken}`)
+    .send({
+      name: 'Perfil Atualizado',
+      phone: '+55 98 99999-0000',
+      avatar_url: 'https://cdn.one.test/avatar.png',
+    });
+
+  assert.equal(updated.status, 200);
+  assert.equal(updated.body.user.name, 'Perfil Atualizado');
+  assert.equal(updated.body.user.phone, '+55 98 99999-0000');
+  assert.equal(updated.body.user.avatar_url, 'https://cdn.one.test/avatar.png');
+
+  const me = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${login.body.accessToken}`);
+  assert.equal(me.status, 200);
+  assert.equal(me.body.user.name, 'Perfil Atualizado');
+  assert.equal(me.body.user.phone, '+55 98 99999-0000');
+
+  await userModel.remove(user.id);
+});
+
+test('usuario autenticado altera a propria senha', async () => {
+  const email = `auth.password.${Date.now()}@one.com`;
+  const user = await userModel.create({
+    name: 'Senha Atual',
+    email,
+    password: await bcrypt.hash('Valid@Test123', 12),
+    role: 'gestor',
+    is_active: true,
+    email_verified_at: new Date().toISOString(),
+  });
+
+  const login = await request(app)
+    .post('/api/auth/login')
+    .set('X-Forwarded-For', nextTestIp())
+    .send({
+      email,
+      password: 'Valid@Test123',
+    });
+
+  const changed = await request(app)
+    .patch('/api/users/me/password')
+    .set('Authorization', `Bearer ${login.body.accessToken}`)
+    .send({
+      current_password: 'Valid@Test123',
+      new_password: 'Updated@Test123',
+    });
+
+  assert.equal(changed.status, 200);
+  assert.equal(changed.body.message, 'Senha atualizada com sucesso.');
+
+  const oldLogin = await request(app)
+    .post('/api/auth/login')
+    .set('X-Forwarded-For', nextTestIp())
+    .send({
+      email,
+      password: 'Valid@Test123',
+    });
+  assert.equal(oldLogin.status, 401);
+
+  const newLogin = await request(app)
+    .post('/api/auth/login')
+    .set('X-Forwarded-For', nextTestIp())
+    .send({
+      email,
+      password: 'Updated@Test123',
+    });
+  assert.equal(newLogin.status, 200);
+
+  await userModel.remove(user.id);
+});
+
 test('refresh token rotativo invalida o token anterior e revoga todas as sessoes ao detectar replay', async () => {
   const email = `auth.refresh.${Date.now()}@one.com`;
   const user = await createVerifiedUser(email);

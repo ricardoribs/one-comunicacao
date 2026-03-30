@@ -6,6 +6,14 @@ const emptyToNullNumber = () =>
     (value) => (value === '' || value === undefined ? null : value),
     z.coerce.number().int().positive().nullable()
   );
+const emptyToNullString = (schema) =>
+  z.preprocess((value) => {
+    if (value === '' || value === undefined || value === null) {
+      return null;
+    }
+
+    return String(value).trim();
+  }, schema.nullable());
 
 const strongPassword = z
   .string()
@@ -22,6 +30,8 @@ exports.userSchema = z.object({
   password: strongPassword,
   role: roleEnum,
   is_active: z.boolean().optional(),
+  phone: emptyToNullString(z.string().max(40, 'Telefone muito longo.')).optional(),
+  avatar_url: emptyToNullString(z.string().url('Informe uma URL válida para a foto.').max(500)).optional(),
 });
 
 exports.userUpdateSchema = z.object({
@@ -31,4 +41,18 @@ exports.userUpdateSchema = z.object({
   password: strongPassword.optional(),
   role: roleEnum.optional(),
   is_active: z.boolean().optional(),
+  phone: emptyToNullString(z.string().max(40, 'Telefone muito longo.')).optional(),
+  avatar_url: emptyToNullString(z.string().url('Informe uma URL válida para a foto.').max(500)).optional(),
+});
+
+exports.profileUpdateSchema = z.object({
+  name: z.string().trim().min(2, 'Nome obrigatório.').max(120, 'Nome muito longo.').optional(),
+  email: z.string().trim().email('Informe um e-mail válido.').optional(),
+  phone: emptyToNullString(z.string().max(40, 'Telefone muito longo.')).optional(),
+  avatar_url: emptyToNullString(z.string().url('Informe uma URL válida para a foto.').max(500)).optional(),
+});
+
+exports.passwordChangeSchema = z.object({
+  current_password: z.string().min(1, 'Informe a senha atual.'),
+  new_password: strongPassword,
 });
