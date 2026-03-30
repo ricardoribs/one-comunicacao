@@ -38,7 +38,7 @@ exports.getSecurityInfo = asyncHandler(async (req, res) => {
   const user = await userModel.findSecurityById(req.params.id);
 
   if (!user) {
-    throw new AppError('Usuario nao encontrado.', 404);
+    throw new AppError('Usuário não encontrado.', 404);
   }
 
   res.json({

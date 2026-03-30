@@ -149,14 +149,14 @@ function inferFileFormat(file = {}) {
 
 async function resolveFileAccessUrl(file) {
   if (!file) {
-    throw new AppError('Arquivo nao encontrado.', 404);
+    throw new AppError('Arquivo não encontrado.', 404);
   }
 
   if (env.uploadProvider === 'cloudinary') {
     const format = inferFileFormat(file);
 
     if (!format) {
-      throw new AppError('Nao foi possivel gerar a URL protegida deste arquivo.', 500);
+      throw new AppError('Não foi possível gerar a URL protegida deste arquivo.', 500);
     }
 
     const expiresAt = Math.floor(Date.now() / 1000) + 300;

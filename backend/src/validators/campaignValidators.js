@@ -18,7 +18,7 @@ const emptyToNullString = (schema = z.string().max(255)) =>
   z.preprocess((value) => (value === '' || value === undefined ? null : value), schema.nullable());
 
 const emptyToNullDate = () =>
-  emptyToNullString(z.string().regex(isoDateRegex, 'Informe uma data valida no formato AAAA-MM-DD'));
+  emptyToNullString(z.string().regex(isoDateRegex, 'Informe uma data válida no formato AAAA-MM-DD.'));
 
 exports.campaignSchema = z.object({
   client_id: z.coerce.number().int().positive(),

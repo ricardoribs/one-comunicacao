@@ -12,9 +12,9 @@ const emptyToNullString = (schema = z.string().max(255)) =>
   z.preprocess((value) => (value === '' || value === undefined ? null : value), schema.nullable());
 
 const emptyToNullDate = () =>
-  emptyToNullString(z.string().regex(isoDateRegex, 'Informe uma data valida no formato AAAA-MM-DD'));
+  emptyToNullString(z.string().regex(isoDateRegex, 'Informe uma data válida no formato AAAA-MM-DD.'));
 
-const emptyToNullEmail = () => emptyToNullString(z.string().email('Informe um e-mail valido').max(160));
+const emptyToNullEmail = () => emptyToNullString(z.string().email('Informe um e-mail válido.').max(160));
 const clientPlanSchema = z.preprocess((value) => {
   if (value === '' || value === undefined || value === null) {
     return undefined;
@@ -24,8 +24,8 @@ const clientPlanSchema = z.preprocess((value) => {
 }, planEnum.optional());
 
 exports.clientSchema = z.object({
-  name: z.string().trim().min(2, 'Nome obrigatorio').max(120),
-  company: z.string().trim().min(2, 'Empresa obrigatoria').max(160),
+  name: z.string().trim().min(2, 'Nome obrigatório.').max(120),
+  company: z.string().trim().min(2, 'Empresa obrigatória.').max(160),
   plan: clientPlanSchema,
   mrr: z.coerce.number().min(0).max(9999999).default(0).optional(),
   segment: emptyToNullString(z.string().max(120)).optional(),
@@ -41,7 +41,7 @@ exports.clientSchema = z.object({
   neighborhood: emptyToNullString(z.string().max(120)).optional(),
   city: emptyToNullString(z.string().max(120)).optional(),
   state: emptyToNullString(z.string().length(2)).optional(),
-  zip_code: emptyToNullString(z.string().regex(zipCodeRegex, 'Informe um CEP valido')).optional(),
+  zip_code: emptyToNullString(z.string().regex(zipCodeRegex, 'Informe um CEP válido.')).optional(),
   country: emptyToNullString(z.string().max(80)).optional(),
   notes: emptyToNullString(z.string().max(5000)).optional(),
   brand_manual: emptyToNullString(z.string().max(10000)).optional(),

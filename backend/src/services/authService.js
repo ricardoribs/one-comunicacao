@@ -88,7 +88,7 @@ async function sendVerificationEmail(user, rawToken) {
   const verifyUrl = `${env.appBaseUrl || 'http://localhost:3000'}/api/auth/verify-email?token=${rawToken}`;
   await sendMail({
     to: user.email,
-    subject: 'Confirme seu cadastro na ONE Comunicacao',
+    subject: 'Confirme seu cadastro na ONE Comunicação',
     html: buildVerificationEmail({
       appBaseUrl: env.appBaseUrl,
       userName: user.name,
@@ -101,7 +101,7 @@ async function sendPasswordResetEmail(user, rawToken) {
   const resetUrl = `${env.appBaseUrl || 'http://localhost:3000'}/reset-password.html?token=${rawToken}`;
   await sendMail({
     to: user.email,
-    subject: 'Redefinicao de senha - ONE Comunicacao',
+    subject: 'Redefinição de senha - ONE Comunicação',
     html: buildPasswordResetEmail({
       appBaseUrl: env.appBaseUrl,
       userName: user.name,
@@ -128,7 +128,7 @@ async function issueEmailVerification(user) {
 async function register(payload) {
   const existingUser = await userModel.findByEmail(payload.email);
   if (existingUser) {
-    throw new AppError('Ja existe um usuario cadastrado com este e-mail', 409);
+    throw new AppError('Já existe um usuário cadastrado com este e-mail.', 409);
   }
 
   const password = await bcrypt.hash(payload.password, env.bcryptRounds);
@@ -231,7 +231,7 @@ async function login({ email, password }, metadata = {}) {
 
 async function refreshAccessToken(rawRefreshToken, metadata = {}) {
   if (!rawRefreshToken) {
-    throw new AppError('Refresh token nao informado', 401);
+    throw new AppError('Refresh token não informado.', 401);
   }
 
   const tokenHash = hashToken(rawRefreshToken);
@@ -240,7 +240,7 @@ async function refreshAccessToken(rawRefreshToken, metadata = {}) {
     const tokenRecord = await userModel.findRefreshTokenForUpdate(tokenHash, dbClient);
 
     if (!tokenRecord) {
-      throw new AppError('Refresh token invalido', 401);
+      throw new AppError('Refresh token inválido.', 401);
     }
 
     if (tokenRecord.revoked_at || tokenRecord.replaced_by_token_hash) {
@@ -251,23 +251,23 @@ async function refreshAccessToken(rawRefreshToken, metadata = {}) {
           token_hash: tokenHash,
           event: 'refresh_token_replay_detected',
         },
-        'Replay de refresh token detectado. Todas as sessoes foram revogadas.'
+        'Replay de refresh token detectado. Todas as sessões foram revogadas.'
       );
-      throw new AppError('Sessao invalida. Faca login novamente.', 401);
+      throw new AppError('Sessão inválida. Faça login novamente.', 401);
     }
 
     if (!tokenRecord.is_active) {
-      throw new AppError('Refresh token invalido', 401);
+      throw new AppError('Refresh token inválido.', 401);
     }
 
     if (new Date(tokenRecord.expires_at) <= new Date()) {
       await userModel.revokeRefreshToken(tokenHash, { revoked_by_ip: metadata.ip }, dbClient);
-      throw new AppError('Refresh token expirado', 401);
+      throw new AppError('Refresh token expirado.', 401);
     }
 
     const user = await userModel.findById(tokenRecord.user_id, dbClient);
     if (!user || !user.is_active) {
-      throw new AppError('Usuario invalido ou inativo', 401);
+      throw new AppError('Usuário inválido ou inativo.', 401);
     }
 
     const nextRefreshToken = generateTokenValue();
@@ -283,7 +283,7 @@ async function refreshAccessToken(rawRefreshToken, metadata = {}) {
     );
 
     if (!revoked) {
-      throw new AppError('Refresh token invalido', 401);
+      throw new AppError('Refresh token inválido.', 401);
     }
 
     await userModel.createRefreshToken(
@@ -323,7 +323,7 @@ async function verifyEmail(rawToken) {
   const token = await userModel.findEmailVerificationToken(tokenHash);
 
   if (!token || token.used_at || new Date(token.expires_at) <= new Date()) {
-    throw new AppError('Token de verificacao invalido ou expirado', 400);
+    throw new AppError('Token de verificação inválido ou expirado.', 400);
   }
 
   await userModel.consumeEmailVerificationToken(tokenHash);
@@ -354,7 +354,7 @@ async function resetPassword(rawToken, newPassword) {
   const token = await userModel.findPasswordResetToken(tokenHash);
 
   if (!token || token.used_at || new Date(token.expires_at) <= new Date()) {
-    throw new AppError('Token de redefinicao invalido ou expirado', 400);
+    throw new AppError('Token de redefinição inválido ou expirado.', 400);
   }
 
   const password = await bcrypt.hash(newPassword, env.bcryptRounds);

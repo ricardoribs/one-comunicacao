@@ -121,13 +121,13 @@ function buildVerificationEmail({ appBaseUrl, userName, verifyUrl }) {
   return buildShell({
     appBaseUrl,
     previewText: "Confirme seu cadastro e ative seu acesso na plataforma ONE.",
-    eyebrow: "Verificacao de acesso",
+    eyebrow: "Verificação de acesso",
     title: "Confirme seu e-mail",
-    intro: `Ola, ${userName}. Para ativar seu acesso ao ambiente da ONE, confirme o endereco de e-mail clicando no botao abaixo.`,
+    intro: `Olá, ${userName}. Para ativar seu acesso ao ambiente da ONE, confirme o endereço de e-mail clicando no botão abaixo.`,
     actionLabel: "Confirmar e-mail",
     actionUrl: verifyUrl,
-    actionNote: "Se voce nao solicitou este cadastro, ignore esta mensagem. Nenhuma alteracao sera feita sem a confirmacao do link.",
-    supportText: "Se o botao nao abrir, copie o link acima e cole diretamente no navegador.",
+    actionNote: "Se você não solicitou este cadastro, ignore esta mensagem. Nenhuma alteração será feita sem a confirmação do link.",
+    supportText: "Se o botão não abrir, copie o link acima e cole diretamente no navegador.",
     fallbackLabel: "Link direto",
   });
 }
@@ -136,13 +136,13 @@ function buildPasswordResetEmail({ appBaseUrl, userName, resetUrl, expiresMinute
   return buildShell({
     appBaseUrl,
     previewText: "Redefina sua senha com seguranca na plataforma ONE.",
-    eyebrow: "Recuperacao de senha",
+    eyebrow: "Recuperação de senha",
     title: "Redefina sua senha",
-    intro: `Ola, ${userName}. Recebemos uma solicitacao para redefinir a senha da sua conta. Use o botao abaixo para criar uma nova senha com seguranca.`,
+    intro: `Olá, ${userName}. Recebemos uma solicitação para redefinir a senha da sua conta. Use o botão abaixo para criar uma nova senha com segurança.`,
     actionLabel: "Redefinir senha",
     actionUrl: resetUrl,
-    actionNote: `Este link expira em ${expiresMinutes} minutos. Se voce nao solicitou a redefinicao, ignore este e-mail e sua senha atual permanecera valida.`,
-    supportText: "Se o botao nao abrir, copie o link acima e cole diretamente no navegador.",
+    actionNote: `Este link expira em ${expiresMinutes} minutos. Se você não solicitou a redefinição, ignore este e-mail e sua senha atual permanecerá válida.`,
+    supportText: "Se o botão não abrir, copie o link acima e cole diretamente no navegador.",
     fallbackLabel: "Link seguro",
   });
 }

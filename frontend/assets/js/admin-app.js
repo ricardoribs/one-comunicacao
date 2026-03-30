@@ -4643,7 +4643,7 @@ async function doLogin() {
     { querySelector: () => submitButton },
     async () => {
       if (!email || !password) {
-        throw new Error("Digite um e-mail e senha");
+        throw new Error("Digite um e-mail e uma senha.");
       }
 
       const session = await apiFetch("/auth/login", {
@@ -4662,10 +4662,10 @@ async function doLogin() {
     { loadingText: "Entrando...", button: submitButton }
   )().catch((error) => {
     const message = String(error?.message || "").trim();
-    const normalizedMessage = /digite um e-mail e senha/i.test(message)
-      ? "Digite um e-mail e senha"
-      : /login ou senha incorretos|e-mail ou senha inv[aá]lidos|informe um e-mail valido|senha obrigatoria/i.test(message)
-        ? "Login ou senha incorretos"
+    const normalizedMessage = /digite um e-mail e( uma)? senha/i.test(message)
+      ? "Digite um e-mail e uma senha."
+      : /login ou senha incorretos|e-mail ou senha inv[aá]lidos|informe um e-mail v[aá]lido|senha obrigat[oó]ria/i.test(message)
+        ? "Login ou senha incorretos."
         : message || "Erro ao entrar no painel.";
     errorNode.textContent = normalizedMessage;
     errorNode.style.display = "block";
@@ -4989,7 +4989,7 @@ function clearAddressFieldValue(field) {
 async function fetchCepSuggestion(cep) {
   const mapCepResponse = (data) => {
     if (data?.erro) {
-      throw new Error("CEP nao encontrado.");
+      throw new Error("CEP não encontrado.");
     }
 
     return {
@@ -5016,7 +5016,7 @@ async function fetchCepSuggestion(cep) {
     });
 
     if (!response.ok) {
-      throw new Error("Nao foi possivel consultar o CEP no momento.");
+      throw new Error("Não foi possível consultar o CEP no momento.");
     }
 
     const data = await response.json().catch(() => ({}));
@@ -5077,12 +5077,12 @@ function initClientAddressAssist(form) {
     const cep = normalizeZipCode(zipField.value);
 
     if (cep.length !== 8) {
-      setCepFeedback(feedbackNode, "Informe um CEP valido com 8 digitos para buscar o endereco.", "error");
+      setCepFeedback(feedbackNode, "Informe um CEP válido com 8 dígitos para buscar o endereço.", "error");
       return;
     }
 
     if (!force && cep === lastResolvedCep) {
-      setCepFeedback(feedbackNode, "CEP ja localizado. Voce pode ajustar os campos manualmente se necessario.");
+      setCepFeedback(feedbackNode, "CEP já localizado. Você pode ajustar os campos manualmente, se necessário.");
       return;
     }
 
@@ -5094,7 +5094,7 @@ function initClientAddressAssist(form) {
       lookupButton.disabled = true;
     }
     lookupInFlightCep = cep;
-    setCepFeedback(feedbackNode, "Buscando endereco pelo CEP...");
+    setCepFeedback(feedbackNode, "Buscando endereço pelo CEP...");
 
     try {
       const address = await fetchCepSuggestion(cep);
@@ -5116,8 +5116,8 @@ function initClientAddressAssist(form) {
       setCepFeedback(
         feedbackNode,
         appliedFields
-          ? "CEP localizado. Confira e ajuste os campos se necessario."
-          : "CEP localizado. Os campos ja tinham dados preenchidos manualmente.",
+          ? "CEP localizado. Confira e ajuste os campos, se necessário."
+          : "CEP localizado. Os campos já tinham dados preenchidos manualmente.",
         "success"
       );
     } catch (error) {
@@ -5411,8 +5411,8 @@ function openModal(type, id = null) {
   if (type === "novo-membro") {
     const user = state.users.find((item) => item.id === id) || {};
     const passwordHelp = user.id
-      ? "Deixe em branco para manter a senha atual. Se preencher, use no minimo 12 caracteres com maiuscula, minuscula, numero e simbolo."
-      : "Use no minimo 12 caracteres com maiuscula, minuscula, numero e simbolo.";
+      ? "Deixe em branco para manter a senha atual. Se preencher, use no mínimo 12 caracteres, com letra maiúscula, letra minúscula, número e símbolo."
+      : "Use no mínimo 12 caracteres, com letra maiúscula, letra minúscula, número e símbolo.";
     html = modalFormWrapper(
       user.id ? "Editar membro" : "Novo membro",
       `

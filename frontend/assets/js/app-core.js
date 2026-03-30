@@ -140,7 +140,7 @@
       const session = await ensureFreshSession();
       const accessToken = session?.accessToken || session?.token;
       if (!accessToken) {
-        throw new Error("Sua sessao expirou. Faca login novamente.");
+        throw new Error("Sua sessão expirou. Faça login novamente.");
       }
       headers.set("Authorization", `Bearer ${accessToken}`);
     }

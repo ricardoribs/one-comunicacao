@@ -6,7 +6,7 @@ const invoiceStatusEnum = z.enum(['Em aberto', 'Pago', 'Atrasado', 'Cancelado'])
 const emptyToNullDate = () =>
   z.preprocess(
     (value) => (value === '' || value === undefined ? null : value),
-    z.string().regex(isoDateRegex, 'Informe uma data valida no formato AAAA-MM-DD').nullable()
+    z.string().regex(isoDateRegex, 'Informe uma data válida no formato AAAA-MM-DD.').nullable()
   );
 
 exports.invoiceSchema = z.object({
