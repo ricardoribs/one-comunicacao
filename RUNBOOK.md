@@ -1,34 +1,34 @@
-# Runbook Basico
+# Runbook
 
-## Banco indisponivel
+## Banco indisponível
 
-1. Verifique `/health`
-2. Confirme conectividade e status do provedor PostgreSQL
-3. Revise `DATABASE_URL`
-4. Se necessario, restaure o ultimo backup valido
+1. Verifique `/api/health`.
+2. Confirme conectividade com o PostgreSQL.
+3. Revise `DATABASE_URL` e os segredos do banco.
+4. Se necessário, execute restore a partir do último backup válido.
 
-## Servidor travando
+## Servidor instável
 
-1. Verifique logs estruturados no provedor
-2. Busque por `request_id`
-3. Confirme memoria e CPU do container
-4. Reinicie o servico se necessario
+1. Verifique logs estruturados no provedor.
+2. Busque pelo `request_id`.
+3. Confirme consumo de CPU, memória e conexões.
+4. Reinicie o serviço apenas depois de identificar a causa provável.
 
-## Deploy falhou
+## Deploy com falha
 
-1. Revise variaveis de ambiente obrigatorias
-2. Confirme `NODE_ENV=production`
-3. Confirme que migrations rodaram
-4. Verifique `/health` apos subir
+1. Revise as variáveis obrigatórias.
+2. Confirme `NODE_ENV=production`.
+3. Confirme a execução das migrations.
+4. Valide `/api/health` e `/api/ready` após o boot.
 
-## Uploads falhando
+## Upload com erro
 
-1. Confirme `UPLOAD_PROVIDER`
-2. Se `cloudinary`, valide credenciais
-3. Confirme tipo de arquivo e limite de 10 MB
+1. Confirme `UPLOAD_PROVIDER`.
+2. Se estiver usando Cloudinary, valide as credenciais.
+3. Confirme o tipo de arquivo e o limite configurado.
 
-## Autenticacao falhando
+## Autenticação com erro
 
-1. Verifique cookie de refresh
-2. Confirme `JWT_SECRET`
-3. Revise se a conta foi bloqueada por excesso de tentativas
+1. Verifique o cookie de refresh.
+2. Confirme `JWT_SECRET`.
+3. Revise bloqueio por tentativas e status da conta.

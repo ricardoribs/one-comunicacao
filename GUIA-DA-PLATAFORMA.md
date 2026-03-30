@@ -1,15 +1,26 @@
 # Guia da Plataforma ONE
 
-Este documento apresenta a estrutura da plataforma ONE, os perfis de acesso e os fluxos principais de operação em linguagem direta e alinhada ao comportamento real do sistema.
+Este guia descreve a estrutura atual da plataforma, os perfis de acesso e os fluxos principais do sistema em linguagem objetiva e alinhada ao comportamento real do produto.
 
 ## 1. Visão geral
 
-A plataforma é composta por duas frentes ativas:
+A plataforma ONE possui duas frentes ativas:
 
-- Site institucional: apresenta a agência, capta leads e direciona acessos.
-- Painel interno: ambiente de operação da equipe com dashboard, kanban, CRM, campanhas, produção, analytics, financeiro e gestão de acesso.
+- site institucional: apresentação da agência e captação de leads;
+- painel interno: ambiente operacional da equipe.
 
-Observação: a antiga Área do Cliente foi descontinuada no frontend público.
+O painel interno concentra:
+
+- visão geral
+- meu perfil
+- kanban
+- calendário da equipe
+- CRM e leads
+- campanhas
+- produção
+- analytics
+- financeiro
+- controle de acesso
 
 ## 2. Estrutura da aplicação
 
@@ -17,133 +28,101 @@ Observação: a antiga Área do Cliente foi descontinuada no frontend público.
 
 - `frontend/index.html`: site institucional
 - `frontend/painel-interno.html`: painel interno
-- `frontend/assets/js/index-app.js`: fluxos da home institucional
+- `frontend/assets/js/index-app.js`: fluxos do site
 - `frontend/assets/js/admin-app.js`: lógica do painel interno
 
 ### Backend
 
-- `backend/src/routes/`: definição das rotas da API
-- `backend/src/controllers/`: entrada das requisições
+- `backend/src/routes/`: rotas da API
+- `backend/src/controllers/`: camada HTTP
 - `backend/src/services/`: regras de negócio
-- `backend/src/models/`: acesso ao banco de dados
+- `backend/src/models/`: acesso ao banco
 - `backend/src/middlewares/`: autenticação, autorização, validação e segurança
 - `backend/src/db/pgmigrations/`: migrations versionadas
 
 ## 3. Perfis de acesso
 
-Os perfis são controlados no backend. O frontend apenas organiza a interface conforme o papel do usuário.
+O backend é a fonte real de autorização. O frontend apenas organiza a interface conforme o perfil.
 
 ### `admin`
 
-Responsabilidade principal:
+Pode:
 
-- administrar a plataforma de ponta a ponta
-
-Pode fazer:
-
-- acessar todos os módulos internos
-- ver indicadores operacionais e financeiros completos
-- listar, criar, editar e remover usuários
-- gerenciar clientes, contatos, campanhas, tarefas, materiais, arquivos, cobranças e faturas
-- consultar equipe habilitada e diretório interno
+- acessar todos os módulos internos;
+- gerenciar usuários, perfis e acessos;
+- criar, editar e remover clientes, campanhas, tarefas, materiais, arquivos, cobranças e faturas;
+- visualizar indicadores operacionais e financeiros completos;
+- criar eventos no calendário da equipe.
 
 ### `gestor`
 
-Responsabilidade principal:
+Pode:
 
-- conduzir a operação da própria carteira
+- operar a própria carteira;
+- distribuir tarefas, inclusive com múltiplos responsáveis;
+- acompanhar CRM, campanhas, produção, analytics e cobranças do próprio escopo;
+- criar eventos no calendário da equipe.
 
-Pode fazer:
+Não pode:
 
-- acessar dashboard interno, equipe habilitada e diretório interno
-- gerenciar clientes, contatos, campanhas, tarefas, materiais, arquivos e cobranças do próprio escopo
-- acompanhar relatórios, métricas e analytics
-- distribuir atividades e acompanhar execução
-
-Não faz:
-
-- gestão completa de usuários
-- gestão de faturas internas
+- administrar usuários;
+- operar o financeiro interno completo por faturas fora do próprio escopo.
 
 ### `designer`
 
-Responsabilidade principal:
+Pode:
 
-- executar entregas e manter a produção organizada
+- acompanhar tarefas atribuídas;
+- operar o kanban;
+- acompanhar produção, relatórios e arquivos do próprio escopo;
+- visualizar o calendário e o perfil pessoal.
 
-Pode fazer:
+Não pode:
 
-- acessar dashboard operacional, kanban e produção
-- criar e atualizar tarefas
-- criar, editar e remover materiais do escopo
-- enviar e remover arquivos do escopo
-- consultar campanhas, relatórios e clientes sem dados sensíveis
-
-Não faz:
-
-- gestão de CRM
-- cobrança e faturamento
-- leitura de métricas financeiras
+- operar CRM;
+- gerenciar usuários;
+- criar eventos no calendário;
+- operar cobrança e faturamento.
 
 ### `comercial`
 
-Responsabilidade principal:
+Pode:
 
-- gerar receita e manter o pipeline atualizado
+- operar CRM e campanhas;
+- converter leads em clientes;
+- acompanhar tarefas, produção, cobranças e faturas;
+- visualizar o calendário e o perfil pessoal.
 
-Pode fazer:
+Não pode:
 
-- acessar dashboard comercial e financeiro
-- gerenciar clientes, contatos e campanhas do próprio escopo
-- criar e atualizar cobranças e faturas
-- consultar tarefas, materiais e relatórios para acompanhar o andamento
+- administrar usuários;
+- operar módulos técnicos.
 
-Não faz:
+### `dev`
 
-- controle de acesso
-- gestão técnica de arquivos e produção
+Pode:
 
-### `dev` (Desenvolvimento)
+- acompanhar o kanban;
+- acessar analytics e integrações;
+- visualizar calendário, relatórios e arquivos do escopo;
+- manter o próprio perfil.
 
-Responsabilidade principal:
+Não pode:
 
-- apoiar a operação técnica e a leitura analítica
+- operar CRM;
+- gerenciar clientes comercialmente;
+- operar cobrança e faturamento.
 
-Pode fazer:
+### `client`
 
-- acessar dashboard técnico, kanban e analytics
-- criar e atualizar tarefas
-- consultar métricas e integrações técnicas quando aplicável
-- usar o diretório interno
-
-Não faz:
-
-- gestão comercial
-- gestão de clientes e campanhas
-- cobrança, faturamento ou produção
-
-### `client` (Cliente)
-
-Responsabilidade principal:
-
-- perfil legado sem portal público ativo
-
-Pode fazer:
-
-- ter o atendimento conduzido pela equipe ONE conforme o escopo contratado
-
-Não faz:
-
-- acessar um portal público dedicado
-- acessar o painel interno
-- alterar dados internos da operação
+Perfil legado, sem portal público ativo.
 
 ## 4. Endereços principais
 
 Em ambiente local:
 
-- Site: `http://localhost:3000/`
-- Painel interno: `http://localhost:3000/painel-interno.html`
+- site: `http://localhost:3000/`
+- painel interno: `http://localhost:3000/painel-interno.html`
 - API: `http://localhost:3000/api`
 
 ## 5. Fluxo de autenticação
@@ -152,31 +131,32 @@ Em ambiente local:
 
 O login usa:
 
-- JWT de acesso
-- refresh token em cookie
-- autorização por perfil
-- escopo de tenant no backend
+- access token JWT;
+- refresh token em cookie `HttpOnly`;
+- autorização por perfil e capacidade;
+- escopo por tenant no backend.
 
-### Recuperação de senha
+### Sessão
 
-O usuário pode:
+O frontend mantém o access token apenas em memória. Em caso de expiração, o refresh token é usado para renovar a sessão.
 
-- solicitar redefinição por e-mail
-- receber link com expiração
-- definir nova senha segura
+### Recuperação de acesso
 
-### Encerramento de sessão
+Existem fluxos para:
 
-Existem fluxos de:
-
-- logout da sessão atual
-- logout global
+- redefinição de senha;
+- verificação de e-mail;
+- logout local;
+- logout global.
 
 ## 6. O que o site institucional faz
 
-O site institucional não é apenas uma vitrine. Ele também inicia fluxos operacionais.
+O site institucional:
 
-### Captação de leads
+- apresenta a agência;
+- capta leads;
+- direciona o acesso ao painel interno;
+- apoia o fluxo comercial.
 
 O formulário principal coleta:
 
@@ -187,38 +167,113 @@ O formulário principal coleta:
 - serviço de interesse
 - mensagem
 
-Esses dados entram na API de contatos para tratamento comercial posterior.
+## 7. Módulos do painel interno
 
-### Acesso aos portais
+### Visão Geral
 
-Pela home, o usuário pode:
+Resumo operacional por perfil, com KPIs, tarefas urgentes e leituras resumidas.
 
-- navegar pelo site institucional
-- preencher o formulário comercial
-- abrir o painel interno quando possuir o endereço e as credenciais corretas
+### Meu Perfil
 
-## 7. Portal do cliente
+Cada usuário pode consultar e editar:
 
-O portal público do cliente foi descontinuado. O acompanhamento operacional permanece centralizado no painel interno da equipe e no fluxo de atendimento conduzido pela ONE.
+- nome
+- e-mail
+- telefone
+- avatar
+- senha
+- último acesso
+- localização
+- permissões do perfil
+- atividade recente
 
-## 8. Painel interno
+### Kanban
 
-### Módulos principais
+O Kanban suporta:
 
-- Visão Geral: resumo operacional e financeiro conforme o perfil
-- Kanban: tarefas em andamento por cliente e responsável
-- CRM: leads, carteira ativa e conversões
-- Campanhas: cadastro e acompanhamento de campanhas
-- Produção: materiais, arquivos e aprovações
-- Analytics: indicadores consolidados e integrações
-- Financeiro: cobranças, faturas e indicadores financeiros
-- Acesso: gestão de membros e perfis, exclusivo do `admin`
+- colunas de fluxo operacional;
+- múltiplos responsáveis por tarefa;
+- checklist diário;
+- histórico do checklist;
+- manual da marca por cliente;
+- drag and drop entre colunas.
 
-### Regra prática
+### Calendário
 
-- o perfil define quais páginas aparecem
-- o backend define o que realmente pode ser lido ou alterado
-- o escopo de cliente nunca deve ser controlado apenas pela interface
+Todos os perfis internos podem visualizar o calendário da equipe.
+
+`admin` e `gestor` podem:
+
+- criar eventos;
+- editar eventos;
+- excluir eventos.
+
+O sistema envia lembretes automáticos para eventos próximos.
+
+### CRM / Leads
+
+O CRM inclui:
+
+- pipeline de leads;
+- conversão em cliente;
+- clientes ativos;
+- histórico comercial.
+
+### Campanhas
+
+Permite:
+
+- cadastrar campanhas;
+- acompanhar orçamento;
+- acompanhar leads e resultados;
+- vincular campanhas a clientes.
+
+### Produção
+
+Concentra:
+
+- materiais;
+- arquivos;
+- status de aprovação;
+- entregas vinculadas a cliente e campanha.
+
+### Analytics
+
+Mostra:
+
+- métricas;
+- relatórios;
+- integrações por cliente;
+- status de sincronização.
+
+### Financeiro
+
+Permite acompanhar:
+
+- cobranças;
+- faturas;
+- margens;
+- resumo financeiro por cliente.
+
+### Controle de Acesso
+
+Exclusivo do `admin`, com:
+
+- membros;
+- perfis e permissões;
+- último acesso;
+- presença;
+- localização;
+- status da conta.
+
+## 8. Notificações internas
+
+O sino do painel interno concentra notificações para:
+
+- nova tarefa atribuída;
+- tarefa concluída;
+- lembretes de calendário;
+- leitura de itens pendentes do fluxo operacional.
 
 ## 9. Fluxos principais
 
@@ -228,22 +283,22 @@ O portal público do cliente foi descontinuado. O acompanhamento operacional per
 2. O time comercial acompanha o pipeline no CRM.
 3. O lead evolui de etapa.
 4. O lead é convertido em cliente.
-5. O cliente passa a ter campanhas, materiais, relatórios e financeiro no portal.
+5. O cliente passa a ter campanhas, tarefas, produção e financeiro vinculados.
 
-### Fluxo de produção
+### Fluxo operacional
 
-1. Cliente e campanha são cadastrados.
-2. Tarefas são criadas no kanban.
-3. A equipe produz os materiais.
-4. Arquivos e entregas são publicados.
-5. O cliente aprova ou pede revisão no portal.
+1. O cliente é cadastrado.
+2. As campanhas e tarefas são criadas.
+3. O Kanban organiza a execução.
+4. A produção publica os materiais.
+5. As notificações ajudam a coordenar entrega, revisão e conclusão.
 
-### Fluxo financeiro
+### Fluxo de calendário
 
-1. `admin`, `gestor` ou `comercial` geram cobrança conforme o escopo.
-2. `admin` ou `comercial` geram e atualizam faturas.
-3. O financeiro acompanha retorno por link, boleto ou Pix.
-4. Os indicadores são refletidos no painel conforme o perfil.
+1. `admin` ou `gestor` cria um evento.
+2. O evento entra na agenda semanal.
+3. O sistema envia lembrete quando a janela de aviso é atingida.
+4. A equipe acompanha o compromisso no painel.
 
 ## 10. API principal
 
@@ -257,43 +312,49 @@ O portal público do cliente foi descontinuado. O acompanhamento operacional per
 - `POST /api/auth/reset-password`
 - `GET /api/auth/verify-email`
 - `GET /api/auth/me`
-- `POST /api/auth/register`
+
+### Perfil do usuário
+
+- `GET /api/users/me/profile`
+- `PATCH /api/users/me/profile`
+- `PATCH /api/users/me/password`
 
 ### Operação
 
 - `GET /api/dashboard`
 - `GET /api/users/team`
 - `GET /api/users/assignable`
+- `GET /api/tasks`
+- `GET /api/checklists/daily`
+- `DELETE /api/checklists/daily/history`
+- `GET /api/calendar-events`
+- `GET /api/notifications`
+- `GET /api/notifications/unread-count`
+
+### Comercial
+
 - `GET /api/clients`
 - `GET /api/contacts`
 - `GET /api/campaigns`
-- `GET /api/tasks`
+
+### Produção e analytics
+
 - `GET /api/materials`
-- `GET /api/reports`
-- `GET /api/messages`
 - `GET /api/files`
+- `GET /api/reports`
 - `GET /api/metrics`
 - `GET /api/integrations`
 
 ### Financeiro
 
 - `GET /api/charges`
-- `POST /api/charges`
-- `PATCH /api/charges/:id`
 - `GET /api/invoices`
-- `POST /api/invoices`
-- `PATCH /api/invoices/:id/status`
-
-### Conta
-
-- `GET /api/account/export`
-- `DELETE /api/account`
 
 ## 11. Como rodar localmente
 
 1. Copie `.env.example` para `.env`.
-2. Ajuste as variáveis necessárias.
-3. Instale as dependências:
+2. Ajuste as variáveis.
+3. Instale o backend:
 
 ```bash
 npm run install:backend
@@ -305,7 +366,7 @@ npm run install:backend
 npm run db:migrate
 ```
 
-5. Se quiser massa de demonstração em ambiente local:
+5. Se quiser dados de demonstração:
 
 ```bash
 npm run db:seed
@@ -317,33 +378,21 @@ npm run db:seed
 npm run dev
 ```
 
-## 12. Bootstrap do primeiro administrador
+## 12. Boas práticas de operação
 
-Use o bootstrap seguro quando o ambiente ainda não tiver usuários:
+- Não trate autorização apenas pelo frontend.
+- Não publique material sem revisar o arquivo final.
+- Não deixe lead, campanha ou tarefa sem responsável.
+- Não use planilhas paralelas para dados já existentes na plataforma.
+- Não ignore notificações operacionais e lembretes do calendário.
 
-```bash
-ALLOW_ADMIN_BOOTSTRAP=true \
-BOOTSTRAP_ADMIN_NAME="Demo Admin" \
-BOOTSTRAP_ADMIN_EMAIL="admin@one.local" \
-BOOTSTRAP_ADMIN_PASSWORD="SenhaForte@123" \
-npm run bootstrap:admin
-```
-
-## 13. Boas práticas de operação
-
-- Não trate permissão apenas pelo frontend.
-- Não publique material para o cliente sem revisar o arquivo final.
-- Não deixe lead, tarefa ou campanha sem responsável claro.
-- Não gere cobrança ou fatura fora do escopo correto.
-- Não use planilhas paralelas para dados que já existem na plataforma.
-
-## 14. Documentos complementares
+## 13. Documentos complementares
 
 - [README.md](README.md)
-- [PLAYBOOK-ONBOARDING.md](PLAYBOOK-ONBOARDING.md)
 - [GUIA-OPERACIONAL-EQUIPE.md](GUIA-OPERACIONAL-EQUIPE.md)
-- [PRODUCTION.md](PRODUCTION.md)
+- [PLAYBOOK-ONBOARDING.md](PLAYBOOK-ONBOARDING.md)
+- [MAPEAMENTO-EQUIPE-ACESSOS.md](MAPEAMENTO-EQUIPE-ACESSOS.md)
+- [PERMISSIONS-MATRIX.md](PERMISSIONS-MATRIX.md)
 - [DEPLOY.md](DEPLOY.md)
 - [ENVIRONMENTS.md](ENVIRONMENTS.md)
-- [PERMISSIONS-MATRIX.md](PERMISSIONS-MATRIX.md)
-- [RUNBOOK-BACKUP-RESTORE.md](RUNBOOK-BACKUP-RESTORE.md)
+- [PRODUCTION.md](PRODUCTION.md)

@@ -1,37 +1,44 @@
 # Ambientes
 
-## Regra
+## Regra geral
 
-Dev, staging e producao nao compartilham banco, storage, contas de servico ou segredos.
+Desenvolvimento, staging e produção não compartilham:
 
-## Dev
+- banco de dados
+- storage
+- segredos
+- contas de serviço
+- credenciais operacionais
 
-- banco local ou temporario
-- uploads e integracoes podem usar sandbox
-- permitido `db:seed`
+## Desenvolvimento
+
+- banco local ou temporário
+- uploads e integrações podem usar modo sandbox
+- permitido `npm run db:seed`
+- foco em velocidade de desenvolvimento
 
 ## Staging
 
-- banco isolado de producao
-- mesmas migrations de producao
-- mesmos providers, preferencialmente em modo sandbox
-- obrigatorio validar `npm run verify:rls`
-- obrigatorio executar smoke test antes de promover
+- banco isolado de produção
+- mesmas migrations de produção
+- providers preferencialmente equivalentes aos de produção
+- smoke test obrigatório antes de promover
+- validação obrigatória de escopo com `npm run audit:tenant --prefix backend`
 
-## Producao
+## Produção
 
 - sem `db:seed`
 - bootstrap inicial apenas com `npm run bootstrap:admin`
 - segredos injetados pelo provedor
-- Sentry obrigatorio
-- uploads externos obrigatorios
-- backup automatico obrigatorio
+- Sentry obrigatório
+- uploads externos obrigatórios
+- backup automático obrigatório
 
-## Promocao
+## Promoção
 
-1. build aprovado no CI
-2. smoke em staging
-3. validacao de readiness
-4. promocao manual para producao
+1. Build aprovado.
+2. Deploy em staging.
+3. Smoke test e validações manuais.
+4. Promoção para produção.
 
-O artefato aprovado em staging deve ser o mesmo promovido para producao.
+O artefato aprovado em staging deve ser o mesmo promovido para produção.

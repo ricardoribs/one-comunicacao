@@ -1,18 +1,26 @@
-# Production
+# Produção
+
+Este documento consolida o checklist operacional e técnico para publicar a plataforma ONE com backend Express, PostgreSQL, uploads protegidos, autenticação com refresh token, notificações, calendário interno e observabilidade.
 
 ## Objetivo
 
-Checklist operacional e tecnico para publicar a aplicacao com backend Express, PostgreSQL, JWT, uploads protegidos e observabilidade.
+Garantir que a publicação em produção ocorra com:
 
-## 1. Segredos e variaveis obrigatorias
+- segredos fora do repositório;
+- banco validado e com migrations aplicadas;
+- autenticação e autorização auditadas;
+- uploads e e-mails configurados;
+- monitoramento, logs e backup revisados.
 
-Gere o segredo JWT fora do repositorio:
+## Segredos e variáveis obrigatórias
+
+Gere o segredo JWT fora do repositório:
 
 ```bash
 openssl rand -hex 64
 ```
 
-Configure no provedor:
+Configuração mínima esperada:
 
 ```env
 NODE_ENV=production
@@ -24,15 +32,16 @@ DATABASE_NAME=postgres
 DATABASE_USER=postgres.<project_ref>
 DATABASE_PASSWORD=<senha do banco>
 DATABASE_SSL_CA_FILE=/etc/secrets/prod-ca-2021.crt
+DB_POOL_MAX=8
 JWT_SECRET=<resultado do openssl rand -hex 64>
 JWT_EXPIRES_IN=15m
 REFRESH_TOKEN_EXPIRES_DAYS=7
 APP_BASE_URL=https://seu-dominio.onrender.com
+CORS_ORIGINS=https://seu-dominio.onrender.com,https://www.seu-dominio.com
 GEO_LOOKUP_ENABLED=true
 GEO_LOOKUP_TIMEOUT_MS=1200
 GEO_LOOKUP_CACHE_TTL_MS=21600000
 GEO_LOOKUP_URL_TEMPLATE=https://ipwho.is/{ip}?fields=success,country_code,country,region,city
-CORS_ORIGINS=https://seu-dominio.onrender.com,https://www.seu-dominio.com
 UPLOAD_PROVIDER=cloudinary
 CLOUDINARY_CLOUD_NAME=...
 CLOUDINARY_API_KEY=...
@@ -46,19 +55,25 @@ PAYMENT_PROVIDER=manual
 MAINTENANCE_MODE=false
 ```
 
-Em producao, nao use arquivos `.env`. Todas as variaveis devem ser injetadas pelo provedor.
+Em produção, não use arquivos `.env` versionados. Todas as variáveis devem ser injetadas pelo provedor.
 
-## 2. Banco e bootstrap
+## Banco, migrations e bootstrap
 
-1. Crie um PostgreSQL dedicado para producao.
-2. Crie um PostgreSQL dedicado para staging.
-3. Aplique migrations:
+1. Usar um PostgreSQL dedicado para `production`.
+2. Manter outro PostgreSQL dedicado para `staging`.
+3. Aplicar migrations:
 
 ```bash
-npm run db:init
+npm run db:migrate
 ```
 
-4. Crie o primeiro administrador:
+4. Validar o tenant guard:
+
+```bash
+npm run audit:tenant --prefix backend
+```
+
+5. Criar o primeiro administrador apenas se a base ainda estiver vazia:
 
 ```bash
 ALLOW_ADMIN_BOOTSTRAP=true \
@@ -68,275 +83,128 @@ BOOTSTRAP_ADMIN_PASSWORD="SenhaForte@123" \
 npm run bootstrap:admin
 ```
 
-5. Nao rode `db:seed` em producao.
+6. Não rodar `db:seed` em produção.
 
-## 3. Render
+## Render
 
-Arquivo de referencia: [render.yaml](/c:/Users/ricar/Downloads/Projeto%20One/render.yaml)
+Arquivo de referência: [render.yaml](/c:/Users/ricar/Downloads/Projeto%20One/render.yaml)
 
-Configuracao esperada:
+Configuração esperada:
 
-- Plan: `starter` ou superior
-- Build Command: `npm run install:backend:prod`
-- Start Command: `npm run start`
-- Health Check Path: `/api/health`
-- Auto deploy: `true`
-- `JWT_SECRET`, `DATABASE_URL`, `RESEND_API_KEY`, `EMAIL_FROM`, `SENTRY_DSN` e `CLOUDINARY_*` como segredos
-- certificado CA do Supabase adicionado como Secret File no Render e `DATABASE_SSL_CA_FILE=/etc/secrets/prod-ca-2021.crt`
-- para o Supabase pooler, prefira `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USER` e `DATABASE_PASSWORD` separados para evitar problemas de parse da URL
+- plano `starter` ou superior;
+- Build Command: `npm run install:backend:prod`;
+- Start Command: `npm run start`;
+- Health Check Path: `/api/health`;
+- `JWT_SECRET`, `DATABASE_URL`, `RESEND_API_KEY`, `EMAIL_FROM`, `SENTRY_DSN` e `CLOUDINARY_*` como segredos;
+- certificado CA do banco adicionado como Secret File no Render, com `DATABASE_SSL_CA_FILE=/etc/secrets/prod-ca-2021.crt`.
 
-## 3.1 Geolocalizacao de acesso e presenca
+## Geolocalização de acesso e presença
 
-O painel interno agora mostra:
+O painel interno exibe:
 
-- ultimo acesso real
-- status `Online` com base em atividade recente
-- localizacao de acesso quando disponivel
+- último acesso real;
+- presença com `Online` baseada em atividade recente;
+- localização de acesso quando disponível.
 
-Fluxo recomendado em producao:
+Fluxo recomendado:
 
-1. Coloque o dominio da aplicacao atras do Cloudflare.
-2. Ative `IP Geolocation` no Cloudflare.
-3. Ative o Managed Transform `Add visitor location headers`.
+1. Colocar o domínio atrás do Cloudflare.
+2. Ativar `IP Geolocation`.
+3. Ativar `Add visitor location headers`.
 
-Com isso, o backend recebe automaticamente headers como:
+Headers aceitos:
 
 - `cf-ipcity`
 - `cf-region`
 - `cf-ipcountry`
-
-Tambem ha compatibilidade nativa com headers da Vercel:
-
 - `x-vercel-ip-city`
 - `x-vercel-ip-country-region`
 - `x-vercel-ip-country`
 
 Comportamento do backend:
 
-- se os headers geograficos vierem da borda, eles sao priorizados
-- se nao vierem, o backend faz fallback por IP usando `GEO_LOOKUP_URL_TEMPLATE`
-- o fallback usa timeout curto e cache, para nao travar login nem presenca
-- IP local/privado nao dispara lookup externo
+- usa headers de borda quando existirem;
+- faz fallback por IP quando os headers não vierem;
+- usa timeout curto e cache;
+- ignora IP local e IP privado.
 
 Regras operacionais:
 
-- nunca envie esses headers pelo frontend; eles nao sao confiaveis
-- use headers do proxy/CDN ou o fallback do servidor
-- se nao houver header geografico e o lookup externo estiver desligado ou indisponivel, o painel exibira `Localizacao nao identificada`
+- não confiar em header enviado pelo frontend;
+- preferir CDN ou proxy confiável;
+- quando a geolocalização não estiver disponível, o painel mostra `Localização não identificada`.
 
-Quando quiser desabilitar o fallback externo:
+## E-mail transacional
 
-```env
-GEO_LOOKUP_ENABLED=false
-```
-
-Quando quiser trocar o provedor de lookup:
-
-```env
-GEO_LOOKUP_URL_TEMPLATE=https://seu-provedor/{ip}
-```
-
-## 4. E-mail transacional
-
-Use Resend com dominio proprio do cliente.
-
-1. Adicione o dominio no Resend.
-2. Publique SPF, DKIM e DMARC no DNS do dominio.
-3. Valide os registros externamente:
-   - SPF/DKIM/DMARC: https://mxtoolbox.com/
-   - Documentacao Resend: https://resend.com/docs/dashboard/domains/introduction
-
-Checklist minimo:
-
-- SPF publicado
-- DKIM publicado
-- DMARC publicado
-- dominio verificado no Resend
-- `EMAIL_FROM` usando o dominio validado
-
-## 5. RLS no PostgreSQL
-
-SQL de referencia para habilitar RLS nas tabelas multi-tenant:
-
-```sql
-CREATE SCHEMA IF NOT EXISTS app;
-
-CREATE OR REPLACE FUNCTION app.current_role() RETURNS TEXT
-LANGUAGE SQL STABLE AS $$
-  SELECT NULLIF(current_setting('app.current_role', true), '');
-$$;
-
-CREATE OR REPLACE FUNCTION app.current_user_id() RETURNS INTEGER
-LANGUAGE SQL STABLE AS $$
-  SELECT NULLIF(current_setting('app.current_user_id', true), '')::INTEGER;
-$$;
-
-CREATE OR REPLACE FUNCTION app.current_client_id() RETURNS INTEGER
-LANGUAGE SQL STABLE AS $$
-  SELECT NULLIF(current_setting('app.current_client_id', true), '')::INTEGER;
-$$;
-
-CREATE OR REPLACE FUNCTION app.is_admin() RETURNS BOOLEAN
-LANGUAGE SQL STABLE AS $$
-  SELECT app.current_role() = 'admin';
-$$;
-
-CREATE OR REPLACE FUNCTION app.is_client() RETURNS BOOLEAN
-LANGUAGE SQL STABLE AS $$
-  SELECT app.current_role() = 'client';
-$$;
-
-CREATE OR REPLACE FUNCTION app.is_internal() RETURNS BOOLEAN
-LANGUAGE SQL STABLE AS $$
-  SELECT app.current_role() IN ('designer', 'gestor', 'comercial', 'dev');
-$$;
-
-CREATE OR REPLACE FUNCTION app.can_access_client(target_client_id INTEGER) RETURNS BOOLEAN
-LANGUAGE SQL STABLE AS $$
-  SELECT
-    app.is_admin()
-    OR (app.is_client() AND target_client_id = app.current_client_id())
-    OR (
-      app.is_internal()
-      AND EXISTS (
-        SELECT 1
-        FROM clients c
-        WHERE c.id = target_client_id
-          AND c.manager_id = app.current_user_id()
-      )
-    );
-$$;
-```
-
-Policies prontas para copiar:
-
-```sql
-ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
-ALTER TABLE clients FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS clients_tenant_isolation ON clients;
-CREATE POLICY clients_tenant_isolation ON clients
-  FOR ALL
-  USING (
-    app.is_admin()
-    OR (app.is_client() AND id = app.current_client_id())
-    OR (app.is_internal() AND manager_id = app.current_user_id())
-  )
-  WITH CHECK (
-    app.is_admin()
-    OR (app.is_client() AND id = app.current_client_id())
-    OR (app.is_internal() AND manager_id = app.current_user_id())
-  );
-
-ALTER TABLE campaigns ENABLE ROW LEVEL SECURITY;
-ALTER TABLE campaigns FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS campaigns_tenant_isolation ON campaigns;
-CREATE POLICY campaigns_tenant_isolation ON campaigns
-  FOR ALL
-  USING (app.can_access_client(client_id))
-  WITH CHECK (app.can_access_client(client_id));
-
-ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
-ALTER TABLE invoices FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS invoices_tenant_isolation ON invoices;
-CREATE POLICY invoices_tenant_isolation ON invoices
-  FOR ALL
-  USING (app.can_access_client(client_id))
-  WITH CHECK (app.can_access_client(client_id));
-
-ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
-ALTER TABLE reports FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS reports_tenant_isolation ON reports;
-CREATE POLICY reports_tenant_isolation ON reports
-  FOR ALL
-  USING (app.can_access_client(client_id))
-  WITH CHECK (app.can_access_client(client_id));
-```
-
-Referencia completa versionada: [006_row_level_security.js](/c:/Users/ricar/Downloads/Projeto%20One/backend/src/db/pgmigrations/006_row_level_security.js)
-
-Validacao obrigatoria:
-
-```bash
-npm run verify:rls
-```
-
-## 6. Observabilidade
-
-- `SENTRY_DSN` configurado
-- alertas para `GET /api/health`, `GET /api/ready` e taxa de 5xx
-- monitoramento de disponibilidade do Render
-- logger central consumindo `request_id`
-
-## 7. 2FA e ownership de contas
-
-2FA obrigatorio:
-
-- Render: https://dashboard.render.com/
-- Supabase: https://supabase.com/dashboard
-- Cloudinary: https://console.cloudinary.com/
-- Registradora / DNS do dominio do cliente
+Use Resend com domínio próprio.
 
 Checklist:
 
-- 2FA habilitado em todas as contas de infra
-- contas de producao no nome do cliente, nunca no nome do desenvolvedor
-- acessos compartilhados por grupo/equipe, nao por conta pessoal unica
+- SPF publicado;
+- DKIM publicado;
+- DMARC publicado;
+- domínio validado no Resend;
+- `EMAIL_FROM` apontando para o domínio validado.
 
-## 8. Staging e backup
+## Uploads
 
-- staging separado de producao
-- segredos separados por ambiente
-- banco separado por ambiente
-- backup automatico diario habilitado
-- restore drill validado em ambiente isolado
+Configuração esperada:
 
-Runbook: [RUNBOOK-BACKUP-RESTORE.md](/c:/Users/ricar/Downloads/Projeto%20One/RUNBOOK-BACKUP-RESTORE.md)
+- `UPLOAD_PROVIDER=cloudinary`;
+- arquivos privados servidos por URL autenticada ou assinada;
+- uploads locais apenas em desenvolvimento;
+- validação por magic bytes ativa;
+- tamanho máximo de upload configurado.
 
-## 9. Validacao pos-deploy
+## Segurança obrigatória
 
-Teste manual:
+- `helmet` ativo com CSP e HSTS em produção;
+- CORS por allowlist explícita;
+- refresh token em cookie `HttpOnly`;
+- rate limiting global e de autenticação;
+- queries parametrizadas;
+- logs sem stack trace exposta ao cliente;
+- `X-Powered-By` desativado;
+- `request_id` por requisição;
+- `npm audit --omit=dev --prefix backend` sem falhas altas ou críticas;
+- `npm run audit:tenant --prefix backend` com zero violações.
 
-1. `GET /api/health`
-2. `GET /api/ready`
-3. login no painel interno
-4. login do cliente
-5. CRUD de cliente, campanha e tarefa
-6. upload de arquivo
-7. criacao de cobranca
-8. logout local e logout global
-9. acessar `Controle de Acesso > Membros` e confirmar:
-   - ultimo acesso com data/hora real
-   - `Online` para usuario com atividade recente
-   - localizacao preenchida por header de borda ou fallback por IP
+## Operação mínima antes do go-live
 
-Smoke automatizado:
+- validar login e refresh;
+- validar criação e edição de cliente;
+- validar criação de campanha;
+- validar Kanban com múltiplos responsáveis;
+- validar checklist diário e limpeza do histórico;
+- validar notificações;
+- validar calendário e lembretes;
+- validar uploads;
+- validar logout.
 
-```bash
-SMOKE_BASE_URL=https://seu-dominio.onrender.com \
-SMOKE_EMAIL=admin@seudominio.com \
-SMOKE_PASSWORD='SenhaForte@123' \
-npm run smoke
-```
+## Observabilidade
 
-O smoke testa:
+- Sentry configurado com DSN real;
+- logs estruturados com Pino;
+- monitoramento externo de uptime;
+- revisão dos logs de boot e health check;
+- rotina documentada em [RUNBOOK.md](/c:/Users/ricar/Downloads/Projeto%20One/RUNBOOK.md).
 
-- liveness
-- readiness
-- login
-- `/api/auth/me`
+## Backup e restauração
 
-## 10. Go-live final
+- confirmar backup diário automático no provedor do banco;
+- executar restore de teste periodicamente;
+- registrar responsável pela operação;
+- seguir o procedimento descrito em [RUNBOOK-BACKUP-RESTORE.md](/c:/Users/ricar/Downloads/Projeto%20One/RUNBOOK-BACKUP-RESTORE.md).
 
-- [ ] `JWT_SECRET` gerado com `openssl rand -hex 64`
-- [ ] `JWT_EXPIRES_IN=15m`
-- [ ] `audit:tenant` sem violacoes
-- [ ] `verify:rls` validado em staging
-- [ ] `RESEND_API_KEY`, `EMAIL_FROM` e `SENTRY_DSN` reais configurados
-- [ ] Cloudinary configurado
-- [ ] SPF, DKIM e DMARC verificados no MXToolbox
-- [ ] contas de infra em nome do cliente
-- [ ] 2FA habilitado em Render, Supabase, Cloudinary e registradora
-- [ ] staging separado e aprovado
-- [ ] backup automatico habilitado
-- [ ] `npm run smoke` executado com sucesso
-- [ ] geolocalizacao de acesso validada em `Controle de Acesso > Membros`
+## Go-live
+
+Antes de liberar o uso para a equipe:
+
+1. Confirmar variáveis de ambiente.
+2. Confirmar migrations e reconciliação de schema.
+3. Confirmar `audit:tenant`.
+4. Validar o primeiro login.
+5. Revisar calendário, notificações e presença.
+6. Revisar checklist, Kanban, CRM e campanhas.
+7. Confirmar backup, e-mail e upload.
+8. Registrar a data do go-live no changelog.

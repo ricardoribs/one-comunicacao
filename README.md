@@ -1,68 +1,92 @@
-# ONE Comunicacao Integrada
+# ONE Comunicação Integrada
 
-Plataforma full stack para agencia de marketing digital, integrada sobre o HTML existente com backend real em Node.js, Express, PostgreSQL, JWT e RBAC.
+Plataforma full stack da ONE para operação interna, CRM, campanhas, produção, analytics e financeiro.
 
-## Estrutura
+## Visão geral
 
-- `frontend/`
-  - `index.html`: site institucional
-  - `painel-interno.html`: painel administrativo e interno
-  - `assets/js/index-app.js`
-  - `assets/js/admin-app.js`
-- `backend/`
-  - `src/routes`, `src/controllers`, `src/services`, `src/models`, `src/middlewares`
-  - `src/db/pgmigrations/`
-  - `src/db/bootstrap-admin.js`
-  - `src/db/seed.js`
-  - `uploads/`
+A plataforma é composta por duas frentes:
+
+- `frontend/index.html`: site institucional
+- `frontend/painel-interno.html`: painel interno da equipe
+- `backend/`: API em Node.js, Express e PostgreSQL
+
+O painel interno concentra:
+
+- visão geral por perfil
+- meu perfil
+- kanban operacional
+- calendário da equipe
+- CRM e leads
+- campanhas
+- produção
+- analytics
+- financeiro
+- controle de acesso
 
 ## Stack
 
-- frontend: HTML + JavaScript com `fetch`
-- backend: Node.js + Express
-- banco: PostgreSQL
-- autenticacao: JWT + bcrypt
-- uploads: `multer` + Cloudinary opcional
+- Frontend: HTML, CSS e JavaScript puro
+- Backend: Node.js + Express
+- Banco: PostgreSQL
+- Autenticação: JWT + refresh token em cookie
+- Segurança: RBAC, isolamento por tenant, validação de entrada e logs estruturados
+- Uploads: provider local para desenvolvimento e Cloudinary para produção
 
-## Funcionalidades
+## Funcionalidades principais
 
-- login com JWT e perfis `client`, `admin`, `designer`, `gestor`, `comercial` e `dev`
-- area do cliente com dashboard, campanhas, relatorios, materiais, faturas e mensagens
-- painel interno com CRM, campanhas, kanban, producao, midia, analytics, financeiro e controle de acesso
-- CRM com leads, conversao em cliente e cobrancas manuais
-- API RESTful com validacao e RBAC
+- login interno com perfis `admin`, `gestor`, `designer`, `comercial` e `dev`
+- notificações internas para atribuição e conclusão de tarefas
+- calendário compartilhado da equipe com lembretes automáticos
+- kanban com múltiplos responsáveis por tarefa
+- checklist diário com histórico e limpeza manual
+- CRM com pipeline, conversão de lead e clientes ativos
+- produção com materiais e arquivos protegidos
+- analytics com integrações e métricas por cliente
+- financeiro com cobranças, faturas e margens
+- controle de acesso com presença, último acesso e localização
+- página de perfil do usuário com edição de dados e troca de senha
 
-## Guia funcional da plataforma
+## Estrutura do repositório
 
-Para um tutorial completo de uso da plataforma, por perfil e por modulo, consulte [GUIA-DA-PLATAFORMA.md](GUIA-DA-PLATAFORMA.md).
+```text
+frontend/
+  index.html
+  painel-interno.html
+  assets/js/
+  assets/css/
 
-Para uma versao mais executiva, voltada a treinamento da equipe comercial e operacional, consulte [GUIA-OPERACIONAL-EQUIPE.md](GUIA-OPERACIONAL-EQUIPE.md).
-
-Para onboarding rapido de novos colaboradores, consulte [PLAYBOOK-ONBOARDING.md](PLAYBOOK-ONBOARDING.md).
+backend/
+  src/routes/
+  src/controllers/
+  src/services/
+  src/models/
+  src/middlewares/
+  src/db/pgmigrations/
+```
 
 ## Como rodar localmente
 
 1. Copie `.env.example` para `.env`.
-2. Ajuste `DATABASE_URL` e `JWT_SECRET`.
-3. Instale as dependencias:
+2. Ajuste as variáveis obrigatórias.
+3. Instale o backend:
 
 ```bash
 npm run install:backend
 ```
 
-4. Rode bootstrap de banco:
+4. Inicialize o banco:
 
 ```bash
 npm run db:init
 ```
 
-5. Se quiser dados demo locais, rode apenas em `development`:
+5. Se quiser massa de teste local:
 
 ```bash
 npm run db:seed
 ```
 
-6. Suba a aplicacao:
+6. Suba a aplicação:
 
 ```bash
 npm run dev
@@ -73,9 +97,7 @@ npm run dev
 - `http://localhost:3000/`
 - `http://localhost:3000/painel-interno.html`
 
-## Bootstrap seguro do primeiro admin
-
-Para ambiente sem dados demo:
+## Bootstrap do primeiro administrador
 
 ```bash
 ALLOW_ADMIN_BOOTSTRAP=true \
@@ -85,9 +107,7 @@ BOOTSTRAP_ADMIN_PASSWORD="SenhaForte@123" \
 npm run bootstrap:admin
 ```
 
-## Variaveis de ambiente
-
-Veja `.env.example`. As principais:
+## Variáveis de ambiente principais
 
 - `NODE_ENV`
 - `PORT`
@@ -97,57 +117,26 @@ Veja `.env.example`. As principais:
 - `APP_BASE_URL`
 - `CORS_ORIGINS`
 - `UPLOAD_PROVIDER`
-- `CLOUDINARY_CLOUD_NAME`
-- `CLOUDINARY_API_KEY`
-- `CLOUDINARY_API_SECRET`
+- `EMAIL_PROVIDER`
+- `SENTRY_DSN`
 
-## Producao
+## Documentação
 
-- `JWT_SECRET` nao pode permanecer no valor padrao em producao
-- `CORS_ORIGINS` deve listar os dominios publicados, separados por virgula
-- `UPLOAD_PROVIDER=cloudinary` e o recomendado para producao
-- o health check esta disponivel em `GET /api/health`
-- a prontidao completa esta disponivel em `GET /api/ready`
-- RLS esta versionado nas migrations e deve ser validado com `npm run verify:rls`
+- [GUIA-DA-PLATAFORMA.md](GUIA-DA-PLATAFORMA.md)
+- [GUIA-OPERACIONAL-EQUIPE.md](GUIA-OPERACIONAL-EQUIPE.md)
+- [PLAYBOOK-ONBOARDING.md](PLAYBOOK-ONBOARDING.md)
+- [MAPEAMENTO-EQUIPE-ACESSOS.md](MAPEAMENTO-EQUIPE-ACESSOS.md)
+- [PERMISSIONS-MATRIX.md](PERMISSIONS-MATRIX.md)
+- [DEPLOY.md](DEPLOY.md)
+- [ENVIRONMENTS.md](ENVIRONMENTS.md)
+- [PRODUCTION.md](PRODUCTION.md)
+- [RUNBOOK.md](RUNBOOK.md)
+- [RUNBOOK-BACKUP-RESTORE.md](RUNBOOK-BACKUP-RESTORE.md)
 
-Passo a passo operacional em [PRODUCTION.md](PRODUCTION.md).
-Separacao de ambientes em [ENVIRONMENTS.md](ENVIRONMENTS.md).
-Backup e restore em [RUNBOOK-BACKUP-RESTORE.md](RUNBOOK-BACKUP-RESTORE.md).
-
-## Smoke test
-
-Para validar um deploy publicado:
+## Validações recomendadas
 
 ```bash
-SMOKE_BASE_URL=https://seu-dominio.onrender.com \
-SMOKE_EMAIL=admin@seudominio.com \
-SMOKE_PASSWORD='SenhaForte@123' \
-npm run smoke
+npm run check:frontend
+npm test --prefix backend
+npm run audit:tenant --prefix backend
 ```
-
-O smoke verifica:
-
-- `/api/health`
-- `/api/ready`
-- login
-- `/api/auth/me`
-
-## Endpoints principais
-
-- `POST /api/auth/login`
-- `GET /api/auth/me`
-- `GET /api/dashboard`
-- `GET /api/clients`
-- `GET /api/campaigns`
-- `GET /api/tasks`
-- `GET /api/contacts`
-- `GET /api/charges`
-- `GET /api/invoices`
-- `GET /api/metrics`
-- `GET /api/files`
-
-## Validacao feita
-
-- `node --check` nos arquivos principais do backend e frontend alterados
-- auditoria de tenant guard com `npm run audit:tenant --prefix backend`
-- validacao de scripts do frontend com `npm run check:frontend`
