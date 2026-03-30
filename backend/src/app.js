@@ -264,18 +264,18 @@ app.get(
   asyncHandler(async (req, res) => {
     const safeName = path.basename(req.params.fileName || '');
     if (!safeName || safeName !== req.params.fileName) {
-      return res.status(404).json({ message: 'Arquivo nao encontrado.', request_id: req.requestId });
+      return res.status(404).json({ message: 'Arquivo não encontrado.', request_id: req.requestId });
     }
 
     const filePath = path.resolve(env.uploadsDir, safeName);
     const uploadsRoot = path.resolve(env.uploadsDir);
     if (!(filePath === path.join(uploadsRoot, safeName) && filePath.startsWith(uploadsRoot))) {
-      return res.status(404).json({ message: 'Arquivo nao encontrado.', request_id: req.requestId });
+      return res.status(404).json({ message: 'Arquivo não encontrado.', request_id: req.requestId });
     }
 
     const allowedAsset = await resolveLocalUploadAccess(safeName, req.user);
     if (!allowedAsset || !fs.existsSync(filePath)) {
-      return res.status(404).json({ message: 'Arquivo nao encontrado.', request_id: req.requestId });
+      return res.status(404).json({ message: 'Arquivo não encontrado.', request_id: req.requestId });
     }
 
     res.setHeader('Cache-Control', 'no-store');

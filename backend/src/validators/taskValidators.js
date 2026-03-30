@@ -40,7 +40,7 @@ const emptyString = (schema = z.string().max(5000)) =>
 const emptyToNullDate = () =>
   z.preprocess(
     (value) => (value === '' || value === undefined ? null : value),
-    z.string().regex(isoDateRegex, 'Informe uma data valida no formato AAAA-MM-DD').nullable()
+    z.string().regex(isoDateRegex, 'Informe uma data válida no formato AAAA-MM-DD.').nullable()
   );
 
 const assignedToIdsSchema = z.preprocess(

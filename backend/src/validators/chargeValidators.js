@@ -10,7 +10,7 @@ const emptyToNullString = (schema = z.string().max(255)) =>
   z.preprocess((value) => (value === '' || value === undefined ? null : value), schema.nullable());
 
 const emptyToNullDate = () =>
-  emptyToNullString(z.string().regex(isoDateRegex, 'Informe uma data valida no formato AAAA-MM-DD'));
+  emptyToNullString(z.string().regex(isoDateRegex, 'Informe uma data válida no formato AAAA-MM-DD.'));
 
 exports.chargeSchema = z
   .object({
@@ -24,14 +24,14 @@ exports.chargeSchema = z
     idempotency_key: emptyToNullString(z.string().max(120)).optional(),
   })
   .refine((payload) => payload.client_id || payload.contact_id, {
-    message: 'Informe client_id ou contact_id para gerar a cobranca.',
+    message: 'Informe client_id ou contact_id para gerar a cobrança.',
     path: ['client_id'],
   });
 
 exports.chargeUpdateSchema = z.object({
   status: chargeStatusEnum.optional(),
-  payment_link: emptyToNullString(z.string().url('Informe uma URL valida').max(500)).optional(),
-  boleto_url: emptyToNullString(z.string().url('Informe uma URL valida').max(500)).optional(),
+  payment_link: emptyToNullString(z.string().url('Informe uma URL válida.').max(500)).optional(),
+  boleto_url: emptyToNullString(z.string().url('Informe uma URL válida.').max(500)).optional(),
   boleto_barcode: emptyToNullString(z.string().max(255)).optional(),
   pix_copy_paste: emptyToNullString(z.string().max(5000)).optional(),
   pix_qr_base64: emptyToNullString(z.string().max(20000)).optional(),

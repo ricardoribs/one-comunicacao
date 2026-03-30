@@ -35,7 +35,7 @@ exports.upload = asyncHandler(async (req, res) => {
 exports.getAccessUrl = asyncHandler(async (req, res) => {
   const file = await fileModel.findById(req.params.id, req.user);
   if (!file) {
-    return res.status(404).json({ message: 'Arquivo nao encontrado.' });
+    return res.status(404).json({ message: 'Arquivo não encontrado.' });
   }
 
   res.json({

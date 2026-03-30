@@ -311,7 +311,7 @@ async function ensureMessageTargetAccess(user, receiverId) {
   const target = await userModel.findById(receiverId);
 
   if (!target || target.is_active === false) {
-    throw new AppError('Destinatario nao encontrado.', 404);
+    throw new AppError('Destinatário não encontrado.', 404);
   }
 
   if (Number(target.id) === Number(user.id)) {
@@ -322,14 +322,14 @@ async function ensureMessageTargetAccess(user, receiverId) {
 
   if (user.role === 'client') {
     if (!targetIsInternal || !user.client_id) {
-      throw new AppError('Sem permissao para enviar mensagem para este destinatario.', 403);
+      throw new AppError('Sem permissão para enviar mensagem para este destinatário.', 403);
     }
 
     const scopedInternalUsers = await userModel.listActiveInternalTeam(user);
     const canReachTarget = scopedInternalUsers.some((internalUser) => Number(internalUser.id) === Number(target.id));
 
     if (!canReachTarget) {
-      throw new AppError('Sem permissao para enviar mensagem para este destinatario.', 403);
+      throw new AppError('Sem permissão para enviar mensagem para este destinatário.', 403);
     }
 
     return target;
@@ -340,7 +340,7 @@ async function ensureMessageTargetAccess(user, receiverId) {
   }
 
   if (!target.client_id) {
-    throw new AppError('Sem permissao para enviar mensagem para este destinatario.', 403);
+    throw new AppError('Sem permissão para enviar mensagem para este destinatário.', 403);
   }
 
   await ensureClientAccess(user, target.client_id);

@@ -5,7 +5,7 @@ const calendarColorEnum = z.enum(['pink', 'blue', 'green', 'gold']);
 const dateTimeString = z
   .string()
   .trim()
-  .refine((value) => !Number.isNaN(Date.parse(value)), 'Informe uma data e hora valida.');
+  .refine((value) => !Number.isNaN(Date.parse(value)), 'Informe uma data e hora válida.');
 
 const optionalText = (max) =>
   z.preprocess(
@@ -19,7 +19,7 @@ exports.calendarEventQuerySchema = z
     to: dateTimeString,
   })
   .refine(({ from, to }) => new Date(to).getTime() > new Date(from).getTime(), {
-    message: 'O periodo informado para o calendario e invalido.',
+    message: 'O período informado para o calendário é inválido.',
     path: ['to'],
   });
 
@@ -33,7 +33,7 @@ exports.calendarEventSchema = z
     color: calendarColorEnum.optional(),
   })
   .refine(({ starts_at, ends_at }) => new Date(ends_at).getTime() > new Date(starts_at).getTime(), {
-    message: 'O fim do evento deve acontecer depois do inicio.',
+    message: 'O fim do evento deve acontecer depois do início.',
     path: ['ends_at'],
   });
 
@@ -52,7 +52,7 @@ exports.calendarEventUpdateSchema = z
       !value.ends_at ||
       new Date(value.ends_at).getTime() > new Date(value.starts_at).getTime(),
     {
-      message: 'O fim do evento deve acontecer depois do inicio.',
+      message: 'O fim do evento deve acontecer depois do início.',
       path: ['ends_at'],
     }
   );

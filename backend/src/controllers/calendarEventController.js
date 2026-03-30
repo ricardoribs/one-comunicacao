@@ -60,7 +60,7 @@ exports.getById = asyncHandler(async (req, res) => {
   const event = await calendarEventModel.findById(req.params.id);
 
   if (!event) {
-    throw new AppError('Evento nao encontrado.', 404);
+    throw new AppError('Evento não encontrado.', 404);
   }
 
   res.json(event);
@@ -77,7 +77,7 @@ exports.create = asyncHandler(async (req, res) => {
 exports.update = asyncHandler(async (req, res) => {
   const current = await calendarEventModel.findById(req.params.id);
   if (!current) {
-    throw new AppError('Evento nao encontrado.', 404);
+    throw new AppError('Evento não encontrado.', 404);
   }
 
   const payload = normalizeEventPayload(req.body, current);
@@ -90,7 +90,7 @@ exports.update = asyncHandler(async (req, res) => {
 exports.remove = asyncHandler(async (req, res) => {
   const removed = await calendarEventModel.remove(req.params.id);
   if (!removed) {
-    throw new AppError('Evento nao encontrado.', 404);
+    throw new AppError('Evento não encontrado.', 404);
   }
 
   res.status(204).send();

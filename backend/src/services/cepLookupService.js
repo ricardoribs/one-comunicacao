@@ -16,7 +16,7 @@ async function lookupCep(rawCep) {
   const cep = normalizeCep(rawCep);
 
   if (cep.length !== 8) {
-    throw new AppError('Informe um CEP valido com 8 digitos.', 400);
+    throw new AppError('Informe um CEP válido com 8 dígitos.', 400);
   }
 
   const controller = new AbortController();
@@ -32,13 +32,13 @@ async function lookupCep(rawCep) {
     });
 
     if (!response.ok) {
-      throw new AppError('Nao foi possivel consultar o CEP no momento.', 502);
+      throw new AppError('Não foi possível consultar o CEP no momento.', 502);
     }
 
     const data = await response.json();
 
     if (data?.erro) {
-      throw new AppError('CEP nao encontrado.', 404);
+      throw new AppError('CEP não encontrado.', 404);
     }
 
     return {
@@ -60,7 +60,7 @@ async function lookupCep(rawCep) {
       throw new AppError('A consulta do CEP demorou mais do que o esperado. Tente novamente.', 504);
     }
 
-    throw new AppError('Nao foi possivel consultar o CEP no momento.', 502);
+    throw new AppError('Não foi possível consultar o CEP no momento.', 502);
   } finally {
     clearTimeout(timeout);
   }
