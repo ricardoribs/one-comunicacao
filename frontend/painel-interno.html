@@ -270,11 +270,15 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 .field-inline .btn{flex:0 0 auto;min-height:44px}
 .field-help.is-error{color:#b91c1c}
 .field-help.is-success{color:var(--success)}
-.assignee-checklist{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:8px;max-height:196px;overflow:auto;padding-right:2px}
-.assignee-check-option{display:flex;align-items:center;gap:8px;min-height:0;padding:10px 12px;background:var(--white);border:1px solid var(--border);cursor:pointer;transition:border-color .18s ease,background .18s ease,box-shadow .18s ease}
-.assignee-check-option:hover{border-color:rgba(232,52,105,.28);background:#fff8fb;box-shadow:0 3px 10px rgba(13,13,15,.05)}
-.assignee-check-option input{width:16px;height:16px;accent-color:var(--pink);flex:0 0 auto}
-.assignee-check-text{font-size:12px;font-weight:600;letter-spacing:.01em;color:var(--text);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:none}
+.responsaveis-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.resp-pill{display:inline-flex;align-items:center;gap:8px;padding:7px 14px 7px 8px;border:1.5px solid var(--border);border-radius:999px;background:var(--white);cursor:pointer;transition:border-color .15s,background .15s,color .15s,box-shadow .15s;user-select:none;appearance:none;min-height:40px}
+.resp-pill:hover{border-color:var(--gray3);box-shadow:0 3px 10px rgba(13,13,15,.05)}
+.resp-pill.selected{border-color:var(--pink);background:var(--pink-light)}
+.resp-pill.selected .resp-av{background:var(--pink);color:#fff}
+.resp-pill.selected .resp-nome{color:var(--pink);font-weight:600}
+.resp-av{width:24px;height:24px;border-radius:50%;background:var(--gray2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--muted);flex-shrink:0;transition:background .15s,color .15s;text-transform:uppercase}
+.resp-nome{font-size:13px;color:var(--text);transition:color .15s;white-space:nowrap}
+.responsaveis-resumo{font-size:12px;color:var(--muted);margin-top:8px;min-height:16px}
 
 /* KANBAN */
 .kanban-scroll-top{overflow-x:auto;overflow-y:hidden;padding-bottom:6px;margin-top:var(--space-5)}
@@ -745,7 +749,6 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .team-list .item-row .badge{justify-self:start}
   .team-member-row,.charge-head,.invoice-head,.historic-card-head,.progress-item-head,.urgent-item,.item-row{flex-direction:column;align-items:flex-start}
   .checklist-composer,.checklist-row{grid-template-columns:1fr}
-  .assignee-checklist{grid-template-columns:repeat(2,minmax(0,1fr))}
   .checklist-row{justify-items:start}
   .checklist-remove{padding:0}
   .team-member-row .badge{margin-left:0}
@@ -770,7 +773,6 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .three-col{grid-template-columns:1fr}
   .access-grid{grid-template-columns:1fr}
   .fin-grid{grid-template-columns:1fr}
-  .assignee-checklist{grid-template-columns:1fr}
   .modal-box{padding:var(--space-5)}
   .login-shell{display:block;min-height:100%}
   .login-topbar{height:auto;padding:calc(var(--space-4) + env(safe-area-inset-top)) var(--space-5) var(--space-4);flex-direction:column;align-items:flex-start;gap:var(--space-4)}
