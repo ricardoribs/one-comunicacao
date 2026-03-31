@@ -209,6 +209,23 @@ async function reconcileSchemaDrift(databaseConfig) {
           );
       $$;
 
+      CREATE OR REPLACE FUNCTION app.can_access_cost_entry_row(target_client_id INTEGER, created_by_user_id INTEGER)
+      RETURNS BOOLEAN
+      LANGUAGE SQL
+      STABLE
+      AS $$
+        SELECT
+          app.is_admin()
+          OR (
+            app.is_internal()
+            AND (
+              target_client_id IS NULL
+              OR created_by_user_id = app.current_user_id()
+              OR app.can_access_client(target_client_id)
+            )
+          );
+      $$;
+
       ALTER TABLE users
         ADD COLUMN IF NOT EXISTS phone VARCHAR(40),
         ADD COLUMN IF NOT EXISTS job_title VARCHAR(120),
@@ -420,7 +437,7 @@ async function reconcileSchemaDrift(databaseConfig) {
 
       CREATE TABLE IF NOT EXISTS cost_entries (
         id SERIAL PRIMARY KEY,
-        client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+        client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
         created_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         category VARCHAR(30) NOT NULL DEFAULT 'operacao',
         description TEXT NOT NULL,
@@ -437,6 +454,9 @@ async function reconcileSchemaDrift(databaseConfig) {
         ADD COLUMN IF NOT EXISTS incurred_on DATE,
         ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
 
+      ALTER TABLE cost_entries
+        ALTER COLUMN client_id DROP NOT NULL;
+
       CREATE INDEX IF NOT EXISTS idx_cost_entries_client_id_created_at ON cost_entries(client_id, created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_cost_entries_category_created_at ON cost_entries(category, created_at DESC);
 
@@ -445,8 +465,8 @@ async function reconcileSchemaDrift(databaseConfig) {
       DROP POLICY IF EXISTS cost_entries_tenant_isolation ON cost_entries;
       CREATE POLICY cost_entries_tenant_isolation ON cost_entries
         FOR ALL
-        USING (app.can_access_client(client_id))
-        WITH CHECK (app.can_access_client(client_id));
+        USING (app.can_access_cost_entry_row(client_id, created_by))
+        WITH CHECK (app.can_access_cost_entry_row(client_id, created_by));
 
       CREATE TABLE IF NOT EXISTS contacts (
         id SERIAL PRIMARY KEY,
