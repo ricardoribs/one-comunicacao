@@ -229,12 +229,13 @@ body.sidebar-open #sidebar-backdrop{display:block;opacity:1}
 .badge{display:inline-flex;align-items:center;padding:3px var(--space-2);font-size:var(--text-2xs);font-weight:600;letter-spacing:.06em;text-transform:uppercase;border-radius:2px;white-space:nowrap}
 .badge-green{background:var(--success-bg);color:var(--success)}
 .badge-yellow{background:var(--warn-bg);color:var(--warn)}
+.badge-red{background:#fdecec;color:#b42318}
 .badge-pink{background:var(--pink-light);color:var(--pink)}
 .badge-blue{background:var(--info-bg);color:var(--info)}
 .badge-gray{background:var(--gray2);color:var(--muted)}
 .badge-dark{background:var(--ink2);color:#fff}
 .badge[class*="badge-"]{border:1px solid transparent}
-.badge-green,.badge-yellow,.badge-pink,.badge-blue,.badge-gray{min-height:22px}
+.badge-green,.badge-yellow,.badge-red,.badge-pink,.badge-blue,.badge-gray{min-height:22px}
 
 /* TABLE */
 .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;background:var(--white);border:1px solid var(--border)}
@@ -491,7 +492,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 .analytics-side-item{display:flex;align-items:center;justify-content:space-between;padding:var(--space-3);background:var(--gray);font-size:var(--text-sm)}
 .progress-stack{display:flex;flex-direction:column;gap:var(--space-3)}
 .progress-item-head{display:flex;justify-content:space-between;font-size:var(--text-sm);margin-bottom:var(--space-1)}
-.finance-header-grid{display:grid;grid-template-columns:minmax(260px,1.45fr) minmax(120px,.7fr) minmax(120px,.7fr) minmax(120px,.7fr) minmax(96px,.5fr) minmax(96px,.5fr);gap:var(--space-4);padding:0 0 var(--space-2);align-items:center}
+.finance-header-grid{display:grid;grid-template-columns:minmax(240px,1.35fr) minmax(120px,.7fr) minmax(120px,.7fr) minmax(120px,.7fr) minmax(120px,.65fr) minmax(96px,.45fr) minmax(120px,.55fr);gap:var(--space-4);padding:0 0 var(--space-2);align-items:center}
 .item-row{display:flex;justify-content:space-between;align-items:center;padding:var(--space-2) 0;border-bottom:1px solid var(--border)}
 .item-row:last-child{border-bottom:none}
 .item-row-main{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3)}
@@ -548,12 +549,13 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 
 /* FINANCEIRO */
 .fin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-4);margin-bottom:var(--space-5);align-items:stretch}
-.finance-header-grid,.fin-row{display:grid;grid-template-columns:minmax(260px,1.45fr) minmax(120px,.7fr) minmax(120px,.7fr) minmax(120px,.7fr) minmax(96px,.5fr) minmax(96px,.5fr);gap:var(--space-4)}
+.finance-header-grid,.fin-row{display:grid;grid-template-columns:minmax(240px,1.35fr) minmax(120px,.7fr) minmax(120px,.7fr) minmax(120px,.7fr) minmax(120px,.65fr) minmax(96px,.45fr) minmax(120px,.55fr);gap:var(--space-4)}
 .fin-row{align-items:center;padding:var(--space-3) 0;border-bottom:1px solid var(--border);font-size:var(--text-sm)}
 .fin-row:last-child{border-bottom:none}
 .finance-header-grid > *, .fin-row > *{display:flex;align-items:center;min-width:0}
 .fin-cell-client strong{display:block;white-space:normal;line-height:1.45}
-.fin-cell-value,.fin-cell-margin,.fin-cell-action{justify-content:flex-end;font-variant-numeric:tabular-nums}
+.fin-cell-value,.fin-cell-status,.fin-cell-margin,.fin-cell-action{justify-content:flex-end;font-variant-numeric:tabular-nums}
+.fin-cell-status .badge{width:max-content}
 .fin-label{font-size:var(--text-2xs);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;padding-bottom:var(--space-2);border-bottom:1px solid var(--border);margin-bottom:var(--space-1)}
 .margin-good{color:var(--success);font-weight:600}
 .margin-warn{color:var(--warn);font-weight:600}
@@ -625,11 +627,13 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-financeiro .finance-header-grid > :nth-child(4),
 #page-financeiro .finance-header-grid > :nth-child(5),
 #page-financeiro .finance-header-grid > :nth-child(6),
+#page-financeiro .finance-header-grid > :nth-child(7),
 #page-financeiro .fin-row > :nth-child(2),
 #page-financeiro .fin-row > :nth-child(3),
 #page-financeiro .fin-row > :nth-child(4),
 #page-financeiro .fin-row > :nth-child(5),
-#page-financeiro .fin-row > :nth-child(6){justify-content:flex-end;text-align:right}
+#page-financeiro .fin-row > :nth-child(6),
+#page-financeiro .fin-row > :nth-child(7){justify-content:flex-end;text-align:right}
 #page-financeiro .fin-row .metric-note{display:block;white-space:normal;line-height:1.45}
 #page-analytics #analytics-tbody td[colspan]{padding:0}
 #page-analytics #analytics-tbody .empty-state{min-height:198px;max-width:none}
@@ -1318,6 +1322,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   <div class="topbar">
     <div><div class="topbar-title">Financeiro Interno</div><div class="topbar-sub">Receitas, custos, margens e acompanhamento de cobranças</div></div>
     <div class="topbar-actions">
+      <select id="finance-period-filter" class="btn btn-outline btn-sm btn-select" onchange="setFinancePeriodFilter(this.value)"></select>
       <button class="btn btn-outline btn-sm" onclick="exportFinanceCsv()">Exportar CSV</button>
       <button class="btn btn-outline btn-sm" onclick="openModal('novo-custo')">+ Novo custo</button>
       <button class="btn btn-outline btn-sm" onclick="openModal('nova-cobranca')">+ Nova cobrança</button>
@@ -1326,15 +1331,15 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   </div>
   <div class="page-body">
     <div class="kpi-grid">
-      <div class="kpi-card"><div class="kpi-label">Receita Bruta</div><div class="kpi-val">R$82k</div><div class="kpi-sub kpi-trend-up">↑ +12% vs. mês ant.</div></div>
-      <div class="kpi-card"><div class="kpi-label">Custos Operacionais</div><div class="kpi-val">R$31k</div><div class="kpi-sub">38% da receita</div></div>
-      <div class="kpi-card"><div class="kpi-label">Lucro Líquido</div><div class="kpi-val">R$51k</div><div class="kpi-sub kpi-trend-up">Margem: 62%</div></div>
-      <div class="kpi-card"><div class="kpi-label">Comissões a Pagar</div><div class="kpi-val">R$4.1k</div><div class="kpi-sub">3 colaboradores</div></div>
+      <div class="kpi-card"><div class="kpi-label">Faturado</div><div class="kpi-val">R$0,00</div><div class="kpi-sub">Sem movimento no período</div></div>
+      <div class="kpi-card"><div class="kpi-label">Recebido</div><div class="kpi-val">R$0,00</div><div class="kpi-sub">Nenhum recebimento no período</div></div>
+      <div class="kpi-card"><div class="kpi-label">Inadimplência</div><div class="kpi-val">R$0,00</div><div class="kpi-sub">Nenhum título atrasado</div></div>
+      <div class="kpi-card"><div class="kpi-label">Lucro Líquido</div><div class="kpi-val">R$0,00</div><div class="kpi-sub">R$0,00 a receber no prazo</div></div>
     </div>
     <div class="card mt-5">
       <div class="section-header"><div class="section-title">Margem por Cliente</div></div>
       <div class="fin-label finance-header-grid">
-        <span>Cliente</span><span>Receita</span><span>Custo</span><span>Cobrado</span><span>Margem</span><span>Ações</span>
+        <span>Cliente</span><span>Faturado</span><span>Custo</span><span>Recebido</span><span>Status</span><span>Margem</span><span>Ações</span>
       </div>
       <div id="fin-clientes"></div>
     </div>
@@ -1344,7 +1349,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
         <div class="card-list-sm" id="fin-custos"></div>
       </div>
       <div class="card">
-        <div class="section-title card-title-spacing">Comissões do Mês</div>
+        <div class="section-title card-title-spacing">Cobranças e faturas</div>
         <div class="team-list" id="fin-comissoes"></div>
       </div>
     </div>
