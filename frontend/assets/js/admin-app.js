@@ -812,6 +812,8 @@ async function resolveProtectedMediaUrl(url) {
     return { url: "", isObjectUrl: false };
   }
 
+  const originUrl = typeof APP.buildOriginUrl === "function" ? APP.buildOriginUrl(url) : url;
+
   if (String(url).startsWith("/api/files/")) {
     const response = await apiFetch(url, { cache: "no-store" });
     if (!response?.url) {
@@ -829,7 +831,7 @@ async function resolveProtectedMediaUrl(url) {
       throw new Error("Sua sessão expirou. Faça login novamente.");
     }
 
-    const response = await fetch(url, {
+    const response = await fetch(originUrl, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${accessToken}`
