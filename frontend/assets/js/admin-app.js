@@ -103,6 +103,7 @@ const PROFILE_CAPABILITY_LABELS = {
   tasks: "Visualizar tarefas",
   users: "Gerenciar membros",
   charges: "Visualizar cobranças",
+  costs: "Visualizar custos",
   invoices: "Visualizar faturas",
   metrics: "Visualizar métricas",
   reports: "Visualizar relatórios",
@@ -127,6 +128,7 @@ const ROLE_DATA_ACCESS = {
     tasks: true,
     users: true,
     charges: true,
+    costs: true,
     invoices: true,
     metrics: true,
     reports: true,
@@ -149,6 +151,7 @@ const ROLE_DATA_ACCESS = {
     tasks: true,
     users: false,
     charges: true,
+    costs: false,
     invoices: false,
     metrics: true,
     reports: true,
@@ -171,6 +174,7 @@ const ROLE_DATA_ACCESS = {
     tasks: true,
     users: false,
     charges: false,
+    costs: false,
     invoices: false,
     metrics: false,
     reports: true,
@@ -193,6 +197,7 @@ const ROLE_DATA_ACCESS = {
     tasks: true,
     users: false,
     charges: true,
+    costs: true,
     invoices: true,
     metrics: false,
     reports: true,
@@ -215,6 +220,7 @@ const ROLE_DATA_ACCESS = {
     tasks: true,
     users: false,
     charges: false,
+    costs: false,
     invoices: false,
     metrics: true,
     reports: true,
@@ -327,6 +333,13 @@ const CLIENT_PLAN_GROUPS = [
     })),
   },
 ];
+const COST_CATEGORY_OPTIONS = [
+  { value: "media", label: "Mídia" },
+  { value: "producao", label: "Produção" },
+  { value: "operacao", label: "Operação" },
+  { value: "outro", label: "Outro" },
+];
+const COST_CATEGORY_LABELS = Object.fromEntries(COST_CATEGORY_OPTIONS.map((option) => [option.value, option.label]));
 
 const CALENDAR_COLOR_OPTIONS = [
   { value: "pink", label: "Rosa ONE" },
@@ -386,6 +399,7 @@ const state = {
   accessMembers: [],
   contacts: [],
   charges: [],
+  costEntries: [],
   invoices: [],
   metrics: [],
   reports: [],
@@ -995,6 +1009,81 @@ function formatCurrency(value) {
   }).format(Number(value || 0));
 }
 
+function parseCurrencyNumber(value) {
+  const raw = String(value || "").replace(/\s|R\$/g, "").trim();
+  if (!raw) {
+    return null;
+  }
+
+  if (/^\d+$/.test(raw)) {
+    return Number(raw);
+  }
+
+  const normalized = raw.includes(",") ? raw.replace(/\./g, "").replace(",", ".") : raw;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatCurrencyInputValue(value) {
+  const parsed = parseCurrencyNumber(value);
+  if (parsed == null) {
+    return "";
+  }
+
+  return new Intl.NumberFormat("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(parsed);
+}
+
+function formatCurrencyEditValue(value) {
+  const parsed = parseCurrencyNumber(value);
+  if (parsed == null) {
+    return "";
+  }
+
+  return String(parsed.toFixed(2)).replace(".", ",");
+}
+
+function initMaskedCurrencyField(form, displayName, hiddenName) {
+  if (!form) {
+    return;
+  }
+
+  const displayField = form.querySelector(`[name="${displayName}"]`);
+  const hiddenField = form.querySelector(`[name="${hiddenName}"]`);
+  if (!displayField || !hiddenField) {
+    return;
+  }
+
+  const syncHidden = () => {
+    const parsed = parseCurrencyNumber(displayField.value);
+    hiddenField.value = parsed == null ? "" : parsed.toFixed(2);
+  };
+
+  const applyDisplay = (formatter) => {
+    const formatted = formatter(displayField.value);
+    if (formatted) {
+      displayField.value = formatted;
+    }
+  };
+
+  displayField.addEventListener("focus", () => {
+    applyDisplay(formatCurrencyEditValue);
+    displayField.select();
+  });
+  displayField.addEventListener("input", syncHidden);
+  displayField.addEventListener("blur", () => {
+    syncHidden();
+    applyDisplay(formatCurrencyInputValue);
+  });
+
+  if (displayField.value) {
+    syncHidden();
+    applyDisplay(formatCurrencyInputValue);
+  }
+}
+
 function formatNumber(value) {
   return new Intl.NumberFormat("pt-BR").format(Number(value || 0));
 }
@@ -1024,6 +1113,10 @@ function normalizePipelineStage(stage) {
 
 function formatCurrencyValue(value) {
   return formatCurrency(Number(value || 0));
+}
+
+function getCostCategoryLabel(value) {
+  return COST_CATEGORY_LABELS[String(value || "").trim()] || "Outro";
 }
 
 function normalizeLooseText(value) {
@@ -4933,13 +5026,12 @@ function renderFinance() {
   const clientFinancials = state.clients.map((client) => {
     const invoices = state.invoices.filter((invoice) => invoice.client_name === client.name);
     const charges = state.charges.filter((charge) => charge.client_name === client.name);
+    const costs = state.costEntries.filter((entry) => Number(entry.client_id) === Number(client.id));
     const revenue = invoices.reduce((acc, invoice) => acc + Number(invoice.amount || 0), 0);
     const chargeVolume = charges.reduce((acc, charge) => acc + Number(charge.amount || 0), 0);
-    const campaignCost = state.campaigns
-      .filter((campaign) => campaign.client_name === client.name)
-      .reduce((acc, campaign) => acc + Number(campaign.budget || 0), 0);
-    const margin = revenue ? Math.round(((revenue - campaignCost) / revenue) * 100) : 0;
-    return { client, revenue, chargeVolume, campaignCost, margin };
+    const costTotal = costs.reduce((acc, entry) => acc + Number(entry.amount || 0), 0);
+    const margin = revenue ? Math.round(((revenue - costTotal) / revenue) * 100) : 0;
+    return { client, revenue, chargeVolume, costTotal, margin };
   });
 
   const totalRevenue = state.invoices.reduce((acc, invoice) => acc + Number(invoice.amount || 0), 0);
@@ -4960,10 +5052,20 @@ function renderFinance() {
   const openTotal = openRevenue + openCharges;
   const receivedEntries = state.invoices.filter((invoice) => isInvoicePaidStatus(invoice.status)).length
     + state.charges.filter((charge) => isChargeReceivedStatus(charge.status)).length;
-  const mediaCost = state.campaigns.reduce((acc, campaign) => acc + Number(campaign.budget || 0), 0);
-  const productionCost = state.materials.reduce((acc, material) => acc + Number(material.cost || 0), 0);
-  const operationsCost = state.tasks.reduce((acc, task) => acc + Number(task.cost || 0), 0);
-  const netProfit = totalRevenue - mediaCost - productionCost - operationsCost;
+  const totalCosts = state.costEntries.reduce((acc, entry) => acc + Number(entry.amount || 0), 0);
+  const mediaCost = state.costEntries
+    .filter((entry) => String(entry.category || "") === "media")
+    .reduce((acc, entry) => acc + Number(entry.amount || 0), 0);
+  const productionCost = state.costEntries
+    .filter((entry) => String(entry.category || "") === "producao")
+    .reduce((acc, entry) => acc + Number(entry.amount || 0), 0);
+  const operationsCost = state.costEntries
+    .filter((entry) => String(entry.category || "") === "operacao")
+    .reduce((acc, entry) => acc + Number(entry.amount || 0), 0);
+  const otherCost = state.costEntries
+    .filter((entry) => String(entry.category || "") === "outro")
+    .reduce((acc, entry) => acc + Number(entry.amount || 0), 0);
+  const netProfit = totalRevenue - totalCosts;
   const financeGrid = document.querySelector("#page-financeiro .kpi-grid");
 
   if (financeGrid) {
@@ -4991,11 +5093,11 @@ function renderFinance() {
 
   document.getElementById("fin-clientes").innerHTML = clientFinancials
     .map(
-      ({ client, revenue, chargeVolume, campaignCost, margin }) => `
+      ({ client, revenue, chargeVolume, costTotal, margin }) => `
         <div class="fin-row">
           <div class="fin-cell fin-cell-client"><strong>${escapeHtml(client.name)}</strong></div>
           <div class="fin-cell fin-cell-value">${formatCurrency(revenue)}</div>
-          <div class="fin-cell fin-cell-value">${formatCurrency(campaignCost)}</div>
+          <div class="fin-cell fin-cell-value">${formatCurrency(costTotal)}</div>
           <div class="fin-cell fin-cell-value">${formatCurrency(chargeVolume)}</div>
           <div class="fin-cell fin-cell-margin ${margin >= 50 ? "margin-good" : margin >= 20 ? "margin-warn" : "margin-bad"}">${margin}%</div>
           <div class="fin-cell fin-cell-action"><button class="btn btn-ghost btn-sm" onclick="openChargeModalForClient(${client.id})">Cobrar</button></div>
@@ -5008,6 +5110,7 @@ function renderFinance() {
     { label: "Mídia", value: mediaCost },
     { label: "Produção", value: productionCost },
     { label: "Operação", value: operationsCost },
+    { label: "Outros", value: otherCost },
     { label: "Recebido", value: receivedTotal }
   ];
 
@@ -5030,8 +5133,22 @@ function renderFinance() {
     financeCards[0].textContent = "Custos e Recebimentos";
   }
   if (financeCards[1]) {
-    financeCards[1].textContent = "Cobranças e faturas";
+    financeCards[1].textContent = "Cobranças, faturas e custos";
   }
+  const costRows = state.costEntries.map(
+    (entry) => `
+        <div class="charge-item">
+          <div class="charge-head">
+            <div>
+              <div class="charge-name">${escapeHtml(entry.client_name || "Sem cliente")}</div>
+              <div class="charge-sub">${escapeHtml(getCostCategoryLabel(entry.category))} · ${formatDate(entry.incurred_on || entry.created_at)} · ${formatCurrency(entry.amount)}</div>
+            </div>
+            <span class="badge badge-blue">${escapeHtml(getCostCategoryLabel(entry.category))}</span>
+          </div>
+          <div class="charge-desc">${escapeHtml(entry.description || "Custo lançado sem descrição complementar")}</div>
+        </div>
+    `
+  );
   const chargeRows = state.charges.map(
     (charge) => `
         <div class="charge-item">
@@ -5081,7 +5198,7 @@ function renderFinance() {
     );
 
   document.getElementById("fin-comissoes").innerHTML =
-    [...chargeRows, ...invoiceRows].join("") || UI.empty("Nenhuma cobrança ou fatura cadastrada", "Use os botões do módulo para registrar a primeira cobrança ou fatura.");
+    [...costRows, ...chargeRows, ...invoiceRows].join("") || UI.empty("Nenhum lançamento financeiro cadastrado");
 }
 
 function renderAll() {
@@ -5261,6 +5378,7 @@ async function refreshData() {
     () => (roleDataAccess.users ? loadResource("controle de acesso", () => apiFetch("/users/access-overview", { cache: "no-store" }), []) : Promise.resolve([])),
     () => (roleDataAccess.contacts ? loadResource("CRM", () => apiFetch("/contacts"), []) : Promise.resolve([])),
     () => (roleDataAccess.invoices ? loadResource("faturas", () => apiFetch("/invoices"), []) : Promise.resolve([])),
+    () => (roleDataAccess.costs ? loadResource("custos", () => apiFetch("/cost-entries"), []) : Promise.resolve([])),
     () => (roleDataAccess.metrics ? loadResource("métricas", () => apiFetch("/metrics", { cache: "no-store" }), []) : Promise.resolve([])),
     () => (roleDataAccess.reports ? loadResource("relatórios", () => apiFetch("/reports"), []) : Promise.resolve([])),
     () => (roleDataAccess.materials ? loadResource("produção", () => apiFetch("/materials"), []) : Promise.resolve([])),
@@ -5269,7 +5387,7 @@ async function refreshData() {
     () => (roleDataAccess.integrations ? loadResource("integrações", () => apiFetch("/integrations"), []) : Promise.resolve([])),
   ];
 
-  const [dashboard, team, assignableUsers, clients, campaigns, tasks, checklist, users, accessMembers, contacts, invoices, metrics, reports, materials, files, charges, integrations] = await runAsyncTasksInBatches(resourceLoaders, 4);
+  const [dashboard, team, assignableUsers, clients, campaigns, tasks, checklist, users, accessMembers, contacts, invoices, costEntries, metrics, reports, materials, files, charges, integrations] = await runAsyncTasksInBatches(resourceLoaders, 4);
 
   state.dashboard = dashboard && typeof dashboard === "object" ? dashboard : createEmptyDashboard();
   state.team = mergeInternalUsers(toArray(team), toArray(assignableUsers), toArray(state.dashboard?.team), toArray(users));
@@ -5281,6 +5399,7 @@ async function refreshData() {
   state.accessMembers = toArray(accessMembers);
   state.contacts = toArray(contacts);
   state.invoices = toArray(invoices);
+  state.costEntries = toArray(costEntries);
   state.metrics = toArray(metrics);
   state.reports = toArray(reports);
   state.materials = toArray(materials);
@@ -5489,7 +5608,16 @@ async function updateInvoiceStatus(id, status) {
 
 function exportFinanceCsv() {
   const rows = [
-    ["tipo", "cliente", "metodo", "valor", "status", "vencimento", "referencia"],
+    ["tipo", "cliente", "classe", "valor", "status", "data", "referencia"],
+    ...state.costEntries.map((entry) => [
+      "custo",
+      entry.client_name || "",
+      getCostCategoryLabel(entry.category),
+      Number(entry.amount || 0),
+      "lançado",
+      formatDate(entry.incurred_on || entry.created_at),
+      entry.description || ""
+    ]),
     ...state.charges.map((charge) => [
       "cobrança",
       charge.client_name || charge.contact_name || "",
@@ -6349,10 +6477,25 @@ function openModal(type, id = null) {
     );
   }
 
-  if (type === "novo-custo" || type === "novo-ab") {
+  if (type === "novo-custo") {
+    html = modalFormWrapper(
+      "Novo custo",
+      `
+        <div class="field"><label>Cliente</label><select name="client_id">${clientOptions("")}</select></div>
+        <div class="field"><label>Categoria</label><select name="category">${COST_CATEGORY_OPTIONS.map(
+          (option) => `<option value="${option.value}">${option.label}</option>`
+        ).join("")}</select></div>
+        <div class="field"><label>Valor</label><input type="text" name="amount_display" inputmode="decimal" autocomplete="off" placeholder="0,00" required><input type="hidden" name="amount" value=""></div>
+        <div class="field"><label>Data</label><input type="date" name="incurred_on" value="${new Date().toISOString().slice(0, 10)}"></div>
+        <div class="field form-full"><label>Descrição</label><textarea name="description" required placeholder="Ex.: impulsionamento do cliente, diária de produção, deslocamento."></textarea></div>
+      `
+    );
+  }
+
+  if (type === "novo-ab") {
     html = `
       <div class="modal-title" id="modal-dialog-title">Ação auxiliar</div>
-      <p class="metric-note">Os módulos principais já estão conectados à API. Esta ação pode ser expandida em cima da mesma estrutura.</p>
+      <p class="metric-note">Este atalho ainda não foi habilitado no painel.</p>
       <div class="modal-actions"><button type="button" class="btn btn-outline" onclick="closeModal()">Fechar</button></div>
     `;
   }
@@ -6371,6 +6514,9 @@ function openModal(type, id = null) {
     if (type === "nova-tarefa") {
       initTaskStatusAssist(form);
       initTaskAssigneePicker(form);
+    }
+    if (type === "novo-custo") {
+      initMaskedCurrencyField(form, "amount_display", "amount");
     }
     if (type === "novo-evento") {
       window.setTimeout(() => {
@@ -6566,6 +6712,15 @@ async function submitModal(event, type, id) {
     if (type === "nova-cobranca") {
       const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["client_id", "contact_id", "due_date", "external_reference"]);
       await apiFetch("/charges", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+    }
+
+    if (type === "novo-custo") {
+      const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["incurred_on"]);
+      delete payload.amount_display;
+      await apiFetch("/cost-entries", {
         method: "POST",
         body: JSON.stringify(payload)
       });

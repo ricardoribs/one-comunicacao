@@ -418,6 +418,36 @@ async function reconcileSchemaDrift(databaseConfig) {
         USING (app.can_access_client(client_id))
         WITH CHECK (app.can_access_client(client_id));
 
+      CREATE TABLE IF NOT EXISTS cost_entries (
+        id SERIAL PRIMARY KEY,
+        client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+        created_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        category VARCHAR(30) NOT NULL DEFAULT 'operacao',
+        description TEXT NOT NULL,
+        amount NUMERIC(12,2) NOT NULL,
+        incurred_on DATE,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+
+      ALTER TABLE cost_entries
+        ADD COLUMN IF NOT EXISTS created_by INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        ADD COLUMN IF NOT EXISTS category VARCHAR(30) NOT NULL DEFAULT 'operacao',
+        ADD COLUMN IF NOT EXISTS description TEXT,
+        ADD COLUMN IF NOT EXISTS amount NUMERIC(12,2),
+        ADD COLUMN IF NOT EXISTS incurred_on DATE,
+        ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+
+      CREATE INDEX IF NOT EXISTS idx_cost_entries_client_id_created_at ON cost_entries(client_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_cost_entries_category_created_at ON cost_entries(category, created_at DESC);
+
+      ALTER TABLE cost_entries ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE cost_entries FORCE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS cost_entries_tenant_isolation ON cost_entries;
+      CREATE POLICY cost_entries_tenant_isolation ON cost_entries
+        FOR ALL
+        USING (app.can_access_client(client_id))
+        WITH CHECK (app.can_access_client(client_id));
+
       CREATE TABLE IF NOT EXISTS contacts (
         id SERIAL PRIMARY KEY,
         name VARCHAR(120) NOT NULL,
