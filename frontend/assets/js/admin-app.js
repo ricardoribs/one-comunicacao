@@ -418,7 +418,8 @@ const state = {
   filters: {
     kanbanClient: "",
     analyticsClient: "",
-    analyticsPeriod: ""
+    analyticsPeriod: "",
+    financePeriod: "month"
   }
 };
 
@@ -2009,6 +2010,281 @@ function getFinancialRevenueSeries(count = 6) {
   };
 }
 
+function getFinancePeriodOptions() {
+  return [
+    { value: "month", label: "Mês atual" },
+    { value: "30d", label: "Últimos 30 dias" },
+    { value: "year", label: "Ano atual" },
+    { value: "all", label: "Todo o período" },
+  ];
+}
+
+function getFinancePeriodRange(period = state.filters.financePeriod || "month") {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (period === "all") {
+    return { key: "all", start: null, end: null };
+  }
+
+  if (period === "year") {
+    const start = new Date(today.getFullYear(), 0, 1);
+    const end = new Date(today.getFullYear(), 11, 31);
+    end.setHours(23, 59, 59, 999);
+    return { key: period, start, end };
+  }
+
+  if (period === "30d") {
+    const start = new Date(today.getTime());
+    start.setDate(start.getDate() - 29);
+    return { key: period, start, end: today };
+  }
+
+  const start = new Date(today.getFullYear(), today.getMonth(), 1);
+  const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  end.setHours(23, 59, 59, 999);
+  return { key: "month", start, end };
+}
+
+function isWithinFinancePeriod(value, range = getFinancePeriodRange()) {
+  if (!value) {
+    return false;
+  }
+
+  if (!range.start || !range.end) {
+    return true;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+
+  date.setHours(0, 0, 0, 0);
+  return date >= range.start && date <= range.end;
+}
+
+function getInvoiceFinanceDate(invoice) {
+  return invoice?.due_date || invoice?.created_at || null;
+}
+
+function getChargeFinanceDate(charge) {
+  return charge?.due_date || charge?.created_at || null;
+}
+
+function getCostFinanceDate(entry) {
+  return entry?.incurred_on || entry?.created_at || null;
+}
+
+function filterFinanceRecords(records, resolveDate) {
+  const range = getFinancePeriodRange();
+  if (!range.start || !range.end) {
+    return [...records];
+  }
+
+  return records.filter((record) => isWithinFinancePeriod(resolveDate(record), range));
+}
+
+function sumFinancialAmount(records) {
+  return records.reduce((acc, record) => acc + Number(record.amount || 0), 0);
+}
+
+function isInvoiceCancelledStatus(status) {
+  const raw = String(status || "").trim().toLowerCase();
+  return raw === "cancelada" || raw === "cancelado";
+}
+
+function isInvoiceOpenStatus(status) {
+  return !isInvoicePaidStatus(status) && !isInvoiceCancelledStatus(status);
+}
+
+function isChargeCancelledStatus(status) {
+  const raw = String(status || "").trim().toUpperCase();
+  return raw === "CANCELED" || raw === "CANCELLED" || raw === "CANCELED";
+}
+
+function getInvoiceOperationalStatus(invoice) {
+  if (isInvoiceCancelledStatus(invoice?.status)) {
+    return "Cancelada";
+  }
+
+  if (isInvoicePaidStatus(invoice?.status)) {
+    return "Pago";
+  }
+
+  if (isOverdueDate(invoice?.due_date)) {
+    return "Atrasada";
+  }
+
+  return "Pendente";
+}
+
+function getChargeOperationalStatus(charge) {
+  if (isChargeCancelledStatus(charge?.status)) {
+    return "Cancelada";
+  }
+
+  if (isChargeReceivedStatus(charge?.status)) {
+    return "Recebida";
+  }
+
+  if (isOverdueDate(charge?.due_date)) {
+    return "Atrasada";
+  }
+
+  return "Pendente";
+}
+
+function getFinanceStatusBadgeClass(status) {
+  const normalized = String(status || "").trim().toLowerCase();
+  if (normalized === "recebida" || normalized === "pago" || normalized === "em dia") {
+    return "badge-green";
+  }
+  if (normalized === "pendente") {
+    return "badge-yellow";
+  }
+  if (normalized === "atrasada" || normalized === "atrasado") {
+    return "badge-red";
+  }
+  return "badge-gray";
+}
+
+function buildFinanceViewModel() {
+  const filteredInvoices = filterFinanceRecords(state.invoices, getInvoiceFinanceDate);
+  const filteredCharges = filterFinanceRecords(state.charges, getChargeFinanceDate);
+  const filteredCosts = filterFinanceRecords(state.costEntries, getCostFinanceDate);
+
+  const paidInvoices = filteredInvoices.filter((invoice) => isInvoicePaidStatus(invoice.status));
+  const openInvoices = filteredInvoices.filter((invoice) => isInvoiceOpenStatus(invoice.status));
+  const overdueInvoices = openInvoices.filter((invoice) => isOverdueDate(invoice.due_date));
+  const pendingInvoices = openInvoices.filter((invoice) => !isOverdueDate(invoice.due_date));
+
+  const receivedCharges = filteredCharges.filter((charge) => isChargeReceivedStatus(charge.status));
+  const openCharges = filteredCharges.filter(
+    (charge) => isChargeOpenStatus(charge.status) && !isChargeCancelledStatus(charge.status)
+  );
+  const overdueCharges = openCharges.filter((charge) => isOverdueDate(charge.due_date));
+  const pendingCharges = openCharges.filter((charge) => !isOverdueDate(charge.due_date));
+
+  const totalBilled = sumFinancialAmount(filteredInvoices) + sumFinancialAmount(filteredCharges);
+  const receivedTotal = sumFinancialAmount(paidInvoices) + sumFinancialAmount(receivedCharges);
+  const pendingTotal = sumFinancialAmount(pendingInvoices) + sumFinancialAmount(pendingCharges);
+  const overdueTotal = sumFinancialAmount(overdueInvoices) + sumFinancialAmount(overdueCharges);
+  const totalCosts = sumFinancialAmount(filteredCosts);
+  const totalMrr = state.clients.reduce((acc, client) => acc + Number(client.mrr || 0), 0);
+  const netProfit = receivedTotal - totalCosts;
+
+  const mediaCost = filteredCosts
+    .filter((entry) => String(entry.category || "") === "media")
+    .reduce((acc, entry) => acc + Number(entry.amount || 0), 0);
+  const productionCost = filteredCosts
+    .filter((entry) => String(entry.category || "") === "producao")
+    .reduce((acc, entry) => acc + Number(entry.amount || 0), 0);
+  const operationsCost = filteredCosts
+    .filter((entry) => String(entry.category || "") === "operacao")
+    .reduce((acc, entry) => acc + Number(entry.amount || 0), 0);
+  const otherCost = filteredCosts
+    .filter((entry) => String(entry.category || "") === "outro")
+    .reduce((acc, entry) => acc + Number(entry.amount || 0), 0);
+
+  const clientFinancials = state.clients
+    .map((client) => {
+      const invoices = filteredInvoices.filter(
+        (invoice) => Number(invoice.client_id) === Number(client.id) || invoice.client_name === client.name
+      );
+      const charges = filteredCharges.filter(
+        (charge) => Number(charge.client_id) === Number(client.id) || charge.client_name === client.name
+      );
+      const costs = filteredCosts.filter((entry) => Number(entry.client_id) === Number(client.id));
+
+      const billedInvoices = sumFinancialAmount(invoices);
+      const billedCharges = sumFinancialAmount(charges);
+      const billedTotal = billedInvoices + billedCharges;
+      const receivedTotalByClient =
+        sumFinancialAmount(invoices.filter((invoice) => isInvoicePaidStatus(invoice.status)))
+        + sumFinancialAmount(charges.filter((charge) => isChargeReceivedStatus(charge.status)));
+      const pendingTotalByClient =
+        sumFinancialAmount(
+          invoices.filter((invoice) => isInvoiceOpenStatus(invoice.status) && !isOverdueDate(invoice.due_date))
+        )
+        + sumFinancialAmount(
+          charges.filter(
+            (charge) =>
+              isChargeOpenStatus(charge.status)
+              && !isChargeCancelledStatus(charge.status)
+              && !isOverdueDate(charge.due_date)
+          )
+        );
+      const overdueTotalByClient =
+        sumFinancialAmount(
+          invoices.filter((invoice) => isInvoiceOpenStatus(invoice.status) && isOverdueDate(invoice.due_date))
+        )
+        + sumFinancialAmount(
+          charges.filter(
+            (charge) =>
+              isChargeOpenStatus(charge.status)
+              && !isChargeCancelledStatus(charge.status)
+              && isOverdueDate(charge.due_date)
+          )
+        );
+      const costTotal = sumFinancialAmount(costs);
+      const marginBase = billedTotal || receivedTotalByClient;
+      const margin = marginBase ? Math.round(((marginBase - costTotal) / marginBase) * 100) : 0;
+
+      let operationalStatus = "Sem movimentação";
+      if (overdueTotalByClient > 0) {
+        operationalStatus = "Atrasado";
+      } else if (pendingTotalByClient > 0) {
+        operationalStatus = "Pendente";
+      } else if (billedTotal > 0 || receivedTotalByClient > 0) {
+        operationalStatus = "Em dia";
+      }
+
+      return {
+        client,
+        billedTotal,
+        receivedTotal: receivedTotalByClient,
+        costTotal,
+        pendingTotal: pendingTotalByClient,
+        overdueTotal: overdueTotalByClient,
+        margin,
+        operationalStatus,
+      };
+    })
+    .sort((left, right) => {
+      if (right.overdueTotal !== left.overdueTotal) {
+        return right.overdueTotal - left.overdueTotal;
+      }
+      if (right.pendingTotal !== left.pendingTotal) {
+        return right.pendingTotal - left.pendingTotal;
+      }
+      if (right.receivedTotal !== left.receivedTotal) {
+        return right.receivedTotal - left.receivedTotal;
+      }
+      return String(left.client?.name || "").localeCompare(String(right.client?.name || ""), "pt-BR");
+    });
+
+  return {
+    filteredInvoices,
+    filteredCharges,
+    filteredCosts,
+    clientFinancials,
+    totalBilled,
+    receivedTotal,
+    pendingTotal,
+    overdueTotal,
+    totalCosts,
+    totalMrr,
+    netProfit,
+    mediaCost,
+    productionCost,
+    operationsCost,
+    otherCost,
+    receivedEntries: paidInvoices.length + receivedCharges.length,
+    overdueEntries: overdueInvoices.length + overdueCharges.length,
+  };
+}
+
 function renderKpiCards(container, cards) {
   if (!container) {
     return;
@@ -2083,7 +2359,9 @@ function normalizeMaterialStatus(status) {
 function normalizeChargeStatus(status) {
   const raw = String(status || "").trim().toUpperCase();
   if (raw === "RECEIVED" || raw === "PAID") return "Recebida";
+  if (raw === "OVERDUE") return "Atrasada";
   if (raw === "PENDING") return "Pendente";
+  if (raw === "CANCELLED" || raw === "CANCELED") return "Cancelada";
   return String(status || "").trim();
 }
 
@@ -5173,106 +5451,67 @@ function renderAnalytics() {
 }
 
 function renderFinance() {
-  const clientFinancials = state.clients.map((client) => {
-    const invoices = state.invoices.filter(
-      (invoice) => Number(invoice.client_id) === Number(client.id) || invoice.client_name === client.name
-    );
-    const charges = state.charges.filter(
-      (charge) => Number(charge.client_id) === Number(client.id) || charge.client_name === client.name
-    );
-    const costs = state.costEntries.filter((entry) => Number(entry.client_id) === Number(client.id));
-    const revenue = invoices.reduce((acc, invoice) => acc + Number(invoice.amount || 0), 0);
-    const receivedInvoiceRevenue = invoices
-      .filter((invoice) => isInvoicePaidStatus(invoice.status))
-      .reduce((acc, invoice) => acc + Number(invoice.amount || 0), 0);
-    const chargeVolume = charges.reduce((acc, charge) => acc + Number(charge.amount || 0), 0);
-    const receivedChargeVolume = charges
-      .filter((charge) => isChargeReceivedStatus(charge.status))
-      .reduce((acc, charge) => acc + Number(charge.amount || 0), 0);
-    const costTotal = costs.reduce((acc, entry) => acc + Number(entry.amount || 0), 0);
-    const marginBase = receivedInvoiceRevenue + receivedChargeVolume || chargeVolume || revenue;
-    const margin = marginBase ? Math.round(((marginBase - costTotal) / marginBase) * 100) : 0;
-    return { client, revenue, chargeVolume, costTotal, margin };
-  });
-
-  const totalRevenue = state.invoices.reduce((acc, invoice) => acc + Number(invoice.amount || 0), 0);
-  const paidRevenue = state.invoices
-    .filter((invoice) => isInvoicePaidStatus(invoice.status))
-    .reduce((acc, invoice) => acc + Number(invoice.amount || 0), 0);
-  const openRevenue = state.invoices
-    .filter((invoice) => !isInvoicePaidStatus(invoice.status))
-    .reduce((acc, invoice) => acc + Number(invoice.amount || 0), 0);
-  const generatedCharges = state.charges.reduce((acc, charge) => acc + Number(charge.amount || 0), 0);
-  const receivedCharges = state.charges
-    .filter((charge) => isChargeReceivedStatus(charge.status))
-    .reduce((acc, charge) => acc + Number(charge.amount || 0), 0);
-  const openCharges = state.charges
-    .filter((charge) => isChargeOpenStatus(charge.status))
-    .reduce((acc, charge) => acc + Number(charge.amount || 0), 0);
-  const receivedTotal = paidRevenue + receivedCharges;
-  const openTotal = openRevenue + openCharges;
-  const receivedEntries = state.invoices.filter((invoice) => isInvoicePaidStatus(invoice.status)).length
-    + state.charges.filter((charge) => isChargeReceivedStatus(charge.status)).length;
-  const totalCosts = state.costEntries.reduce((acc, entry) => acc + Number(entry.amount || 0), 0);
-  const mediaCost = state.costEntries
-    .filter((entry) => String(entry.category || "") === "media")
-    .reduce((acc, entry) => acc + Number(entry.amount || 0), 0);
-  const productionCost = state.costEntries
-    .filter((entry) => String(entry.category || "") === "producao")
-    .reduce((acc, entry) => acc + Number(entry.amount || 0), 0);
-  const operationsCost = state.costEntries
-    .filter((entry) => String(entry.category || "") === "operacao")
-    .reduce((acc, entry) => acc + Number(entry.amount || 0), 0);
-  const otherCost = state.costEntries
-    .filter((entry) => String(entry.category || "") === "outro")
-    .reduce((acc, entry) => acc + Number(entry.amount || 0), 0);
-  const netProfit = receivedTotal - totalCosts;
+  const finance = buildFinanceViewModel();
   const financeGrid = document.querySelector("#page-financeiro .kpi-grid");
 
   if (financeGrid) {
-    financeGrid.innerHTML = [
-      { label: "Receita Bruta", value: formatCurrency(totalRevenue), sub: `${state.invoices.length} faturas` },
+    renderKpiCards(financeGrid, [
+      {
+        label: "Faturado",
+        value: formatCurrency(finance.totalBilled),
+        sub: finance.totalMrr ? `MRR ativo ${formatCurrency(finance.totalMrr)}` : "Sem MRR ativo"
+      },
       {
         label: "Recebido",
-        value: formatCurrency(receivedTotal),
-        sub: receivedEntries ? `${receivedEntries} ${receivedEntries === 1 ? "registro recebido" : "registros recebidos"}` : "Sem recebimentos confirmados"
+        value: formatCurrency(finance.receivedTotal),
+        sub: finance.receivedEntries
+          ? `${finance.receivedEntries} ${finance.receivedEntries === 1 ? "registro recebido" : "registros recebidos"}`
+          : "Nenhum recebimento no período"
       },
-      { label: "Cobranças geradas", value: formatCurrency(generatedCharges), sub: `${state.charges.length} cobranças` },
-      { label: "Lucro Líquido", value: formatCurrency(netProfit), sub: `${formatCurrency(openTotal)} em aberto` }
-    ]
-      .map(
-        (item) => `
-          <div class="kpi-card">
-            <div class="kpi-label">${escapeHtml(item.label)}</div>
-            <div class="kpi-val">${escapeHtml(item.value)}</div>
-            <div class="kpi-sub">${escapeHtml(item.sub)}</div>
-          </div>
-        `
-      )
-      .join("");
+      {
+        label: "Inadimplência",
+        value: formatCurrency(finance.overdueTotal),
+        sub: finance.overdueEntries
+          ? `${finance.overdueEntries} ${finance.overdueEntries === 1 ? "título em atraso" : "títulos em atraso"}`
+          : "Nenhum título atrasado"
+      },
+      {
+        label: "Lucro Líquido",
+        value: formatCurrency(finance.netProfit),
+        sub: `${formatCurrency(finance.pendingTotal)} a receber no prazo`
+      }
+    ]);
   }
 
-  document.getElementById("fin-clientes").innerHTML = clientFinancials
+  document.getElementById("fin-clientes").innerHTML = finance.clientFinancials
     .map(
-      ({ client, revenue, chargeVolume, costTotal, margin }) => `
+      ({ client, billedTotal, receivedTotal, costTotal, pendingTotal, overdueTotal, margin, operationalStatus }) => `
         <div class="fin-row">
           <div class="fin-cell fin-cell-client"><strong>${escapeHtml(client.name)}</strong></div>
-          <div class="fin-cell fin-cell-value">${formatCurrency(revenue)}</div>
+          <div class="fin-cell fin-cell-value">${formatCurrency(billedTotal)}</div>
           <div class="fin-cell fin-cell-value">${formatCurrency(costTotal)}</div>
-          <div class="fin-cell fin-cell-value">${formatCurrency(chargeVolume)}</div>
+          <div class="fin-cell fin-cell-value">${formatCurrency(receivedTotal)}</div>
+          <div class="fin-cell fin-cell-status"><span class="badge ${getFinanceStatusBadgeClass(operationalStatus)}">${escapeHtml(operationalStatus)}</span></div>
           <div class="fin-cell fin-cell-margin ${margin >= 50 ? "margin-good" : margin >= 20 ? "margin-warn" : "margin-bad"}">${margin}%</div>
-          <div class="fin-cell fin-cell-action"><button class="btn btn-ghost btn-sm" onclick="openChargeModalForClient(${client.id})">Cobrar</button></div>
+          <div class="fin-cell fin-cell-action">
+            <button
+              class="btn ${overdueTotal > 0 ? "btn-pink" : pendingTotal > 0 ? "btn-outline" : "btn-ghost"} btn-sm"
+              onclick="openChargeModalForClient(${client.id})"
+            >
+              ${overdueTotal > 0 || pendingTotal > 0 ? "Cobrar" : "Nova cobrança"}
+            </button>
+          </div>
         </div>
       `
     )
     .join("") || UI.empty("Nenhum cliente disponível", "Cadastre clientes para acompanhar receitas, custos e margem.");
 
   const costBuckets = [
-    { label: "Mídia", value: mediaCost },
-    { label: "Produção", value: productionCost },
-    { label: "Operação", value: operationsCost },
-    { label: "Outros", value: otherCost },
-    { label: "Recebido", value: receivedTotal }
+    { label: "Mídia", value: finance.mediaCost },
+    { label: "Produção", value: finance.productionCost },
+    { label: "Operação", value: finance.operationsCost },
+    { label: "Outros", value: finance.otherCost },
+    { label: "Total de custos", value: finance.totalCosts }
   ];
 
   document.getElementById("fin-custos").innerHTML = costBuckets
@@ -5282,35 +5521,14 @@ function renderFinance() {
           <div class="progress-item-head">
             <span>${escapeHtml(bucket.label)}</span><span class="text-strong">${formatCurrency(bucket.value)}</span>
           </div>
-          <div class="progress-bar progress-sm"><div class="progress-fill" style="width:${Math.min((bucket.value / Math.max(totalRevenue || 1, 1)) * 100, 100)}%;background:var(--ink)"></div></div>
+          <div class="progress-bar progress-sm"><div class="progress-fill" style="width:${Math.min((bucket.value / Math.max(finance.totalBilled || finance.totalCosts || 1, 1)) * 100, 100)}%;background:var(--ink)"></div></div>
         </div>
       `
     )
     .join("") || UI.empty("Nenhum custo registrado", "Os lançamentos de custo por categoria aparecerão aqui.");
 
   const canManageInvoices = ["admin", "comercial"].includes(state.session.user.role);
-  const financeCards = document.querySelectorAll("#page-financeiro .two-col .card .section-title");
-  if (financeCards[0]) {
-    financeCards[0].textContent = "Custos e Recebimentos";
-  }
-  if (financeCards[1]) {
-    financeCards[1].textContent = "Cobranças, faturas e custos";
-  }
-  const costRows = state.costEntries.map(
-    (entry) => `
-        <div class="charge-item">
-          <div class="charge-head">
-            <div>
-              <div class="charge-name">${escapeHtml(entry.client_name || "Sem cliente")}</div>
-              <div class="charge-sub">${escapeHtml(getCostCategoryLabel(entry.category))} · ${formatDate(entry.incurred_on || entry.created_at)} · ${formatCurrency(entry.amount)}</div>
-            </div>
-            <span class="badge badge-blue">${escapeHtml(getCostCategoryLabel(entry.category))}</span>
-          </div>
-          <div class="charge-desc">${escapeHtml(entry.description || "Custo lançado sem descrição complementar")}</div>
-        </div>
-    `
-  );
-  const chargeRows = state.charges.map(
+  const chargeRows = finance.filteredCharges.map(
     (charge) => `
         <div class="charge-item">
           <div class="charge-head">
@@ -5318,7 +5536,7 @@ function renderFinance() {
             <div class="charge-name">${escapeHtml(charge.client_name || charge.contact_name || "Sem cliente")}</div>
             <div class="charge-sub">${escapeHtml(charge.payment_method)} · vencimento ${formatDate(charge.due_date)} · ${formatCurrency(charge.amount)}</div>
             </div>
-          <span class="badge ${String(charge.status || "").toLowerCase().includes("receive") || String(charge.status || "").toLowerCase().includes("paid") ? "badge-green" : "badge-yellow"}">${escapeHtml(normalizeChargeStatus(charge.status))}</span>
+          <span class="badge ${getFinanceStatusBadgeClass(getChargeOperationalStatus(charge))}">${escapeHtml(getChargeOperationalStatus(charge))}</span>
           </div>
         <div class="charge-desc">${escapeHtml(charge.description || "Cobrança gerada sem observação complementar")}</div>
         <div class="item-actions">
@@ -5336,7 +5554,7 @@ function renderFinance() {
     `
   );
 
-  const invoiceRows = state.invoices.map(
+  const invoiceRows = finance.filteredInvoices.map(
       (invoice) => `
         <div class="invoice-item">
           <div class="invoice-head">
@@ -5344,7 +5562,7 @@ function renderFinance() {
               <div class="invoice-name">${escapeHtml(invoice.client_name)}</div>
               <div class="invoice-sub">Vencimento ${formatDate(invoice.due_date)} · ${formatCurrency(invoice.amount)}</div>
             </div>
-            <span class="badge ${invoice.status === "Pago" ? "badge-green" : invoice.status === "Em aberto" ? "badge-yellow" : "badge-blue"}">${escapeHtml(invoice.status)}</span>
+            <span class="badge ${getFinanceStatusBadgeClass(getInvoiceOperationalStatus(invoice))}">${escapeHtml(getInvoiceOperationalStatus(invoice))}</span>
           </div>
           ${
             canManageInvoices
@@ -5359,7 +5577,9 @@ function renderFinance() {
     );
 
   document.getElementById("fin-comissoes").innerHTML =
-    [...costRows, ...chargeRows, ...invoiceRows].join("") || UI.empty("Nenhum lançamento financeiro cadastrado");
+    [...chargeRows, ...invoiceRows].join("") || UI.empty("Nenhum lançamento financeiro cadastrado", "Use o filtro de período ou registre cobranças e faturas.");
+
+  bindLegacyInlineHandlers(document.getElementById("page-financeiro"));
 }
 
 function renderAll() {
@@ -5607,6 +5827,14 @@ async function refreshData() {
     analyticsPeriodFilter.value = state.filters.analyticsPeriod;
   }
 
+  const financePeriodFilter = document.getElementById("finance-period-filter");
+  if (financePeriodFilter) {
+    financePeriodFilter.innerHTML = getFinancePeriodOptions()
+      .map((option) => `<option value="${option.value}">${option.label}</option>`)
+      .join("");
+    financePeriodFilter.value = state.filters.financePeriod;
+  }
+
   const analyticsActions = document.querySelector("#page-analytics .topbar-actions");
   const integrationsButton = document.getElementById("btn-manage-integrations");
   if (analyticsActions && canManageIntegrations() && hasScopedClients() && !integrationsButton) {
@@ -5752,6 +5980,11 @@ function setAnalyticsPeriodFilter(period) {
   renderAnalytics();
 }
 
+function setFinancePeriodFilter(period) {
+  state.filters.financePeriod = period || "month";
+  renderFinance();
+}
+
 async function syncTrafficData() {
   await refreshData();
   showToast("Painel atualizado com sucesso.");
@@ -5771,9 +6004,10 @@ async function updateInvoiceStatus(id, status) {
 }
 
 function exportFinanceCsv() {
+  const finance = buildFinanceViewModel();
   const rows = [
     ["tipo", "cliente", "classe", "valor", "status", "data", "referencia"],
-    ...state.costEntries.map((entry) => [
+    ...finance.filteredCosts.map((entry) => [
       "custo",
       entry.client_name || "",
       getCostCategoryLabel(entry.category),
@@ -5782,23 +6016,31 @@ function exportFinanceCsv() {
       formatDate(entry.incurred_on || entry.created_at),
       entry.description || ""
     ]),
-    ...state.charges.map((charge) => [
+    ...finance.filteredCharges.map((charge) => [
       "cobrança",
       charge.client_name || charge.contact_name || "",
       charge.payment_method || "",
       Number(charge.amount || 0),
-      charge.status || "",
+      getChargeOperationalStatus(charge),
       formatDate(charge.due_date),
       charge.provider_charge_id || charge.external_reference || ""
     ]),
-    ...state.invoices.map((invoice) => ["fatura", invoice.client_name, "", Number(invoice.amount || 0), invoice.status, formatDate(invoice.due_date), invoice.id])
+    ...finance.filteredInvoices.map((invoice) => [
+      "fatura",
+      invoice.client_name,
+      "",
+      Number(invoice.amount || 0),
+      getInvoiceOperationalStatus(invoice),
+      formatDate(invoice.due_date),
+      invoice.id
+    ])
   ];
   const csv = rows.map((row) => row.join(";")).join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "financeiro.csv";
+  link.download = `financeiro-${state.filters.financePeriod || "month"}.csv`;
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -7116,6 +7358,7 @@ window.goTo = goTo;
 window.filterKanban = filterKanban;
 window.setAnalyticsClientFilter = setAnalyticsClientFilter;
 window.setAnalyticsPeriodFilter = setAnalyticsPeriodFilter;
+window.setFinancePeriodFilter = setFinancePeriodFilter;
 window.setTab = setTab;
 window.openModal = openModal;
 window.closeModal = closeModal;
