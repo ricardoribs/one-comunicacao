@@ -5544,9 +5544,13 @@ function renderFinance() {
   );
   const chargeRows = finance.filteredCharges.map((charge) => {
     const chargeStatus = getChargeOperationalStatus(charge);
-    const canMarkReceived = canManageInvoices && !isChargeReceivedStatus(charge.status);
+    const isChargeReceived = isChargeReceivedStatus(charge.status);
+    const canMarkReceived = canManageInvoices && !isChargeReceived;
     const canMarkPending =
-      canManageInvoices && !isChargeCancelledStatus(charge.status) && String(chargeStatus).toLowerCase() !== "pendente";
+      canManageInvoices
+      && !isChargeReceived
+      && !isChargeCancelledStatus(charge.status)
+      && String(chargeStatus).toLowerCase() !== "pendente";
 
     return `
         <div class="charge-item">
@@ -5571,8 +5575,12 @@ function renderFinance() {
     `
   });
 
-  const invoiceRows = finance.filteredInvoices.map(
-      (invoice) => `
+  const invoiceRows = finance.filteredInvoices.map((invoice) => {
+      const isInvoicePaid = isInvoicePaidStatus(invoice.status);
+      const canMarkInvoicePaid = canManageInvoices && !isInvoicePaid;
+      const canMarkInvoiceOpen = canManageInvoices && !isInvoicePaid && !isInvoiceCancelledStatus(invoice.status) && !isInvoiceOpenStatus(invoice.status);
+
+      return `
         <div class="invoice-item">
           <div class="invoice-head">
             <div>
@@ -5584,14 +5592,14 @@ function renderFinance() {
           ${
             canManageInvoices
               ? `<div class="item-actions">
-                  <button class="btn btn-ghost btn-sm" onclick="updateInvoiceStatus(${invoice.id}, 'Pago')">Marcar pago</button>
-                  <button class="btn btn-ghost btn-sm" onclick="updateInvoiceStatus(${invoice.id}, 'Em aberto')">Em aberto</button>
+                  <button class="btn btn-ghost btn-sm" ${canMarkInvoicePaid ? `onclick="updateInvoiceStatus(${invoice.id}, 'Pago')"` : "disabled"}>Marcar pago</button>
+                  <button class="btn btn-ghost btn-sm" ${canMarkInvoiceOpen ? `onclick="updateInvoiceStatus(${invoice.id}, 'Em aberto')"` : "disabled"}>Em aberto</button>
                 </div>`
               : ""
           }
         </div>
-      `
-    );
+      `;
+    });
 
   document.getElementById("fin-comissoes").innerHTML =
     [...costRows, ...chargeRows, ...invoiceRows].join("")
@@ -6010,6 +6018,30 @@ async function syncTrafficData() {
 
 async function updateInvoiceStatus(id, status) {
   try {
+    const invoice = state.invoices.find((item) => Number(item.id) === Number(id));
+    if (!invoice) {
+      showToast("Fatura não encontrada.");
+      return;
+    }
+
+    const normalizedStatus = String(status || "").trim().toLowerCase();
+    const invoicePaid = isInvoicePaidStatus(invoice.status);
+
+    if (invoicePaid) {
+      showToast("Esta fatura já está paga.");
+      return;
+    }
+
+    if (normalizedStatus === "pago" && invoicePaid) {
+      showToast("Esta fatura já está paga.");
+      return;
+    }
+
+    if (normalizedStatus === "em aberto" && isInvoiceOpenStatus(invoice.status)) {
+      showToast("Esta fatura já está em aberto.");
+      return;
+    }
+
     await apiFetch(`/invoices/${id}/status`, {
       method: "PATCH",
       body: JSON.stringify({ status })
@@ -7273,12 +7305,20 @@ async function updateChargeStatus(id, status) {
       return;
     }
 
-    if (String(status || "").toUpperCase() === "RECEIVED" && isChargeReceivedStatus(charge.status)) {
+    const normalizedStatus = String(status || "").toUpperCase();
+    const chargeReceived = isChargeReceivedStatus(charge.status);
+
+    if (normalizedStatus === "RECEIVED" && chargeReceived) {
       showToast("Esta cobrança já está recebida.");
       return;
     }
 
-    if (String(status || "").toUpperCase() === "PENDING" && getChargeOperationalStatus(charge) === "Pendente") {
+    if (chargeReceived) {
+      showToast("Esta cobrança já está recebida.");
+      return;
+    }
+
+    if (normalizedStatus === "PENDING" && getChargeOperationalStatus(charge) === "Pendente") {
       showToast("Esta cobrança já está pendente.");
       return;
     }
