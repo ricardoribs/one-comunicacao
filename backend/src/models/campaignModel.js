@@ -106,7 +106,7 @@ async function update(id, data, user = null) {
     table: 'campaigns',
     scopeConfig,
     prefix: 'AND',
-    startIndex: 11,
+    startIndex: 12,
     sql: `UPDATE campaigns cam
      SET client_id = COALESCE($2, client_id),
          name = COALESCE($3, name),
