@@ -247,6 +247,7 @@ const kanbanRuntime = {
   dragPlaceholderEl: null,
   scrollSyncBound: false,
 };
+let kanbanTransparentDragImage = null;
 const taskAssignState = {
   selected: new Set(),
   users: [],
@@ -4298,7 +4299,7 @@ function renderKanban() {
     .map((column) => {
       const tasks = filtered.filter((task) => getTaskColumnName(task) === column.key);
       return `
-        <div class="kanban-col" data-kanban-column="${column.key}">
+        <div class="kanban-col" data-kanban-column="${column.key}" data-kanban-dropzone="${column.key}">
           <div class="kanban-col-title">${column.label} <span class="col-count">${tasks.length}</span></div>
           <div class="kanban-col-body" data-kanban-dropzone="${column.key}">
             ${
@@ -4430,6 +4431,29 @@ function createKanbanDragPreview(card) {
   return preview;
 }
 
+function getKanbanTransparentDragImage() {
+  if (kanbanTransparentDragImage) {
+    return kanbanTransparentDragImage;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 1;
+  canvas.height = 1;
+  kanbanTransparentDragImage = canvas;
+  return kanbanTransparentDragImage;
+}
+
+function updateKanbanDragPreviewPosition(event) {
+  if (!kanbanRuntime.dragPreviewEl) {
+    return;
+  }
+
+  const left = Number(event?.clientX || 0) + 18;
+  const top = Number(event?.clientY || 0) + 18;
+  kanbanRuntime.dragPreviewEl.style.left = `${left}px`;
+  kanbanRuntime.dragPreviewEl.style.top = `${top}px`;
+}
+
 function setupKanbanScrollSync() {
   const board = document.getElementById("kanban-board");
   const topScroll = document.getElementById("kanban-top-scroll");
@@ -4509,12 +4533,11 @@ function bindKanbanBoardInteractions() {
       if (event.dataTransfer) {
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", card.dataset.taskId);
-        const preview = createKanbanDragPreview(card);
-        event.dataTransfer.setDragImage(preview, 28, 24);
+        createKanbanDragPreview(card);
+        updateKanbanDragPreviewPosition(event);
+        event.dataTransfer.setDragImage(getKanbanTransparentDragImage(), 0, 0);
       }
-      window.requestAnimationFrame(() => {
-        card.classList.add("is-drag-source");
-      });
+      card.classList.add("is-drag-source");
     });
 
     card.addEventListener("dragend", () => {
@@ -4536,12 +4559,14 @@ function bindKanbanBoardInteractions() {
       return;
     }
 
-    const column = event.target.closest("[data-kanban-column]");
-    if (!column) {
+    const dropzone = event.target.closest("[data-kanban-dropzone]");
+    const column = dropzone?.closest("[data-kanban-column]") || event.target.closest("[data-kanban-column]");
+    if (!column || !column.dataset.kanbanColumn) {
       return;
     }
 
     event.preventDefault();
+    updateKanbanDragPreviewPosition(event);
     clearDropTargets();
     column.classList.add("is-drop-target");
     if (event.dataTransfer) {
@@ -4566,7 +4591,8 @@ function bindKanbanBoardInteractions() {
       return;
     }
 
-    const column = event.target.closest("[data-kanban-column]");
+    const dropzone = event.target.closest("[data-kanban-dropzone]");
+    const column = dropzone?.closest("[data-kanban-column]") || event.target.closest("[data-kanban-column]");
     event.preventDefault();
     document.body.classList.remove("kanban-drag-active");
     clearDropTargets();
