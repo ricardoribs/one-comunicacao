@@ -5542,31 +5542,34 @@ function renderFinance() {
         </div>
     `
   );
-  const chargeRows = finance.filteredCharges.map(
-    (charge) => `
+  const chargeRows = finance.filteredCharges.map((charge) => {
+    const chargeStatus = getChargeOperationalStatus(charge);
+    const canMarkReceived = canManageInvoices && !isChargeReceivedStatus(charge.status);
+    const canMarkPending =
+      canManageInvoices && !isChargeCancelledStatus(charge.status) && String(chargeStatus).toLowerCase() !== "pendente";
+
+    return `
         <div class="charge-item">
           <div class="charge-head">
             <div>
             <div class="charge-name">${escapeHtml(charge.client_name || charge.contact_name || "Sem cliente")}</div>
             <div class="charge-sub">${escapeHtml(charge.payment_method)} · vencimento ${formatDate(charge.due_date)} · ${formatCurrency(charge.amount)}</div>
             </div>
-          <span class="badge ${getFinanceStatusBadgeClass(getChargeOperationalStatus(charge))}">${escapeHtml(getChargeOperationalStatus(charge))}</span>
+          <span class="badge ${getFinanceStatusBadgeClass(chargeStatus)}">${escapeHtml(chargeStatus)}</span>
           </div>
         <div class="charge-desc">${escapeHtml(charge.description || "Cobrança gerada sem observação complementar")}</div>
         <div class="item-actions">
           ${charge.payment_link ? `<button class="btn btn-ghost btn-sm" onclick="openChargeResource(${charge.id}, 'payment_link')">Abrir link</button>` : ""}
           ${charge.boleto_url ? `<button class="btn btn-ghost btn-sm" onclick="openChargeResource(${charge.id}, 'boleto_url')">Boleto</button>` : ""}
           ${charge.pix_copy_paste ? `<button class="btn btn-ghost btn-sm" onclick="copyChargePix(${charge.id})">Copiar Pix</button>` : ""}
-          ${
-            canManageInvoices
-              ? `<button class="btn btn-ghost btn-sm" onclick="updateChargeStatus(${charge.id}, 'RECEIVED')">Recebida</button>
-                 <button class="btn btn-ghost btn-sm" onclick="updateChargeStatus(${charge.id}, 'PENDING')">Pendente</button>`
-              : ""
-          }
+          ${canManageInvoices ? `
+            <button class="btn btn-ghost btn-sm" ${canMarkReceived ? `onclick="updateChargeStatus(${charge.id}, 'RECEIVED')"` : "disabled"}>Recebida</button>
+            <button class="btn btn-ghost btn-sm" ${canMarkPending ? `onclick="updateChargeStatus(${charge.id}, 'PENDING')"` : "disabled"}>Pendente</button>
+          ` : ""}
         </div>
       </div>
     `
-  );
+  });
 
   const invoiceRows = finance.filteredInvoices.map(
       (invoice) => `
@@ -7264,6 +7267,22 @@ async function convertLead(id) {
 
 async function updateChargeStatus(id, status) {
   try {
+    const charge = state.charges.find((item) => Number(item.id) === Number(id));
+    if (!charge) {
+      showToast("Cobrança não encontrada.");
+      return;
+    }
+
+    if (String(status || "").toUpperCase() === "RECEIVED" && isChargeReceivedStatus(charge.status)) {
+      showToast("Esta cobrança já está recebida.");
+      return;
+    }
+
+    if (String(status || "").toUpperCase() === "PENDING" && getChargeOperationalStatus(charge) === "Pendente") {
+      showToast("Esta cobrança já está pendente.");
+      return;
+    }
+
     await apiFetch(`/charges/${id}`, {
       method: "PATCH",
       body: JSON.stringify({ status })
