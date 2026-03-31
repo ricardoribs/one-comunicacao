@@ -1127,6 +1127,27 @@ function normalizeLooseText(value) {
     .toLowerCase();
 }
 
+function getDisplayText(value, fallback = "—") {
+  const text = String(value ?? "").trim();
+  return text || fallback;
+}
+
+function getCampaignViewModel(campaign) {
+  const matchedClient = state.clients.find((client) => Number(client.id) === Number(campaign?.client_id));
+  const name = getDisplayText(campaign?.name, "Campanha sem nome");
+  const clientName = getDisplayText(campaign?.client_name || matchedClient?.name, "Cliente não vinculado");
+  const channel = getDisplayText(campaign?.channel, "Canal não informado");
+  const audience = getDisplayText(campaign?.audience);
+
+  return {
+    ...campaign,
+    name,
+    client_name: clientName,
+    channel,
+    audience,
+  };
+}
+
 function isChecklistPlaceholderLabel(value) {
   return CHECKLIST_PLACEHOLDER_LABELS.has(normalizeLooseText(value));
 }
@@ -4655,25 +4676,26 @@ function renderCampaigns() {
   }
 
   document.getElementById("campanhas-tbody").innerHTML = state.campaigns
-    .map(
-      (campaign) => `
+    .map((campaign) => {
+      const view = getCampaignViewModel(campaign);
+      return `
         <tr>
-          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(campaign.name)}">${escapeHtml(campaign.name)}</span></td>
-          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(campaign.client_name)}">${escapeHtml(campaign.client_name)}</span></td>
-          <td><span class="badge ${getChannelBadgeClass(campaign.channel)}">${escapeHtml(campaign.channel)}</span></td>
-          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(campaign.audience || "-")}">${escapeHtml(campaign.audience || "-")}</span></td>
-          <td data-align="right"><span class="${getValueToneClass(campaign.budget)}">${formatCurrencyValue(campaign.budget)}</span></td>
-          <td>${formatDate(campaign.start_date)}</td>
-          <td><span class="badge ${getCampaignStatusBadgeClass(campaign.status)}">${escapeHtml(campaign.status)}</span></td>
+          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(view.name)}">${escapeHtml(view.name)}</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(view.client_name)}">${escapeHtml(view.client_name)}</span></td>
+          <td><span class="badge ${getChannelBadgeClass(view.channel)}">${escapeHtml(view.channel)}</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(view.audience)}">${escapeHtml(view.audience)}</span></td>
+          <td data-align="right"><span class="${getValueToneClass(view.budget)}">${formatCurrencyValue(view.budget)}</span></td>
+          <td>${formatDate(view.start_date)}</td>
+          <td><span class="badge ${getCampaignStatusBadgeClass(view.status)}">${escapeHtml(getDisplayText(view.status, "Planejamento"))}</span></td>
           <td class="cell-actions">
             <div class="table-actions">
-              <button class="btn btn-ghost btn-sm" onclick="openModal('nova-campanha', ${campaign.id})">Editar</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteCampaign(${campaign.id})">Excluir</button>
+              <button class="btn btn-ghost btn-sm" onclick="openModal('nova-campanha', ${view.id})">Editar</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteCampaign(${view.id})">Excluir</button>
             </div>
           </td>
         </tr>
-      `
-    )
+      `;
+    })
     .join("")
     || UI.tableEmpty(
       8,
@@ -4824,34 +4846,36 @@ function renderTraffic() {
 
   document.getElementById("ab-list").innerHTML = activeCampaigns
     .slice(0, 3)
-    .map(
-      (campaign) => `
+    .map((campaign) => {
+      const view = getCampaignViewModel(campaign);
+      return `
         <div class="item-row">
           <div>
-            <div class="block-title-sm">${escapeHtml(campaign.name)}</div>
-            <div class="block-text-xs">${escapeHtml(campaign.client_name)}</div>
+            <div class="block-title-sm">${escapeHtml(view.name)}</div>
+            <div class="block-text-xs">${escapeHtml(view.client_name)}</div>
           </div>
-          <span class="badge ${Number(campaign.roi || 0) === 0 ? "badge-gray" : "badge-blue"}">ROI ${Number(campaign.roi || 0).toFixed(1)}%</span>
+          <span class="badge ${Number(view.roi || 0) === 0 ? "badge-gray" : "badge-blue"}">ROI ${Number(view.roi || 0).toFixed(1)}%</span>
         </div>
-      `
-    )
+      `;
+    })
     .join("") || UI.empty("Nenhuma campanha ativa", "Ative campanhas para acompanhar a performance de mídia.");
 
   document.getElementById("trafego-tbody").innerHTML = state.campaigns
-    .map(
-      (campaign) => `
+    .map((campaign) => {
+      const view = getCampaignViewModel(campaign);
+      return `
         <tr>
-          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(campaign.name)}">${escapeHtml(campaign.name)}</span></td>
-          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(campaign.client_name)}">${escapeHtml(campaign.client_name)}</span></td>
-          <td><span class="badge ${getChannelBadgeClass(campaign.channel)}">${escapeHtml(campaign.channel)}</span></td>
-          <td data-align="right"><span class="${getValueToneClass(campaign.budget)}">${formatCurrencyValue(campaign.budget)}</span></td>
-          <td data-align="right"><span class="${getValueToneClass(campaign.leads)}">${formatNumber(campaign.leads)}</span></td>
-          <td data-align="right"><span class="${getValueToneClass(campaign.revenue)}">${formatCurrencyValue(campaign.revenue)}</span></td>
-          <td data-align="right"><span class="${Number(campaign.roi || 0) === 0 ? "value-zero" : "value-strong"}">${Number(campaign.roi || 0).toFixed(2)}%</span></td>
-          <td><span class="badge ${getCampaignStatusBadgeClass(campaign.status)}">${escapeHtml(campaign.status)}</span></td>
+          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(view.name)}">${escapeHtml(view.name)}</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(view.client_name)}">${escapeHtml(view.client_name)}</span></td>
+          <td><span class="badge ${getChannelBadgeClass(view.channel)}">${escapeHtml(view.channel)}</span></td>
+          <td data-align="right"><span class="${getValueToneClass(view.budget)}">${formatCurrencyValue(view.budget)}</span></td>
+          <td data-align="right"><span class="${getValueToneClass(view.leads)}">${formatNumber(view.leads)}</span></td>
+          <td data-align="right"><span class="${getValueToneClass(view.revenue)}">${formatCurrencyValue(view.revenue)}</span></td>
+          <td data-align="right"><span class="${Number(view.roi || 0) === 0 ? "value-zero" : "value-strong"}">${Number(view.roi || 0).toFixed(2)}%</span></td>
+          <td><span class="badge ${getCampaignStatusBadgeClass(view.status)}">${escapeHtml(getDisplayText(view.status, "Planejamento"))}</span></td>
         </tr>
-      `
-    )
+      `;
+    })
     .join("") || UI.tableEmpty(8, "Nenhum dado de tráfego disponível", "Publique campanhas para visualizar métricas e evolução de mídia.");
 }
 
@@ -5024,13 +5048,24 @@ function renderAnalytics() {
 
 function renderFinance() {
   const clientFinancials = state.clients.map((client) => {
-    const invoices = state.invoices.filter((invoice) => invoice.client_name === client.name);
-    const charges = state.charges.filter((charge) => charge.client_name === client.name);
+    const invoices = state.invoices.filter(
+      (invoice) => Number(invoice.client_id) === Number(client.id) || invoice.client_name === client.name
+    );
+    const charges = state.charges.filter(
+      (charge) => Number(charge.client_id) === Number(client.id) || charge.client_name === client.name
+    );
     const costs = state.costEntries.filter((entry) => Number(entry.client_id) === Number(client.id));
     const revenue = invoices.reduce((acc, invoice) => acc + Number(invoice.amount || 0), 0);
+    const receivedInvoiceRevenue = invoices
+      .filter((invoice) => isInvoicePaidStatus(invoice.status))
+      .reduce((acc, invoice) => acc + Number(invoice.amount || 0), 0);
     const chargeVolume = charges.reduce((acc, charge) => acc + Number(charge.amount || 0), 0);
+    const receivedChargeVolume = charges
+      .filter((charge) => isChargeReceivedStatus(charge.status))
+      .reduce((acc, charge) => acc + Number(charge.amount || 0), 0);
     const costTotal = costs.reduce((acc, entry) => acc + Number(entry.amount || 0), 0);
-    const margin = revenue ? Math.round(((revenue - costTotal) / revenue) * 100) : 0;
+    const marginBase = receivedInvoiceRevenue + receivedChargeVolume || chargeVolume || revenue;
+    const margin = marginBase ? Math.round(((marginBase - costTotal) / marginBase) * 100) : 0;
     return { client, revenue, chargeVolume, costTotal, margin };
   });
 
@@ -5065,7 +5100,7 @@ function renderFinance() {
   const otherCost = state.costEntries
     .filter((entry) => String(entry.category || "") === "outro")
     .reduce((acc, entry) => acc + Number(entry.amount || 0), 0);
-  const netProfit = totalRevenue - totalCosts;
+  const netProfit = receivedTotal - totalCosts;
   const financeGrid = document.querySelector("#page-financeiro .kpi-grid");
 
   if (financeGrid) {
@@ -6646,7 +6681,16 @@ async function submitModal(event, type, id) {
     }
 
     if (type === "nova-campanha") {
-      const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["start_date"]);
+      const payload = {
+        name: String(formData.get("name") || "").trim(),
+        client_id: formData.get("client_id") || null,
+        channel: String(formData.get("channel") || "").trim(),
+        audience: String(formData.get("audience") || "").trim() || null,
+        budget: formData.get("budget") || 0,
+        start_date: formData.get("start_date") || null,
+        status: String(formData.get("status") || "").trim() || null,
+        objective: String(formData.get("objective") || "").trim() || null,
+      };
       await apiFetch(id ? `/campaigns/${id}` : "/campaigns", {
         method: id ? "PUT" : "POST",
         body: JSON.stringify(payload)
