@@ -2727,23 +2727,78 @@ function formatAccessLocationLabel(value) {
   return normalized;
 }
 
+function getMemberPresenceMeta(user) {
+  if (!user.is_active) {
+    return { label: "Inativo", tone: "is-inactive" };
+  }
+
+  if (user.is_online) {
+    return { label: "Online agora", tone: "is-online" };
+  }
+
+  return { label: "Ativo", tone: "is-active" };
+}
+
+function renderAccessMembersTable(bodyHtml) {
+  return `
+    <div class="access-member-table-wrap table-wrap">
+      <table class="access-member-table">
+        <thead>
+          <tr>
+            <th>Membro</th>
+            <th>Perfil</th>
+            <th>Presença</th>
+            <th>Último acesso</th>
+            <th class="cell-actions" data-align="right">Ações</th>
+          </tr>
+        </thead>
+        <tbody>${bodyHtml}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function bindAccessMemberActions() {
+  const membersRoot = document.getElementById("membros-tbody");
+  if (!membersRoot || membersRoot.dataset.bound === "1") {
+    return;
+  }
+
+  membersRoot.addEventListener("click", (event) => {
+    const editTrigger = event.target.closest("[data-access-edit]");
+    if (editTrigger) {
+      const userId = Number(editTrigger.dataset.accessEdit);
+      if (Number.isFinite(userId)) {
+        openModal("novo-membro", userId);
+      }
+      return;
+    }
+
+    const removeTrigger = event.target.closest("[data-access-remove]");
+    if (removeTrigger) {
+      const userId = Number(removeTrigger.dataset.accessRemove);
+      if (Number.isFinite(userId)) {
+        deleteUser(userId);
+      }
+    }
+  });
+
+  membersRoot.dataset.bound = "1";
+}
+
 function renderMemberRow(user, currentUserId) {
   const lastAccess = user.last_seen_at || user.last_login_at;
-  const lastAccessLabel = lastAccess ? formatDateTime(lastAccess) : "Sem registro de acesso";
-  const presenceLabel = !user.is_active ? "Inativo" : user.is_online ? "Online" : "Ativo";
-  const presenceBadgeClass = !user.is_active ? "badge-gray" : user.is_online ? "badge-blue" : "badge-green";
+  const lastAccessLabel = lastAccess ? formatDateTime(lastAccess) : "—";
+  const presence = getMemberPresenceMeta(user);
   const locationLabel = formatAccessLocationLabel(user.last_seen_location);
-  const locationHtml = locationLabel
-    ? `
-        <div class="access-member-meta-item is-full">
-          <span class="access-member-meta-label">Localização</span>
-          <span class="access-member-meta-value access-member-location" title="${escapeHtml(locationLabel)}">${escapeHtml(locationLabel)}</span>
-        </div>
-      `
+  const canRemoveUser = Number(user.id) !== Number(currentUserId) && String(user.role || "").toLowerCase() !== "admin";
+  const lastAccessMeta = locationLabel
+    ? `<span class="access-member-last-location" title="${escapeHtml(locationLabel)}">${escapeHtml(locationLabel)}</span>`
     : "";
+
   return `
-    <article class="access-member-card">
-      <div class="access-member-head">
+    <tr>
+      <td>
         <div class="access-member-ident">
           <div class="avatar av-pink">${getInitials(user.name)}</div>
           <div class="cell-stack">
@@ -2751,24 +2806,27 @@ function renderMemberRow(user, currentUserId) {
             <span class="cell-sub" title="${escapeHtml(user.email)}">${escapeHtml(user.email)}</span>
           </div>
         </div>
-        <span class="sb-role-badge ${getRoleBadgeClass(user.role)}">${ROLE_LABELS[user.role] || user.role}</span>
-      </div>
-      <div class="access-member-meta">
-        <div class="access-member-meta-item">
-          <span class="access-member-meta-label">Último acesso</span>
-          <span class="access-member-meta-value" title="${escapeHtml(lastAccessLabel)}">${lastAccessLabel}</span>
+      </td>
+      <td><span class="sb-role-badge ${getRoleBadgeClass(user.role)}">${ROLE_LABELS[user.role] || user.role}</span></td>
+      <td>
+        <span class="access-member-presence ${presence.tone}">
+          <span class="access-member-presence-dot" aria-hidden="true"></span>
+          <span>${escapeHtml(presence.label)}</span>
+        </span>
+      </td>
+      <td>
+        <div class="access-member-last-access">
+          <span class="access-member-last-time" title="${escapeHtml(lastAccessLabel)}">${escapeHtml(lastAccessLabel)}</span>
+          ${lastAccessMeta}
         </div>
-        <div class="access-member-meta-item">
-          <span class="access-member-meta-label">Presença</span>
-          <span class="badge ${presenceBadgeClass}">${presenceLabel}</span>
+      </td>
+      <td class="cell-actions" data-align="right">
+        <div class="access-member-actions">
+          <button class="btn btn-outline btn-sm" type="button" data-access-edit="${user.id}">Editar</button>
+          ${canRemoveUser ? `<button class="access-remove-link" type="button" data-access-remove="${user.id}">Remover</button>` : ""}
         </div>
-        ${locationHtml}
-      </div>
-      <div class="access-member-actions">
-        <button class="btn btn-ghost btn-sm" onclick="openModal('novo-membro', ${user.id})">Editar</button>
-        ${user.id !== currentUserId ? `<button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id})">Remover</button>` : ""}
-      </div>
-    </article>
+      </td>
+    </tr>
   `;
 }
 
@@ -5270,6 +5328,8 @@ function renderAccessV2() {
     return;
   }
 
+  bindAccessMemberActions();
+
   const sortedUsers = [...(state.accessMembers.length ? state.accessMembers : state.users)].sort((left, right) => {
     if (Boolean(left.is_online) !== Boolean(right.is_online)) {
       return Number(Boolean(right.is_online)) - Number(Boolean(left.is_online));
@@ -5284,9 +5344,10 @@ function renderAccessV2() {
     return String(left.name || "").localeCompare(String(right.name || ""), "pt-BR");
   });
 
-  document.getElementById("membros-tbody").innerHTML = sortedUsers
-    .map((user) => renderMemberRow(user, state.session.user.id))
-    .join("") || UI.empty("Nenhum membro cadastrado", "Crie o primeiro usuário interno para liberar o acesso da equipe.");
+  document.getElementById("membros-tbody").innerHTML = renderAccessMembersTable(
+    sortedUsers.map((user) => renderMemberRow(user, state.session.user.id)).join("")
+      || UI.tableEmpty(5, "Nenhum membro cadastrado", "Crie o primeiro usuário interno para liberar o acesso da equipe.", { icon: false })
+  );
 
   const roleCards = {
     Admin: ["Clientes", "Campanhas", "Kanban", "Produção", "Tráfego", "Analytics", "Financeiro", "Controle de acesso"],
@@ -5353,7 +5414,7 @@ async function refreshData() {
 
   const membersBody = document.getElementById("membros-tbody");
   if (membersBody) {
-    membersBody.innerHTML = UI.skeletonMemberCards(4);
+    membersBody.innerHTML = renderAccessMembersTable(UI.skeletonRows(5, 5));
   }
 
   const analyticsBody = document.getElementById("analytics-tbody");

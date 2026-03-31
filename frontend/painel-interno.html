@@ -633,24 +633,30 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-analytics #analytics-tbody td[colspan]{padding:0}
 #page-analytics #analytics-tbody .empty-state{min-height:198px;max-width:none}
 
-#page-acesso #acesso-membros .access-member-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:var(--space-4);align-items:stretch}
-#page-acesso #acesso-membros .access-member-card{background:var(--white);border:1px solid var(--border);padding:var(--space-5);display:flex;flex-direction:column;gap:var(--space-4);min-width:0}
-#page-acesso #acesso-membros .access-member-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3);padding-bottom:var(--space-3);border-bottom:1px solid var(--border)}
-#page-acesso #acesso-membros .access-member-ident{display:flex;align-items:flex-start;gap:var(--space-3);min-width:0}
+#page-acesso #acesso-membros .access-members-shell{display:block}
+#page-acesso #acesso-membros .access-member-table-wrap{background:var(--white);border:1px solid var(--border)}
+#page-acesso #acesso-membros .access-member-table{min-width:920px}
+#page-acesso #acesso-membros .access-member-table th:nth-child(1){width:38%}
+#page-acesso #acesso-membros .access-member-table th:nth-child(2){width:14%}
+#page-acesso #acesso-membros .access-member-table th:nth-child(3){width:16%}
+#page-acesso #acesso-membros .access-member-table th:nth-child(4){width:20%}
+#page-acesso #acesso-membros .access-member-table th:nth-child(5){width:12%}
+#page-acesso #acesso-membros .access-member-ident{display:flex;align-items:center;gap:var(--space-3);min-width:0}
 #page-acesso #acesso-membros .access-member-ident .cell-stack{min-width:0}
 #page-acesso #acesso-membros .access-member-ident .cell-title{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35}
 #page-acesso #acesso-membros .access-member-ident .cell-sub{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.45}
-#page-acesso #acesso-membros .access-member-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3);align-items:start}
-#page-acesso #acesso-membros .access-member-meta-item{display:flex;flex-direction:column;gap:var(--space-1);min-width:0}
-#page-acesso #acesso-membros .access-member-meta-item.is-full{grid-column:1/-1}
-#page-acesso #acesso-membros .access-member-meta-label{font-size:var(--text-2xs);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-#page-acesso #acesso-membros .access-member-meta-value{font-size:var(--text-sm);line-height:1.45;color:var(--text);white-space:normal;overflow:visible;text-overflow:clip}
-#page-acesso #acesso-membros .access-member-meta .badge{width:max-content;max-width:100%;align-self:flex-start}
-#page-acesso #acesso-membros .access-member-location{color:var(--muted);line-height:1.4}
-#page-acesso #acesso-membros .access-member-actions{display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:auto;padding-top:var(--space-3);border-top:1px solid var(--border)}
-#page-acesso #acesso-membros .access-member-actions .btn{flex:1 1 140px;justify-content:center}
+#page-acesso #acesso-membros .access-member-presence{display:inline-flex;align-items:center;gap:8px;font-size:var(--text-sm);color:var(--text)}
+#page-acesso #acesso-membros .access-member-presence-dot{width:8px;height:8px;border-radius:999px;background:var(--muted);flex-shrink:0}
+#page-acesso #acesso-membros .access-member-presence.is-online .access-member-presence-dot{background:var(--success)}
+#page-acesso #acesso-membros .access-member-presence.is-active .access-member-presence-dot{background:#94a3b8}
+#page-acesso #acesso-membros .access-member-presence.is-inactive .access-member-presence-dot{background:#c24141}
+#page-acesso #acesso-membros .access-member-last-access{display:flex;flex-direction:column;gap:4px;min-width:0}
+#page-acesso #acesso-membros .access-member-last-time{font-size:var(--text-sm);color:var(--text)}
+#page-acesso #acesso-membros .access-member-last-location{font-size:var(--text-xs);line-height:1.45;color:var(--muted);white-space:normal}
+#page-acesso #acesso-membros .access-member-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px}
+#page-acesso #acesso-membros .access-remove-link{padding:0;border:0;background:none;color:#c24141;font-size:var(--text-sm);font-weight:500;cursor:pointer}
+#page-acesso #acesso-membros .access-remove-link:hover{color:#991b1b}
 #page-acesso #acesso-membros .empty-state{background:var(--white);border:1px solid var(--border)}
-#page-acesso #acesso-membros .access-member-card-skeleton{pointer-events:none}
 
 /* PERFIL */
 #page-perfil .profile-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr);gap:var(--space-4);align-items:stretch}
@@ -758,7 +764,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .table-actions,.item-actions,.modal-actions{flex-wrap:wrap}
   #page-calendario .calendar-week-grid{min-width:820px}
   #page-crm #crm-clientes .crm-client-list{grid-template-columns:1fr}
-  #page-acesso #acesso-membros .access-member-list{grid-template-columns:1fr}
+  #page-acesso #acesso-membros .access-member-table{min-width:760px}
   #page-perfil .profile-grid{grid-template-columns:1fr}
   #page-perfil .profile-side-stack{grid-template-columns:1fr}
   #page-perfil .profile-secondary-grid{grid-template-columns:1fr}
@@ -815,8 +821,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   #page-calendario .calendar-upcoming-actions .btn{flex:1 1 100%}
   #page-crm #crm-clientes .crm-client-facts{grid-template-columns:1fr}
   #page-crm #crm-clientes .crm-client-actions .btn{flex:1 1 100%}
-  #page-acesso #acesso-membros .access-member-meta{grid-template-columns:1fr}
-  #page-acesso #acesso-membros .access-member-actions .btn{flex:1 1 100%}
+  #page-acesso #acesso-membros .access-member-table{min-width:680px}
   #page-perfil .profile-meta-grid{grid-template-columns:1fr}
   #page-perfil .profile-actions .btn{flex:1 1 100%;justify-content:center}
   #page-perfil .profile-secondary-grid{grid-template-columns:1fr}
@@ -1359,7 +1364,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
       <div class="tab" id="acesso-tab-perfis" onclick="setTab('acesso','perfis')">Perfis e Permissões</div>
     </div>
     <div id="acesso-membros">
-      <div class="access-member-list" id="membros-tbody"></div>
+      <div class="access-members-shell" id="membros-tbody"></div>
     </div>
     <div id="acesso-perfis" class="hidden-panel">
       <div class="access-grid" id="perfis-grid"></div>
