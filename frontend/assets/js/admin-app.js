@@ -903,6 +903,7 @@ async function ensureProfileAvatarAsset({ force = false, silent = true } = {}) {
       loading: false,
     };
     renderProfile();
+    renderHome();
     return resolved.url;
   } catch (error) {
     state.profileAvatarAsset = {
@@ -2906,6 +2907,34 @@ function renderProfileAvatar(profile) {
   return `<img class="profile-avatar-image" src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(profile?.name || "Foto do perfil")}" loading="lazy" referrerpolicy="no-referrer">`;
 }
 
+function renderUserAvatar(user, className = "avatar av-pink") {
+  const safeClassName = escapeHtml(className);
+  const fallback = `<div class="${safeClassName}">${escapeHtml(getInitials(user?.name || "ONE"))}</div>`;
+  const avatarUrl = String(user?.avatar_url || "").trim();
+
+  if (!avatarUrl) {
+    return fallback;
+  }
+
+  const isCurrentUser = Number(user?.id) === Number(state.session?.user?.id);
+
+  if (isCurrentUser && state.profileAvatarAsset.source === avatarUrl && state.profileAvatarAsset.url) {
+    return `<img class="${safeClassName} avatar-photo" src="${escapeHtml(state.profileAvatarAsset.url)}" alt="${escapeHtml(user?.name || "Foto do membro")}" loading="lazy" referrerpolicy="no-referrer">`;
+  }
+
+  if (!isProtectedAssetUrl(avatarUrl)) {
+    return `<img class="${safeClassName} avatar-photo" src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(user?.name || "Foto do membro")}" loading="lazy" referrerpolicy="no-referrer">`;
+  }
+
+  if (isCurrentUser && (!state.profileAvatarAsset.loading || state.profileAvatarAsset.source !== avatarUrl)) {
+    window.setTimeout(() => {
+      ensureProfileAvatarAsset({ silent: true }).catch(() => {});
+    }, 0);
+  }
+
+  return fallback;
+}
+
 function getProfileModuleLabels(role) {
   return (PAGE_ACCESS[role] || [])
     .map((page) => PAGE_LABELS[page])
@@ -3716,7 +3745,7 @@ function renderHome() {
             (user) => `
               <div class="team-member-row">
                 <div class="team-member">
-                  <div class="avatar av-pink">${getInitials(user.name)}</div>
+                  ${renderUserAvatar(user)}
                   <div class="team-member-info">
                     <div class="team-member-name">${escapeHtml(user.name)}</div>
                     <div class="team-member-role">${ROLE_LABELS[user.role]}</div>
