@@ -1971,24 +1971,35 @@ function getRecentMonthBuckets(count = 6) {
   });
 }
 
-function getInvoiceRevenueSeries(count = 6) {
+function appendMonthlySeriesValue(totals, referenceDate, amount) {
+  const date = new Date(referenceDate);
+  if (Number.isNaN(date.getTime())) {
+    return;
+  }
+
+  const key = `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}`;
+  if (!totals.has(key)) {
+    return;
+  }
+
+  totals.set(key, totals.get(key) + Number(amount || 0));
+}
+
+function getFinancialRevenueSeries(count = 6) {
   const buckets = getRecentMonthBuckets(count);
   const totals = new Map(buckets.map((bucket) => [bucket.key, 0]));
 
-  state.invoices.forEach((invoice) => {
-    const referenceDate = invoice.paid_at || invoice.due_date || invoice.created_at;
-    const date = new Date(referenceDate);
-    if (Number.isNaN(date.getTime())) {
-      return;
-    }
+  state.invoices
+    .filter((invoice) => isInvoicePaidStatus(invoice.status))
+    .forEach((invoice) => {
+      appendMonthlySeriesValue(totals, invoice.paid_at || invoice.due_date || invoice.created_at, invoice.amount);
+    });
 
-    const key = `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}`;
-    if (!totals.has(key)) {
-      return;
-    }
-
-    totals.set(key, totals.get(key) + Number(invoice.amount || 0));
-  });
+  state.charges
+    .filter((charge) => isChargeReceivedStatus(charge.status))
+    .forEach((charge) => {
+      appendMonthlySeriesValue(totals, charge.received_at || charge.paid_at || charge.due_date || charge.created_at, charge.amount);
+    });
 
   return {
     labels: buckets.map((bucket) => bucket.label),
@@ -3603,7 +3614,7 @@ function renderHome() {
 
   if (topCards[1]) {
     if (hasRoleDataAccess("homeFinancial")) {
-      const revenueSeries = getInvoiceRevenueSeries(6);
+      const revenueSeries = getFinancialRevenueSeries(6);
       topCards[1].innerHTML = `
         <div class="section-header"><div><div class="section-title">Faturamento — Últimos 6 meses</div></div></div>
         <div class="chart-bar-wrap" id="home-chart"></div>
