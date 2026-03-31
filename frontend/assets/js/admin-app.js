@@ -5528,6 +5528,20 @@ function renderFinance() {
     .join("") || UI.empty("Nenhum custo registrado", "Os lançamentos de custo por categoria aparecerão aqui.");
 
   const canManageInvoices = ["admin", "comercial"].includes(state.session.user.role);
+  const costRows = finance.filteredCosts.map(
+    (entry) => `
+        <div class="charge-item">
+          <div class="charge-head">
+            <div>
+              <div class="charge-name">${escapeHtml(entry.client_name || "Equipe interna")}</div>
+              <div class="charge-sub">${escapeHtml(getCostCategoryLabel(entry.category))} · ${formatDate(entry.incurred_on || entry.created_at)} · ${formatCurrency(entry.amount)}</div>
+            </div>
+            <span class="badge badge-blue">${escapeHtml(getCostCategoryLabel(entry.category))}</span>
+          </div>
+          <div class="charge-desc">${escapeHtml(entry.description || "Custo lançado sem descrição complementar")}</div>
+        </div>
+    `
+  );
   const chargeRows = finance.filteredCharges.map(
     (charge) => `
         <div class="charge-item">
@@ -5577,7 +5591,8 @@ function renderFinance() {
     );
 
   document.getElementById("fin-comissoes").innerHTML =
-    [...chargeRows, ...invoiceRows].join("") || UI.empty("Nenhum lançamento financeiro cadastrado", "Use o filtro de período ou registre cobranças e faturas.");
+    [...costRows, ...chargeRows, ...invoiceRows].join("")
+    || UI.empty("Nenhum lançamento financeiro cadastrado", "Use o filtro de período ou registre custos, cobranças e faturas.");
 
   bindLegacyInlineHandlers(document.getElementById("page-financeiro"));
 }
@@ -6859,7 +6874,7 @@ function openModal(type, id = null) {
     html = modalFormWrapper(
       "Nova fatura",
       `
-        <div class="field"><label>Cliente</label><select name="client_id">${clientOptions("")}</select></div>
+        <div class="field"><label>Vínculo</label><select name="client_id"><option value="">Equipe interna</option>${clientOptions("")}</select></div>
         <div class="field"><label>Valor</label><input type="number" step="0.01" name="amount" required></div>
         <div class="field"><label>Status</label><select name="status">${invoiceStatusOptions("Em aberto")}</select></div>
         <div class="field"><label>Vencimento</label><input type="date" name="due_date"></div>
@@ -7133,7 +7148,7 @@ async function submitModal(event, type, id) {
     }
 
     if (type === "novo-custo") {
-      const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["incurred_on"]);
+      const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["client_id", "incurred_on"]);
       delete payload.amount_display;
       await apiFetch("/cost-entries", {
         method: "POST",

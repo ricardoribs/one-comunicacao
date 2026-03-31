@@ -8,6 +8,8 @@ exports.list = asyncHandler(async (req, res) => {
 });
 
 exports.create = asyncHandler(async (req, res) => {
-  await ensureClientAccess(req.user, req.body.client_id);
+  if (req.body.client_id) {
+    await ensureClientAccess(req.user, req.body.client_id);
+  }
   res.status(201).json(await costEntryModel.create(req.body, req.user));
 });

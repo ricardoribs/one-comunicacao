@@ -96,7 +96,7 @@ CREATE TABLE invoices (
 
 CREATE TABLE cost_entries (
   id SERIAL PRIMARY KEY,
-  client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
   created_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   category VARCHAR(30) NOT NULL DEFAULT 'operacao',
   description TEXT NOT NULL,
