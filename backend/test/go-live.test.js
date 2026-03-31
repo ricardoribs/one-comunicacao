@@ -104,6 +104,45 @@ test('listagem de usuarios omite metadados sensiveis no endpoint principal', { c
   await userModel.remove(admin.id);
 });
 
+test('financeiro interno permite lançar e listar custos por cliente', { concurrency: false }, async () => {
+  const suffix = Date.now() + 210;
+  const admin = await createUser({
+    name: `Admin Cost ${suffix}`,
+    email: `admin.cost.${suffix}@one.test`,
+    role: 'admin',
+  });
+  const clientId = await createClient(`Cliente Cost ${suffix}`, `Empresa Cost ${suffix}`, admin.id);
+
+  const auth = await login(admin.email);
+  const created = await request(app)
+    .post('/api/cost-entries')
+    .set('Authorization', `Bearer ${auth.body.accessToken}`)
+    .send({
+      client_id: clientId,
+      category: 'operacao',
+      description: 'Deslocamento da equipe',
+      amount: 1250.5,
+      incurred_on: '2026-03-31',
+    });
+
+  assert.equal(created.status, 201);
+  assert.equal(created.body.client_id, clientId);
+  assert.equal(created.body.category, 'operacao');
+  assert.equal(Number(created.body.amount), 1250.5);
+
+  const listed = await request(app)
+    .get('/api/cost-entries')
+    .set('Authorization', `Bearer ${auth.body.accessToken}`);
+
+  assert.equal(listed.status, 200);
+  assert.equal(Array.isArray(listed.body), true);
+  assert.equal(listed.body.some((entry) => Number(entry.id) === Number(created.body.id)), true);
+
+  await pool.query('DELETE FROM cost_entries');
+  await pool.query('DELETE FROM clients WHERE id = $1', [clientId]);
+  await userModel.remove(admin.id);
+});
+
 test('calendario interno permite leitura para a equipe e escrita apenas para admin ou gestor', { concurrency: false }, async () => {
   const suffix = Date.now() + 205;
   const admin = await createUser({

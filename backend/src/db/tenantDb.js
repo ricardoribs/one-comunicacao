@@ -11,6 +11,7 @@ const TENANT_TABLES = new Set([
   'materials',
   'files',
   'invoices',
+  'cost_entries',
   'metrics',
   'charges',
   'reports',

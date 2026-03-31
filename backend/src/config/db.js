@@ -138,6 +138,17 @@ function createPgMemPool() {
       created_at TIMESTAMP NOT NULL DEFAULT NOW()
     );
 
+    CREATE TABLE cost_entries (
+      id SERIAL PRIMARY KEY,
+      client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+      created_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      category VARCHAR(30) NOT NULL DEFAULT 'operacao',
+      description TEXT NOT NULL,
+      amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
+      incurred_on DATE,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+
     CREATE TABLE campaigns (
       id SERIAL PRIMARY KEY,
       client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
