@@ -1958,6 +1958,20 @@ function normalizeChargeStatus(status) {
   return String(status || "").trim();
 }
 
+function isChargeReceivedStatus(status) {
+  const raw = String(status || "").trim().toUpperCase();
+  return raw === "RECEIVED" || raw === "PAID";
+}
+
+function isChargeOpenStatus(status) {
+  const raw = String(status || "").trim().toUpperCase();
+  return raw === "PENDING" || raw === "OVERDUE";
+}
+
+function isInvoicePaidStatus(status) {
+  return String(status || "").trim().toLowerCase() === "pago";
+}
+
 function getChannelBadgeClass(channel) {
   const value = String(channel || "").toLowerCase();
   if (value.includes("google")) return "badge-gray";
@@ -4929,9 +4943,23 @@ function renderFinance() {
   });
 
   const totalRevenue = state.invoices.reduce((acc, invoice) => acc + Number(invoice.amount || 0), 0);
-  const paidRevenue = state.invoices.filter((invoice) => invoice.status === "Pago").reduce((acc, invoice) => acc + Number(invoice.amount || 0), 0);
-  const openRevenue = state.invoices.filter((invoice) => invoice.status !== "Pago").reduce((acc, invoice) => acc + Number(invoice.amount || 0), 0);
+  const paidRevenue = state.invoices
+    .filter((invoice) => isInvoicePaidStatus(invoice.status))
+    .reduce((acc, invoice) => acc + Number(invoice.amount || 0), 0);
+  const openRevenue = state.invoices
+    .filter((invoice) => !isInvoicePaidStatus(invoice.status))
+    .reduce((acc, invoice) => acc + Number(invoice.amount || 0), 0);
   const generatedCharges = state.charges.reduce((acc, charge) => acc + Number(charge.amount || 0), 0);
+  const receivedCharges = state.charges
+    .filter((charge) => isChargeReceivedStatus(charge.status))
+    .reduce((acc, charge) => acc + Number(charge.amount || 0), 0);
+  const openCharges = state.charges
+    .filter((charge) => isChargeOpenStatus(charge.status))
+    .reduce((acc, charge) => acc + Number(charge.amount || 0), 0);
+  const receivedTotal = paidRevenue + receivedCharges;
+  const openTotal = openRevenue + openCharges;
+  const receivedEntries = state.invoices.filter((invoice) => isInvoicePaidStatus(invoice.status)).length
+    + state.charges.filter((charge) => isChargeReceivedStatus(charge.status)).length;
   const mediaCost = state.campaigns.reduce((acc, campaign) => acc + Number(campaign.budget || 0), 0);
   const productionCost = state.materials.reduce((acc, material) => acc + Number(material.cost || 0), 0);
   const operationsCost = state.tasks.reduce((acc, task) => acc + Number(task.cost || 0), 0);
@@ -4941,9 +4969,13 @@ function renderFinance() {
   if (financeGrid) {
     financeGrid.innerHTML = [
       { label: "Receita Bruta", value: formatCurrency(totalRevenue), sub: `${state.invoices.length} faturas` },
-      { label: "Recebido", value: formatCurrency(paidRevenue), sub: "status pago" },
+      {
+        label: "Recebido",
+        value: formatCurrency(receivedTotal),
+        sub: receivedEntries ? `${receivedEntries} ${receivedEntries === 1 ? "registro recebido" : "registros recebidos"}` : "Sem recebimentos confirmados"
+      },
       { label: "Cobranças geradas", value: formatCurrency(generatedCharges), sub: `${state.charges.length} cobranças` },
-      { label: "Lucro Líquido", value: formatCurrency(netProfit), sub: `${formatCurrency(openRevenue)} em aberto` }
+      { label: "Lucro Líquido", value: formatCurrency(netProfit), sub: `${formatCurrency(openTotal)} em aberto` }
     ]
       .map(
         (item) => `
@@ -4976,7 +5008,7 @@ function renderFinance() {
     { label: "Mídia", value: mediaCost },
     { label: "Produção", value: productionCost },
     { label: "Operação", value: operationsCost },
-    { label: "Recebido", value: paidRevenue }
+    { label: "Recebido", value: receivedTotal }
   ];
 
   document.getElementById("fin-custos").innerHTML = costBuckets
