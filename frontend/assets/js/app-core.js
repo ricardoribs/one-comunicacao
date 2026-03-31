@@ -1,5 +1,8 @@
 (function bootstrapOneApp() {
   const API_BASE = window.ONE_CONFIG?.apiBase || "/api";
+  const API_URL = new URL(API_BASE, window.location.origin);
+  const API_ORIGIN = API_URL.origin;
+  const API_PATHNAME = API_URL.pathname.replace(/\/$/, "");
   const CHANNEL_NAME = "one_auth_channel";
   const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
   const REQUEST_TIMEOUT_MS = 10000;
@@ -83,13 +86,49 @@
     logoutListeners.forEach((listener) => listener(reason));
   }
 
+  function buildOriginUrl(path) {
+    if (!path) {
+      return API_ORIGIN;
+    }
+
+    if (/^[a-z]+:\/\//i.test(path)) {
+      return path;
+    }
+
+    const normalized = String(path).startsWith("/") ? String(path) : `/${String(path)}`;
+    return `${API_ORIGIN}${normalized}`;
+  }
+
+  function buildApiUrl(path) {
+    if (!path) {
+      return API_URL.toString();
+    }
+
+    const normalized = String(path);
+    if (/^[a-z]+:\/\//i.test(normalized)) {
+      return normalized;
+    }
+
+    if (
+      normalized === API_PATHNAME ||
+      normalized.startsWith(`${API_PATHNAME}/`) ||
+      normalized === "/api" ||
+      normalized.startsWith("/api/")
+    ) {
+      return buildOriginUrl(normalized);
+    }
+
+    const suffix = normalized.startsWith("/") ? normalized : `/${normalized}`;
+    return `${API_ORIGIN}${API_PATHNAME}${suffix}`;
+  }
+
   async function refreshSession() {
     if (refreshInFlight) {
       return refreshInFlight;
     }
 
     refreshInFlight = (async () => {
-      const response = await fetch(`${API_BASE}/auth/refresh`, {
+      const response = await fetch(buildApiUrl("/auth/refresh"), {
         method: "POST",
         credentials: "include"
       });
@@ -149,7 +188,7 @@
     const timeout = setTimeout(() => controller.abort(), options.timeoutMs || REQUEST_TIMEOUT_MS);
 
     try {
-      const response = await fetch(`${API_BASE}${path}`, {
+      const response = await fetch(buildApiUrl(path), {
         ...options,
         headers,
         credentials: "include",
@@ -223,7 +262,7 @@
         throw new Error("Sua sessão expirou. Faça login novamente.");
       }
 
-      const response = await fetch(url, {
+      const response = await fetch(buildOriginUrl(url), {
         method: "GET",
         headers: {
           Authorization: `Bearer ${accessToken}`
@@ -248,7 +287,7 @@
 
   async function logout(options = {}) {
     try {
-      await fetch(`${API_BASE}/auth/logout`, {
+      await fetch(buildApiUrl("/auth/logout"), {
         method: "POST",
         credentials: "include"
       });
@@ -310,6 +349,8 @@
 
   window.ONE_APP = {
     apiBase: API_BASE,
+    buildApiUrl,
+    buildOriginUrl,
     loadSession,
     saveSession,
     clearSession,
