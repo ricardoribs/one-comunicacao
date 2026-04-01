@@ -122,28 +122,42 @@ function buildBrandManual(clientName, tone, restrictions, cta) {
 }
 
 async function ensureDatabaseExists() {
-  const databaseUrl = new URL(env.databaseUrl);
-  const isLocalDatabase = ['localhost', '127.0.0.1', '::1'].includes(databaseUrl.hostname);
+  const resolvedHost = env.databaseHost || new URL(env.databaseUrl).hostname;
+  const resolvedPort = env.databaseHost ? env.databasePort : new URL(env.databaseUrl).port;
+  const resolvedName = env.databaseHost
+    ? env.databaseName
+    : decodeURIComponent(new URL(env.databaseUrl).pathname.replace(/^\//, ''));
+  const isLocalDatabase = ['localhost', '127.0.0.1', '::1'].includes(resolvedHost);
 
   if (!isLocalDatabase) {
     console.log('[showcase] Banco remoto detectado; pulando criacao/verificacao administrativa.');
     return;
   }
 
-  const databaseName = decodeURIComponent(databaseUrl.pathname.replace(/^\//, ''));
-  const adminUrl = new URL(env.databaseUrl);
-  adminUrl.pathname = '/postgres';
+  const clientConfig = env.databaseHost && env.databaseUser && env.databaseName
+    ? {
+        host: env.databaseHost,
+        port: resolvedPort,
+        database: 'postgres',
+        user: env.databaseUser,
+        password: env.databasePassword,
+      }
+    : (() => {
+        const adminUrl = new URL(env.databaseUrl);
+        adminUrl.pathname = '/postgres';
+        return { connectionString: adminUrl.toString() };
+      })();
 
-  const client = new Client({ connectionString: adminUrl.toString() });
+  const client = new Client(clientConfig);
   await client.connect();
   try {
-    const { rows } = await client.query('SELECT 1 FROM pg_database WHERE datname = $1', [databaseName]);
+    const { rows } = await client.query('SELECT 1 FROM pg_database WHERE datname = $1', [resolvedName]);
     if (!rows.length) {
-      const safeName = `"${databaseName.replace(/"/g, '""')}"`;
+      const safeName = `"${resolvedName.replace(/"/g, '""')}"`;
       await client.query(`CREATE DATABASE ${safeName}`);
-      console.log(`[showcase] Banco criado: ${databaseName}`);
+      console.log(`[showcase] Banco criado: ${resolvedName}`);
     } else {
-      console.log(`[showcase] Banco encontrado: ${databaseName}`);
+      console.log(`[showcase] Banco encontrado: ${resolvedName}`);
     }
   } finally {
     await client.end();
