@@ -7534,6 +7534,7 @@ async function deleteUser(id) {
 async function boot() {
   bindSidebarInteractions();
   bindLegacyInlineHandlers();
+  bindDataActions();
   syncSidebarShell();
   APP.registerActivityTracking();
   APP.onLogout((reason) => {
