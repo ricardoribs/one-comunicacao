@@ -5320,20 +5320,65 @@ function renderTraffic() {
   document.getElementById("trafego-tbody").innerHTML = state.campaigns
     .map((campaign) => {
       const view = getCampaignViewModel(campaign);
+      const campaignMetrics = state.metrics.filter((metric) => Number(metric.campaign_id) === Number(view.id));
+      const impressions = sumBy(campaignMetrics, (metric) => metric.impressions);
+      const clicks = sumBy(campaignMetrics, (metric) => metric.clicks);
+      const leads = sumBy(campaignMetrics, (metric) => metric.leads);
+      const revenue = sumBy(campaignMetrics, (metric) => metric.revenue);
+      const budget = Number(view.budget || 0);
+      const cpc = clicks ? budget / clicks : 0;
+      const ctrValue = impressions ? (clicks / impressions) * 100 : 0;
+      const conversionValue = clicks ? (leads / clicks) * 100 : 0;
+      const roasValue = budget ? revenue / budget : 0;
       return `
         <tr>
-          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(view.name)}">${escapeHtml(view.name)}</span></td>
-          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(view.client_name)}">${escapeHtml(view.client_name)}</span></td>
-          <td><span class="badge ${getChannelBadgeClass(view.channel)}">${escapeHtml(view.channel)}</span></td>
-          <td data-align="right"><span class="${getValueToneClass(view.budget)}">${formatCurrencyValue(view.budget)}</span></td>
-          <td data-align="right"><span class="${getValueToneClass(view.leads)}">${formatNumber(view.leads)}</span></td>
-          <td data-align="right"><span class="${getValueToneClass(view.revenue)}">${formatCurrencyValue(view.revenue)}</span></td>
-          <td data-align="right"><span class="${Number(view.roi || 0) === 0 ? "value-zero" : "value-strong"}">${Number(view.roi || 0).toFixed(2)}%</span></td>
-          <td><span class="badge ${getCampaignStatusBadgeClass(view.status)}">${escapeHtml(getDisplayText(view.status, "Planejamento"))}</span></td>
+          <td class="cell-stack traffic-campaign-main">
+            <span class="cell-title" title="${escapeHtml(view.name)}">${escapeHtml(view.name)}</span>
+          </td>
+          <td class="traffic-cell traffic-client-cell">
+            <div class="traffic-cell-left">
+              <span class="cell-sub" title="${escapeHtml(view.client_name)}">${escapeHtml(view.client_name)}</span>
+            </div>
+          </td>
+          <td class="traffic-cell traffic-platform-cell">
+            <div class="traffic-cell-center">
+              <span class="badge ${getChannelBadgeClass(view.channel)}">${escapeHtml(view.channel)}</span>
+            </div>
+          </td>
+          <td class="traffic-cell traffic-budget-cell">
+            <div class="traffic-cell-right">
+              <span class="${getValueToneClass(budget)}">${formatCurrencyValue(budget)}</span>
+            </div>
+          </td>
+          <td class="traffic-cell traffic-cpc-cell">
+            <div class="traffic-cell-right">
+              <span class="${cpc > 0 ? "value-strong" : "value-zero"}">${formatCurrencyValue(cpc)}</span>
+            </div>
+          </td>
+          <td class="traffic-cell traffic-ctr-cell">
+            <div class="traffic-cell-right">
+              <span class="${ctrValue > 0 ? "value-strong" : "value-zero"}">${ctrValue.toFixed(2)}%</span>
+            </div>
+          </td>
+          <td class="traffic-cell traffic-conv-cell">
+            <div class="traffic-cell-right">
+              <span class="${conversionValue > 0 ? "value-strong" : "value-zero"}">${conversionValue.toFixed(2)}%</span>
+            </div>
+          </td>
+          <td class="traffic-cell traffic-roas-cell">
+            <div class="traffic-cell-right">
+              <span class="${roasValue > 0 ? "value-strong" : "value-zero"}">${roasValue.toFixed(1)}x</span>
+            </div>
+          </td>
+          <td class="traffic-cell traffic-status-cell">
+            <div class="traffic-cell-center">
+              <span class="badge ${getCampaignStatusBadgeClass(view.status)}">${escapeHtml(getDisplayText(view.status, "Planejamento"))}</span>
+            </div>
+          </td>
         </tr>
       `;
     })
-    .join("") || UI.tableEmpty(8, "Nenhum dado de tráfego disponível", "Publique campanhas para visualizar métricas e evolução de mídia.");
+    .join("") || UI.tableEmpty(9, "Nenhum dado de tráfego disponível", "Publique campanhas para visualizar métricas e evolução de mídia.");
 }
 
 function getFilteredMetrics() {
