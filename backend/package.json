@@ -12,6 +12,7 @@
     "db:migrate": "node src/db/migrate.js up",
     "db:migrate:down": "node src/db/migrate.js down 1",
     "db:seed": "node src/db/seed.js",
+    "db:showcase": "node scripts/ingest-showcase-data.js",
     "bootstrap:admin": "node src/db/bootstrap-admin.js",
     "bootstrap:user": "node src/db/bootstrap-user.js",
     "test": "cross-env NODE_ENV=test node --test \"test/**/*.test.js\"",
