@@ -626,23 +626,35 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-analytics #integrations-tbody td:nth-child(4) .cell-sub{white-space:normal}
 #page-analytics #integrations-tbody td:nth-child(7){text-align:right}
 #page-analytics #integrations-tbody .table-actions{justify-content:flex-end}
-#page-trafego .traffic-table{min-width:980px;table-layout:auto}
-#page-trafego .traffic-table th:nth-child(1){width:18%}
-#page-trafego .traffic-table th:nth-child(2){width:16%}
-#page-trafego .traffic-table th:nth-child(3){width:12%}
-#page-trafego .traffic-table th:nth-child(4){width:12%}
-#page-trafego .traffic-table th:nth-child(5){width:10%}
-#page-trafego .traffic-table th:nth-child(6){width:8%}
-#page-trafego .traffic-table th:nth-child(7){width:8%}
-#page-trafego .traffic-table th:nth-child(8){width:8%}
-#page-trafego .traffic-table th:nth-child(9){width:8%}
-#page-trafego #trafego-tbody td{vertical-align:top}
-#page-trafego #trafego-tbody td:nth-child(1),
-#page-trafego #trafego-tbody td:nth-child(2),
-#page-trafego #trafego-tbody td:nth-child(3){white-space:normal}
-#page-trafego #trafego-tbody td:nth-child(1) .cell-title,
-#page-trafego #trafego-tbody td:nth-child(1) .cell-sub,
-#page-trafego #trafego-tbody td:nth-child(2) .cell-sub{white-space:normal}
+#page-trafego .traffic-overview-grid{margin-top:var(--space-5);margin-bottom:var(--space-6);grid-auto-rows:1fr;align-items:stretch}
+#page-trafego .traffic-overview-card{min-height:248px}
+#page-trafego .traffic-overview-card .progress-stack,
+#page-trafego .traffic-overview-card .team-list{flex:1}
+#page-trafego .traffic-table-card{margin-top:0}
+#page-trafego .traffic-table{min-width:1080px;table-layout:fixed}
+#page-trafego .traffic-table th:nth-child(1){width:20%;text-align:left}
+#page-trafego .traffic-table th:nth-child(2){width:18%;text-align:left}
+#page-trafego .traffic-table th:nth-child(3){width:14%;text-align:center}
+#page-trafego .traffic-table th:nth-child(4){width:12%;text-align:right}
+#page-trafego .traffic-table th:nth-child(5){width:10%;text-align:right}
+#page-trafego .traffic-table th:nth-child(6){width:8%;text-align:right}
+#page-trafego .traffic-table th:nth-child(7){width:8%;text-align:right}
+#page-trafego .traffic-table th:nth-child(8){width:10%;text-align:right}
+#page-trafego .traffic-table th:nth-child(9){width:10%;text-align:center}
+#page-trafego #trafego-tbody td{vertical-align:top;padding-top:var(--space-4);padding-bottom:var(--space-4)}
+#page-trafego #trafego-tbody .traffic-campaign-main .cell-title,
+#page-trafego #trafego-tbody .traffic-client-cell .cell-sub{white-space:normal;line-height:1.45}
+#page-trafego #trafego-tbody .traffic-cell{vertical-align:middle}
+#page-trafego #trafego-tbody .traffic-cell-left,
+#page-trafego #trafego-tbody .traffic-cell-center,
+#page-trafego #trafego-tbody .traffic-cell-right{display:flex;min-height:88px}
+#page-trafego #trafego-tbody .traffic-cell-left{align-items:center;justify-content:flex-start;text-align:left}
+#page-trafego #trafego-tbody .traffic-cell-center{align-items:center;justify-content:center;text-align:center}
+#page-trafego #trafego-tbody .traffic-cell-right{flex-direction:column;align-items:flex-end;justify-content:center;text-align:right;gap:4px}
+#page-trafego #trafego-tbody .traffic-platform-cell .badge,
+#page-trafego #trafego-tbody .traffic-status-cell .badge{margin:0 auto}
+#page-trafego #trafego-tbody .traffic-cell-right .cell-sub{white-space:normal;line-height:1.45;text-align:right}
+#page-trafego #trafego-tbody tr + tr td{border-top:1px solid rgba(13,13,15,.05)}
 
 #page-crm #crm-clientes .crm-client-table{min-width:980px;table-layout:fixed}
 #page-crm #crm-clientes .crm-client-table th:nth-child(1){width:28%;text-align:left}
@@ -1349,8 +1361,8 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
       <div class="kpi-card"><div class="kpi-label">CTR Médio</div><div class="kpi-val">0.0%</div><div class="kpi-sub">todas as plataformas</div></div>
       <div class="kpi-card"><div class="kpi-label">Impressões</div><div class="kpi-val">0</div><div class="kpi-sub">este mês</div></div>
     </div>
-    <div class="two-col mt-5">
-      <div class="card">
+    <div class="two-col traffic-overview-grid">
+      <div class="card traffic-overview-card">
         <div class="section-title card-title-spacing">Campanhas por Plataforma</div>
         <div class="progress-stack" id="traffic-platform-breakdown">
           <div class="empty-state is-no-icon is-plain">
@@ -1358,12 +1370,12 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
           </div>
         </div>
       </div>
-      <div class="card">
+      <div class="card traffic-overview-card">
         <div class="section-title card-title-spacing">Testes A/B Ativos</div>
         <div class="team-list" id="ab-list"></div>
       </div>
     </div>
-    <div class="card">
+    <div class="card traffic-table-card">
       <div class="section-header"><div class="section-title">Campanhas Detalhadas</div></div>
       <div class="table-wrap">
         <table class="traffic-table">
