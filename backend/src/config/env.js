@@ -61,7 +61,6 @@ module.exports = {
   cloudinaryApiKey: process.env.CLOUDINARY_API_KEY || '',
   cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || '',
   appBaseUrl: process.env.APP_BASE_URL || '',
-  showcaseIngestEnabled: process.env.SHOWCASE_INGEST_ENABLED === 'true',
   geoLookupEnabled: process.env.GEO_LOOKUP_ENABLED !== 'false',
   geoLookupTimeoutMs: Number(process.env.GEO_LOOKUP_TIMEOUT_MS || 1200),
   geoLookupCacheTtlMs: Number(process.env.GEO_LOOKUP_CACHE_TTL_MS || 6 * 60 * 60 * 1000),
