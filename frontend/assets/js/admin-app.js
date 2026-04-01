@@ -4734,6 +4734,43 @@ function updateKanbanDragPreviewPosition(event) {
   kanbanRuntime.dragPreviewEl.style.top = `${top}px`;
 }
 
+function resolveKanbanColumnFromEvent(board, event) {
+  if (!board || !event) {
+    return null;
+  }
+
+  const directColumn = event.target?.closest?.("[data-kanban-column]");
+  if (directColumn?.dataset?.kanbanColumn) {
+    return directColumn;
+  }
+
+  const dropzone = event.target?.closest?.("[data-kanban-dropzone]");
+  const dropzoneColumn = dropzone?.closest?.("[data-kanban-column]");
+  if (dropzoneColumn?.dataset?.kanbanColumn) {
+    return dropzoneColumn;
+  }
+
+  const clientX = Number(event.clientX);
+  const clientY = Number(event.clientY);
+  if (Number.isFinite(clientX) && Number.isFinite(clientY)) {
+    const pointEl = document.elementFromPoint(clientX, clientY);
+    const pointColumn = pointEl?.closest?.("[data-kanban-column]");
+    if (pointColumn?.dataset?.kanbanColumn) {
+      return pointColumn;
+    }
+
+    const columns = Array.from(board.querySelectorAll("[data-kanban-column]"));
+    for (const column of columns) {
+      const rect = column.getBoundingClientRect();
+      if (clientX >= rect.left && clientX <= rect.right) {
+        return column;
+      }
+    }
+  }
+
+  return null;
+}
+
 function setupKanbanScrollSync() {
   const board = document.getElementById("kanban-board");
   const topScroll = document.getElementById("kanban-top-scroll");
@@ -4813,9 +4850,8 @@ function bindKanbanBoardInteractions() {
       if (event.dataTransfer) {
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", card.dataset.taskId);
-        createKanbanDragPreview(card);
-        updateKanbanDragPreviewPosition(event);
-        event.dataTransfer.setDragImage(getKanbanTransparentDragImage(), 0, 0);
+        const preview = createKanbanDragPreview(card);
+        event.dataTransfer.setDragImage(preview, 24, 24);
       }
       card.classList.add("is-drag-source");
     });
@@ -4839,14 +4875,12 @@ function bindKanbanBoardInteractions() {
       return;
     }
 
-    const dropzone = event.target.closest("[data-kanban-dropzone]");
-    const column = dropzone?.closest("[data-kanban-column]") || event.target.closest("[data-kanban-column]");
+    const column = resolveKanbanColumnFromEvent(board, event);
     if (!column || !column.dataset.kanbanColumn) {
       return;
     }
 
     event.preventDefault();
-    updateKanbanDragPreviewPosition(event);
     clearDropTargets();
     column.classList.add("is-drop-target");
     if (event.dataTransfer) {
@@ -4871,8 +4905,7 @@ function bindKanbanBoardInteractions() {
       return;
     }
 
-    const dropzone = event.target.closest("[data-kanban-dropzone]");
-    const column = dropzone?.closest("[data-kanban-column]") || event.target.closest("[data-kanban-column]");
+    const column = resolveKanbanColumnFromEvent(board, event);
     event.preventDefault();
     document.body.classList.remove("kanban-drag-active");
     clearDropTargets();
@@ -4884,7 +4917,7 @@ function bindKanbanBoardInteractions() {
       return;
     }
 
-    await moveTaskToColumn(taskId, column.dataset.kanbanColumn);
+    void moveTaskToColumn(taskId, column.dataset.kanbanColumn);
   });
 
   board.dataset.boundKanbanBoard = "1";
