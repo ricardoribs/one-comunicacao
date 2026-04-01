@@ -169,23 +169,26 @@ body.sidebar-open #sidebar-backdrop{display:block;opacity:1}
 .notification-trigger:hover{border-color:rgba(232,52,105,.32);color:var(--pink)}
 .notification-trigger svg{width:18px;height:18px;fill:currentColor}
 .notification-badge{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center;background:var(--pink);color:#fff;font-size:10px;font-weight:700;letter-spacing:.04em;border-radius:999px;box-shadow:0 8px 16px rgba(232,52,105,.24)}
-.notification-panel{position:absolute;top:calc(100% + 10px);right:0;width:min(360px,calc(100vw - 32px));background:var(--white);border:1px solid var(--border);box-shadow:0 24px 40px rgba(13,13,15,.14);display:none;flex-direction:column;max-height:420px;overflow:hidden;z-index:140;border-radius:2px}
+.notification-panel{position:absolute;top:calc(100% + 10px);right:0;width:min(380px,calc(100vw - 32px));background:var(--white);border:1px solid var(--border);box-shadow:0 24px 40px rgba(13,13,15,.14);display:none;flex-direction:column;max-height:420px;overflow:hidden;z-index:140;border-radius:6px}
 .notification-shell.open .notification-panel{display:flex}
-.notification-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3);padding:var(--space-4);border-bottom:1px solid var(--border);background:#fcfbf9}
+.notification-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3);padding:var(--space-4);border-bottom:1px solid var(--border);background:#fdfcfa}
 .notification-panel-head strong{display:block;font-size:var(--text-sm);font-weight:700;color:var(--text)}
 .notification-panel-head span{display:block;margin-top:2px;font-size:var(--text-xs);color:var(--muted)}
-.notification-mark-all{border:none;background:none;color:var(--pink);font-size:var(--text-xs);font-weight:600;cursor:pointer;padding:0}
-.notification-mark-all:hover{color:var(--pink-dark)}
+.notification-mark-all{border:none;background:none;color:var(--text);font-size:var(--text-xs);font-weight:600;cursor:pointer;padding:0}
+.notification-mark-all:hover{color:var(--pink)}
 .notification-list{display:flex;flex-direction:column;overflow-y:auto}
 .notification-item{width:100%;display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-4);background:var(--white);border:none;border-bottom:1px solid var(--border);text-align:left;cursor:pointer;transition:background var(--tr)}
 .notification-item:last-child{border-bottom:none}
-.notification-item:hover{background:var(--gray)}
-.notification-item.is-unread{background:#fff6f9}
+.notification-item:hover{background:#f6f5f3}
+.notification-item.is-unread{background:#fbfaf9;border-left:3px solid var(--pink)}
+.notification-item-head{display:flex;align-items:flex-start;gap:var(--space-3)}
+.notification-item-main{display:flex;flex-direction:column;gap:6px}
+.notification-dot{width:8px;height:8px;border-radius:50%;background:#cfd3d8;flex:0 0 auto;margin-top:6px}
+.notification-item.is-unread .notification-dot{background:var(--pink)}
+.notification-item-title{font-size:var(--text-sm);font-weight:600;line-height:1.4;color:var(--text)}
 .notification-item-body{font-size:var(--text-xs);line-height:1.45;color:var(--muted)}
-.notification-item-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3)}
-.notification-item-title{font-size:var(--text-sm);font-weight:600;line-height:1.45;color:var(--text)}
 .notification-item-meta{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);font-size:var(--text-xs);color:var(--muted)}
-.notification-status{display:inline-flex;align-items:center;justify-content:center;min-height:20px;padding:0 var(--space-2);background:var(--pink-light);color:var(--pink);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:999px}
+.notification-item-action{color:var(--text);font-weight:600}
 .notification-empty{display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-6);font-size:var(--text-sm);color:var(--muted)}
 .notification-empty strong{font-size:var(--text-sm);color:var(--text)}
 

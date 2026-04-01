@@ -2569,13 +2569,15 @@ function buildNotificationPanelHtml() {
               data-notification-entity-id="${item.entity_id || ""}"
             >
               <div class="notification-item-head">
-                <strong class="notification-item-title">${escapeHtml(item.title || "Nova notificação")}</strong>
-                ${isUnreadNotification(item) ? '<span class="notification-status">Novo</span>' : ""}
-              </div>
-              ${item.body ? `<div class="notification-item-body">${escapeHtml(item.body)}</div>` : ""}
-              <div class="notification-item-meta">
-                <span>${escapeHtml(formatNotificationTime(item.created_at))}</span>
-                <span>${action}</span>
+                <span class="notification-dot" aria-hidden="true"></span>
+                <div class="notification-item-main">
+                  <div class="notification-item-title">${escapeHtml(item.title || "Notificação")}</div>
+                  ${item.body ? `<div class="notification-item-body">${escapeHtml(item.body)}</div>` : ""}
+                  <div class="notification-item-meta">
+                    <span>${escapeHtml(formatNotificationTime(item.created_at))}</span>
+                    <span class="notification-item-action">${action}</span>
+                  </div>
+                </div>
               </div>
             </button>
           `;
@@ -2583,8 +2585,8 @@ function buildNotificationPanelHtml() {
         .join("")
     : `
         <div class="notification-empty">
-          <strong>Nenhuma notificação</strong>
-          <span>As novas tarefas e lembretes de agenda aparecerão aqui.</span>
+          <strong>Nenhuma notificação recente</strong>
+          <span>Quando houver movimentações, elas aparecem aqui.</span>
         </div>
       `;
 
@@ -2603,9 +2605,9 @@ function buildNotificationPanelHtml() {
       <div class="notification-panel-head">
         <div>
           <strong>Notificações</strong>
-          <span>${unreadCount ? `${unreadCount} nova${unreadCount > 1 ? "s" : ""}` : "Tudo em dia"}</span>
+          <span>${unreadCount ? `${unreadCount} nova${unreadCount > 1 ? "s" : ""}` : "Sem pendências"}</span>
         </div>
-        <button type="button" class="notification-mark-all" data-notification-mark-all="1">Marcar todas</button>
+        <button type="button" class="notification-mark-all" data-notification-mark-all="1">Marcar como lidas</button>
       </div>
       <div class="notification-list">${itemsHtml}</div>
     </div>
