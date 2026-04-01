@@ -5462,7 +5462,7 @@ function renderAnalytics() {
               <span class="cell-sub" title="${escapeHtml(integration.external_property_id || "-")}">${escapeHtml(integration.external_property_id || "Sem propriedade vinculada")}</span>
             </td>
             <td>${formatDateTime(integration.last_sync_at)}</td>
-            <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(integration.updated_by_name || integration.created_by_name || "-")}">${escapeHtml(integration.updated_by_name || integration.created_by_name || "-")}</span></td>
+            <td class="cell-stack"><span class="cell-title" title="${escapeHtml(integration.updated_by_name || integration.created_by_name || "-")}">${escapeHtml(integration.updated_by_name || integration.created_by_name || "-")}</span></td>
             <td class="cell-actions">
               ${
                 canManageIntegrations()
