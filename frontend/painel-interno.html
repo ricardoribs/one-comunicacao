@@ -603,25 +603,20 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-trafego .table-wrap table td:nth-child(7) .cell-stack,
 #page-trafego .table-wrap table td:nth-child(8) .cell-stack{align-items:flex-end}
 
-#page-crm #crm-clientes .crm-client-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:var(--space-4);align-items:stretch}
-#page-crm #crm-clientes .crm-client-card{background:var(--white);border:1px solid var(--border);padding:var(--space-5);display:flex;flex-direction:column;gap:var(--space-4);min-width:0}
-#page-crm #crm-clientes .crm-client-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3);padding-bottom:var(--space-3);border-bottom:1px solid var(--border)}
-#page-crm #crm-clientes .crm-client-primary{min-width:0;gap:var(--space-1)}
-#page-crm #crm-clientes .crm-client-primary .cell-title{font-size:var(--text-base);line-height:1.35;white-space:normal;overflow:visible;text-overflow:clip}
-#page-crm #crm-clientes .crm-client-primary .cell-sub{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.45}
-#page-crm #crm-clientes .crm-client-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3)}
-#page-crm #crm-clientes .crm-client-fact{display:flex;flex-direction:column;gap:var(--space-1);min-width:0}
-#page-crm #crm-clientes .crm-client-fact-label{font-size:var(--text-2xs);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-#page-crm #crm-clientes .crm-client-fact-value{font-size:var(--text-sm);line-height:1.45;color:var(--text);white-space:normal;overflow:visible;text-overflow:clip}
-#page-crm #crm-clientes .crm-plan-cell{gap:var(--space-2)}
-#page-crm #crm-clientes .crm-plan-cell .badge{width:max-content;max-width:100%}
-#page-crm #crm-clientes .crm-plan-cell .cell-sub,
-#page-crm #crm-clientes .crm-client-fact-mrr .cell-sub{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.45}
-#page-crm #crm-clientes .crm-client-actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);margin-top:auto;padding-top:var(--space-3);border-top:1px solid var(--border)}
-#page-crm #crm-clientes .crm-client-actions .btn{flex:1 1 140px;justify-content:center}
-#page-crm #crm-clientes .empty-state{background:var(--white);border:1px solid var(--border)}
-#page-crm #crm-clientes .crm-client-card-skeleton{pointer-events:none}
-#page-crm #crm-clientes .crm-client-card-skeleton .crm-client-facts{margin-top:var(--space-1)}
+#page-crm #crm-clientes .crm-client-table{min-width:940px}
+#page-crm #crm-clientes .crm-client-table th:nth-child(1){width:30%}
+#page-crm #crm-clientes .crm-client-table th:nth-child(2){width:14%}
+#page-crm #crm-clientes .crm-client-table th:nth-child(3){width:14%}
+#page-crm #crm-clientes .crm-client-table th:nth-child(4){width:10%}
+#page-crm #crm-clientes .crm-client-table th:nth-child(5){width:12%}
+#page-crm #crm-clientes .crm-client-table th:nth-child(6){width:8%}
+#page-crm #crm-clientes .crm-client-table th:nth-child(7){width:12%}
+#page-crm #crm-clientes .crm-client-table td:nth-child(4),
+#page-crm #crm-clientes .crm-client-table td:nth-child(5){white-space:nowrap}
+#page-crm #crm-clientes .crm-client-table td:nth-child(5){text-align:right}
+#page-crm #crm-clientes .crm-client-table td:nth-child(5) .cell-stack{align-items:flex-end}
+#page-crm #crm-clientes .crm-client-table td:nth-child(7){text-align:right}
+#page-crm #crm-clientes .crm-client-table .table-actions{justify-content:flex-end}
 #page-kanban .kanban-top-grid.is-single-card{grid-template-columns:minmax(0,1fr)}
 #page-kanban .brand-manual-card.is-hidden{display:none}
 #page-analytics #analytics-tbody .empty-state.is-analytics-empty{min-height:198px;justify-content:center;align-items:center;text-align:center}
@@ -800,7 +795,6 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .fin-row{gap:var(--space-2)}
   .table-actions,.item-actions,.modal-actions{flex-wrap:wrap}
   #page-calendario .calendar-week-grid{min-width:820px}
-  #page-crm #crm-clientes .crm-client-list{grid-template-columns:1fr}
   #page-acesso #acesso-membros .access-member-table{min-width:760px}
   #page-perfil .profile-grid{grid-template-columns:1fr}
   #page-perfil .profile-side-stack{grid-template-columns:1fr}
@@ -856,8 +850,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .login-footer{padding:var(--space-4)}
   .login-footer-links{flex-wrap:wrap;gap:var(--space-4)}
   #page-calendario .calendar-upcoming-actions .btn{flex:1 1 100%}
-  #page-crm #crm-clientes .crm-client-facts{grid-template-columns:1fr}
-  #page-crm #crm-clientes .crm-client-actions .btn{flex:1 1 100%}
+  #page-crm #crm-clientes .crm-client-table{min-width:720px}
   #page-acesso #acesso-membros .access-member-table{min-width:680px}
   #page-perfil .profile-meta-grid{grid-template-columns:1fr}
   #page-perfil .profile-actions .btn{flex:1 1 100%;justify-content:center}
@@ -1186,7 +1179,22 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
       <div class="pipeline" id="pipeline-board"></div>
     </div>
     <div id="crm-clientes" class="hidden-panel">
-      <div class="crm-client-list" id="clientes-tbody"></div>
+      <div class="table-wrap">
+        <table class="crm-client-table">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Segmento</th>
+              <th>Plano</th>
+              <th>Desde</th>
+              <th>MRR</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="clientes-tbody"></tbody>
+        </table>
+      </div>
     </div>
     <div id="crm-historico" class="hidden-panel">
       <div class="stack-md" id="historico-list"></div>
