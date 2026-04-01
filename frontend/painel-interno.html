@@ -569,11 +569,18 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 .margin-bad{color:#b91c1c;font-weight:600}
 
 #page-financeiro .kpi-val{font-size:clamp(1.2rem,2vw,var(--text-3xl));line-height:1.15}
-#design-grid{align-items:stretch}
-#design-grid > .card,
-#design-grid > .card-sm{display:flex;flex-direction:column;justify-content:space-between;min-height:156px}
-#design-grid .historic-card-head{align-items:flex-start;min-height:72px}
-#design-grid .item-card-actions{margin-top:auto}
+#page-producao .prod-table{min-width:860px}
+#page-producao .prod-table th:nth-child(1){width:38%}
+#page-producao .prod-table th:nth-child(2){width:14%}
+#page-producao .prod-table th:nth-child(3){width:16%}
+#page-producao .prod-table th:nth-child(4){width:14%}
+#page-producao .prod-table th:nth-child(5){width:18%}
+#page-producao .prod-table td:nth-child(4){white-space:nowrap}
+#page-producao .prod-table .prod-deadline.is-overdue{color:#b91c1c;font-weight:600}
+#page-producao .prod-table .table-actions{gap:10px;flex-wrap:nowrap}
+#page-producao .prod-table .table-action-sep{width:1px;height:18px;background:var(--border);display:inline-block}
+.btn-danger-link{border:0;background:none;color:#c24141;font-weight:500;padding:0 var(--space-1)}
+.btn-danger-link:hover{color:#991b1b}
 
 #page-campanhas .table-wrap table th:nth-child(1),#page-campanhas .table-wrap table td:nth-child(1){width:20%}
 #page-campanhas .table-wrap table th:nth-child(2),#page-campanhas .table-wrap table td:nth-child(2){width:16%}
@@ -1224,7 +1231,20 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
       <div class="tab" id="prod-tab-lp" onclick="setTab('prod','lp')">Landing Pages</div>
     </div>
     <div id="prod-design">
-      <div class="three-col" id="design-grid"></div>
+      <div class="table-wrap prod-table-wrap">
+        <table class="prod-table">
+          <thead>
+            <tr>
+              <th>Entrega</th>
+              <th>Tipo</th>
+              <th>Status</th>
+              <th>Prazo</th>
+              <th class="cell-actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="prod-design-tbody"></tbody>
+        </table>
+      </div>
     </div>
     <div id="prod-copy" class="hidden-panel">
       <div class="table-wrap">
