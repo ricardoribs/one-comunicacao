@@ -423,11 +423,15 @@ const state = {
 
 const UI = {
   empty: (msg = "Sem dados no período", sub = "", options = {}) => {
-    const showIcon = options.icon !== false && options.icon !== undefined;
+    const showIcon = options.icon === true || typeof options.icon === "string";
     const showSub = Boolean(options.allowSub && sub);
     return `
       <div class="empty-state${options.className ? ` ${options.className}` : ""}${showIcon ? "" : " is-no-icon"}">
-        ${showIcon ? `<div class="empty-state-icon">${escapeHtml(options.icon || "○")}</div>` : ""}
+        ${
+          showIcon
+            ? `<div class="empty-state-icon">${escapeHtml(options.icon === true ? "○" : options.icon)}</div>`
+            : ""
+        }
         <div class="empty-state-title">${escapeHtml(msg)}</div>
         ${showSub ? `<div class="empty-state-sub">${escapeHtml(sub)}</div>` : ""}
         ${options.actionHtml || ""}
