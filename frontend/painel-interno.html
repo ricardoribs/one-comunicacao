@@ -604,6 +604,24 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-trafego .table-wrap table td:nth-child(7) .cell-stack,
 #page-trafego .table-wrap table td:nth-child(8) .cell-stack{align-items:flex-end}
 #page-analytics #integrations-tbody td{vertical-align:top}
+#page-analytics .integrations-table{min-width:980px;table-layout:auto}
+#page-analytics .integrations-table th:nth-child(1){width:20%}
+#page-analytics .integrations-table th:nth-child(2){width:16%}
+#page-analytics .integrations-table th:nth-child(3){width:10%}
+#page-analytics .integrations-table th:nth-child(4){width:18%}
+#page-analytics .integrations-table th:nth-child(5){width:14%}
+#page-analytics .integrations-table th:nth-child(6){width:14%}
+#page-analytics .integrations-table th:nth-child(7){width:8%}
+#page-analytics #integrations-tbody td:nth-child(1),
+#page-analytics #integrations-tbody td:nth-child(2),
+#page-analytics #integrations-tbody td:nth-child(4){white-space:normal}
+#page-analytics #integrations-tbody td:nth-child(1) .cell-title,
+#page-analytics #integrations-tbody td:nth-child(1) .cell-sub,
+#page-analytics #integrations-tbody td:nth-child(2) .cell-title,
+#page-analytics #integrations-tbody td:nth-child(4) .cell-title,
+#page-analytics #integrations-tbody td:nth-child(4) .cell-sub{white-space:normal}
+#page-analytics #integrations-tbody td:nth-child(7){text-align:right}
+#page-analytics #integrations-tbody .table-actions{justify-content:flex-end}
 
 #page-crm #crm-clientes .crm-client-table{min-width:980px;table-layout:auto}
 #page-crm #crm-clientes .crm-client-table th:nth-child(1){width:28%}
@@ -1365,7 +1383,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
     <div class="card mt-5">
       <div class="section-header"><div class="section-title">Conexões registradas</div></div>
       <div class="table-wrap">
-        <table>
+        <table class="integrations-table">
           <thead><tr><th>Cliente</th><th>Integração</th><th>Status</th><th>Conta / Propriedade</th><th>Última sincronização</th><th>Atualizado por</th><th class="cell-actions">Ações</th></tr></thead>
           <tbody id="integrations-tbody"></tbody>
         </table>
