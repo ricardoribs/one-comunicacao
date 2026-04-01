@@ -11,7 +11,7 @@ let showcaseIngestInFlight = null;
 
 function assertShowcaseIngestEnabled() {
   if (!env.showcaseIngestEnabled) {
-    throw new AppError('Endpoint não encontrado.', 404);
+    throw new AppError('Endpoint nao encontrado.', 404);
   }
 }
 
@@ -21,10 +21,7 @@ function summarizeOutput(stdout = '', stderr = '') {
     .map((line) => line.trim())
     .filter(Boolean);
 
-  const importantLines = combinedLines.filter(
-    (line) => line.startsWith('[showcase]') || line.startsWith('- ')
-  );
-
+  const importantLines = combinedLines.filter((line) => line.startsWith('[showcase]') || line.startsWith('- '));
   return importantLines.length > 0 ? importantLines : combinedLines.slice(-20);
 }
 
@@ -46,7 +43,7 @@ async function ingestShowcase(req, res) {
   assertShowcaseIngestEnabled();
 
   if (showcaseIngestInFlight) {
-    throw new AppError('A ingestão de showcase já está em execução.', 409);
+    throw new AppError('A ingestao de showcase ja esta em execucao.', 409);
   }
 
   showcaseIngestInFlight = runShowcaseIngestion();
@@ -58,10 +55,10 @@ async function ingestShowcase(req, res) {
         user_id: req.user?.id || null,
         duration_ms: result.durationMs,
       },
-      'Ingestão de showcase executada por rota administrativa.'
+      'Ingestao de showcase executada por rota administrativa.'
     );
     res.json({
-      message: 'Ingestão executada com sucesso.',
+      message: 'Ingestao executada com sucesso.',
       duration_ms: result.durationMs,
       output: result.lines,
     });
@@ -71,9 +68,13 @@ async function ingestShowcase(req, res) {
         user_id: req.user?.id || null,
         err: error,
       },
-      'Falha ao executar ingestão de showcase por rota administrativa.'
+      'Falha ao executar ingestao de showcase por rota administrativa.'
     );
-    throw new AppError(error.stderr?.trim() || error.stdout?.trim() || error.message || 'Falha ao executar ingestão.', 500);
+    res.status(500).json({
+      message: 'Falha ao executar ingestao.',
+      request_id: req.requestId,
+      details: summarizeOutput(error.stdout, error.stderr),
+    });
   } finally {
     showcaseIngestInFlight = null;
   }
