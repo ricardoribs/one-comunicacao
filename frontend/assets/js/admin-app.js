@@ -5028,61 +5028,50 @@ function renderCRM() {
     })
     .join("");
 
-  document.getElementById("clientes-tbody").innerHTML = state.clients
-    .map(
-      (client) => {
+  document.getElementById("clientes-tbody").innerHTML =
+    state.clients
+      .map((client) => {
         const segmentLabel = String(client.segment || "").trim() || "—";
         const planLabel = normalizeClientPlanLabel(client.plan);
         const onDemandService = getOnDemandServiceLabel(client.plan);
         const campaignsLabel = Number(client.campaigns_count || 0)
           ? `${formatNumber(client.campaigns_count)} ${Number(client.campaigns_count) === 1 ? "campanha vinculada" : "campanhas vinculadas"}`
-          : "Sem campanhas vinculadas";
+          : "—";
         const startedAtLabel = client.started_at ? formatDate(client.started_at) : "—";
         const mrrValue = formatCurrencyValue(client.mrr);
-        const mrrSub = Number(client.mrr || 0) > 0 ? "receita mensal recorrente" : "MRR ainda não informado";
+        const showMrrSub = Number(client.mrr || 0) > 0;
+        const mrrSub = showMrrSub ? "receita mensal recorrente" : "";
 
         return `
-        <article class="crm-client-card">
-          <div class="crm-client-card-head">
-            <div class="cell-stack crm-client-primary">
-              <span class="cell-title" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span>
-              <span class="cell-sub" title="${escapeHtml(client.company || "—")}">${escapeHtml(client.company || "—")}</span>
-              <span class="cell-sub" title="${escapeHtml(campaignsLabel)}">${escapeHtml(campaignsLabel)}</span>
+        <tr>
+          <td class="cell-stack">
+            <span class="cell-title" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span>
+            <span class="cell-sub" title="${escapeHtml(client.company || "—")}">${escapeHtml(client.company || "—")}</span>
+            <span class="cell-sub" title="${escapeHtml(campaignsLabel)}">${escapeHtml(campaignsLabel)}</span>
+          </td>
+          <td><span class="cell-sub" title="${escapeHtml(segmentLabel)}">${escapeHtml(segmentLabel)}</span></td>
+          <td class="cell-stack">
+            <span class="badge ${getClientPlanBadgeClass(client.plan)}" title="${escapeHtml(planLabel)}">${escapeHtml(planLabel)}</span>
+            ${onDemandService && planLabel === "Sob demanda" ? `<span class="cell-sub" title="${escapeHtml(onDemandService)}">${escapeHtml(onDemandService)}</span>` : ""}
+          </td>
+          <td>${escapeHtml(startedAtLabel)}</td>
+          <td class="cell-stack">
+            <span class="${getValueToneClass(client.mrr)}">${mrrValue}</span>
+            ${showMrrSub ? `<span class="cell-sub">${escapeHtml(mrrSub)}</span>` : ""}
+          </td>
+          <td><span class="badge badge-green">Ativo</span></td>
+          <td class="cell-actions">
+            <div class="table-actions">
+              <button type="button" class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="novo-cliente" data-id="${client.id}">Editar</button>
+              <button type="button" class="btn btn-ghost btn-sm" data-action="open-charge-modal" data-id="${client.id}">Cobrar</button>
+              <span class="table-action-sep"></span>
+              <button type="button" class="btn btn-sm btn-danger-link" data-action="delete-client" data-id="${client.id}">Excluir</button>
             </div>
-            <span class="badge badge-green">Ativo</span>
-          </div>
-          <div class="crm-client-facts">
-            <div class="crm-client-fact">
-              <span class="crm-client-fact-label">Segmento</span>
-              <span class="crm-client-fact-value" title="${escapeHtml(segmentLabel)}">${escapeHtml(segmentLabel)}</span>
-            </div>
-            <div class="crm-client-fact">
-              <span class="crm-client-fact-label">Plano</span>
-              <div class="cell-stack crm-plan-cell">
-                <span class="badge ${getClientPlanBadgeClass(client.plan)}" title="${escapeHtml(planLabel)}">${escapeHtml(planLabel)}</span>
-                ${onDemandService && planLabel === "Sob demanda" ? `<span class="cell-sub" title="${escapeHtml(onDemandService)}">${escapeHtml(onDemandService)}</span>` : ""}
-              </div>
-            </div>
-            <div class="crm-client-fact">
-              <span class="crm-client-fact-label">Desde</span>
-              <span class="crm-client-fact-value" title="${escapeHtml(startedAtLabel)}">${escapeHtml(startedAtLabel)}</span>
-            </div>
-            <div class="crm-client-fact crm-client-fact-mrr">
-              <span class="crm-client-fact-label">MRR</span>
-              <span class="crm-client-fact-value ${getValueToneClass(client.mrr)}">${mrrValue}</span>
-              <span class="cell-sub" title="${escapeHtml(mrrSub)}">${escapeHtml(mrrSub)}</span>
-            </div>
-          </div>
-          <div class="crm-client-actions">
-            <button type="button" class="btn btn-outline btn-sm" data-action="open-modal" data-modal="novo-cliente" data-id="${client.id}">Editar</button>
-            <button type="button" class="btn btn-ghost btn-sm" data-action="open-charge-modal" data-id="${client.id}">Cobrar</button>
-            <button type="button" class="btn btn-danger btn-sm" data-action="delete-client" data-id="${client.id}">Excluir</button>
-          </div>
-        </article>
+          </td>
+        </tr>
       `;
-      }
-    )
-    .join("") || UI.empty("Nenhum cliente cadastrado", "Cadastre o primeiro cliente para iniciar o acompanhamento comercial.");
+      })
+      .join("") || UI.tableEmpty(7, "Nenhum cliente cadastrado");
 
   document.getElementById("historico-list").innerHTML = [...state.reports, ...state.materials, ...state.charges]
     .slice(0, 8)
@@ -5900,7 +5889,7 @@ async function refreshData() {
 
   const clientsBody = document.getElementById("clientes-tbody");
   if (clientsBody) {
-    clientsBody.innerHTML = UI.skeletonClientCards(4);
+    clientsBody.innerHTML = UI.skeletonRows(7, 4);
   }
 
   const filesBody = document.getElementById("copy-tbody");
