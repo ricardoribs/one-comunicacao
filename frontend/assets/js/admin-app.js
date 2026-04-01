@@ -2561,6 +2561,17 @@ function formatNotificationTime(value) {
   }).format(date);
 }
 
+function getNotificationTimeLabel(item) {
+  if (item?.entity_type === "calendar_event" && item.entity_id) {
+    const event = state.calendarEvents.find((record) => Number(record.id) === Number(item.entity_id));
+    if (event?.starts_at) {
+      return formatNotificationTime(event.starts_at);
+    }
+  }
+
+  return formatNotificationTime(item.created_at);
+}
+
 function buildNotificationPanelHtml() {
   const notifications = sortNotifications(state.notifications).slice(0, 30);
   const unreadCount = Number(notificationRuntime.unread || 0);
@@ -2590,7 +2601,7 @@ function buildNotificationPanelHtml() {
                   <div class="notification-item-title">${escapeHtml(item.title || "Notificação")}</div>
                   ${item.body ? `<div class="notification-item-body">${escapeHtml(item.body)}</div>` : ""}
                   <div class="notification-item-meta">
-                    <span>${escapeHtml(formatNotificationTime(item.created_at))}</span>
+                    <span>${escapeHtml(getNotificationTimeLabel(item))}</span>
                     <span class="notification-item-action">${action}</span>
                   </div>
                 </div>
