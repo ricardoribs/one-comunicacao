@@ -4872,13 +4872,7 @@ function bindKanbanBoardInteractions() {
       if (event.dataTransfer) {
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", card.dataset.taskId);
-        const preview = createKanbanDragPreview(card);
         event.dataTransfer.setDragImage(getKanbanTransparentDragImage(), 0, 0);
-        updateKanbanDragPreviewPosition(event);
-        const onMove = (moveEvent) => updateKanbanDragPreviewPosition(moveEvent);
-        document.addEventListener("dragover", onMove);
-        card.dataset.kanbanDragMoveBound = "1";
-        card._kanbanDragMoveHandler = onMove;
       }
     });
 
@@ -4887,10 +4881,6 @@ function bindKanbanBoardInteractions() {
       clearDropTargets();
       clearKanbanDragArtifacts();
       kanbanRuntime.dragTaskId = null;
-      if (card._kanbanDragMoveHandler) {
-        document.removeEventListener("dragover", card._kanbanDragMoveHandler);
-        delete card._kanbanDragMoveHandler;
-      }
     });
 
     card.dataset.boundKanbanDrag = "1";
@@ -4916,7 +4906,6 @@ function bindKanbanBoardInteractions() {
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = "move";
     }
-    updateKanbanDragPreviewPosition(event);
   };
 
   board.addEventListener("dragover", handleDragOver);
