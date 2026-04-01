@@ -224,6 +224,9 @@ body.sidebar-open #sidebar-backdrop{display:block;opacity:1}
 .kpi-card-link:hover{transform:translateY(-1px);box-shadow:0 10px 26px rgba(13,13,15,.06);border-color:rgba(232,52,105,.28)}
 .kpi-card-link:focus-visible{outline:2px solid var(--pink);outline-offset:2px;box-shadow:0 0 0 3px var(--pink-light)}
 .kpi-card[disabled]{cursor:default}
+.card + .card{margin-top:var(--space-5)}
+.page-body > .card + .card{margin-top:var(--space-5)}
+.page-body > .table-wrap + .card{margin-top:var(--space-5)}
 .kpi-label{font-size:var(--text-2xs);font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:var(--space-2)}
 .kpi-val{display:block;font-family:var(--font-d);font-size:clamp(1.6rem,3vw,var(--text-4xl));font-weight:800;color:var(--pink);line-height:1.08;letter-spacing:-.05em;min-height:calc(clamp(1.6rem,3vw,var(--text-4xl)) * 1.08);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-top:var(--space-1);padding-bottom:var(--space-1)}
 .kpi-sub{font-size:var(--text-xs);color:var(--muted);margin-top:var(--space-2)}
