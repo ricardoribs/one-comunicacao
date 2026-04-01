@@ -248,12 +248,12 @@ body.sidebar-open #sidebar-backdrop{display:block;opacity:1}
 
 /* TABLE */
 .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;background:var(--white);border:1px solid var(--border)}
-table{width:100%;border-collapse:collapse;table-layout:fixed;min-width:880px}
+table{width:100%;border-collapse:collapse;table-layout:auto;min-width:880px}
 thead th{background:var(--gray);padding:var(--space-3) var(--space-4);font-size:var(--text-2xs);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;white-space:nowrap;border-bottom:1px solid var(--border);overflow:hidden;text-overflow:ellipsis}
 tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:var(--gray)}
-td{padding:var(--space-3) var(--space-4);font-size:var(--text-sm);vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+td{padding:var(--space-3) var(--space-4);font-size:var(--text-sm);vertical-align:top;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 th[data-align="right"],td[data-align="right"]{text-align:right}
 .table-wrap td.cell-actions,.table-wrap th.cell-actions{white-space:normal;overflow:visible}
 .table-wrap td.cell-stack{white-space:normal}
