@@ -5059,27 +5059,42 @@ function renderCRM() {
 
         return `
         <tr>
-          <td class="cell-stack">
+          <td class="cell-stack crm-client-main">
             <span class="cell-title" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span>
             <span class="cell-sub" title="${escapeHtml(client.company || "—")}">${escapeHtml(client.company || "—")}</span>
             <span class="cell-sub" title="${escapeHtml(campaignsLabel)}">${escapeHtml(campaignsLabel)}</span>
           </td>
-          <td><span class="cell-sub" title="${escapeHtml(segmentLabel)}">${escapeHtml(segmentLabel)}</span></td>
-          <td class="cell-stack">
-            <span class="badge ${getClientPlanBadgeClass(client.plan)}" title="${escapeHtml(planLabel)}">${escapeHtml(planLabel)}</span>
-            ${onDemandService && planLabel === "Sob demanda" ? `<span class="cell-sub" title="${escapeHtml(onDemandService)}">${escapeHtml(onDemandService)}</span>` : ""}
+          <td class="crm-client-cell crm-client-segment-cell">
+            <div class="crm-cell-center">
+              <span class="crm-cell-text" title="${escapeHtml(segmentLabel)}">${escapeHtml(segmentLabel)}</span>
+            </div>
           </td>
-          <td>${escapeHtml(startedAtLabel)}</td>
-          <td class="cell-stack">
-            <span class="${getValueToneClass(client.mrr)}">${mrrValue}</span>
-            ${showMrrSub ? `<span class="cell-sub">${escapeHtml(mrrSub)}</span>` : ""}
+          <td class="crm-client-cell crm-client-plan-cell">
+            <div class="crm-cell-center crm-cell-stack">
+              <span class="badge ${getClientPlanBadgeClass(client.plan)}" title="${escapeHtml(planLabel)}">${escapeHtml(planLabel)}</span>
+              ${onDemandService && planLabel === "Sob demanda" ? `<span class="cell-sub" title="${escapeHtml(onDemandService)}">${escapeHtml(onDemandService)}</span>` : ""}
+            </div>
           </td>
-          <td><span class="badge badge-green">Ativo</span></td>
-          <td class="cell-actions">
-            <div class="table-actions">
+          <td class="crm-client-cell crm-client-since-cell">
+            <div class="crm-cell-center">
+              <span class="crm-cell-text">${escapeHtml(startedAtLabel)}</span>
+            </div>
+          </td>
+          <td class="crm-client-cell crm-client-mrr-cell">
+            <div class="crm-cell-mrr">
+              <span class="${getValueToneClass(client.mrr)}">${mrrValue}</span>
+              ${showMrrSub ? `<span class="cell-sub">${escapeHtml(mrrSub)}</span>` : ""}
+            </div>
+          </td>
+          <td class="crm-client-cell crm-client-status-cell">
+            <div class="crm-cell-center">
+              <span class="badge badge-green">Ativo</span>
+            </div>
+          </td>
+          <td class="cell-actions crm-client-actions-cell">
+            <div class="table-actions crm-client-actions">
               <button type="button" class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="novo-cliente" data-id="${client.id}">Editar</button>
               <button type="button" class="btn btn-ghost btn-sm" data-action="open-charge-modal" data-id="${client.id}">Cobrar</button>
-              <span class="table-action-sep"></span>
               <button type="button" class="btn btn-sm btn-danger-link" data-action="delete-client" data-id="${client.id}">Excluir</button>
             </div>
           </td>
