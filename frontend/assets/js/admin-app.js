@@ -57,13 +57,11 @@ const BRAZIL_STATES = [
 ];
 
 const PIPELINE_STAGE_LABELS = {
-  "Prospeccao": "Prospecção",
-  "Prospecção": "Prospecção",
-  "Contato feito": "Contato feito",
-  "Proposta": "Proposta",
-  "Negociacao": "Negociação",
-  "Negociação": "Negociação",
-  "Fechado": "Fechado"
+  prospeccao: "Prospecção",
+  contato: "Contato feito",
+  proposta: "Proposta",
+  negociacao: "Negociação",
+  fechado: "Fechado"
 };
 
 const PAGE_ACCESS = {
@@ -424,13 +422,17 @@ const state = {
 };
 
 const UI = {
-  empty: (msg = "Nenhum registro disponível", sub = "", options = {}) => `
-    <div class="empty-state${options.className ? ` ${options.className}` : ""}${options.icon === false ? " is-no-icon" : ""}">
-      ${options.icon === false ? "" : `<div class="empty-state-icon">${escapeHtml(options.icon || "○")}</div>`}
-      <div class="empty-state-title">${escapeHtml(msg)}</div>
-      ${sub ? `<div class="empty-state-sub">${escapeHtml(sub)}</div>` : ""}
-      ${options.actionHtml || ""}
-    </div>`,
+  empty: (msg = "Sem dados no período", sub = "", options = {}) => {
+    const showIcon = options.icon !== false && options.icon !== undefined;
+    const showSub = Boolean(options.allowSub && sub);
+    return `
+      <div class="empty-state${options.className ? ` ${options.className}` : ""}${showIcon ? "" : " is-no-icon"}">
+        ${showIcon ? `<div class="empty-state-icon">${escapeHtml(options.icon || "○")}</div>` : ""}
+        <div class="empty-state-title">${escapeHtml(msg)}</div>
+        ${showSub ? `<div class="empty-state-sub">${escapeHtml(sub)}</div>` : ""}
+        ${options.actionHtml || ""}
+      </div>`;
+  },
 
   tableEmpty: (cols, msg = "Nenhum registro disponível", sub = "", options = {}) => `
     <tr>
@@ -1113,7 +1115,19 @@ function formatLeadCount(value) {
 }
 
 function normalizePipelineStage(stage) {
-  return PIPELINE_STAGE_LABELS[String(stage || "").trim()] || String(stage || "").trim();
+  const normalized = String(stage || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z]/g, "");
+
+  if (normalized.includes("pros")) return PIPELINE_STAGE_LABELS.prospeccao;
+  if (normalized.includes("contato")) return PIPELINE_STAGE_LABELS.contato;
+  if (normalized.includes("proposta")) return PIPELINE_STAGE_LABELS.proposta;
+  if (normalized.includes("nego")) return PIPELINE_STAGE_LABELS.negociacao;
+  if (normalized.includes("fech")) return PIPELINE_STAGE_LABELS.fechado;
+  return stage || "—";
 }
 
 function formatCurrencyValue(value) {
@@ -1727,7 +1741,9 @@ function buildCalendarGridHtml(events, weekStart) {
     const segmentsHtml = daySegments[dayIndex]
       .map((event) => {
         const color = getCalendarColorConfig(event.color);
-        const manageAction = canManageCalendarEvents() ? ` onclick="openModal('novo-evento', ${event.id})"` : "";
+        const manageAction = canManageCalendarEvents()
+          ? ` data-action="open-modal" data-modal="novo-evento" data-id="${event.id}"`
+          : "";
         const interactiveClass = canManageCalendarEvents() ? " is-clickable" : "";
         return `
           <article
@@ -1800,8 +1816,8 @@ function buildCalendarUpcomingHtml(events) {
           ${
             canManage
               ? `<div class="calendar-upcoming-actions">
-                  <button type="button" class="btn btn-ghost btn-sm" onclick="openModal('novo-evento', ${event.id})">Editar</button>
-                  <button type="button" class="btn btn-danger btn-sm" onclick="deleteCalendarEvent(${event.id})">Excluir</button>
+                  <button type="button" class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="novo-evento" data-id="${event.id}">Editar</button>
+                  <button type="button" class="btn btn-danger btn-sm" data-action="delete-calendar-event" data-id="${event.id}">Excluir</button>
                 </div>`
               : ""
           }
@@ -2467,7 +2483,7 @@ function getDeadlineClass(task) {
 function getTaskDeadlineLabel(task) {
   const dueDateValue = task?.due_date || task?.deadline;
   if (!dueDateValue) {
-    return "Sem prazo";
+  return "—";
   }
 
   const dueDate = new Date(dueDateValue);
@@ -2955,17 +2971,17 @@ function renderResourceAction(
 ) {
   if (url) {
     if (url.startsWith("/api/files/") || url.startsWith("/uploads/")) {
-      return `<button type="button" class="${className}" onclick="openProtectedResource('${escapeInlineMessage(
+      return `<button type="button" class="${className}" data-action="open-protected-resource" data-url="${escapeHtml(
         url
-      )}')">${escapeHtml(label)}</button>`;
+      )}">${escapeHtml(label)}</button>`;
     }
 
     return `<a class="${className}" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>`;
   }
 
-  return `<button type="button" class="${className}" onclick="showToast('${escapeInlineMessage(
+  return `<button type="button" class="${className}" data-action="toast" data-message="${escapeHtml(
     missingMessage
-  )}')">${escapeHtml(label)}</button>`;
+  )}">${escapeHtml(label)}</button>`;
 }
 
 const ACCESS_COUNTRY_LABELS = {
@@ -2989,7 +3005,7 @@ const ROLE_PROFILE_DESCRIPTIONS = {
   dev: "Suporte técnico, integrações e analytics.",
 };
 
-const PROFILE_ACTIVITY_PLACEHOLDERS = ["fxfxcvxv"];
+const PROFILE_ACTIVITY_PLACEHOLDERS = [];
 
 function hasMeaningfulAccessLocation(value) {
   const normalized = String(value || "").trim();
@@ -3235,9 +3251,9 @@ function renderProfileSummaryCard(profile) {
   const jobTitle = String(profile.job_title || "").trim();
   const clientLabel = profile.client_name || profile.client_company || "Equipe interna";
   const emailVerifiedLabel = profile.email_verified_at ? "Verificado" : "Pendente";
-  const lastAccessLabel = profile.last_seen_at || profile.last_login_at ? formatDateTime(profile.last_seen_at || profile.last_login_at) : "Sem registro";
+  const lastAccessLabel = profile.last_seen_at || profile.last_login_at ? formatDateTime(profile.last_seen_at || profile.last_login_at) : "—";
   const locationLabel = formatAccessLocationLabel(profile.last_seen_location);
-  const createdLabel = profile.created_at ? formatDate(profile.created_at) : "Não informado";
+  const createdLabel = profile.created_at ? formatDate(profile.created_at) : "—";
   const phoneLabel = formatPhoneDisplay(profile.phone);
   const metaItems = [
     {
@@ -3293,7 +3309,7 @@ function renderProfileSummaryCard(profile) {
           <span class="sb-role-badge ${getRoleBadgeClass(profile.role)}">${escapeHtml(roleLabel)}</span>
         </div>
         ${jobTitle ? `<div class="profile-summary-copy">${escapeHtml(jobTitle)}</div>` : ""}
-        <div class="profile-summary-copy">${escapeHtml(profile.email || "Sem e-mail cadastrado")}</div>
+        <div class="profile-summary-copy">${escapeHtml(profile.email || "—")}</div>
       </div>
     </div>
     <div class="profile-meta-grid">
@@ -3309,8 +3325,8 @@ function renderProfileSummaryCard(profile) {
         .join("")}
     </div>
     <div class="profile-actions">
-      <button type="button" class="btn btn-pink btn-sm" onclick="openModal('editar-perfil')">Editar perfil</button>
-      <button type="button" class="btn btn-outline btn-sm" onclick="openModal('alterar-senha')">Alterar senha</button>
+      <button type="button" class="btn btn-pink btn-sm" data-action="open-modal" data-modal="editar-perfil">Editar perfil</button>
+      <button type="button" class="btn btn-outline btn-sm" data-action="open-modal" data-modal="alterar-senha">Alterar senha</button>
     </div>
   `;
 }
@@ -3383,12 +3399,12 @@ function renderProfileSecurityCard(profile) {
     },
     {
       title: "Último acesso confirmado",
-      value: profile.last_seen_at || profile.last_login_at ? formatDateTime(profile.last_seen_at || profile.last_login_at) : "Sem registro",
+      value: profile.last_seen_at || profile.last_login_at ? formatDateTime(profile.last_seen_at || profile.last_login_at) : "—",
       meta: formatAccessLocationLabel(profile.last_seen_location),
     },
     {
       title: "E-mail de acesso",
-      value: profile.email || "Não informado",
+      value: profile.email || "—",
       meta: profile.email_verified_at ? "Endereço verificado." : "Verificação pendente.",
     },
   ];
@@ -3761,7 +3777,7 @@ function renderBarChart(containerId, values, labels, formatter) {
   }
 
   if (!values.length || !labels.length) {
-    container.innerHTML = UI.empty("Ainda não há dados suficientes", "Os gráficos serão exibidos assim que houver base consolidada para leitura.");
+    container.innerHTML = UI.empty("Sem dados no período", "", { icon: false });
     return;
   }
 
@@ -3792,13 +3808,13 @@ function renderHomeQuickActions() {
 
   const actions = [];
   if (canManageClients()) {
-    actions.push(`<button class="btn btn-outline btn-sm" onclick="openModal('novo-cliente')">+ Novo cliente</button>`);
+    actions.push(`<button class="btn btn-outline btn-sm" data-action="open-modal" data-modal="novo-cliente">+ Novo cliente</button>`);
   }
   if (hasRoleDataAccess("contacts")) {
-    actions.push(`<button class="btn btn-pink btn-sm" onclick="openModal('novo-lead')">+ Novo lead</button>`);
+    actions.push(`<button class="btn btn-pink btn-sm" data-action="open-modal" data-modal="novo-lead">+ Novo lead</button>`);
   }
   if (canManageCalendarEvents()) {
-    actions.push(`<button class="btn btn-outline btn-sm" onclick="openModal('novo-evento')">+ Novo evento</button>`);
+    actions.push(`<button class="btn btn-outline btn-sm" data-action="open-modal" data-modal="novo-evento">+ Novo evento</button>`);
   }
 
   container.innerHTML = actions.join("");
@@ -3970,7 +3986,7 @@ function renderHome() {
     if (hasRoleDataAccess("contacts")) {
       const stages = ["Prospecção", "Contato feito", "Proposta", "Negociação"];
       lowerCards[0].innerHTML = `
-        <div class="section-header"><div class="section-title">Pipeline resumido</div><button class="btn btn-ghost btn-sm btn-link-arrow" onclick="goTo('crm')">Ver CRM <span>→</span></button></div>
+        <div class="section-header"><div class="section-title">Pipeline resumido</div><button class="btn btn-ghost btn-sm btn-link-arrow" data-action="go-to" data-page="crm">Ver CRM <span>→</span></button></div>
         ${stages
           .map((stage) => {
             const stageContacts = state.contacts.filter((contact) => normalizePipelineStage(contact.lead_stage) === stage);
@@ -4542,7 +4558,7 @@ function renderKanbanBrandManual(filteredTasks) {
         <div class="section-title">${escapeHtml(client.name || "Cliente")}</div>
         <div class="section-sub">${escapeHtml(contactBits || "Manual operacional da marca")}</div>
       </div>
-      ${canManageClients() ? `<button type="button" class="btn btn-outline btn-sm" onclick="openModal('novo-cliente', ${client.id})">Editar</button>` : ""}
+      ${canManageClients() ? `<button type="button" class="btn btn-outline btn-sm" data-action="open-modal" data-modal="novo-cliente" data-id="${client.id}">Editar</button>` : ""}
     </div>
     ${
       brandManual
@@ -4598,8 +4614,8 @@ function renderKanban() {
                       ${
                         canEditTasks || canRemoveTasks
                           ? `<div class="actions-gap-top">
-                              ${canEditTasks ? `<button class="btn btn-ghost btn-sm" onclick="openModal('nova-tarefa', ${task.id})">Editar</button>` : ""}
-                              ${canRemoveTasks ? `<button class="btn btn-danger-soft btn-sm" onclick="deleteTask(${task.id})">Excluir</button>` : ""}
+                              ${canEditTasks ? `<button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-tarefa" data-id="${task.id}">Editar</button>` : ""}
+                              ${canRemoveTasks ? `<button class="btn btn-danger-soft btn-sm" data-action="delete-task" data-id="${task.id}">Excluir</button>` : ""}
                             </div>`
                           : ""
                       }
@@ -4978,12 +4994,12 @@ function renderCRM() {
               (contact) => `
                 <div class="pipe-card">
                   <div class="pipe-lead-name" title="${escapeHtml(contact.name)}">${escapeHtml(contact.name)}</div>
-                  <div class="pipe-lead-company" title="${escapeHtml(contact.company || "Sem empresa")}">${escapeHtml(contact.company || "Sem empresa")}</div>
+                  <div class="pipe-lead-company" title="${escapeHtml(contact.company || "—")}">${escapeHtml(contact.company || "—")}</div>
                   <div class="pipe-lead-val">${formatCurrency(contact.estimated_value)}</div>
                   <div class="item-card-actions">
-                    <button class="btn btn-ghost btn-sm" onclick="openModal('novo-lead', ${contact.id})">Editar</button>
-                    <button class="btn btn-ghost btn-sm" onclick="convertLead(${contact.id})">Converter</button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteLead(${contact.id})">Excluir</button>
+                    <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="novo-lead" data-id="${contact.id}">Editar</button>
+                    <button class="btn btn-ghost btn-sm" data-action="convert-lead" data-id="${contact.id}">Converter</button>
+                    <button class="btn btn-danger btn-sm" data-action="delete-lead" data-id="${contact.id}">Excluir</button>
                   </div>
                 </div>
               `
@@ -4992,7 +5008,7 @@ function renderCRM() {
             || `<div class="pipe-empty pipe-empty-minimal">
                  ${
                    stage === "Prospecção" && hasRoleDataAccess("contacts")
-                     ? `<button type="button" class="btn btn-pink btn-sm" onclick="openModal('novo-lead')">Adicionar primeiro lead</button>`
+                     ? `<button type="button" class="btn btn-pink btn-sm" data-action="open-modal" data-modal="novo-lead">Adicionar primeiro lead</button>`
                      : ""
                  }
                </div>`}
@@ -5004,13 +5020,13 @@ function renderCRM() {
   document.getElementById("clientes-tbody").innerHTML = state.clients
     .map(
       (client) => {
-        const segmentLabel = String(client.segment || "").trim() || "Não informado";
+        const segmentLabel = String(client.segment || "").trim() || "—";
         const planLabel = normalizeClientPlanLabel(client.plan);
         const onDemandService = getOnDemandServiceLabel(client.plan);
         const campaignsLabel = Number(client.campaigns_count || 0)
           ? `${formatNumber(client.campaigns_count)} ${Number(client.campaigns_count) === 1 ? "campanha vinculada" : "campanhas vinculadas"}`
           : "Sem campanhas vinculadas";
-        const startedAtLabel = client.started_at ? formatDate(client.started_at) : "Sem data de início";
+        const startedAtLabel = client.started_at ? formatDate(client.started_at) : "—";
         const mrrValue = formatCurrencyValue(client.mrr);
         const mrrSub = Number(client.mrr || 0) > 0 ? "receita mensal recorrente" : "MRR ainda não informado";
 
@@ -5019,7 +5035,7 @@ function renderCRM() {
           <div class="crm-client-card-head">
             <div class="cell-stack crm-client-primary">
               <span class="cell-title" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span>
-              <span class="cell-sub" title="${escapeHtml(client.company || "Sem empresa")}">${escapeHtml(client.company || "Sem empresa")}</span>
+              <span class="cell-sub" title="${escapeHtml(client.company || "—")}">${escapeHtml(client.company || "—")}</span>
               <span class="cell-sub" title="${escapeHtml(campaignsLabel)}">${escapeHtml(campaignsLabel)}</span>
             </div>
             <span class="badge badge-green">Ativo</span>
@@ -5047,9 +5063,9 @@ function renderCRM() {
             </div>
           </div>
           <div class="crm-client-actions">
-            <button type="button" class="btn btn-outline btn-sm" onclick="openModal('novo-cliente', ${client.id})">Editar</button>
-            <button type="button" class="btn btn-ghost btn-sm" onclick="openChargeModalForClient(${client.id})">Cobrar</button>
-            <button type="button" class="btn btn-danger btn-sm" onclick="deleteClient(${client.id})">Excluir</button>
+            <button type="button" class="btn btn-outline btn-sm" data-action="open-modal" data-modal="novo-cliente" data-id="${client.id}">Editar</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-action="open-charge-modal" data-id="${client.id}">Cobrar</button>
+            <button type="button" class="btn btn-danger btn-sm" data-action="delete-client" data-id="${client.id}">Excluir</button>
           </div>
         </article>
       `;
@@ -5128,8 +5144,8 @@ function renderCampaigns() {
           <td><span class="badge ${getCampaignStatusBadgeClass(view.status)}">${escapeHtml(getDisplayText(view.status, "Planejamento"))}</span></td>
           <td class="cell-actions">
             <div class="table-actions">
-              <button class="btn btn-ghost btn-sm" onclick="openModal('nova-campanha', ${view.id})">Editar</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteCampaign(${view.id})">Excluir</button>
+              <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-campanha" data-id="${view.id}">Editar</button>
+              <button class="btn btn-danger btn-sm" data-action="delete-campaign" data-id="${view.id}">Excluir</button>
             </div>
           </td>
         </tr>
@@ -5143,7 +5159,7 @@ function renderCampaigns() {
       {
         icon: false,
         className: "campaign-empty-panel",
-        actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" onclick="openModal('nova-campanha')">Criar primeira campanha</button>`,
+        actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="nova-campanha">Criar primeira campanha</button>`,
       }
     );
 }
@@ -5179,8 +5195,8 @@ function renderProduction() {
                 className: "btn btn-outline btn-sm",
                 missingMessage: "Arquivo ainda não disponível para abertura."
               })}
-              ${canEditProduction ? `<button class="btn btn-ghost btn-sm" onclick="openModal('nova-entrega', ${material.id})">Editar</button>` : ""}
-              ${canEditProduction ? `<span class="table-action-sep" aria-hidden="true"></span><button class="btn btn-sm btn-danger-link" onclick="deleteMaterial(${material.id})">Excluir</button>` : ""}
+              ${canEditProduction ? `<button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-entrega" data-id="${material.id}">Editar</button>` : ""}
+              ${canEditProduction ? `<span class="table-action-sep" aria-hidden="true"></span><button class="btn btn-sm btn-danger-link" data-action="delete-material" data-id="${material.id}">Excluir</button>` : ""}
             </div>
           </td>
         </tr>
@@ -5480,8 +5496,8 @@ function renderAnalytics() {
               ${
                 canManageIntegrations()
                   ? `<div class="table-actions">
-                      <button class="btn btn-ghost btn-sm" onclick="openModal('nova-integracao', ${integration.id})">Editar</button>
-                      <button class="btn btn-danger btn-sm" onclick="deleteIntegration(${integration.id})">Excluir</button>
+                      <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-integracao" data-id="${integration.id}">Editar</button>
+                      <button class="btn btn-danger btn-sm" data-action="delete-integration" data-id="${integration.id}">Excluir</button>
                     </div>`
                   : '<span class="cell-sub">Somente leitura</span>'
               }
@@ -5544,7 +5560,7 @@ function renderFinance() {
           <div class="fin-cell fin-cell-action">
             <button
               class="btn ${overdueTotal > 0 ? "btn-pink" : pendingTotal > 0 ? "btn-outline" : "btn-ghost"} btn-sm"
-              onclick="openChargeModalForClient(${client.id})"
+              data-action="open-charge-modal" data-id="${client.id}"
             >
               ${overdueTotal > 0 || pendingTotal > 0 ? "Cobrar" : "Nova cobrança"}
             </button>
@@ -5611,12 +5627,12 @@ function renderFinance() {
           </div>
         <div class="charge-desc">${escapeHtml(charge.description || "Cobrança gerada sem observação complementar")}</div>
         <div class="item-actions">
-          ${charge.payment_link ? `<button class="btn btn-ghost btn-sm" onclick="openChargeResource(${charge.id}, 'payment_link')">Abrir link</button>` : ""}
-          ${charge.boleto_url ? `<button class="btn btn-ghost btn-sm" onclick="openChargeResource(${charge.id}, 'boleto_url')">Boleto</button>` : ""}
-          ${charge.pix_copy_paste ? `<button class="btn btn-ghost btn-sm" onclick="copyChargePix(${charge.id})">Copiar Pix</button>` : ""}
+          ${charge.payment_link ? `<button class="btn btn-ghost btn-sm" data-action="open-charge-resource" data-id="${charge.id}" data-resource="payment_link">Abrir link</button>` : ""}
+          ${charge.boleto_url ? `<button class="btn btn-ghost btn-sm" data-action="open-charge-resource" data-id="${charge.id}" data-resource="boleto_url">Boleto</button>` : ""}
+          ${charge.pix_copy_paste ? `<button class="btn btn-ghost btn-sm" data-action="copy-charge-pix" data-id="${charge.id}">Copiar Pix</button>` : ""}
           ${canManageInvoices ? `
-            <button class="btn btn-ghost btn-sm" ${canMarkReceived ? `onclick="updateChargeStatus(${charge.id}, 'RECEIVED')"` : "disabled"}>Recebida</button>
-            <button class="btn btn-ghost btn-sm" ${canMarkPending ? `onclick="updateChargeStatus(${charge.id}, 'PENDING')"` : "disabled"}>Pendente</button>
+            <button class="btn btn-ghost btn-sm" ${canMarkReceived ? `data-action="update-charge-status" data-id="${charge.id}" data-status="RECEIVED"` : "disabled"}>Recebida</button>
+            <button class="btn btn-ghost btn-sm" ${canMarkPending ? `data-action="update-charge-status" data-id="${charge.id}" data-status="PENDING"` : "disabled"}>Pendente</button>
           ` : ""}
         </div>
       </div>
@@ -5640,8 +5656,8 @@ function renderFinance() {
           ${
             canManageInvoices
               ? `<div class="item-actions">
-                  <button class="btn btn-ghost btn-sm" ${canMarkInvoicePaid ? `onclick="updateInvoiceStatus(${invoice.id}, 'Pago')"` : "disabled"}>Marcar pago</button>
-                  <button class="btn btn-ghost btn-sm" ${canMarkInvoiceOpen ? `onclick="updateInvoiceStatus(${invoice.id}, 'Em aberto')"` : "disabled"}>Em aberto</button>
+                  <button class="btn btn-ghost btn-sm" ${canMarkInvoicePaid ? `data-action="update-invoice-status" data-id="${invoice.id}" data-status="Pago"` : "disabled"}>Marcar pago</button>
+                  <button class="btn btn-ghost btn-sm" ${canMarkInvoiceOpen ? `data-action="update-invoice-status" data-id="${invoice.id}" data-status="Em aberto"` : "disabled"}>Em aberto</button>
                 </div>`
               : ""
           }
@@ -5681,8 +5697,90 @@ function renderAll() {
   });
 
   bindLegacyInlineHandlers();
+  bindDataActions();
   hardenInputPrivacy(document);
   ensureNotificationUi();
+}
+
+function bindDataActions() {
+  if (document.body.dataset.boundDataActions === "1") {
+    return;
+  }
+
+  document.addEventListener("click", (event) => {
+    const target = event.target.closest("[data-action]");
+    if (!target) {
+      return;
+    }
+
+    if (target.disabled) {
+      event.preventDefault();
+      return;
+    }
+
+    const action = target.dataset.action;
+    const id = target.dataset.id ? Number(target.dataset.id) : null;
+    event.preventDefault();
+
+    switch (action) {
+      case "do-login":
+        return doLogin();
+      case "do-logout":
+        return doLogout();
+      case "go-to":
+        return goTo(target.dataset.page || "");
+      case "set-tab":
+        return setTab(target.dataset.group || "", target.dataset.tab || "");
+      case "open-modal":
+        return openModal(target.dataset.modal || "", id || null);
+      case "shift-calendar":
+        return shiftCalendarWeek(Number(target.dataset.offset || 0));
+      case "calendar-today":
+        return goToCalendarToday();
+      case "export-finance":
+        return exportFinanceCsv();
+      case "sync-traffic":
+        return syncTrafficData();
+      case "open-protected-resource":
+        return openProtectedResource(target.dataset.url || "");
+      case "toast":
+        return showToast(target.dataset.message || "");
+      case "open-charge-resource":
+        return openChargeResource(id, target.dataset.resource || "");
+      case "copy-charge-pix":
+        return copyChargePix(id);
+      case "update-charge-status":
+        return updateChargeStatus(id, target.dataset.status || "");
+      case "update-invoice-status":
+        return updateInvoiceStatus(id, target.dataset.status || "");
+      case "delete-task":
+        return deleteTask(id);
+      case "delete-lead":
+        return deleteLead(id);
+      case "convert-lead":
+        return convertLead(id);
+      case "delete-client":
+        return deleteClient(id);
+      case "delete-campaign":
+        return deleteCampaign(id);
+      case "delete-integration":
+        return deleteIntegration(id);
+      case "delete-material":
+        return deleteMaterial(id);
+      case "delete-calendar-event":
+        return deleteCalendarEvent(id);
+      case "open-charge-modal":
+        return openChargeModalForClient(id);
+      case "close-modal":
+        return closeModal();
+      case "close-modal-bg":
+        return closeModalIfBg(event);
+      default:
+        return;
+    }
+  });
+
+  document.body.dataset.boundDataActions = "1";
 }
 
 function renderAccessV2() {
@@ -5916,7 +6014,8 @@ async function refreshData() {
     button.id = "btn-manage-integrations";
     button.className = "btn btn-pink btn-sm";
     button.textContent = "+ Nova integração";
-    button.onclick = () => openModal("nova-integracao");
+    button.dataset.action = "open-modal";
+    button.dataset.modal = "nova-integracao";
     analyticsActions.append(button);
   }
   if (integrationsButton && (!canManageIntegrations() || !hasScopedClients())) {
@@ -5930,7 +6029,8 @@ async function refreshData() {
     button.id = "btn-new-client";
     button.className = "btn btn-outline btn-sm";
     button.textContent = "+ Novo cliente";
-    button.onclick = () => openModal("novo-cliente");
+    button.dataset.action = "open-modal";
+    button.dataset.modal = "novo-cliente";
     crmActions.prepend(button);
   }
   if (newClientButton && !canManageClients()) {
@@ -6149,7 +6249,7 @@ function modalFormWrapper(title, body, submitLabel = "Salvar") {
       <div class="modal-title" id="modal-dialog-title">${escapeHtml(title)}</div>
       <div class="form-grid">${body}</div>
       <div class="modal-actions">
-        <button type="button" class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+        <button type="button" class="btn btn-outline" data-action="close-modal">Cancelar</button>
         <button type="submit" id="modal-submit-btn" class="btn btn-pink">${escapeHtml(submitLabel)}</button>
       </div>
     </form>
@@ -6927,7 +7027,7 @@ function openModal(type, id = null) {
       html = `
         <div class="modal-title" id="modal-dialog-title">Integrações do analytics</div>
         <p class="metric-note">Cadastre pelo menos um cliente antes de registrar integrações. As conexões deste módulo sempre pertencem a um cliente específico.</p>
-        <div class="modal-actions"><button type="button" class="btn btn-outline" onclick="closeModal()">Fechar</button></div>
+        <div class="modal-actions"><button type="button" class="btn btn-outline" data-action="close-modal">Fechar</button></div>
       `;
       modal.innerHTML = html;
       document.getElementById("modal-overlay").classList.add("open");
@@ -7000,7 +7100,7 @@ function openModal(type, id = null) {
     html = `
       <div class="modal-title" id="modal-dialog-title">Ação auxiliar</div>
       <p class="metric-note">Este atalho ainda não foi habilitado no painel.</p>
-      <div class="modal-actions"><button type="button" class="btn btn-outline" onclick="closeModal()">Fechar</button></div>
+      <div class="modal-actions"><button type="button" class="btn btn-outline" data-action="close-modal">Fechar</button></div>
     `;
   }
 

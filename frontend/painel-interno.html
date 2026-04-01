@@ -23,6 +23,8 @@
   --text:#1a1a1a;
   --muted:#7a7670;
   --border:rgba(13,13,15,.1);
+  --danger:#b42318;
+  --danger-bg:#fdecec;
 
   --font-d:'Inter',sans-serif;
   --font-b:'Inter',sans-serif;
@@ -123,7 +125,7 @@ button,.btn,.sb-link,.tab,a{touch-action:manipulation}
 .sb-user{padding:var(--space-4);border-bottom:1px solid rgba(255,255,255,.06)}
 .sb-user-name{font-size:var(--text-sm);font-weight:600;color:#fff}
 .sb-user-role{display:none}
-.sb-role-badge{display:inline-block;padding:var(--space-1) var(--space-2);border-radius:var(--radius-0);font-size:var(--text-xs);font-weight:500;letter-spacing:.08em;text-transform:uppercase;margin-top:var(--space-2)}
+.sb-role-badge{display:inline-block;padding:var(--space-1) var(--space-2);border-radius:var(--radius-0);font-size:var(--text-xs);font-weight:600;letter-spacing:0;text-transform:none;margin-top:var(--space-2)}
 #sidebar .sb-user #sb-badge{display:none}
 .rb-admin{background:rgba(232,52,105,.2);color:var(--pink)}
 .rb-designer{background:rgba(26,86,176,.2);color:#6fa3f7}
@@ -205,8 +207,8 @@ body.sidebar-open #sidebar-backdrop{display:block;opacity:1}
 .section-header .btn-ghost.btn-sm:hover{color:var(--pink);background:transparent}
 .btn-link-arrow span{display:inline-block;transition:transform var(--tr)}
 .btn-link-arrow:hover span{transform:translateX(4px)}
-.btn-danger{background:#fee2e2;color:#b91c1c;border:none}
-.btn-danger:hover{background:#fecaca}
+.btn-danger{background:transparent;color:var(--danger);border:1px solid rgba(180,35,24,.18)}
+.btn-danger:hover{background:var(--danger-bg);border-color:rgba(180,35,24,.28)}
 .btn-danger-soft{background:transparent;color:#b91c1c;border:1px solid rgba(185,28,28,.14)}
 .btn-danger-soft:hover{background:#fff1f2;border-color:rgba(185,28,28,.24)}
 .btn:disabled,.login-btn:disabled{opacity:.5;cursor:not-allowed;transform:none !important;pointer-events:none}
@@ -229,10 +231,10 @@ body.sidebar-open #sidebar-backdrop{display:block;opacity:1}
 .kpi-trend-down{color:#b91c1c}
 
 /* BADGES */
-.badge{display:inline-flex;align-items:center;padding:3px var(--space-2);font-size:var(--text-2xs);font-weight:600;letter-spacing:.06em;text-transform:uppercase;border-radius:2px;white-space:nowrap}
+.badge{display:inline-flex;align-items:center;padding:3px var(--space-2);font-size:var(--text-2xs);font-weight:600;letter-spacing:0;text-transform:none;border-radius:2px;white-space:nowrap}
 .badge-green{background:var(--success-bg);color:var(--success)}
 .badge-yellow{background:var(--warn-bg);color:var(--warn)}
-.badge-red{background:#fdecec;color:#b42318}
+.badge-red{background:var(--danger-bg);color:var(--danger)}
 .badge-pink{background:var(--pink-light);color:var(--pink)}
 .badge-blue{background:var(--info-bg);color:var(--info)}
 .badge-gray{background:var(--gray2);color:var(--muted)}
@@ -929,7 +931,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
             <label>Senha</label>
             <input type="password" id="l-pass" placeholder="••••••••" autocomplete="new-password"/>
           </div>
-          <button type="button" class="login-btn" onclick="doLogin()">Entrar no Painel</button>
+          <button type="button" class="login-btn" data-action="do-login">Entrar no Painel</button>
           <p class="login-error" id="login-error">Login ou senha incorretos.</p>
           <p class="login-note">Acesso exclusivo à equipe ONE.</p>
         </div>
@@ -966,28 +968,28 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   </div>
   <nav class="sb-nav">
     <div class="sb-section">Principal</div>
-    <div class="sb-link active" data-page="home" onclick="goTo('home')"><span class="icon"></span> Visão Geral</div>
+    <div class="sb-link active" data-page="home" data-action="go-to"><span class="icon"></span> Visão Geral</div>
 
     <div class="sb-section">Operações</div>
-    <div class="sb-link" data-page="kanban" onclick="goTo('kanban')"><span class="icon"></span> Kanban <span class="count" data-count-for="kanban" style="display:none">0</span></div>
-    <div class="sb-link" data-page="calendario" onclick="goTo('calendario')"><span class="icon"></span> Calendário</div>
-    <div class="sb-link" data-page="crm" onclick="goTo('crm')"><span class="icon"></span> CRM / Leads</div>
-    <div class="sb-link" data-page="campanhas" onclick="goTo('campanhas')"><span class="icon"></span> Campanhas</div>
+    <div class="sb-link" data-page="kanban" data-action="go-to"><span class="icon"></span> Kanban <span class="count" data-count-for="kanban" style="display:none">0</span></div>
+    <div class="sb-link" data-page="calendario" data-action="go-to"><span class="icon"></span> Calendário</div>
+    <div class="sb-link" data-page="crm" data-action="go-to"><span class="icon"></span> CRM / Leads</div>
+    <div class="sb-link" data-page="campanhas" data-action="go-to"><span class="icon"></span> Campanhas</div>
 
     <div class="sb-section">Produção</div>
-    <div class="sb-link" data-page="producao" onclick="goTo('producao')"><span class="icon"></span> Produção <span class="count" data-count-for="producao" style="display:none">0</span></div>
-    <div class="sb-link" data-page="trafego" onclick="goTo('trafego')"><span class="icon"></span> Tráfego Pago</div>
+    <div class="sb-link" data-page="producao" data-action="go-to"><span class="icon"></span> Produção <span class="count" data-count-for="producao" style="display:none">0</span></div>
+    <div class="sb-link" data-page="trafego" data-action="go-to"><span class="icon"></span> Tráfego Pago</div>
 
     <div class="sb-section">Inteligência</div>
-    <div class="sb-link" data-page="analytics" onclick="goTo('analytics')"><span class="icon"></span> Analytics</div>
-    <div class="sb-link" data-page="financeiro" onclick="goTo('financeiro')"><span class="icon"></span> Financeiro</div>
+    <div class="sb-link" data-page="analytics" data-action="go-to"><span class="icon"></span> Analytics</div>
+    <div class="sb-link" data-page="financeiro" data-action="go-to"><span class="icon"></span> Financeiro</div>
 
     <div class="sb-section">Configurações</div>
-    <div class="sb-link" data-page="perfil" onclick="goTo('perfil')"><span class="icon"></span> Meu Perfil</div>
-    <div class="sb-link" data-page="acesso" onclick="goTo('acesso')"><span class="icon"></span> Controle de Acesso</div>
+    <div class="sb-link" data-page="perfil" data-action="go-to"><span class="icon"></span> Meu Perfil</div>
+    <div class="sb-link" data-page="acesso" data-action="go-to"><span class="icon"></span> Controle de Acesso</div>
   </nav>
   <div class="sb-footer">
-    <div class="sb-logout" onclick="doLogout()">Sair do painel</div>
+    <div class="sb-logout" data-action="do-logout">Sair do painel</div>
   </div>
 </div>
 
@@ -1031,7 +1033,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 
     <div class="two-col kanban-top-grid">
       <div class="card">
-        <div class="section-header"><div class="section-title">Pipeline Resumido</div><button class="btn btn-ghost btn-sm btn-link-arrow" onclick="goTo('crm')">Ver CRM <span>→</span></button></div>
+        <div class="section-header"><div class="section-title">Pipeline Resumido</div><button class="btn btn-ghost btn-sm btn-link-arrow" data-action="go-to" data-page="crm">Ver CRM <span>→</span></button></div>
         <div class="stack-sm">
           <div class="skeleton skeleton-text" style="width:86%;height:18px"></div>
           <div class="skeleton skeleton-text" style="width:78%;height:18px"></div>
@@ -1088,7 +1090,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
         <option value="Instituto Saber+">Instituto Saber+</option>
         <option value="Horizonte">Horizonte</option>
       </select>
-      <button class="btn btn-pink btn-sm" onclick="openModal('nova-tarefa')">+ Nova tarefa</button>
+      <button class="btn btn-pink btn-sm" data-action="open-modal" data-modal="nova-tarefa">+ Nova tarefa</button>
     </div>
   </div>
   <div class="page-body">
@@ -1124,10 +1126,10 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   <div class="topbar">
     <div><div class="topbar-title">Calendário da Equipe</div></div>
     <div class="topbar-actions">
-      <button class="btn btn-outline btn-sm" onclick="shiftCalendarWeek(-1)">Semana anterior</button>
-      <button class="btn btn-outline btn-sm" onclick="goToCalendarToday()">Hoje</button>
-      <button class="btn btn-outline btn-sm" onclick="shiftCalendarWeek(1)">Próxima semana</button>
-      <button id="btn-new-calendar-event" class="btn btn-pink btn-sm" onclick="openModal('novo-evento')">+ Novo evento</button>
+      <button class="btn btn-outline btn-sm" data-action="shift-calendar" data-offset="-1">Semana anterior</button>
+      <button class="btn btn-outline btn-sm" data-action="calendar-today">Hoje</button>
+      <button class="btn btn-outline btn-sm" data-action="shift-calendar" data-offset="1">Próxima semana</button>
+      <button id="btn-new-calendar-event" class="btn btn-pink btn-sm" data-action="open-modal" data-modal="novo-evento">+ Novo evento</button>
     </div>
   </div>
   <div class="page-body">
@@ -1162,16 +1164,16 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   <div class="topbar">
     <div><div class="topbar-title">CRM — Leads & Clientes</div><div class="topbar-sub">Pipeline de vendas e histórico</div></div>
     <div class="topbar-actions">
-      <button class="btn btn-outline btn-sm" onclick="setTab('crm','pipeline')">Pipeline</button>
-      <button class="btn btn-outline btn-sm" onclick="setTab('crm','clientes')">Clientes</button>
-      <button class="btn btn-pink btn-sm" onclick="openModal('novo-lead')">+ Novo lead</button>
+      <button class="btn btn-outline btn-sm" data-action="set-tab" data-group="crm" data-tab="pipeline">Pipeline</button>
+      <button class="btn btn-outline btn-sm" data-action="set-tab" data-group="crm" data-tab="clientes">Clientes</button>
+      <button class="btn btn-pink btn-sm" data-action="open-modal" data-modal="novo-lead">+ Novo lead</button>
     </div>
   </div>
   <div class="page-body">
     <div class="tabs">
-      <div class="tab active" id="crm-tab-pipeline" onclick="setTab('crm','pipeline')">Pipeline</div>
-      <div class="tab" id="crm-tab-clientes" onclick="setTab('crm','clientes')">Clientes Ativos</div>
-      <div class="tab" id="crm-tab-historico" onclick="setTab('crm','historico')">Histórico</div>
+      <div class="tab active" id="crm-tab-pipeline" data-action="set-tab" data-group="crm" data-tab="pipeline">Pipeline</div>
+      <div class="tab" id="crm-tab-clientes" data-action="set-tab" data-group="crm" data-tab="clientes">Clientes Ativos</div>
+      <div class="tab" id="crm-tab-historico" data-action="set-tab" data-group="crm" data-tab="historico">Histórico</div>
     </div>
     <div id="crm-pipeline">
       <div class="kpi-grid crm-kpi-grid mt-5" id="crm-kpi-grid">
@@ -1197,7 +1199,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   <div class="topbar">
     <div><div class="topbar-title">Planejamento de Campanhas</div><div class="topbar-sub">Estratégia, público-alvo e orçamento</div></div>
     <div class="topbar-actions">
-      <button class="btn btn-pink btn-sm" onclick="openModal('nova-campanha')">+ Nova campanha</button>
+      <button class="btn btn-pink btn-sm" data-action="open-modal" data-modal="nova-campanha">+ Nova campanha</button>
     </div>
   </div>
   <div class="page-body">
@@ -1221,14 +1223,14 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   <div class="topbar">
     <div><div class="topbar-title">Produção</div><div class="topbar-sub">Design, copy e landing pages</div></div>
     <div class="topbar-actions">
-      <button id="btn-new-delivery" class="btn btn-pink btn-sm" onclick="openModal('nova-entrega')">+ Nova entrega</button>
+      <button id="btn-new-delivery" class="btn btn-pink btn-sm" data-action="open-modal" data-modal="nova-entrega">+ Nova entrega</button>
     </div>
   </div>
   <div class="page-body">
     <div class="tabs">
-      <div class="tab active" id="prod-tab-design" onclick="setTab('prod','design')">Design</div>
-      <div class="tab" id="prod-tab-copy" onclick="setTab('prod','copy')">Copywriting</div>
-      <div class="tab" id="prod-tab-lp" onclick="setTab('prod','lp')">Landing Pages</div>
+      <div class="tab active" id="prod-tab-design" data-action="set-tab" data-group="prod" data-tab="design">Design</div>
+      <div class="tab" id="prod-tab-copy" data-action="set-tab" data-group="prod" data-tab="copy">Copywriting</div>
+      <div class="tab" id="prod-tab-lp" data-action="set-tab" data-group="prod" data-tab="lp">Landing Pages</div>
     </div>
     <div id="prod-design">
       <div class="table-wrap prod-table-wrap">
@@ -1270,8 +1272,8 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   <div class="topbar">
     <div><div class="topbar-title">Gestão de Tráfego</div><div class="topbar-sub">Controle de mídia paga, testes e otimizações contínuas</div></div>
     <div class="topbar-actions">
-      <button class="btn btn-outline btn-sm" onclick="syncTrafficData()">Sincronizar dados</button>
-      <button class="btn btn-pink btn-sm" onclick="openModal('novo-ab')">+ Teste A/B</button>
+      <button class="btn btn-outline btn-sm" data-action="sync-traffic">Sincronizar dados</button>
+      <button class="btn btn-pink btn-sm" data-action="open-modal" data-modal="novo-ab">+ Teste A/B</button>
     </div>
   </div>
   <div class="page-body">
@@ -1366,10 +1368,10 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
     <div><div class="topbar-title">Financeiro Interno</div><div class="topbar-sub">Receitas, custos, margens e acompanhamento de cobranças</div></div>
     <div class="topbar-actions">
       <select id="finance-period-filter" class="btn btn-outline btn-sm btn-select" onchange="setFinancePeriodFilter(this.value)"></select>
-      <button class="btn btn-outline btn-sm" onclick="exportFinanceCsv()">Exportar CSV</button>
-      <button class="btn btn-outline btn-sm" onclick="openModal('novo-custo')">+ Novo custo</button>
-      <button class="btn btn-outline btn-sm" onclick="openModal('nova-cobranca')">+ Nova cobrança</button>
-      <button class="btn btn-pink btn-sm" onclick="openModal('nova-fatura')">+ Nova fatura</button>
+      <button class="btn btn-outline btn-sm" data-action="export-finance">Exportar CSV</button>
+      <button class="btn btn-outline btn-sm" data-action="open-modal" data-modal="novo-custo">+ Novo custo</button>
+      <button class="btn btn-outline btn-sm" data-action="open-modal" data-modal="nova-cobranca">+ Nova cobrança</button>
+      <button class="btn btn-pink btn-sm" data-action="open-modal" data-modal="nova-fatura">+ Nova fatura</button>
     </div>
   </div>
   <div class="page-body">
@@ -1404,13 +1406,13 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   <div class="topbar">
     <div><div class="topbar-title">Controle de Acesso</div><div class="topbar-sub">Perfis, permissões e gestão de usuários internos</div></div>
     <div class="topbar-actions">
-      <button class="btn btn-pink btn-sm" onclick="openModal('novo-membro')">+ Novo membro</button>
+      <button class="btn btn-pink btn-sm" data-action="open-modal" data-modal="novo-membro">+ Novo membro</button>
     </div>
   </div>
   <div class="page-body">
     <div class="tabs">
-      <div class="tab active" id="acesso-tab-membros" onclick="setTab('acesso','membros')">Membros</div>
-      <div class="tab" id="acesso-tab-perfis" onclick="setTab('acesso','perfis')">Perfis e Permissões</div>
+      <div class="tab active" id="acesso-tab-membros" data-action="set-tab" data-group="acesso" data-tab="membros">Membros</div>
+      <div class="tab" id="acesso-tab-perfis" data-action="set-tab" data-group="acesso" data-tab="perfis">Perfis e Permissões</div>
     </div>
     <div id="acesso-membros">
       <div class="access-members-shell" id="membros-tbody"></div>
@@ -1424,9 +1426,9 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 </main>
 
 <!-- MODAL CONTAINER -->
-<div class="modal-overlay" id="modal-overlay" onclick="closeModalIfBg(event)" aria-hidden="true">
+<div class="modal-overlay" id="modal-overlay" data-action="close-modal-bg" aria-hidden="true">
   <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-dialog-title">
-    <button type="button" class="modal-close-btn" aria-label="Fechar modal" onclick="closeModal()">×</button>
+    <button type="button" class="modal-close-btn" aria-label="Fechar modal" data-action="close-modal">×</button>
     <div id="modal-content"></div>
   </div>
 </div>
