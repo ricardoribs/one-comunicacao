@@ -4869,22 +4869,17 @@ function bindKanbanBoardInteractions() {
       kanbanRuntime.dragSourceEl = card;
       card.classList.add("is-dragging");
       document.body.classList.add("kanban-drag-active");
-      const placeholder = card.cloneNode(true);
-      placeholder.classList.remove("is-dragging", "is-highlighted");
-      placeholder.classList.add("k-card-placeholder");
-      placeholder.removeAttribute("draggable");
-      placeholder.removeAttribute("data-task-card");
-      placeholder.removeAttribute("data-task-id");
-      placeholder.setAttribute("aria-hidden", "true");
-      card.insertAdjacentElement("afterend", placeholder);
-      kanbanRuntime.dragPlaceholderEl = placeholder;
       if (event.dataTransfer) {
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", card.dataset.taskId);
         const preview = createKanbanDragPreview(card);
-        event.dataTransfer.setDragImage(preview, 24, 24);
+        event.dataTransfer.setDragImage(getKanbanTransparentDragImage(), 0, 0);
+        updateKanbanDragPreviewPosition(event);
+        const onMove = (moveEvent) => updateKanbanDragPreviewPosition(moveEvent);
+        document.addEventListener("dragover", onMove);
+        card.dataset.kanbanDragMoveBound = "1";
+        card._kanbanDragMoveHandler = onMove;
       }
-      card.classList.add("is-drag-source");
     });
 
     card.addEventListener("dragend", () => {
@@ -4892,6 +4887,10 @@ function bindKanbanBoardInteractions() {
       clearDropTargets();
       clearKanbanDragArtifacts();
       kanbanRuntime.dragTaskId = null;
+      if (card._kanbanDragMoveHandler) {
+        document.removeEventListener("dragover", card._kanbanDragMoveHandler);
+        delete card._kanbanDragMoveHandler;
+      }
     });
 
     card.dataset.boundKanbanDrag = "1";
@@ -4901,7 +4900,7 @@ function bindKanbanBoardInteractions() {
     return;
   }
 
-  board.addEventListener("dragover", (event) => {
+  const handleDragOver = (event) => {
     if (!kanbanRuntime.dragTaskId) {
       return;
     }
@@ -4917,7 +4916,10 @@ function bindKanbanBoardInteractions() {
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = "move";
     }
-  });
+    updateKanbanDragPreviewPosition(event);
+  };
+
+  board.addEventListener("dragover", handleDragOver);
 
   board.addEventListener("dragleave", (event) => {
     if (!kanbanRuntime.dragTaskId) {
@@ -4949,6 +4951,26 @@ function bindKanbanBoardInteractions() {
     }
 
     void moveTaskToColumn(taskId, column.dataset.kanbanColumn);
+  });
+
+  board.querySelectorAll("[data-kanban-column]").forEach((column) => {
+    column.addEventListener("dragover", handleDragOver);
+    column.addEventListener("drop", (event) => {
+      if (!kanbanRuntime.dragTaskId) {
+        return;
+      }
+      const col = resolveKanbanColumnFromEvent(board, event);
+      event.preventDefault();
+      document.body.classList.remove("kanban-drag-active");
+      clearDropTargets();
+      const taskId = Number(event.dataTransfer?.getData("text/plain") || kanbanRuntime.dragTaskId || 0);
+      clearKanbanDragArtifacts();
+      kanbanRuntime.dragTaskId = null;
+      if (!taskId || !col?.dataset?.kanbanColumn) {
+        return;
+      }
+      void moveTaskToColumn(taskId, col.dataset.kanbanColumn);
+    });
   });
 
   board.dataset.boundKanbanBoard = "1";
