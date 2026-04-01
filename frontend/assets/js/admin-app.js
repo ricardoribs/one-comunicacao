@@ -6067,7 +6067,8 @@ async function doLogin() {
       const session = await apiFetch("/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
-        auth: false
+        auth: false,
+        timeoutMs: 20000
       });
 
       if (session.user.role === "client") {
