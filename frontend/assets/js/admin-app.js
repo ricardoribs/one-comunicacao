@@ -240,12 +240,13 @@ const notificationRuntime = {
 const kanbanRuntime = {
   movingTaskId: null,
   dragTaskId: null,
-  dragPreviewEl: null,
   dragSourceEl: null,
   dragPlaceholderEl: null,
+  pointerId: null,
+  dragOffsetX: 0,
+  dragOffsetY: 0,
   scrollSyncBound: false,
 };
-let kanbanTransparentDragImage = null;
 const taskAssignState = {
   selected: new Set(),
   users: [],
@@ -4617,7 +4618,7 @@ function renderKanban() {
               tasks
                 .map(
                   (task) => `
-                    <div class="k-card" data-task-card="1" data-task-id="${task.id}" ${canEditTasks ? 'draggable="true"' : ""}>
+                    <div class="k-card${canEditTasks ? " is-draggable" : ""}" data-task-card="1" data-task-id="${task.id}">
                       <div class="k-card-client" title="${escapeHtml(task.client_name || "Interno")}">${escapeHtml(task.client_name || "Interno")}</div>
                       <div class="k-card-title" title="${escapeHtml(task.title)}">${escapeHtml(task.title)}</div>
                       <div class="k-card-desc" title="${escapeHtml(task.description || "")}">${escapeHtml(task.description || "Sem descrição.")}</div>
@@ -4708,94 +4709,54 @@ async function moveTaskToColumn(taskId, nextColumn) {
   }
 }
 
-function clearKanbanDragPreview() {
-  if (kanbanRuntime.dragPreviewEl) {
-    kanbanRuntime.dragPreviewEl.remove();
-    kanbanRuntime.dragPreviewEl = null;
-  }
-}
-
 function clearKanbanDragArtifacts() {
-  clearKanbanDragPreview();
+  if (kanbanRuntime.dragSourceEl) {
+    if (kanbanRuntime.dragPlaceholderEl?.parentElement) {
+      kanbanRuntime.dragPlaceholderEl.replaceWith(kanbanRuntime.dragSourceEl);
+    }
+    kanbanRuntime.dragSourceEl.classList.remove("is-dragging", "is-drag-source", "is-pointer-dragging");
+    kanbanRuntime.dragSourceEl.style.width = "";
+    kanbanRuntime.dragSourceEl.style.height = "";
+    kanbanRuntime.dragSourceEl.style.left = "";
+    kanbanRuntime.dragSourceEl.style.top = "";
+    kanbanRuntime.dragSourceEl.style.position = "";
+    kanbanRuntime.dragSourceEl.style.zIndex = "";
+    kanbanRuntime.dragSourceEl.style.pointerEvents = "";
+    kanbanRuntime.dragSourceEl = null;
+  }
 
   if (kanbanRuntime.dragPlaceholderEl) {
     kanbanRuntime.dragPlaceholderEl.remove();
     kanbanRuntime.dragPlaceholderEl = null;
   }
 
-  if (kanbanRuntime.dragSourceEl) {
-    kanbanRuntime.dragSourceEl.classList.remove("is-dragging", "is-drag-source");
-    kanbanRuntime.dragSourceEl = null;
-  }
+  kanbanRuntime.dragTaskId = null;
+  kanbanRuntime.pointerId = null;
+  kanbanRuntime.dragOffsetX = 0;
+  kanbanRuntime.dragOffsetY = 0;
 }
 
-function createKanbanDragPreview(card) {
-  clearKanbanDragPreview();
-
-  const preview = card.cloneNode(true);
-  preview.classList.remove("is-dragging", "is-highlighted");
-  preview.classList.add("kanban-drag-ghost");
-  preview.removeAttribute("id");
-  preview.style.width = `${Math.ceil(card.getBoundingClientRect().width)}px`;
-  document.body.appendChild(preview);
-  kanbanRuntime.dragPreviewEl = preview;
-  return preview;
-}
-
-function getKanbanTransparentDragImage() {
-  if (kanbanTransparentDragImage) {
-    return kanbanTransparentDragImage;
-  }
-
-  const canvas = document.createElement("canvas");
-  canvas.width = 1;
-  canvas.height = 1;
-  kanbanTransparentDragImage = canvas;
-  return kanbanTransparentDragImage;
-}
-
-function updateKanbanDragPreviewPosition(event) {
-  if (!kanbanRuntime.dragPreviewEl) {
-    return;
-  }
-
-  const left = Number(event?.clientX || 0) + 18;
-  const top = Number(event?.clientY || 0) + 18;
-  kanbanRuntime.dragPreviewEl.style.left = `${left}px`;
-  kanbanRuntime.dragPreviewEl.style.top = `${top}px`;
-}
-
-function resolveKanbanColumnFromEvent(board, event) {
-  if (!board || !event) {
+function resolveKanbanColumnFromPoint(board, clientX, clientY) {
+  if (!board || !Number.isFinite(clientX) || !Number.isFinite(clientY)) {
     return null;
   }
 
-  const directColumn = event.target?.closest?.("[data-kanban-column]");
-  if (directColumn?.dataset?.kanbanColumn) {
-    return directColumn;
+  const pointEl = document.elementFromPoint(clientX, clientY);
+  const pointColumn = pointEl?.closest?.("[data-kanban-column]");
+  if (pointColumn?.dataset?.kanbanColumn) {
+    return pointColumn;
   }
 
-  const dropzone = event.target?.closest?.("[data-kanban-dropzone]");
-  const dropzoneColumn = dropzone?.closest?.("[data-kanban-column]");
-  if (dropzoneColumn?.dataset?.kanbanColumn) {
-    return dropzoneColumn;
-  }
-
-  const clientX = Number(event.clientX);
-  const clientY = Number(event.clientY);
-  if (Number.isFinite(clientX) && Number.isFinite(clientY)) {
-    const pointEl = document.elementFromPoint(clientX, clientY);
-    const pointColumn = pointEl?.closest?.("[data-kanban-column]");
-    if (pointColumn?.dataset?.kanbanColumn) {
-      return pointColumn;
-    }
-
-    const columns = Array.from(board.querySelectorAll("[data-kanban-column]"));
-    for (const column of columns) {
-      const rect = column.getBoundingClientRect();
-      if (clientX >= rect.left && clientX <= rect.right) {
-        return column;
-      }
+  const columns = Array.from(board.querySelectorAll("[data-kanban-column]"));
+  for (const column of columns) {
+    const rect = column.getBoundingClientRect();
+    if (
+      clientX >= rect.left &&
+      clientX <= rect.right &&
+      clientY >= rect.top &&
+      clientY <= rect.bottom
+    ) {
+      return column;
     }
   }
 
@@ -4859,110 +4820,108 @@ function bindKanbanBoardInteractions() {
     board.querySelectorAll("[data-kanban-column]").forEach((column) => column.classList.remove("is-drop-target"));
   };
 
-  board.querySelectorAll("[data-task-card][draggable='true']").forEach((card) => {
-    if (card.dataset.boundKanbanDrag === "1") {
+  const placeKanbanPlaceholderInColumn = (column) => {
+    if (!column || !kanbanRuntime.dragPlaceholderEl) {
       return;
     }
 
-    card.addEventListener("dragstart", (event) => {
-      kanbanRuntime.dragTaskId = Number(card.dataset.taskId);
-      kanbanRuntime.dragSourceEl = card;
-      card.classList.add("is-dragging");
-      document.body.classList.add("kanban-drag-active");
-      if (event.dataTransfer) {
-        event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("text/plain", card.dataset.taskId);
-        event.dataTransfer.setDragImage(getKanbanTransparentDragImage(), 0, 0);
-      }
-    });
-
-    card.addEventListener("dragend", () => {
-      document.body.classList.remove("kanban-drag-active");
-      clearDropTargets();
-      clearKanbanDragArtifacts();
-      kanbanRuntime.dragTaskId = null;
-    });
-
-    card.dataset.boundKanbanDrag = "1";
-  });
-
-  if (board.dataset.boundKanbanBoard === "1") {
-    return;
-  }
-
-  const handleDragOver = (event) => {
-    if (!kanbanRuntime.dragTaskId) {
+    const body = column.querySelector(".kanban-col-body");
+    if (!body) {
       return;
     }
 
-    const column = resolveKanbanColumnFromEvent(board, event);
-    if (!column || !column.dataset.kanbanColumn) {
-      return;
-    }
-
-    event.preventDefault();
-    clearDropTargets();
-    column.classList.add("is-drop-target");
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = "move";
+    if (kanbanRuntime.dragPlaceholderEl.parentElement !== body) {
+      body.appendChild(kanbanRuntime.dragPlaceholderEl);
     }
   };
 
-  board.addEventListener("dragover", handleDragOver);
-
-  board.addEventListener("dragleave", (event) => {
-    if (!kanbanRuntime.dragTaskId) {
+  const handlePointerMove = (event) => {
+    if (!kanbanRuntime.dragTaskId || event.pointerId !== kanbanRuntime.pointerId || !kanbanRuntime.dragSourceEl) {
       return;
     }
 
-    if (event.relatedTarget && board.contains(event.relatedTarget)) {
-      return;
-    }
+    const left = Number(event.clientX || 0) - kanbanRuntime.dragOffsetX;
+    const top = Number(event.clientY || 0) - kanbanRuntime.dragOffsetY;
+    kanbanRuntime.dragSourceEl.style.left = `${left}px`;
+    kanbanRuntime.dragSourceEl.style.top = `${top}px`;
 
+    const column = resolveKanbanColumnFromPoint(board, Number(event.clientX), Number(event.clientY));
     clearDropTargets();
-  });
+    if (column?.dataset?.kanbanColumn) {
+      column.classList.add("is-drop-target");
+      placeKanbanPlaceholderInColumn(column);
+    }
+  };
 
-  board.addEventListener("drop", async (event) => {
-    if (!kanbanRuntime.dragTaskId) {
+  const handlePointerUp = (event) => {
+    if (!kanbanRuntime.dragTaskId || event.pointerId !== kanbanRuntime.pointerId) {
       return;
     }
 
-    const column = resolveKanbanColumnFromEvent(board, event);
-    event.preventDefault();
+    const column = resolveKanbanColumnFromPoint(board, Number(event.clientX), Number(event.clientY));
+    const taskId = Number(kanbanRuntime.dragTaskId || 0);
+    clearDropTargets();
     document.body.classList.remove("kanban-drag-active");
-    clearDropTargets();
-    const taskId = Number(event.dataTransfer?.getData("text/plain") || kanbanRuntime.dragTaskId || 0);
+    document.removeEventListener("pointermove", handlePointerMove, true);
+    document.removeEventListener("pointerup", handlePointerUp, true);
+    document.removeEventListener("pointercancel", handlePointerUp, true);
     clearKanbanDragArtifacts();
-    kanbanRuntime.dragTaskId = null;
 
     if (!taskId || !column?.dataset.kanbanColumn) {
       return;
     }
 
     void moveTaskToColumn(taskId, column.dataset.kanbanColumn);
-  });
+  };
 
-  board.querySelectorAll("[data-kanban-column]").forEach((column) => {
-    column.addEventListener("dragover", handleDragOver);
-    column.addEventListener("drop", (event) => {
-      if (!kanbanRuntime.dragTaskId) {
+  board.querySelectorAll(".k-card.is-draggable[data-task-card='1']").forEach((card) => {
+    if (card.dataset.boundKanbanDrag === "1") {
+      return;
+    }
+
+    card.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) {
         return;
       }
-      const col = resolveKanbanColumnFromEvent(board, event);
+
+      if (event.target?.closest?.("button, a, input, select, textarea, [data-action]")) {
+        return;
+      }
+
+      const rect = card.getBoundingClientRect();
+      const placeholder = document.createElement("div");
+      placeholder.className = "k-card k-card-placeholder";
+      placeholder.style.height = `${Math.ceil(rect.height)}px`;
+      placeholder.style.width = "100%";
+      placeholder.setAttribute("aria-hidden", "true");
+
+      kanbanRuntime.dragTaskId = Number(card.dataset.taskId);
+      kanbanRuntime.dragSourceEl = card;
+      kanbanRuntime.dragPlaceholderEl = placeholder;
+      kanbanRuntime.pointerId = event.pointerId;
+      kanbanRuntime.dragOffsetX = Number(event.clientX) - rect.left;
+      kanbanRuntime.dragOffsetY = Number(event.clientY) - rect.top;
+
+      card.insertAdjacentElement("afterend", placeholder);
+      card.classList.add("is-dragging", "is-pointer-dragging");
+      card.style.width = `${Math.ceil(rect.width)}px`;
+      card.style.height = `${Math.ceil(rect.height)}px`;
+      card.style.left = `${rect.left}px`;
+      card.style.top = `${rect.top}px`;
+      card.style.position = "fixed";
+      card.style.zIndex = "1200";
+      card.style.pointerEvents = "none";
+      document.body.appendChild(card);
+      document.body.classList.add("kanban-drag-active");
+
+      document.addEventListener("pointermove", handlePointerMove, true);
+      document.addEventListener("pointerup", handlePointerUp, true);
+      document.addEventListener("pointercancel", handlePointerUp, true);
       event.preventDefault();
-      document.body.classList.remove("kanban-drag-active");
-      clearDropTargets();
-      const taskId = Number(event.dataTransfer?.getData("text/plain") || kanbanRuntime.dragTaskId || 0);
-      clearKanbanDragArtifacts();
-      kanbanRuntime.dragTaskId = null;
-      if (!taskId || !col?.dataset?.kanbanColumn) {
-        return;
-      }
-      void moveTaskToColumn(taskId, col.dataset.kanbanColumn);
     });
-  });
 
-  board.dataset.boundKanbanBoard = "1";
+    card.dataset.boundKanbanDrag = "1";
+  });
 }
 
 function renderCRM() {
