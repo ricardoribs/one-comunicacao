@@ -38,8 +38,6 @@ services:
         sync: false
       - key: APP_BASE_URL
         sync: false
-      - key: SHOWCASE_INGEST_ENABLED
-        sync: false
       - key: GEO_LOOKUP_ENABLED
         value: "true"
       - key: GEO_LOOKUP_TIMEOUT_MS
