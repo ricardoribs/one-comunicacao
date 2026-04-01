@@ -123,6 +123,13 @@ function buildBrandManual(clientName, tone, restrictions, cta) {
 
 async function ensureDatabaseExists() {
   const databaseUrl = new URL(env.databaseUrl);
+  const isLocalDatabase = ['localhost', '127.0.0.1', '::1'].includes(databaseUrl.hostname);
+
+  if (!isLocalDatabase) {
+    console.log('[showcase] Banco remoto detectado; pulando criacao/verificacao administrativa.');
+    return;
+  }
+
   const databaseName = decodeURIComponent(databaseUrl.pathname.replace(/^\//, ''));
   const adminUrl = new URL(env.databaseUrl);
   adminUrl.pathname = '/postgres';
