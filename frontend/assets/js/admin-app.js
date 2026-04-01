@@ -5150,30 +5150,43 @@ function renderCampaigns() {
 
 function renderProduction() {
   const canEditProduction = canManageMaterials();
-  document.getElementById("design-grid").innerHTML = state.materials
-    .map(
-      (material) => `
-        <div class="card card-sm">
-          <div class="historic-card-head">
-            <div>
-              <div class="historic-card-title">${escapeHtml(material.title)}</div>
-              <div class="historic-card-sub">${escapeHtml(material.client_name)}</div>
+  document.getElementById("prod-design-tbody").innerHTML = state.materials
+    .map((material) => {
+      const deadlineValue = material.due_date || material.deadline || null;
+      const deadlineLabel = deadlineValue ? formatDate(deadlineValue) : "—";
+      const isOverdue = deadlineValue ? isOverdueDate(deadlineValue) : false;
+      const statusLabel = normalizeMaterialStatus(material.status);
+      const statusClass =
+        material.status === "Aprovado"
+          ? "badge-green"
+          : material.status === "Revisao"
+            ? "badge-yellow"
+            : "badge-pink";
+
+      return `
+        <tr>
+          <td class="cell-stack">
+            <span class="cell-title" title="${escapeHtml(material.title)}">${escapeHtml(material.title)}</span>
+            <span class="cell-sub" title="${escapeHtml(material.client_name)}">${escapeHtml(material.client_name)}</span>
+          </td>
+          <td><span class="badge badge-blue">Design</span></td>
+          <td><span class="badge ${statusClass}">${escapeHtml(statusLabel)}</span></td>
+          <td><span class="prod-deadline ${isOverdue ? "is-overdue" : ""}">${escapeHtml(deadlineLabel)}</span></td>
+          <td class="cell-actions">
+            <div class="table-actions">
+              ${renderResourceAction(material.url || material.file_url, {
+                label: "Arquivo",
+                className: "btn btn-outline btn-sm",
+                missingMessage: "Arquivo ainda não disponível para abertura."
+              })}
+              ${canEditProduction ? `<button class="btn btn-ghost btn-sm" onclick="openModal('nova-entrega', ${material.id})">Editar</button>` : ""}
+              ${canEditProduction ? `<span class="table-action-sep" aria-hidden="true"></span><button class="btn btn-sm btn-danger-link" onclick="deleteMaterial(${material.id})">Excluir</button>` : ""}
             </div>
-            <span class="badge ${material.status === "Aprovado" ? "badge-green" : material.status === "Revisao" ? "badge-yellow" : "badge-pink"}">${escapeHtml(normalizeMaterialStatus(material.status))}</span>
-          </div>
-          <div class="item-card-actions">
-            ${renderResourceAction(material.url || material.file_url, {
-              label: "Arquivo",
-              className: "btn btn-outline btn-sm",
-              missingMessage: "Arquivo ainda não disponível para abertura."
-            })}
-            ${canEditProduction ? `<button class="btn btn-ghost btn-sm" onclick="openModal('nova-entrega', ${material.id})">Editar</button>` : ""}
-            ${canEditProduction ? `<button class="btn btn-danger btn-sm" onclick="deleteMaterial(${material.id})">Excluir</button>` : ""}
-          </div>
-        </div>
-      `
-    )
-    .join("") || UI.empty("Nenhuma entrega cadastrada", "Cadastre a primeira entrega para iniciar o fluxo de produção.");
+          </td>
+        </tr>
+      `;
+    })
+    .join("") || UI.tableEmpty(5, "Nenhuma entrega cadastrada", "Cadastre a primeira entrega para iniciar o fluxo de produção.");
 
   document.getElementById("copy-tbody").innerHTML = state.files
     .map(
