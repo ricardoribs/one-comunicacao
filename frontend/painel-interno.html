@@ -221,7 +221,7 @@ body.sidebar-open #sidebar-backdrop{display:block;opacity:1}
 .card,.kpi-card,.access-card,.modal-box,.kanban-col,.pipe-col,.k-card,.pipe-card,.card-sm{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-0)}
 .card,.card-sm,.access-card{padding:var(--space-5) var(--space-6)}
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-4);margin-bottom:var(--space-8);align-items:stretch}
-.kpi-card{height:120px;padding:var(--space-5);display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.kpi-card{min-height:120px;height:auto;padding:var(--space-5);display:flex;flex-direction:column;justify-content:space-between;overflow:visible}
 .kpi-card-link{width:100%;appearance:none;text-align:left;cursor:pointer}
 .kpi-card-link:hover{transform:translateY(-1px);box-shadow:0 10px 26px rgba(13,13,15,.06);border-color:rgba(232,52,105,.28)}
 .kpi-card-link:focus-visible{outline:2px solid var(--pink);outline-offset:2px;box-shadow:0 0 0 3px var(--pink-light)}
@@ -230,7 +230,7 @@ body.sidebar-open #sidebar-backdrop{display:block;opacity:1}
 .page-body > .card + .card{margin-top:var(--space-5)}
 .page-body > .table-wrap + .card{margin-top:var(--space-5)}
 .kpi-label{font-size:var(--text-2xs);font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:var(--space-2)}
-.kpi-val{display:block;font-family:var(--font-d);font-size:clamp(1.05rem,2.15vw,var(--text-4xl));font-weight:800;color:var(--pink);line-height:1.08;letter-spacing:-.05em;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal;word-break:normal;padding-top:var(--space-1);padding-bottom:var(--space-1)}
+.kpi-val{display:block;font-family:var(--font-d);font-size:clamp(1.05rem,2.15vw,var(--text-4xl));font-weight:800;color:var(--pink);line-height:1.14;letter-spacing:-.05em;max-width:100%;white-space:nowrap;overflow-x:hidden;overflow-y:visible;text-overflow:ellipsis;overflow-wrap:normal;word-break:normal;padding-top:var(--space-1);padding-bottom:var(--space-1)}
 .kpi-sub{font-size:var(--text-xs);color:var(--muted);margin-top:var(--space-2)}
 .kpi-sub.is-empty{visibility:hidden;min-height:1.25em}
 .kpi-trend-up{color:var(--success)}
@@ -599,10 +599,10 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 .margin-warn{color:var(--warn);font-weight:600}
 .margin-bad{color:#b91c1c;font-weight:600}
 
-#page-financeiro .kpi-val{font-size:clamp(1.2rem,2vw,var(--text-3xl));line-height:1.15}
-#page-financeiro .page-body > .two-col{margin-top:var(--space-5)}
-#page-financeiro .page-body > .two-col{grid-template-columns:minmax(0,.72fr) minmax(0,1.28fr)}
-#page-financeiro .page-body > .two-col > .card{padding-top:var(--space-6)}
+#page-financeiro .kpi-card{min-height:132px}
+#page-financeiro .kpi-val{font-size:clamp(1.2rem,1.9vw,var(--text-3xl));line-height:1.22;overflow:visible;text-overflow:clip}
+#page-financeiro .finance-bottom-grid{display:grid;grid-template-columns:1fr;gap:var(--space-5);margin-top:var(--space-5)}
+#page-financeiro .finance-bottom-grid > .card{padding-top:var(--space-6)}
 #page-producao .prod-table{min-width:860px}
 #page-producao .prod-table th:nth-child(1){width:38%}
 #page-producao .prod-table th:nth-child(2){width:14%}
@@ -912,25 +912,33 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-analytics .integrations-table th:nth-child(5),#page-analytics .integrations-table td:nth-child(5){width:14%}
 #page-analytics .integrations-table th:nth-child(6),#page-analytics .integrations-table td:nth-child(6){width:10%}
 #page-analytics .integrations-table th:nth-child(7),#page-analytics .integrations-table td:nth-child(7){width:8%}
-#page-financeiro .finance-client-table th:nth-child(1),#page-financeiro .finance-client-table td:nth-child(1){width:24%}
-#page-financeiro .finance-client-table th:nth-child(2),#page-financeiro .finance-client-table td:nth-child(2){width:12%;text-align:right}
-#page-financeiro .finance-client-table th:nth-child(3),#page-financeiro .finance-client-table td:nth-child(3){width:12%;text-align:right}
-#page-financeiro .finance-client-table th:nth-child(4),#page-financeiro .finance-client-table td:nth-child(4){width:12%;text-align:right}
-#page-financeiro .finance-client-table th:nth-child(5),#page-financeiro .finance-client-table td:nth-child(5){width:12%}
-#page-financeiro .finance-client-table th:nth-child(6),#page-financeiro .finance-client-table td:nth-child(6){width:16%}
-#page-financeiro .finance-client-table th:nth-child(7),#page-financeiro .finance-client-table td:nth-child(7){width:12%}
+#page-financeiro .finance-client-table{table-layout:auto}
+#page-financeiro .finance-client-table th:nth-child(1),#page-financeiro .finance-client-table td:nth-child(1){width:32%;min-width:280px}
+#page-financeiro .finance-client-table th:nth-child(2),#page-financeiro .finance-client-table td:nth-child(2){width:120px;text-align:right}
+#page-financeiro .finance-client-table th:nth-child(3),#page-financeiro .finance-client-table td:nth-child(3){width:108px;text-align:right}
+#page-financeiro .finance-client-table th:nth-child(4),#page-financeiro .finance-client-table td:nth-child(4){width:120px;text-align:right}
+#page-financeiro .finance-client-table th:nth-child(5),#page-financeiro .finance-client-table td:nth-child(5){width:120px}
+#page-financeiro .finance-client-table th:nth-child(6),#page-financeiro .finance-client-table td:nth-child(6){width:148px}
+#page-financeiro .finance-client-table th:nth-child(7),#page-financeiro .finance-client-table td:nth-child(7){width:96px}
+#page-financeiro .finance-client-table td:nth-child(1) .cell-title,#page-financeiro .finance-client-table td:nth-child(1) .cell-sub{white-space:normal;overflow:visible;text-overflow:clip}
+#page-financeiro .finance-client-table td:nth-child(1) .cell-title{line-height:1.35}
+#page-financeiro .finance-client-table td:nth-child(1) .cell-sub{overflow-wrap:anywhere}
 #page-financeiro .finance-client-table .finance-margin-cell{padding-right:var(--space-4)}
-#page-financeiro .finance-inline-status,#page-financeiro .finance-type-inline{display:none}
+#page-financeiro .finance-inline-status,#page-financeiro .finance-launch-type-inline,#page-financeiro .finance-launch-client-inline,#page-financeiro .finance-launch-detail-inline{display:none}
+#page-financeiro .finance-launch-client-inline,#page-financeiro .finance-launch-detail-inline{line-height:1.45}
 #page-financeiro .finance-margin-track{position:relative;height:8px;background:#efe8df;margin-top:8px;overflow:hidden}
 #page-financeiro .finance-margin-fill{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#dc2626 0%,#f2b200 52%,#0f9f51 100%)}
 #page-financeiro .finance-margin-value{display:block;font-weight:700}
-#page-financeiro .finance-launches-table th:nth-child(1),#page-financeiro .finance-launches-table td:nth-child(1){width:10%}
-#page-financeiro .finance-launches-table th:nth-child(2),#page-financeiro .finance-launches-table td:nth-child(2){width:24%}
-#page-financeiro .finance-launches-table th:nth-child(3),#page-financeiro .finance-launches-table td:nth-child(3){width:14%}
-#page-financeiro .finance-launches-table th:nth-child(4),#page-financeiro .finance-launches-table td:nth-child(4){width:16%}
-#page-financeiro .finance-launches-table th:nth-child(5),#page-financeiro .finance-launches-table td:nth-child(5){width:12%;text-align:right}
-#page-financeiro .finance-launches-table th:nth-child(6),#page-financeiro .finance-launches-table td:nth-child(6){width:12%}
-#page-financeiro .finance-launches-table th:nth-child(7),#page-financeiro .finance-launches-table td:nth-child(7){width:12%}
+#page-financeiro .finance-launches-table{table-layout:auto}
+#page-financeiro .finance-launches-table th:nth-child(1),#page-financeiro .finance-launches-table td:nth-child(1){width:88px}
+#page-financeiro .finance-launches-table th:nth-child(2),#page-financeiro .finance-launches-table td:nth-child(2){width:auto;min-width:280px}
+#page-financeiro .finance-launches-table th:nth-child(3),#page-financeiro .finance-launches-table td:nth-child(3){width:156px}
+#page-financeiro .finance-launches-table th:nth-child(4),#page-financeiro .finance-launches-table td:nth-child(4){width:184px}
+#page-financeiro .finance-launches-table th:nth-child(5),#page-financeiro .finance-launches-table td:nth-child(5){width:112px;text-align:right}
+#page-financeiro .finance-launches-table th:nth-child(6),#page-financeiro .finance-launches-table td:nth-child(6){width:108px}
+#page-financeiro .finance-launches-table th:nth-child(7),#page-financeiro .finance-launches-table td:nth-child(7){width:132px}
+#page-financeiro .finance-launches-table td:nth-child(2) .cell-title,#page-financeiro .finance-launches-table td:nth-child(2) .cell-sub{white-space:normal;overflow:visible;text-overflow:clip}
+#page-financeiro .finance-launches-table .table-actions{justify-content:flex-end;flex-wrap:nowrap}
 #page-financeiro .finance-launches-table th,#page-financeiro .finance-launches-table td{padding-left:var(--space-2);padding-right:var(--space-2)}
 #page-financeiro .finance-launches-table td:nth-child(5){font-variant-numeric:tabular-nums}
 #page-crm #crm-clientes .crm-client-table th:nth-child(1),#page-crm #crm-clientes .crm-client-table td:nth-child(1){width:32%}
@@ -942,6 +950,19 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-acesso #acesso-membros .access-member-actions{justify-content:flex-end;flex-wrap:wrap}
 
 /* RESPONSIVE */
+@media(min-width:1600px){
+  #page-financeiro .finance-bottom-grid{grid-template-columns:minmax(0,320px) minmax(0,1fr);align-items:start}
+}
+@media(max-width:1280px){
+  #page-financeiro .finance-launch-type-col,#page-financeiro .finance-launch-client-col{display:none !important}
+  #page-financeiro .finance-launch-type-inline{display:inline-flex !important}
+  #page-financeiro .finance-launch-client-inline{display:block !important}
+  #page-financeiro .finance-launches-table th:nth-child(2),#page-financeiro .finance-launches-table td:nth-child(2){min-width:0}
+  #page-financeiro .finance-launches-table th:nth-child(4),#page-financeiro .finance-launches-table td:nth-child(4){width:168px}
+  #page-financeiro .finance-launches-table th:nth-child(5),#page-financeiro .finance-launches-table td:nth-child(5){width:108px}
+  #page-financeiro .finance-launches-table th:nth-child(6),#page-financeiro .finance-launches-table td:nth-child(6){width:104px}
+  #page-financeiro .finance-launches-table th:nth-child(7),#page-financeiro .finance-launches-table td:nth-child(7){width:124px}
+}
 @media(max-width:1024px){
   :root{--sidebar:216px}
   .page-body{padding:var(--space-6)}
@@ -962,16 +983,16 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .topbar-actions::-webkit-scrollbar{display:none}
   .topbar-actions-group{flex-wrap:nowrap}
   .hide-tablet{display:none !important}
-  #page-financeiro .page-body > .two-col{grid-template-columns:1fr}
   #page-crm #crm-historico .history-table th:nth-child(1),#page-crm #crm-historico .history-table td:nth-child(1){width:40%}
   #page-crm #crm-historico .history-table th:nth-child(2),#page-crm #crm-historico .history-table td:nth-child(2){width:22%}
   #page-crm #crm-historico .history-table th:nth-child(4),#page-crm #crm-historico .history-table td:nth-child(4){width:18%}
   #page-crm #crm-historico .history-table th:nth-child(6),#page-crm #crm-historico .history-table td:nth-child(6){width:20%}
-  #page-financeiro .finance-client-table th:nth-child(1),#page-financeiro .finance-client-table td:nth-child(1){width:34%}
-  #page-financeiro .finance-client-table th:nth-child(2),#page-financeiro .finance-client-table td:nth-child(2){width:18%}
-  #page-financeiro .finance-client-table th:nth-child(5),#page-financeiro .finance-client-table td:nth-child(5){width:14%}
-  #page-financeiro .finance-client-table th:nth-child(6),#page-financeiro .finance-client-table td:nth-child(6){width:18%}
-  #page-financeiro .finance-client-table th:nth-child(7),#page-financeiro .finance-client-table td:nth-child(7){width:16%}
+  #page-financeiro .finance-client-table th:nth-child(1),#page-financeiro .finance-client-table td:nth-child(1){width:30%;min-width:240px}
+  #page-financeiro .finance-client-table th:nth-child(2),#page-financeiro .finance-client-table td:nth-child(2){width:116px}
+  #page-financeiro .finance-client-table th:nth-child(5),#page-financeiro .finance-client-table td:nth-child(5){width:116px}
+  #page-financeiro .finance-client-table th:nth-child(6),#page-financeiro .finance-client-table td:nth-child(6){width:140px}
+  #page-financeiro .finance-client-table th:nth-child(7),#page-financeiro .finance-client-table td:nth-child(7){width:96px}
+  #page-financeiro .finance-launch-detail-inline{display:block !important}
 }
 @media(max-width:900px){
   :root{--sidebar:200px}
@@ -1034,13 +1055,14 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   #page-analytics .integrations-table th:nth-child(2),#page-analytics .integrations-table td:nth-child(2){width:24%}
   #page-analytics .integrations-table th:nth-child(3),#page-analytics .integrations-table td:nth-child(3){width:18%}
   #page-analytics .integrations-table th:nth-child(7),#page-analytics .integrations-table td:nth-child(7){width:30%}
-  #page-financeiro .finance-inline-status,#page-financeiro .finance-type-inline{display:inline-flex !important}
-  #page-financeiro .finance-client-table th:nth-child(1),#page-financeiro .finance-client-table td:nth-child(1){width:46%}
-  #page-financeiro .finance-client-table th:nth-child(6),#page-financeiro .finance-client-table td:nth-child(6){width:26%}
-  #page-financeiro .finance-client-table th:nth-child(7),#page-financeiro .finance-client-table td:nth-child(7){width:28%}
-  #page-financeiro .finance-launches-table th:nth-child(2),#page-financeiro .finance-launches-table td:nth-child(2){width:50%}
-  #page-financeiro .finance-launches-table th:nth-child(6),#page-financeiro .finance-launches-table td:nth-child(6){width:22%}
-  #page-financeiro .finance-launches-table th:nth-child(7),#page-financeiro .finance-launches-table td:nth-child(7){width:28%}
+  #page-financeiro .finance-inline-status,#page-financeiro .finance-launch-type-inline{display:inline-flex !important}
+  #page-financeiro .finance-client-table th:nth-child(1),#page-financeiro .finance-client-table td:nth-child(1){width:auto;min-width:0}
+  #page-financeiro .finance-client-table th:nth-child(6),#page-financeiro .finance-client-table td:nth-child(6){width:124px}
+  #page-financeiro .finance-client-table th:nth-child(7),#page-financeiro .finance-client-table td:nth-child(7){width:96px}
+  #page-financeiro .finance-launches-table th:nth-child(2),#page-financeiro .finance-launches-table td:nth-child(2){width:auto;min-width:0}
+  #page-financeiro .finance-launches-table th:nth-child(6),#page-financeiro .finance-launches-table td:nth-child(6){width:112px}
+  #page-financeiro .finance-launches-table th:nth-child(7),#page-financeiro .finance-launches-table td:nth-child(7){width:96px}
+  #page-financeiro .finance-launches-table .table-actions{flex-wrap:wrap}
   #page-acesso #acesso-membros .access-member-table th:nth-child(1),#page-acesso #acesso-membros .access-member-table td:nth-child(1){width:48%}
   #page-acesso #acesso-membros .access-member-table th:nth-child(3),#page-acesso #acesso-membros .access-member-table td:nth-child(3){width:24%}
   #page-acesso #acesso-membros .access-member-table th:nth-child(5),#page-acesso #acesso-membros .access-member-table td:nth-child(5){width:28%}
@@ -1663,7 +1685,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
         </table>
       </div>
     </div>
-    <div class="two-col">
+    <div class="finance-bottom-grid">
       <div class="card">
         <div class="section-title card-title-spacing">Custos por Categoria</div>
         <div class="card-list-sm" id="fin-custos"></div>
@@ -1674,10 +1696,10 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
           <table class="finance-launches-table">
             <thead>
               <tr>
-                <th class="hide-mobile">Tipo</th>
+                <th class="finance-launch-type-col hide-mobile">Tipo</th>
                 <th>Registro</th>
-                <th class="hide-phone">Cliente</th>
-                <th class="hide-tablet">Detalhe</th>
+                <th class="finance-launch-client-col hide-phone">Cliente</th>
+                <th class="finance-launch-detail-col hide-tablet">Detalhe</th>
                 <th class="hide-mobile">Valor</th>
                 <th>Status</th>
                 <th class="cell-actions">Ações</th>
