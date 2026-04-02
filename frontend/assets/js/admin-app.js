@@ -5883,18 +5883,18 @@ function renderAnalytics() {
       .map(
         (integration) => `
           <tr>
-            <td class="cell-stack"><span class="cell-title" title="${escapeHtml(integration.client_name)}">${escapeHtml(integration.client_name)}</span></td>
-            <td class="cell-stack"><span class="cell-title">${getIntegrationProviderLabel(integration.provider_key)}</span></td>
-            <td><span class="badge ${getIntegrationStatusBadgeClass(integration.status)}">${escapeHtml(
+            <td class="cell-stack integration-client-cell"><span class="cell-title" title="${escapeHtml(integration.client_name)}">${escapeHtml(integration.client_name)}</span></td>
+            <td class="cell-stack integration-provider-cell"><span class="cell-title">${getIntegrationProviderLabel(integration.provider_key)}</span></td>
+            <td class="integration-status-cell"><span class="badge ${getIntegrationStatusBadgeClass(integration.status)}">${escapeHtml(
               INTEGRATION_STATUS_LABELS[integration.status] || integration.status
             )}</span></td>
-            <td class="cell-stack hide-tablet">
+            <td class="cell-stack integration-account-cell hide-tablet">
               <span class="cell-title" title="${escapeHtml(integration.external_account_id || "—")}">${escapeHtml(integration.external_account_id || "—")}</span>
               ${integration.external_property_id ? `<span class="cell-sub" title="${escapeHtml(integration.external_property_id)}">${escapeHtml(integration.external_property_id)}</span>` : ""}
             </td>
-            <td class="hide-mobile">${formatDateTime(integration.last_sync_at)}</td>
-            <td class="cell-stack hide-phone"><span class="cell-title" title="${escapeHtml(integration.updated_by_name || integration.created_by_name || "—")}">${escapeHtml(integration.updated_by_name || integration.created_by_name || "—")}</span></td>
-            <td class="cell-actions">
+            <td class="integration-sync-cell hide-mobile">${formatDateTime(integration.last_sync_at)}</td>
+            <td class="cell-stack integration-owner-cell hide-phone"><span class="cell-title" title="${escapeHtml(integration.updated_by_name || integration.created_by_name || "—")}">${escapeHtml(integration.updated_by_name || integration.created_by_name || "—")}</span></td>
+            <td class="cell-actions integration-actions-cell">
               ${
                 canManageIntegrations()
                   ? `<div class="table-actions">
