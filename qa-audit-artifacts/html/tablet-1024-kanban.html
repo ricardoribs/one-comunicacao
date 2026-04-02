@@ -1,0 +1,295 @@
+<section id="page-kanban" class="app-screen active">
+  <div class="topbar">
+    <div><div class="topbar-title">Gestão de Projetos</div><div class="topbar-sub">Kanban · Tarefas em tempo real</div></div>
+    <div class="topbar-actions">
+      <select class="btn btn-outline btn-sm btn-select" data-bound-change="1"><option value="">Todos os clientes</option><option value="101">Clínica Harmonia Oral Premium</option><option value="102">Grupo Atlas Logística Integrada</option><option value="103">Aurora Moda Feminina</option><option value="104">VivaPet Centro Veterinário 24h</option><option value="105">Construtora Horizonte Urbano</option><option value="106">Escola Bilíngue Raízes</option></select>
+      <button class="btn btn-pink btn-sm" data-action="open-modal" data-modal="nova-tarefa">+ Nova tarefa</button>
+    <div class="notification-shell" data-notification-shell="1" data-notification-bound="1">
+    <button type="button" class="notification-trigger" data-notification-toggle="1" aria-label="Abrir notificações" aria-expanded="false">
+      <span class="notification-trigger-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+          <path d="M12 3a5 5 0 0 0-5 5v2.6c0 .7-.2 1.4-.6 2l-1.2 1.9A1 1 0 0 0 6 16h12a1 1 0 0 0 .8-1.5l-1.2-1.9a3.8 3.8 0 0 1-.6-2V8a5 5 0 0 0-5-5Zm0 18a2.5 2.5 0 0 0 2.3-1.5h-4.6A2.5 2.5 0 0 0 12 21Z"></path>
+        </svg>
+      </span>
+      <span class="notification-badge">3</span>
+    </button>
+    <div class="notification-panel" role="dialog" aria-label="Notificações">
+      <div class="notification-panel-head">
+        <div>
+          <strong>Notificações</strong>
+          <span>3 novas</span>
+        </div>
+        <button type="button" class="notification-mark-all" data-notification-mark-all="1">Marcar como lidas</button>
+      </div>
+      <div class="notification-list">
+            <button type="button" class="notification-item is-unread" data-notification-item="1" data-notification-id="1303" data-notification-entity-type="calendar_event" data-notification-entity-id="1402">
+              <div class="notification-item-head">
+                <span class="notification-dot" aria-hidden="true"></span>
+                <div class="notification-item-main">
+                  <div class="notification-item-title">Evento de calendário em 1h</div>
+                  <div class="notification-item-body">Reunião de alinhamento com Atlas Logística.</div>
+                  <div class="notification-item-meta">
+                    <span>há 9 horas</span>
+                    <span class="notification-item-action">Abrir calendário</span>
+                  </div>
+                </div>
+              </div>
+            </button>
+          
+            <button type="button" class="notification-item" data-notification-item="1" data-notification-id="1302" data-notification-entity-type="contact" data-notification-entity-id="203">
+              <div class="notification-item-head">
+                <span class="notification-dot" aria-hidden="true"></span>
+                <div class="notification-item-main">
+                  <div class="notification-item-title">Lead avançou para proposta</div>
+                  <div class="notification-item-body">Marcelo Ribeiro chegou à etapa de proposta comercial.</div>
+                  <div class="notification-item-meta">
+                    <span>há 10 horas</span>
+                    <span class="notification-item-action">Abrir</span>
+                  </div>
+                </div>
+              </div>
+            </button>
+          
+            <button type="button" class="notification-item is-unread" data-notification-item="1" data-notification-id="1301" data-notification-entity-type="task" data-notification-entity-id="402">
+              <div class="notification-item-head">
+                <span class="notification-dot" aria-hidden="true"></span>
+                <div class="notification-item-main">
+                  <div class="notification-item-title">Tarefa vence hoje</div>
+                  <div class="notification-item-body">Subir criativos em stories para Harmonia Oral.</div>
+                  <div class="notification-item-meta">
+                    <span>há 11 horas</span>
+                    <span class="notification-item-action">Abrir tarefa</span>
+                  </div>
+                </div>
+              </div>
+            </button>
+          
+            <button type="button" class="notification-item is-unread" data-notification-item="1" data-notification-id="1304" data-notification-entity-type="charge" data-notification-entity-id="1102">
+              <div class="notification-item-head">
+                <span class="notification-dot" aria-hidden="true"></span>
+                <div class="notification-item-main">
+                  <div class="notification-item-title">Cobrança atrasada</div>
+                  <div class="notification-item-body">Aurora Moda está com cobrança vencida pendente.</div>
+                  <div class="notification-item-meta">
+                    <span>ontem</span>
+                    <span class="notification-item-action">Abrir</span>
+                  </div>
+                </div>
+              </div>
+            </button>
+          </div>
+    </div>
+  </div></div>
+  </div>
+  <div class="page-body">
+    <div class="two-col kanban-top-grid">
+      <div class="card brand-manual-card">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Checklist diário</div>
+            <div class="section-sub">Prioridades do dia por perfil e entregas com vencimento imediato.</div>
+          </div>
+        </div>
+        <div class="stack-sm" id="kanban-daily-checklist" data-bound-checklist="1">
+    <div class="section-sub">Checklist pessoal de Ricardo Matos.</div>
+    <form class="checklist-composer" data-checklist-form="">
+      <input type="text" name="checklist-item" class="checklist-input" maxlength="120" placeholder="Adicionar item" autocomplete="new-password" autocorrect="off" autocapitalize="none" spellcheck="false" aria-label="Novo item do checklist">
+      <button type="submit" class="btn btn-outline btn-sm">Adicionar</button>
+    </form>
+    <div class="checklist-progress">
+      1 de 3 itens concluídos hoje
+    </div>
+    <div class="checklist-list">
+      
+                  <label class="checklist-row is-done">
+                    <span class="checklist-row-main">
+                      <input type="checkbox" data-daily-checklist="ck1" checked="">
+                      <span class="checklist-row-label">Revisar quadro de urgências do dia</span>
+                    </span>
+                    <span class="badge badge-green">Feito</span>
+                    <button type="button" class="btn btn-ghost btn-sm checklist-remove" data-checklist-remove="ck1">Remover</button>
+                  </label>
+                
+                  <label class="checklist-row">
+                    <span class="checklist-row-main">
+                      <input type="checkbox" data-daily-checklist="ck2">
+                      <span class="checklist-row-label">Confirmar aprovações pendentes de clientes premium</span>
+                    </span>
+                    <span class="badge badge-gray">Pendente</span>
+                    <button type="button" class="btn btn-ghost btn-sm checklist-remove" data-checklist-remove="ck2">Remover</button>
+                  </label>
+                
+                  <label class="checklist-row">
+                    <span class="checklist-row-main">
+                      <input type="checkbox" data-daily-checklist="ck3">
+                      <span class="checklist-row-label">Validar calendário de reuniões da semana</span>
+                    </span>
+                    <span class="badge badge-gray">Pendente</span>
+                    <button type="button" class="btn btn-ghost btn-sm checklist-remove" data-checklist-remove="ck3">Remover</button>
+                  </label>
+                
+    </div>
+    <div class="section-header"><div class="section-title">Entregas do dia</div></div>
+    
+      <div class="empty-state is-plain is-no-icon">
+        
+        <div class="empty-state-title">Sem tarefas vencendo hoje.</div>
+        
+        
+      </div>
+    <div class="section-header checklist-history-head">
+      <div class="section-title">Histórico do checklist</div>
+      <button type="button" class="btn btn-ghost btn-sm" data-checklist-clear-history="1">Limpar histórico</button>
+    </div>
+    <div class="checklist-history">
+      
+                  <div class="checklist-history-group">
+                    <div class="checklist-history-title">Ontem</div>
+                    
+                          <div class="checklist-history-card">
+                            <div class="checklist-history-meta">30/03/2026 · 2 itens</div>
+                            <div class="checklist-history-list">
+                              
+                                    <div class="checklist-history-item">
+                                      <span class="badge badge-green">Feito</span>
+                                      <span>Encerrar relatório mensal</span>
+                                    </div>
+                                  
+                                    <div class="checklist-history-item">
+                                      <span class="badge badge-green">Feito</span>
+                                      <span>Responder follow-up comercial</span>
+                                    </div>
+                                  
+                            </div>
+                          </div>
+                        
+                  </div>
+                
+                  <div class="checklist-history-group">
+                    <div class="checklist-history-title">Últimos 7 dias</div>
+                    
+                          <div class="checklist-history-card">
+                            <div class="checklist-history-meta">27/03/2026 · 1 item</div>
+                            <div class="checklist-history-list">
+                              
+                                    <div class="checklist-history-item">
+                                      <span class="badge badge-green">Feito</span>
+                                      <span>Organizar backlog do time criativo</span>
+                                    </div>
+                                  
+                            </div>
+                          </div>
+                        
+                  </div>
+                
+    </div>
+  </div>
+      </div>
+      <div class="card">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Manual da marca</div>
+            <div class="section-sub">Tom de voz, roteiro, restrições e orientações da conta selecionada.</div>
+          </div>
+        </div>
+        <div id="kanban-brand-manual">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Clínica Harmonia Oral Premium</div>
+        <div class="section-sub">Clínica Harmonia Oral Premium · Dra. Camila Prado</div>
+      </div>
+      <button type="button" class="btn btn-outline btn-sm" data-action="open-modal" data-modal="novo-cliente" data-id="101">Editar</button>
+    </div>
+    <div class="muted-panel">Tom de voz consultivo, humano e seguro. Evitar linguagem promocional agressiva. Priorizar provas sociais, antes e depois e termos simples para procedimentos complexos.</div>
+  </div>
+      </div>
+    </div>
+    <div class="kanban-scroll-top" id="kanban-top-scroll" aria-label="Rolagem horizontal superior do kanban">
+      <div class="kanban-scroll-top-track" id="kanban-top-scroll-track" style="width: 1088px;"></div>
+    </div>
+    <div class="kanban" id="kanban-board">
+        <div class="kanban-col" data-kanban-column="backlog" data-kanban-dropzone="backlog">
+          <div class="kanban-col-title">Backlog <span class="col-count">1</span></div>
+          <div class="kanban-col-body" data-kanban-dropzone="backlog">
+            
+                    <div class="k-card is-draggable" data-task-card="1" data-task-id="401" data-bound-kanban-drag="1">
+                      <div class="k-card-client" title="Clínica Harmonia Oral Premium">Clínica Harmonia Oral Premium</div>
+                      <div class="k-card-title" title="Ajustar página de conversão para implante com FAQ clínico e prova social acima da dobra">Ajustar página de conversão para implante com FAQ clínico e prova social acima da dobra</div>
+                      <div class="k-card-desc" title="Reorganizar hero, CTA fixo e bloco de objeções. Prioridade do comercial.">Reorganizar hero, CTA fixo e bloco de objeções. Prioridade do comercial.</div>
+                      <div class="status-gap-top"><span class="badge badge-blue">copy</span></div>
+                      <div class="k-card-meta">
+                        <span class="k-card-assignee" title="Bruno Lima e Carla Mendes">Bruno Lima e Carla Mendes</span>
+                        <span class="k-card-deadline deadline-soon">Prazo · 03/04/2026</span>
+                      </div>
+                      <div class="actions-gap-top">
+                              <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-tarefa" data-id="401">Editar</button>
+                              <button class="btn btn-danger-soft btn-sm" data-action="delete-task" data-id="401">Excluir</button>
+                            </div>
+                    </div>
+                  
+            <div class="kanban-col-dropzone" data-kanban-dropzone="backlog" aria-hidden="true"></div>
+          </div>
+        </div>
+      
+        <div class="kanban-col" data-kanban-column="todo" data-kanban-dropzone="todo">
+          <div class="kanban-col-title">A Fazer <span class="col-count">1</span></div>
+          <div class="kanban-col-body" data-kanban-dropzone="todo">
+            
+                    <div class="k-card is-draggable" data-task-card="1" data-task-id="402" data-bound-kanban-drag="1">
+                      <div class="k-card-client" title="Clínica Harmonia Oral Premium">Clínica Harmonia Oral Premium</div>
+                      <div class="k-card-title" title="Subir criativos em variação quadrada, stories e reels para lentes de contato dental">Subir criativos em variação quadrada, stories e reels para lentes de contato dental</div>
+                      <div class="k-card-desc" title="Exportar com naming padrão e UTMs revisadas.">Exportar com naming padrão e UTMs revisadas.</div>
+                      <div class="status-gap-top"><span class="badge badge-blue">DESIGN GRÁFICO</span></div>
+                      <div class="k-card-meta">
+                        <span class="k-card-assignee" title="Bruno Lima">Bruno Lima</span>
+                        <span class="k-card-deadline deadline-soon">Hoje · 01/04/2026</span>
+                      </div>
+                      <div class="actions-gap-top">
+                              <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-tarefa" data-id="402">Editar</button>
+                              <button class="btn btn-danger-soft btn-sm" data-action="delete-task" data-id="402">Excluir</button>
+                            </div>
+                    </div>
+                  
+            <div class="kanban-col-dropzone" data-kanban-dropzone="todo" aria-hidden="true"></div>
+          </div>
+        </div>
+      
+        <div class="kanban-col" data-kanban-column="doing" data-kanban-dropzone="doing">
+          <div class="kanban-col-title">Em Progresso <span class="col-count">0</span></div>
+          <div class="kanban-col-body" data-kanban-dropzone="doing">
+            
+      <div class="empty-state is-plain is-compact is-no-icon">
+        
+        <div class="empty-state-title">Coluna sem tarefas.</div>
+        
+        
+      </div>
+            <div class="kanban-col-dropzone" data-kanban-dropzone="doing" aria-hidden="true"></div>
+          </div>
+        </div>
+      
+        <div class="kanban-col" data-kanban-column="done" data-kanban-dropzone="done">
+          <div class="kanban-col-title">Concluído <span class="col-count">1</span></div>
+          <div class="kanban-col-body" data-kanban-dropzone="done">
+            
+                    <div class="k-card is-draggable" data-task-card="1" data-task-id="409" data-bound-kanban-drag="1">
+                      <div class="k-card-client" title="Clínica Harmonia Oral Premium">Clínica Harmonia Oral Premium</div>
+                      <div class="k-card-title" title="Checklist de validação de tags e conversões de formulário">Checklist de validação de tags e conversões de formulário</div>
+                      <div class="k-card-desc" title="Confirmar eventos de lead em GA4 e Meta.">Confirmar eventos de lead em GA4 e Meta.</div>
+                      <div class="status-gap-top"><span class="badge badge-blue">analytics</span></div>
+                      <div class="k-card-meta">
+                        <span class="k-card-assignee" title="Diego Freitas">Diego Freitas</span>
+                        <span class="k-card-deadline deadline-done">Concluída · 26/03/2026</span>
+                      </div>
+                      <div class="actions-gap-top">
+                              <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-tarefa" data-id="409">Editar</button>
+                              <button class="btn btn-danger-soft btn-sm" data-action="delete-task" data-id="409">Excluir</button>
+                            </div>
+                    </div>
+                  
+            <div class="kanban-col-dropzone" data-kanban-dropzone="done" aria-hidden="true"></div>
+          </div>
+        </div>
+      </div>
+  </div>
+</section>

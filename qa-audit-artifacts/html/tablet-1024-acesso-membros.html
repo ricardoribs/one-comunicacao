@@ -1,0 +1,356 @@
+<section id="page-acesso" class="app-screen active">
+  <div class="topbar">
+    <div><div class="topbar-title">Controle de Acesso</div><div class="topbar-sub">Perfis, permissões e gestão de usuários internos</div></div>
+    <div class="topbar-actions">
+      <button class="btn btn-pink btn-sm" data-action="open-modal" data-modal="novo-membro">+ Novo membro</button>
+    <div class="notification-shell" data-notification-shell="1" data-notification-bound="1">
+    <button type="button" class="notification-trigger" data-notification-toggle="1" aria-label="Abrir notificações" aria-expanded="false">
+      <span class="notification-trigger-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+          <path d="M12 3a5 5 0 0 0-5 5v2.6c0 .7-.2 1.4-.6 2l-1.2 1.9A1 1 0 0 0 6 16h12a1 1 0 0 0 .8-1.5l-1.2-1.9a3.8 3.8 0 0 1-.6-2V8a5 5 0 0 0-5-5Zm0 18a2.5 2.5 0 0 0 2.3-1.5h-4.6A2.5 2.5 0 0 0 12 21Z"></path>
+        </svg>
+      </span>
+      <span class="notification-badge">3</span>
+    </button>
+    <div class="notification-panel" role="dialog" aria-label="Notificações">
+      <div class="notification-panel-head">
+        <div>
+          <strong>Notificações</strong>
+          <span>3 novas</span>
+        </div>
+        <button type="button" class="notification-mark-all" data-notification-mark-all="1">Marcar como lidas</button>
+      </div>
+      <div class="notification-list">
+            <button type="button" class="notification-item is-unread" data-notification-item="1" data-notification-id="1303" data-notification-entity-type="calendar_event" data-notification-entity-id="1402">
+              <div class="notification-item-head">
+                <span class="notification-dot" aria-hidden="true"></span>
+                <div class="notification-item-main">
+                  <div class="notification-item-title">Evento de calendário em 1h</div>
+                  <div class="notification-item-body">Reunião de alinhamento com Atlas Logística.</div>
+                  <div class="notification-item-meta">
+                    <span>há 6 horas</span>
+                    <span class="notification-item-action">Abrir calendário</span>
+                  </div>
+                </div>
+              </div>
+            </button>
+          
+            <button type="button" class="notification-item" data-notification-item="1" data-notification-id="1302" data-notification-entity-type="contact" data-notification-entity-id="203">
+              <div class="notification-item-head">
+                <span class="notification-dot" aria-hidden="true"></span>
+                <div class="notification-item-main">
+                  <div class="notification-item-title">Lead avançou para proposta</div>
+                  <div class="notification-item-body">Marcelo Ribeiro chegou à etapa de proposta comercial.</div>
+                  <div class="notification-item-meta">
+                    <span>há 10 horas</span>
+                    <span class="notification-item-action">Abrir</span>
+                  </div>
+                </div>
+              </div>
+            </button>
+          
+            <button type="button" class="notification-item is-unread" data-notification-item="1" data-notification-id="1301" data-notification-entity-type="task" data-notification-entity-id="402">
+              <div class="notification-item-head">
+                <span class="notification-dot" aria-hidden="true"></span>
+                <div class="notification-item-main">
+                  <div class="notification-item-title">Tarefa vence hoje</div>
+                  <div class="notification-item-body">Subir criativos em stories para Harmonia Oral.</div>
+                  <div class="notification-item-meta">
+                    <span>há 11 horas</span>
+                    <span class="notification-item-action">Abrir tarefa</span>
+                  </div>
+                </div>
+              </div>
+            </button>
+          
+            <button type="button" class="notification-item is-unread" data-notification-item="1" data-notification-id="1304" data-notification-entity-type="charge" data-notification-entity-id="1102">
+              <div class="notification-item-head">
+                <span class="notification-dot" aria-hidden="true"></span>
+                <div class="notification-item-main">
+                  <div class="notification-item-title">Cobrança atrasada</div>
+                  <div class="notification-item-body">Aurora Moda está com cobrança vencida pendente.</div>
+                  <div class="notification-item-meta">
+                    <span>ontem</span>
+                    <span class="notification-item-action">Abrir</span>
+                  </div>
+                </div>
+              </div>
+            </button>
+          </div>
+    </div>
+  </div></div>
+  </div>
+  <div class="page-body">
+    <div class="tabs">
+      <div class="tab active" id="acesso-tab-membros" data-action="set-tab" data-group="acesso" data-tab="membros">Membros</div>
+      <div class="tab" id="acesso-tab-perfis" data-action="set-tab" data-group="acesso" data-tab="perfis">Perfis e Permissões</div>
+    </div>
+    <div id="acesso-membros" style="display: block;">
+      <div class="access-members-shell" id="membros-tbody" data-bound="1">
+    <div class="access-member-table-wrap table-wrap">
+      <table class="access-member-table">
+        <thead>
+          <tr>
+            <th>Membro</th>
+            <th>Perfil</th>
+            <th>Presença</th>
+            <th>Último acesso</th>
+            <th class="cell-actions" data-align="right">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+    <tr>
+      <td>
+        <div class="access-member-ident">
+          <div class="avatar av-pink">RM</div>
+          <div class="cell-stack">
+            <strong class="cell-title" title="Ricardo Matos">Ricardo Matos</strong>
+            <span class="cell-sub" title="ricardo@onecomunicacao.com.br">ricardo@onecomunicacao.com.br</span>
+          </div>
+        </div>
+      </td>
+      <td><span class="sb-role-badge rb-admin">Admin</span></td>
+      <td>
+        <span class="access-member-presence is-online">
+          <span class="access-member-presence-dot" aria-hidden="true"></span>
+          <span>Online agora</span>
+        </span>
+      </td>
+      <td>
+        <div class="access-member-last-access">
+          <span class="access-member-last-time" title="01/04/2026, 13:12">01/04/2026, 13:12</span>
+          <span class="access-member-last-location" title="São Paulo, SP">São Paulo, SP</span>
+        </div>
+      </td>
+      <td class="cell-actions" data-align="right">
+        <div class="access-member-actions">
+          <button class="btn btn-outline btn-sm" type="button" data-access-edit="1">Editar</button>
+          
+        </div>
+      </td>
+    </tr>
+  
+    <tr>
+      <td>
+        <div class="access-member-ident">
+          <div class="avatar av-pink">AS</div>
+          <div class="cell-stack">
+            <strong class="cell-title" title="Ana Souza">Ana Souza</strong>
+            <span class="cell-sub" title="ana@onecomunicacao.com.br">ana@onecomunicacao.com.br</span>
+          </div>
+        </div>
+      </td>
+      <td><span class="sb-role-badge rb-gestor">Gestor</span></td>
+      <td>
+        <span class="access-member-presence is-online">
+          <span class="access-member-presence-dot" aria-hidden="true"></span>
+          <span>Online agora</span>
+        </span>
+      </td>
+      <td>
+        <div class="access-member-last-access">
+          <span class="access-member-last-time" title="01/04/2026, 12:58">01/04/2026, 12:58</span>
+          <span class="access-member-last-location" title="Curitiba, PR">Curitiba, PR</span>
+        </div>
+      </td>
+      <td class="cell-actions" data-align="right">
+        <div class="access-member-actions">
+          <button class="btn btn-outline btn-sm" type="button" data-access-edit="2">Editar</button>
+          <button class="access-remove-link" type="button" data-access-remove="2">Remover</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr>
+      <td>
+        <div class="access-member-ident">
+          <div class="avatar av-pink">BL</div>
+          <div class="cell-stack">
+            <strong class="cell-title" title="Bruno Lima">Bruno Lima</strong>
+            <span class="cell-sub" title="bruno@onecomunicacao.com.br">bruno@onecomunicacao.com.br</span>
+          </div>
+        </div>
+      </td>
+      <td><span class="sb-role-badge rb-designer">Designer</span></td>
+      <td>
+        <span class="access-member-presence is-active">
+          <span class="access-member-presence-dot" aria-hidden="true"></span>
+          <span>Ativo</span>
+        </span>
+      </td>
+      <td>
+        <div class="access-member-last-access">
+          <span class="access-member-last-time" title="31/03/2026, 18:44">31/03/2026, 18:44</span>
+          <span class="access-member-last-location" title="Campinas, SP">Campinas, SP</span>
+        </div>
+      </td>
+      <td class="cell-actions" data-align="right">
+        <div class="access-member-actions">
+          <button class="btn btn-outline btn-sm" type="button" data-access-edit="3">Editar</button>
+          <button class="access-remove-link" type="button" data-access-remove="3">Remover</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr>
+      <td>
+        <div class="access-member-ident">
+          <div class="avatar av-pink">CM</div>
+          <div class="cell-stack">
+            <strong class="cell-title" title="Carla Mendes">Carla Mendes</strong>
+            <span class="cell-sub" title="carla@onecomunicacao.com.br">carla@onecomunicacao.com.br</span>
+          </div>
+        </div>
+      </td>
+      <td><span class="sb-role-badge rb-comercial">Comercial</span></td>
+      <td>
+        <span class="access-member-presence is-active">
+          <span class="access-member-presence-dot" aria-hidden="true"></span>
+          <span>Ativo</span>
+        </span>
+      </td>
+      <td>
+        <div class="access-member-last-access">
+          <span class="access-member-last-time" title="30/03/2026, 16:20">30/03/2026, 16:20</span>
+          <span class="access-member-last-location" title="Belo Horizonte, MG">Belo Horizonte, MG</span>
+        </div>
+      </td>
+      <td class="cell-actions" data-align="right">
+        <div class="access-member-actions">
+          <button class="btn btn-outline btn-sm" type="button" data-access-edit="4">Editar</button>
+          <button class="access-remove-link" type="button" data-access-remove="4">Remover</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr>
+      <td>
+        <div class="access-member-ident">
+          <div class="avatar av-pink">DF</div>
+          <div class="cell-stack">
+            <strong class="cell-title" title="Diego Freitas">Diego Freitas</strong>
+            <span class="cell-sub" title="diego@onecomunicacao.com.br">diego@onecomunicacao.com.br</span>
+          </div>
+        </div>
+      </td>
+      <td><span class="sb-role-badge rb-dev">Desenvolvimento</span></td>
+      <td>
+        <span class="access-member-presence is-active">
+          <span class="access-member-presence-dot" aria-hidden="true"></span>
+          <span>Ativo</span>
+        </span>
+      </td>
+      <td>
+        <div class="access-member-last-access">
+          <span class="access-member-last-time" title="26/03/2026, 11:10">26/03/2026, 11:10</span>
+          <span class="access-member-last-location" title="Recife, PE">Recife, PE</span>
+        </div>
+      </td>
+      <td class="cell-actions" data-align="right">
+        <div class="access-member-actions">
+          <button class="btn btn-outline btn-sm" type="button" data-access-edit="5">Editar</button>
+          <button class="access-remove-link" type="button" data-access-remove="5">Remover</button>
+        </div>
+      </td>
+    </tr>
+  
+    <tr>
+      <td>
+        <div class="access-member-ident">
+          <div class="avatar av-pink">ER</div>
+          <div class="cell-stack">
+            <strong class="cell-title" title="Elisa Ramos">Elisa Ramos</strong>
+            <span class="cell-sub" title="elisa@onecomunicacao.com.br">elisa@onecomunicacao.com.br</span>
+          </div>
+        </div>
+      </td>
+      <td><span class="sb-role-badge rb-designer">Designer</span></td>
+      <td>
+        <span class="access-member-presence is-inactive">
+          <span class="access-member-presence-dot" aria-hidden="true"></span>
+          <span>Inativo</span>
+        </span>
+      </td>
+      <td>
+        <div class="access-member-last-access">
+          <span class="access-member-last-time" title="18/03/2026, 10:00">18/03/2026, 10:00</span>
+          <span class="access-member-last-location" title="Rio de Janeiro, RJ">Rio de Janeiro, RJ</span>
+        </div>
+      </td>
+      <td class="cell-actions" data-align="right">
+        <div class="access-member-actions">
+          <button class="btn btn-outline btn-sm" type="button" data-access-edit="6">Editar</button>
+          <button class="access-remove-link" type="button" data-access-remove="6">Remover</button>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+      </table>
+    </div>
+  </div>
+    </div>
+    <div id="acesso-perfis" class="hidden-panel" style="display: none;">
+      <div class="access-grid" id="perfis-grid">
+    <div class="access-card">
+      <div class="access-card-header">
+        <span class="access-card-title">Admin</span>
+        <span class="sb-role-badge rb-admin">Admin</span>
+      </div>
+      <div class="perm-list">
+        <div class="perm-row"><span class="perm-label">Clientes</span></div><div class="perm-row"><span class="perm-label">Campanhas</span></div><div class="perm-row"><span class="perm-label">Kanban</span></div><div class="perm-row"><span class="perm-label">Produção</span></div><div class="perm-row"><span class="perm-label">Tráfego</span></div><div class="perm-row"><span class="perm-label">Analytics</span></div><div class="perm-row"><span class="perm-label">Financeiro</span></div><div class="perm-row"><span class="perm-label">Controle de acesso</span></div>
+      </div>
+    </div>
+  
+    <div class="access-card">
+      <div class="access-card-header">
+        <span class="access-card-title">Gestor</span>
+        <span class="sb-role-badge rb-gestor">Gestor</span>
+      </div>
+      <div class="perm-list">
+        <div class="perm-row"><span class="perm-label">Dashboard interno</span></div><div class="perm-row"><span class="perm-label">Kanban</span></div><div class="perm-row"><span class="perm-label">CRM</span></div><div class="perm-row"><span class="perm-label">Campanhas</span></div><div class="perm-row"><span class="perm-label">Produção</span></div><div class="perm-row"><span class="perm-label">Tráfego</span></div><div class="perm-row"><span class="perm-label">Analytics</span></div><div class="perm-row"><span class="perm-label">Cobranças</span></div>
+      </div>
+    </div>
+  
+    <div class="access-card">
+      <div class="access-card-header">
+        <span class="access-card-title">Designer</span>
+        <span class="sb-role-badge rb-designer">Designer</span>
+      </div>
+      <div class="perm-list">
+        <div class="perm-row"><span class="perm-label">Dashboard interno</span></div><div class="perm-row"><span class="perm-label">Kanban</span></div><div class="perm-row"><span class="perm-label">Produção</span></div>
+      </div>
+    </div>
+  
+    <div class="access-card">
+      <div class="access-card-header">
+        <span class="access-card-title">Comercial</span>
+        <span class="sb-role-badge rb-comercial">Comercial</span>
+      </div>
+      <div class="perm-list">
+        <div class="perm-row"><span class="perm-label">Dashboard interno</span></div><div class="perm-row"><span class="perm-label">Kanban</span></div><div class="perm-row"><span class="perm-label">CRM</span></div><div class="perm-row"><span class="perm-label">Campanhas</span></div><div class="perm-row"><span class="perm-label">Produção</span></div><div class="perm-row"><span class="perm-label">Financeiro</span></div>
+      </div>
+    </div>
+  
+    <div class="access-card">
+      <div class="access-card-header">
+        <span class="access-card-title">Dev</span>
+        <span class="sb-role-badge rb-dev">Dev</span>
+      </div>
+      <div class="perm-list">
+        <div class="perm-row"><span class="perm-label">Dashboard interno</span></div><div class="perm-row"><span class="perm-label">Kanban</span></div><div class="perm-row"><span class="perm-label">Produção</span></div><div class="perm-row"><span class="perm-label">Analytics</span></div>
+      </div>
+    </div>
+  
+    <div class="access-card">
+      <div class="access-card-header">
+        <span class="access-card-title">Cliente</span>
+        <span class="sb-role-badge rb-designer">Cliente</span>
+      </div>
+      <div class="perm-list">
+        <div class="perm-row"><span class="perm-label">Dashboard</span></div><div class="perm-row"><span class="perm-label">Campanhas</span></div><div class="perm-row"><span class="perm-label">Relatórios</span></div><div class="perm-row"><span class="perm-label">Faturas</span></div><div class="perm-row"><span class="perm-label">Mensagens</span></div>
+      </div>
+    </div>
+  </div>
+    </div>
+  </div>
+</section>

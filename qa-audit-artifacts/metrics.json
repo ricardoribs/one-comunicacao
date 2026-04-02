@@ -1,0 +1,4897 @@
+{
+  "evidence": [
+    {
+      "screenName": "home",
+      "viewportName": "desktop-1280",
+      "activeId": "page-home",
+      "topbarTitle": "Visão Geral",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "+ Novo cliente",
+          "width": 110.359375,
+          "height": 33
+        },
+        {
+          "text": "+ Novo lead",
+          "width": 94.171875,
+          "height": 31
+        },
+        {
+          "text": "+ Novo evento",
+          "width": 110.953125,
+          "height": 33
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Ver CRM\n→",
+          "width": 73.25,
+          "height": 17
+        }
+      ],
+      "smallTargetCount": 5,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "perfil",
+      "viewportName": "desktop-1280",
+      "activeId": "page-perfil",
+      "topbarTitle": "Meu Perfil",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Editar perfil",
+          "width": 91.984375,
+          "height": 33
+        },
+        {
+          "text": "Alterar senha",
+          "width": 104.296875,
+          "height": 33
+        },
+        {
+          "text": "Salvar preferências",
+          "width": 139.484375,
+          "height": 33
+        }
+      ],
+      "smallTargetCount": 4,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "kanban",
+      "viewportName": "desktop-1280",
+      "activeId": "page-kanban",
+      "topbarTitle": "Gestão de Projetos",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "+ Nova tarefa",
+          "width": 103.28125,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Adicionar",
+          "width": 81.8125,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 53.546875,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 53.546875,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 53.546875,
+          "height": 33
+        },
+        {
+          "text": "Limpar histórico",
+          "width": 96.4375,
+          "height": 17
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        }
+      ],
+      "smallTargetCount": 14,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "calendario",
+      "viewportName": "desktop-1280",
+      "activeId": "page-calendario",
+      "topbarTitle": "Calendário da Equipe",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "Semana anterior",
+          "width": 122.015625,
+          "height": 33
+        },
+        {
+          "text": "Hoje",
+          "width": 52.75,
+          "height": 33
+        },
+        {
+          "text": "Próxima semana",
+          "width": 122.1875,
+          "height": 33
+        },
+        {
+          "text": "+ Novo evento",
+          "width": 108.953125,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Editar",
+          "width": 136,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 136,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 136,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 136,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 136,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 136,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 136,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 136,
+          "height": 33
+        }
+      ],
+      "smallTargetCount": 13,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "crm-pipeline",
+      "viewportName": "desktop-1280",
+      "activeId": "page-crm",
+      "topbarTitle": "CRM — Leads & Clientes",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "+ Novo cliente",
+          "width": 110.359375,
+          "height": 33
+        },
+        {
+          "text": "Pipeline",
+          "width": 72.46875,
+          "height": 33
+        },
+        {
+          "text": "Clientes",
+          "width": 73.5625,
+          "height": 33
+        },
+        {
+          "text": "+ Novo lead",
+          "width": 94.171875,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Converter",
+          "width": 84.390625,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Converter",
+          "width": 84.390625,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Converter",
+          "width": 84.390625,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Converter",
+          "width": 84.390625,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Converter",
+          "width": 84.390625,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        }
+      ],
+      "smallTargetCount": 26,
+      "cardActionCounts": [
+        {
+          "text": "Leonardo Tavares",
+          "buttons": 3
+        },
+        {
+          "text": "Larissa Gonçalves",
+          "buttons": 3
+        },
+        {
+          "text": "Fernanda Rocha",
+          "buttons": 3
+        },
+        {
+          "text": "Carlos Furlan",
+          "buttons": 3
+        },
+        {
+          "text": "Marcelo Ribeiro",
+          "buttons": 3
+        },
+        {
+          "text": "Juliana Martins",
+          "buttons": 3
+        },
+        {
+          "text": "Paulo Medeiros",
+          "buttons": 3
+        }
+      ],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "crm-clientes",
+      "viewportName": "desktop-1280",
+      "activeId": "page-crm",
+      "topbarTitle": "CRM — Leads & Clientes",
+      "tables": [
+        {
+          "headers": [
+            "CLIENTE",
+            "SEGMENTO",
+            "PLANO",
+            "DESDE",
+            "MRR",
+            "STATUS",
+            "AÇÕES"
+          ],
+          "rowCount": 6,
+          "minWidth": "980px",
+          "width": 980,
+          "wrapWidth": 976
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 976,
+          "scrollWidth": 980,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "+ Novo cliente",
+          "width": 110.359375,
+          "height": 33
+        },
+        {
+          "text": "Pipeline",
+          "width": 72.46875,
+          "height": 33
+        },
+        {
+          "text": "Clientes",
+          "width": 73.5625,
+          "height": 33
+        },
+        {
+          "text": "+ Novo lead",
+          "width": 94.171875,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Editar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Cobrar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 105.234375,
+          "height": 15
+        },
+        {
+          "text": "Editar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Cobrar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 105.234375,
+          "height": 15
+        },
+        {
+          "text": "Editar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Cobrar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 105.234375,
+          "height": 15
+        },
+        {
+          "text": "Editar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Cobrar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 105.234375,
+          "height": 15
+        },
+        {
+          "text": "Editar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Cobrar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 105.234375,
+          "height": 15
+        }
+      ],
+      "smallTargetCount": 23,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "crm-historico",
+      "viewportName": "desktop-1280",
+      "activeId": "page-crm",
+      "topbarTitle": "CRM — Leads & Clientes",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "+ Novo cliente",
+          "width": 110.359375,
+          "height": 33
+        },
+        {
+          "text": "Pipeline",
+          "width": 72.46875,
+          "height": 33
+        },
+        {
+          "text": "Clientes",
+          "width": 73.5625,
+          "height": 33
+        },
+        {
+          "text": "+ Novo lead",
+          "width": 94.171875,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 5,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "campanhas",
+      "viewportName": "desktop-1280",
+      "activeId": "page-campanhas",
+      "topbarTitle": "Planejamento de Campanhas",
+      "tables": [
+        {
+          "headers": [
+            "CAMPANHA",
+            "CLIENTE",
+            "CANAL",
+            "PÚBLICO-ALVO",
+            "ORÇAMENTO",
+            "INÍCIO",
+            "STATUS",
+            "AÇÕES"
+          ],
+          "rowCount": 8,
+          "minWidth": "880px",
+          "width": 1635.375,
+          "wrapWidth": 976
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 976,
+          "scrollWidth": 1635,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "+ Nova campanha",
+          "width": 130.0625,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        }
+      ],
+      "smallTargetCount": 18,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "producao-design",
+      "viewportName": "desktop-1280",
+      "activeId": "page-producao",
+      "topbarTitle": "Produção",
+      "tables": [
+        {
+          "headers": [
+            "ENTREGA",
+            "TIPO",
+            "STATUS",
+            "PRAZO",
+            "AÇÕES"
+          ],
+          "rowCount": 5,
+          "minWidth": "860px",
+          "width": 984.78125,
+          "wrapWidth": 976
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 976,
+          "scrollWidth": 985,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "+ Nova entrega",
+          "width": 113.890625,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Arquivo",
+          "width": 71.34375,
+          "height": 37.1875
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 37.1875
+        },
+        {
+          "text": "Excluir",
+          "width": 47.34375,
+          "height": 37.1875
+        },
+        {
+          "text": "Arquivo",
+          "width": 71.34375,
+          "height": 37.1875
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 37.1875
+        },
+        {
+          "text": "Excluir",
+          "width": 47.34375,
+          "height": 37.1875
+        },
+        {
+          "text": "Arquivo",
+          "width": 71.34375,
+          "height": 37.1875
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 37.1875
+        },
+        {
+          "text": "Excluir",
+          "width": 47.34375,
+          "height": 37.1875
+        },
+        {
+          "text": "Arquivo",
+          "width": 71.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 47.34375,
+          "height": 33
+        },
+        {
+          "text": "Arquivo",
+          "width": 71.34375,
+          "height": 37.1875
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 37.1875
+        },
+        {
+          "text": "Excluir",
+          "width": 47.34375,
+          "height": 37.1875
+        }
+      ],
+      "smallTargetCount": 17,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "producao-copy",
+      "viewportName": "desktop-1280",
+      "activeId": "page-producao",
+      "topbarTitle": "Produção",
+      "tables": [
+        {
+          "headers": [
+            "ENTREGA",
+            "CLIENTE",
+            "TIPO",
+            "PALAVRAS",
+            "DEADLINE",
+            "STATUS"
+          ],
+          "rowCount": 5,
+          "minWidth": "960px",
+          "width": 1011.515625,
+          "wrapWidth": 976
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 976,
+          "scrollWidth": 1012,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "+ Nova entrega",
+          "width": 113.890625,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        }
+      ],
+      "smallTargetCount": 7,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "producao-lp",
+      "viewportName": "desktop-1280",
+      "activeId": "page-producao",
+      "topbarTitle": "Produção",
+      "tables": [
+        {
+          "headers": [
+            "LANDING PAGE",
+            "CLIENTE",
+            "OBJETIVO",
+            "CONVERSÃO",
+            "STATUS",
+            "AÇÕES"
+          ],
+          "rowCount": 4,
+          "minWidth": "960px",
+          "width": 1076.25,
+          "wrapWidth": 976
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 976,
+          "scrollWidth": 1076,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "+ Nova entrega",
+          "width": 113.890625,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 33
+        }
+      ],
+      "smallTargetCount": 6,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "trafego",
+      "viewportName": "desktop-1280",
+      "activeId": "page-trafego",
+      "topbarTitle": "Gestão de Tráfego",
+      "tables": [
+        {
+          "headers": [
+            "CAMPANHA",
+            "CLIENTE",
+            "PLATAFORMA",
+            "ORÇAMENTO DIÁRIO",
+            "CPC",
+            "CTR",
+            "CONV.",
+            "ROAS",
+            "STATUS"
+          ],
+          "rowCount": 8,
+          "minWidth": "1080px",
+          "width": 1080,
+          "wrapWidth": 926
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 926,
+          "scrollWidth": 1080,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "Sincronizar dados",
+          "width": 131.59375,
+          "height": 33
+        },
+        {
+          "text": "+ Teste A/B",
+          "width": 92.1875,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 3,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "analytics",
+      "viewportName": "desktop-1280",
+      "activeId": "page-analytics",
+      "topbarTitle": "Dados & Analytics",
+      "tables": [
+        {
+          "headers": [
+            "CLIENTE",
+            "SESSÕES",
+            "BOUNCE RATE",
+            "CONV. RATE",
+            "ALCANCE SOCIAL",
+            "ENGAJ.",
+            "SCORE GERAL"
+          ],
+          "rowCount": 7,
+          "minWidth": "880px",
+          "width": 924,
+          "wrapWidth": 926
+        },
+        {
+          "headers": [
+            "CLIENTE",
+            "INTEGRAÇÃO",
+            "STATUS",
+            "CONTA / PROPRIEDADE",
+            "ÚLTIMA SINCRONIZAÇÃO",
+            "ATUALIZADO POR",
+            "AÇÕES"
+          ],
+          "rowCount": 5,
+          "minWidth": "980px",
+          "width": 980,
+          "wrapWidth": 926
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 926,
+          "scrollWidth": 924,
+          "overflow": false
+        },
+        {
+          "width": 926,
+          "scrollWidth": 980,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "+ Nova integração",
+          "width": 131.390625,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        }
+      ],
+      "smallTargetCount": 12,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "financeiro",
+      "viewportName": "desktop-1280",
+      "activeId": "page-financeiro",
+      "topbarTitle": "Financeiro Interno",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "Exportar CSV",
+          "width": 104.734375,
+          "height": 33
+        },
+        {
+          "text": "+ Novo custo",
+          "width": 103.6875,
+          "height": 33
+        },
+        {
+          "text": "+ Nova cobrança",
+          "width": 126.015625,
+          "height": 33
+        },
+        {
+          "text": "+ Nova fatura",
+          "width": 103.578125,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Cobrar",
+          "width": 64.234375,
+          "height": 31
+        },
+        {
+          "text": "Cobrar",
+          "width": 66.234375,
+          "height": 33
+        },
+        {
+          "text": "Cobrar",
+          "width": 66.234375,
+          "height": 33
+        },
+        {
+          "text": "Nova cobrança",
+          "width": 114.5625,
+          "height": 33
+        },
+        {
+          "text": "Nova cobrança",
+          "width": 114.5625,
+          "height": 33
+        },
+        {
+          "text": "Nova cobrança",
+          "width": 114.5625,
+          "height": 33
+        },
+        {
+          "text": "Abrir link",
+          "width": 78.703125,
+          "height": 34
+        },
+        {
+          "text": "Copiar Pix",
+          "width": 85.765625,
+          "height": 34
+        },
+        {
+          "text": "Recebida",
+          "width": 80.28125,
+          "height": 34
+        },
+        {
+          "text": "Pendente",
+          "width": 81.5625,
+          "height": 34
+        },
+        {
+          "text": "Abrir link",
+          "width": 78.703125,
+          "height": 34
+        },
+        {
+          "text": "Boleto",
+          "width": 63.140625,
+          "height": 34
+        },
+        {
+          "text": "Recebida",
+          "width": 80.28125,
+          "height": 34
+        },
+        {
+          "text": "Pendente",
+          "width": 81.5625,
+          "height": 34
+        },
+        {
+          "text": "Recebida",
+          "width": 80.28125,
+          "height": 34
+        }
+      ],
+      "smallTargetCount": 29,
+      "cardActionCounts": [
+        {
+          "text": "VivaPet Centro Veterinário 24h",
+          "buttons": 4
+        },
+        {
+          "text": "Aurora Moda Feminina",
+          "buttons": 4
+        }
+      ],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 87,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "acesso-membros",
+      "viewportName": "desktop-1280",
+      "activeId": "page-acesso",
+      "topbarTitle": "Controle de Acesso",
+      "tables": [
+        {
+          "headers": [
+            "MEMBRO",
+            "PERFIL",
+            "PRESENÇA",
+            "ÚLTIMO ACESSO",
+            "AÇÕES"
+          ],
+          "rowCount": 6,
+          "minWidth": "920px",
+          "width": 974,
+          "wrapWidth": 976
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 976,
+          "scrollWidth": 974,
+          "overflow": false
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "+ Novo membro",
+          "width": 117.421875,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 54.921875,
+          "height": 16
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 54.921875,
+          "height": 16
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 54.921875,
+          "height": 16
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 54.921875,
+          "height": 16
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 54.921875,
+          "height": 16
+        }
+      ],
+      "smallTargetCount": 13,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "acesso-perfis",
+      "viewportName": "desktop-1280",
+      "activeId": "page-acesso",
+      "topbarTitle": "Controle de Acesso",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "+ Novo membro",
+          "width": 117.421875,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 2,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "home",
+      "viewportName": "tablet-1024",
+      "activeId": "page-home",
+      "topbarTitle": "Visão Geral",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "+ Novo cliente",
+          "width": 110.359375,
+          "height": 33
+        },
+        {
+          "text": "+ Novo lead",
+          "width": 94.171875,
+          "height": 31
+        },
+        {
+          "text": "+ Novo evento",
+          "width": 110.953125,
+          "height": 33
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Ver CRM\n→",
+          "width": 73.25,
+          "height": 17
+        }
+      ],
+      "smallTargetCount": 5,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "perfil",
+      "viewportName": "tablet-1024",
+      "activeId": "page-perfil",
+      "topbarTitle": "Meu Perfil",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Editar perfil",
+          "width": 91.984375,
+          "height": 33
+        },
+        {
+          "text": "Alterar senha",
+          "width": 104.296875,
+          "height": 33
+        },
+        {
+          "text": "Salvar preferências",
+          "width": 139.484375,
+          "height": 33
+        }
+      ],
+      "smallTargetCount": 4,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "kanban",
+      "viewportName": "tablet-1024",
+      "activeId": "page-kanban",
+      "topbarTitle": "Gestão de Projetos",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "+ Nova tarefa",
+          "width": 103.28125,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Adicionar",
+          "width": 81.8125,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 53.546875,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 53.546875,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 53.546875,
+          "height": 33
+        },
+        {
+          "text": "Limpar histórico",
+          "width": 96.4375,
+          "height": 17
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        }
+      ],
+      "smallTargetCount": 14,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "calendario",
+      "viewportName": "tablet-1024",
+      "activeId": "page-calendario",
+      "topbarTitle": "Calendário da Equipe",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "Semana anterior",
+          "width": 122.015625,
+          "height": 33
+        },
+        {
+          "text": "Hoje",
+          "width": 52.75,
+          "height": 33
+        },
+        {
+          "text": "Próxima semana",
+          "width": 122.1875,
+          "height": 33
+        },
+        {
+          "text": "+ Novo evento",
+          "width": 108.953125,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Editar",
+          "width": 152.609375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 152.625,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 152.609375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 152.625,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 152.609375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 152.625,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 152.609375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 152.625,
+          "height": 33
+        }
+      ],
+      "smallTargetCount": 13,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "crm-pipeline",
+      "viewportName": "tablet-1024",
+      "activeId": "page-crm",
+      "topbarTitle": "CRM — Leads & Clientes",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "+ Novo cliente",
+          "width": 110.359375,
+          "height": 33
+        },
+        {
+          "text": "Pipeline",
+          "width": 72.46875,
+          "height": 33
+        },
+        {
+          "text": "Clientes",
+          "width": 73.5625,
+          "height": 33
+        },
+        {
+          "text": "+ Novo lead",
+          "width": 94.171875,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Converter",
+          "width": 84.390625,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Converter",
+          "width": 84.390625,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Converter",
+          "width": 84.390625,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Converter",
+          "width": 84.390625,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Converter",
+          "width": 84.390625,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        }
+      ],
+      "smallTargetCount": 26,
+      "cardActionCounts": [
+        {
+          "text": "Leonardo Tavares",
+          "buttons": 3
+        },
+        {
+          "text": "Larissa Gonçalves",
+          "buttons": 3
+        },
+        {
+          "text": "Fernanda Rocha",
+          "buttons": 3
+        },
+        {
+          "text": "Carlos Furlan",
+          "buttons": 3
+        },
+        {
+          "text": "Marcelo Ribeiro",
+          "buttons": 3
+        },
+        {
+          "text": "Juliana Martins",
+          "buttons": 3
+        },
+        {
+          "text": "Paulo Medeiros",
+          "buttons": 3
+        }
+      ],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "crm-clientes",
+      "viewportName": "tablet-1024",
+      "activeId": "page-crm",
+      "topbarTitle": "CRM — Leads & Clientes",
+      "tables": [
+        {
+          "headers": [
+            "CLIENTE",
+            "SEGMENTO",
+            "PLANO",
+            "DESDE",
+            "MRR",
+            "STATUS",
+            "AÇÕES"
+          ],
+          "rowCount": 6,
+          "minWidth": "980px",
+          "width": 980,
+          "wrapWidth": 760
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 760,
+          "scrollWidth": 980,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "+ Novo cliente",
+          "width": 110.359375,
+          "height": 33
+        },
+        {
+          "text": "Pipeline",
+          "width": 72.46875,
+          "height": 33
+        },
+        {
+          "text": "Clientes",
+          "width": 73.5625,
+          "height": 33
+        },
+        {
+          "text": "+ Novo lead",
+          "width": 94.171875,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Editar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Cobrar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 105.234375,
+          "height": 15
+        },
+        {
+          "text": "Editar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Cobrar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 105.234375,
+          "height": 15
+        },
+        {
+          "text": "Editar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Cobrar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 105.234375,
+          "height": 15
+        },
+        {
+          "text": "Editar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Cobrar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 105.234375,
+          "height": 15
+        },
+        {
+          "text": "Editar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Cobrar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 105.234375,
+          "height": 15
+        }
+      ],
+      "smallTargetCount": 23,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "crm-historico",
+      "viewportName": "tablet-1024",
+      "activeId": "page-crm",
+      "topbarTitle": "CRM — Leads & Clientes",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "+ Novo cliente",
+          "width": 110.359375,
+          "height": 33
+        },
+        {
+          "text": "Pipeline",
+          "width": 72.46875,
+          "height": 33
+        },
+        {
+          "text": "Clientes",
+          "width": 73.5625,
+          "height": 33
+        },
+        {
+          "text": "+ Novo lead",
+          "width": 94.171875,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 5,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "campanhas",
+      "viewportName": "tablet-1024",
+      "activeId": "page-campanhas",
+      "topbarTitle": "Planejamento de Campanhas",
+      "tables": [
+        {
+          "headers": [
+            "CAMPANHA",
+            "CLIENTE",
+            "CANAL",
+            "PÚBLICO-ALVO",
+            "ORÇAMENTO",
+            "INÍCIO",
+            "STATUS",
+            "AÇÕES"
+          ],
+          "rowCount": 8,
+          "minWidth": "760px",
+          "width": 1635.375,
+          "wrapWidth": 760
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 760,
+          "scrollWidth": 1635,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "+ Nova campanha",
+          "width": 130.0625,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        }
+      ],
+      "smallTargetCount": 18,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "producao-design",
+      "viewportName": "tablet-1024",
+      "activeId": "page-producao",
+      "topbarTitle": "Produção",
+      "tables": [
+        {
+          "headers": [
+            "ENTREGA",
+            "TIPO",
+            "STATUS",
+            "PRAZO",
+            "AÇÕES"
+          ],
+          "rowCount": 5,
+          "minWidth": "860px",
+          "width": 984.78125,
+          "wrapWidth": 760
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 760,
+          "scrollWidth": 985,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "+ Nova entrega",
+          "width": 113.890625,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Arquivo",
+          "width": 71.34375,
+          "height": 37.1875
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 37.1875
+        },
+        {
+          "text": "Excluir",
+          "width": 47.34375,
+          "height": 37.1875
+        },
+        {
+          "text": "Arquivo",
+          "width": 71.34375,
+          "height": 37.1875
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 37.1875
+        },
+        {
+          "text": "Excluir",
+          "width": 47.34375,
+          "height": 37.1875
+        },
+        {
+          "text": "Arquivo",
+          "width": 71.34375,
+          "height": 37.1875
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 37.1875
+        },
+        {
+          "text": "Excluir",
+          "width": 47.34375,
+          "height": 37.1875
+        },
+        {
+          "text": "Arquivo",
+          "width": 71.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 47.34375,
+          "height": 33
+        },
+        {
+          "text": "Arquivo",
+          "width": 71.34375,
+          "height": 37.1875
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 37.1875
+        },
+        {
+          "text": "Excluir",
+          "width": 47.34375,
+          "height": 37.1875
+        }
+      ],
+      "smallTargetCount": 17,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "producao-copy",
+      "viewportName": "tablet-1024",
+      "activeId": "page-producao",
+      "topbarTitle": "Produção",
+      "tables": [
+        {
+          "headers": [
+            "ENTREGA",
+            "CLIENTE",
+            "TIPO",
+            "PALAVRAS",
+            "DEADLINE",
+            "STATUS"
+          ],
+          "rowCount": 5,
+          "minWidth": "960px",
+          "width": 1011.515625,
+          "wrapWidth": 760
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 760,
+          "scrollWidth": 1012,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "+ Nova entrega",
+          "width": 113.890625,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        }
+      ],
+      "smallTargetCount": 7,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "producao-lp",
+      "viewportName": "tablet-1024",
+      "activeId": "page-producao",
+      "topbarTitle": "Produção",
+      "tables": [
+        {
+          "headers": [
+            "LANDING PAGE",
+            "CLIENTE",
+            "OBJETIVO",
+            "CONVERSÃO",
+            "STATUS",
+            "AÇÕES"
+          ],
+          "rowCount": 4,
+          "minWidth": "960px",
+          "width": 1076.25,
+          "wrapWidth": 760
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 760,
+          "scrollWidth": 1076,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "+ Nova entrega",
+          "width": 113.890625,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 33
+        }
+      ],
+      "smallTargetCount": 6,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "trafego",
+      "viewportName": "tablet-1024",
+      "activeId": "page-trafego",
+      "topbarTitle": "Gestão de Tráfego",
+      "tables": [
+        {
+          "headers": [
+            "CAMPANHA",
+            "CLIENTE",
+            "PLATAFORMA",
+            "ORÇAMENTO DIÁRIO",
+            "CPC",
+            "CTR",
+            "CONV.",
+            "ROAS",
+            "STATUS"
+          ],
+          "rowCount": 8,
+          "minWidth": "1080px",
+          "width": 1080,
+          "wrapWidth": 710
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 710,
+          "scrollWidth": 1080,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "Sincronizar dados",
+          "width": 131.59375,
+          "height": 33
+        },
+        {
+          "text": "+ Teste A/B",
+          "width": 92.1875,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 3,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "analytics",
+      "viewportName": "tablet-1024",
+      "activeId": "page-analytics",
+      "topbarTitle": "Dados & Analytics",
+      "tables": [
+        {
+          "headers": [
+            "CLIENTE",
+            "SESSÕES",
+            "BOUNCE RATE",
+            "CONV. RATE",
+            "ALCANCE SOCIAL",
+            "ENGAJ.",
+            "SCORE GERAL"
+          ],
+          "rowCount": 7,
+          "minWidth": "760px",
+          "width": 911.234375,
+          "wrapWidth": 710
+        },
+        {
+          "headers": [
+            "CLIENTE",
+            "INTEGRAÇÃO",
+            "STATUS",
+            "CONTA / PROPRIEDADE",
+            "ÚLTIMA SINCRONIZAÇÃO",
+            "ATUALIZADO POR",
+            "AÇÕES"
+          ],
+          "rowCount": 5,
+          "minWidth": "980px",
+          "width": 980,
+          "wrapWidth": 710
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 710,
+          "scrollWidth": 911,
+          "overflow": true
+        },
+        {
+          "width": 710,
+          "scrollWidth": 980,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "+ Nova integração",
+          "width": 131.390625,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        }
+      ],
+      "smallTargetCount": 12,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 87,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "financeiro",
+      "viewportName": "tablet-1024",
+      "activeId": "page-financeiro",
+      "topbarTitle": "Financeiro Interno",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "Exportar CSV",
+          "width": 104.734375,
+          "height": 33
+        },
+        {
+          "text": "+ Novo custo",
+          "width": 103.6875,
+          "height": 33
+        },
+        {
+          "text": "+ Nova cobrança",
+          "width": 126.015625,
+          "height": 33
+        },
+        {
+          "text": "+ Nova fatura",
+          "width": 103.578125,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Cobrar",
+          "width": 64.234375,
+          "height": 31
+        },
+        {
+          "text": "Cobrar",
+          "width": 66.234375,
+          "height": 33
+        },
+        {
+          "text": "Cobrar",
+          "width": 66.234375,
+          "height": 33
+        },
+        {
+          "text": "Nova cobrança",
+          "width": 114.5625,
+          "height": 33
+        },
+        {
+          "text": "Nova cobrança",
+          "width": 114.5625,
+          "height": 33
+        },
+        {
+          "text": "Nova cobrança",
+          "width": 114.5625,
+          "height": 33
+        },
+        {
+          "text": "Abrir link",
+          "width": 78.703125,
+          "height": 34
+        },
+        {
+          "text": "Copiar Pix",
+          "width": 85.765625,
+          "height": 34
+        },
+        {
+          "text": "Recebida",
+          "width": 80.28125,
+          "height": 34
+        },
+        {
+          "text": "Pendente",
+          "width": 81.5625,
+          "height": 34
+        },
+        {
+          "text": "Abrir link",
+          "width": 78.703125,
+          "height": 34
+        },
+        {
+          "text": "Boleto",
+          "width": 63.140625,
+          "height": 34
+        },
+        {
+          "text": "Recebida",
+          "width": 80.28125,
+          "height": 34
+        },
+        {
+          "text": "Pendente",
+          "width": 81.5625,
+          "height": 34
+        },
+        {
+          "text": "Recebida",
+          "width": 80.28125,
+          "height": 34
+        }
+      ],
+      "smallTargetCount": 29,
+      "cardActionCounts": [
+        {
+          "text": "VivaPet Centro Veterinário 24h",
+          "buttons": 4
+        },
+        {
+          "text": "Aurora Moda Feminina",
+          "buttons": 4
+        }
+      ],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 87,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "acesso-membros",
+      "viewportName": "tablet-1024",
+      "activeId": "page-acesso",
+      "topbarTitle": "Controle de Acesso",
+      "tables": [
+        {
+          "headers": [
+            "MEMBRO",
+            "PERFIL",
+            "PRESENÇA",
+            "ÚLTIMO ACESSO",
+            "AÇÕES"
+          ],
+          "rowCount": 6,
+          "minWidth": "920px",
+          "width": 920,
+          "wrapWidth": 760
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 760,
+          "scrollWidth": 920,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "+ Novo membro",
+          "width": 117.421875,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 54.921875,
+          "height": 16
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 54.921875,
+          "height": 16
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 54.921875,
+          "height": 16
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 54.921875,
+          "height": 16
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 54.921875,
+          "height": 16
+        }
+      ],
+      "smallTargetCount": 13,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "acesso-perfis",
+      "viewportName": "tablet-1024",
+      "activeId": "page-acesso",
+      "topbarTitle": "Controle de Acesso",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "+ Novo membro",
+          "width": 117.421875,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 2,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "home",
+      "viewportName": "tablet-768",
+      "activeId": "page-home",
+      "topbarTitle": "Visão Geral",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "+ Novo cliente",
+          "width": 110.359375,
+          "height": 33
+        },
+        {
+          "text": "+ Novo lead",
+          "width": 94.171875,
+          "height": 31
+        },
+        {
+          "text": "+ Novo evento",
+          "width": 110.953125,
+          "height": 33
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Ver CRM\n→",
+          "width": 73.25,
+          "height": 17
+        }
+      ],
+      "smallTargetCount": 5,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 71.1875,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "perfil",
+      "viewportName": "tablet-768",
+      "activeId": "page-perfil",
+      "topbarTitle": "Meu Perfil",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Editar perfil",
+          "width": 91.984375,
+          "height": 33
+        },
+        {
+          "text": "Alterar senha",
+          "width": 104.296875,
+          "height": 33
+        },
+        {
+          "text": "Salvar preferências",
+          "width": 139.484375,
+          "height": 33
+        }
+      ],
+      "smallTargetCount": 4,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "kanban",
+      "viewportName": "tablet-768",
+      "activeId": "page-kanban",
+      "topbarTitle": "Gestão de Projetos",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "+ Nova tarefa",
+          "width": 103.28125,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Adicionar",
+          "width": 686,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 53.546875,
+          "height": 17
+        },
+        {
+          "text": "Remover",
+          "width": 53.546875,
+          "height": 17
+        },
+        {
+          "text": "Remover",
+          "width": 53.546875,
+          "height": 17
+        },
+        {
+          "text": "Limpar histórico",
+          "width": 96.4375,
+          "height": 17
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        }
+      ],
+      "smallTargetCount": 14,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "calendario",
+      "viewportName": "tablet-768",
+      "activeId": "page-calendario",
+      "topbarTitle": "Calendário da Equipe",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "Semana anterior",
+          "width": 122.015625,
+          "height": 33
+        },
+        {
+          "text": "Hoje",
+          "width": 52.75,
+          "height": 33
+        },
+        {
+          "text": "Próxima semana",
+          "width": 122.1875,
+          "height": 33
+        },
+        {
+          "text": "+ Novo evento",
+          "width": 108.953125,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Editar",
+          "width": 152.609375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 152.625,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 152.609375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 152.625,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 152.609375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 152.625,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 152.609375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 152.625,
+          "height": 33
+        }
+      ],
+      "smallTargetCount": 13,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "crm-pipeline",
+      "viewportName": "tablet-768",
+      "activeId": "page-crm",
+      "topbarTitle": "CRM — Leads & Clientes",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "+ Novo cliente",
+          "width": 110.359375,
+          "height": 33
+        },
+        {
+          "text": "Pipeline",
+          "width": 72.46875,
+          "height": 33
+        },
+        {
+          "text": "Clientes",
+          "width": 73.5625,
+          "height": 33
+        },
+        {
+          "text": "+ Novo lead",
+          "width": 94.171875,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Converter",
+          "width": 84.390625,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Converter",
+          "width": 84.390625,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Converter",
+          "width": 84.390625,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Converter",
+          "width": 84.390625,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Converter",
+          "width": 84.390625,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        }
+      ],
+      "smallTargetCount": 26,
+      "cardActionCounts": [
+        {
+          "text": "Leonardo Tavares",
+          "buttons": 3
+        },
+        {
+          "text": "Larissa Gonçalves",
+          "buttons": 3
+        },
+        {
+          "text": "Fernanda Rocha",
+          "buttons": 3
+        },
+        {
+          "text": "Carlos Furlan",
+          "buttons": 3
+        },
+        {
+          "text": "Marcelo Ribeiro",
+          "buttons": 3
+        },
+        {
+          "text": "Juliana Martins",
+          "buttons": 3
+        },
+        {
+          "text": "Paulo Medeiros",
+          "buttons": 3
+        }
+      ],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "crm-clientes",
+      "viewportName": "tablet-768",
+      "activeId": "page-crm",
+      "topbarTitle": "CRM — Leads & Clientes",
+      "tables": [
+        {
+          "headers": [
+            "CLIENTE",
+            "SEGMENTO",
+            "PLANO",
+            "DESDE",
+            "MRR",
+            "STATUS",
+            "AÇÕES"
+          ],
+          "rowCount": 6,
+          "minWidth": "980px",
+          "width": 980,
+          "wrapWidth": 736
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 736,
+          "scrollWidth": 980,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "+ Novo cliente",
+          "width": 110.359375,
+          "height": 33
+        },
+        {
+          "text": "Pipeline",
+          "width": 72.46875,
+          "height": 33
+        },
+        {
+          "text": "Clientes",
+          "width": 73.5625,
+          "height": 33
+        },
+        {
+          "text": "+ Novo lead",
+          "width": 94.171875,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Editar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Cobrar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 105.234375,
+          "height": 15
+        },
+        {
+          "text": "Editar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Cobrar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 105.234375,
+          "height": 15
+        },
+        {
+          "text": "Editar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Cobrar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 105.234375,
+          "height": 15
+        },
+        {
+          "text": "Editar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Cobrar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 105.234375,
+          "height": 15
+        },
+        {
+          "text": "Editar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Cobrar",
+          "width": 105.234375,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 105.234375,
+          "height": 15
+        }
+      ],
+      "smallTargetCount": 23,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "crm-historico",
+      "viewportName": "tablet-768",
+      "activeId": "page-crm",
+      "topbarTitle": "CRM — Leads & Clientes",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "+ Novo cliente",
+          "width": 110.359375,
+          "height": 33
+        },
+        {
+          "text": "Pipeline",
+          "width": 72.46875,
+          "height": 33
+        },
+        {
+          "text": "Clientes",
+          "width": 73.5625,
+          "height": 33
+        },
+        {
+          "text": "+ Novo lead",
+          "width": 94.171875,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 5,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "campanhas",
+      "viewportName": "tablet-768",
+      "activeId": "page-campanhas",
+      "topbarTitle": "Planejamento de Campanhas",
+      "tables": [
+        {
+          "headers": [
+            "CAMPANHA",
+            "CLIENTE",
+            "CANAL",
+            "PÚBLICO-ALVO",
+            "ORÇAMENTO",
+            "INÍCIO",
+            "STATUS",
+            "AÇÕES"
+          ],
+          "rowCount": 8,
+          "minWidth": "720px",
+          "width": 1567.375,
+          "wrapWidth": 736
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 736,
+          "scrollWidth": 1567,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "+ Nova campanha",
+          "width": 130.0625,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        }
+      ],
+      "smallTargetCount": 18,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "producao-design",
+      "viewportName": "tablet-768",
+      "activeId": "page-producao",
+      "topbarTitle": "Produção",
+      "tables": [
+        {
+          "headers": [
+            "ENTREGA",
+            "TIPO",
+            "STATUS",
+            "PRAZO",
+            "AÇÕES"
+          ],
+          "rowCount": 5,
+          "minWidth": "860px",
+          "width": 984.78125,
+          "wrapWidth": 736
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 736,
+          "scrollWidth": 985,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "+ Nova entrega",
+          "width": 113.890625,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Arquivo",
+          "width": 71.34375,
+          "height": 37.1875
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 37.1875
+        },
+        {
+          "text": "Excluir",
+          "width": 47.34375,
+          "height": 37.1875
+        },
+        {
+          "text": "Arquivo",
+          "width": 71.34375,
+          "height": 37.1875
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 37.1875
+        },
+        {
+          "text": "Excluir",
+          "width": 47.34375,
+          "height": 37.1875
+        },
+        {
+          "text": "Arquivo",
+          "width": 71.34375,
+          "height": 37.1875
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 37.1875
+        },
+        {
+          "text": "Excluir",
+          "width": 47.34375,
+          "height": 37.1875
+        },
+        {
+          "text": "Arquivo",
+          "width": 71.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 47.34375,
+          "height": 33
+        },
+        {
+          "text": "Arquivo",
+          "width": 71.34375,
+          "height": 37.1875
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 37.1875
+        },
+        {
+          "text": "Excluir",
+          "width": 47.34375,
+          "height": 37.1875
+        }
+      ],
+      "smallTargetCount": 17,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "producao-copy",
+      "viewportName": "tablet-768",
+      "activeId": "page-producao",
+      "topbarTitle": "Produção",
+      "tables": [
+        {
+          "headers": [
+            "ENTREGA",
+            "CLIENTE",
+            "TIPO",
+            "PALAVRAS",
+            "DEADLINE",
+            "STATUS"
+          ],
+          "rowCount": 5,
+          "minWidth": "960px",
+          "width": 1011.515625,
+          "wrapWidth": 736
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 736,
+          "scrollWidth": 1012,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "+ Nova entrega",
+          "width": 113.890625,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        }
+      ],
+      "smallTargetCount": 7,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "producao-lp",
+      "viewportName": "tablet-768",
+      "activeId": "page-producao",
+      "topbarTitle": "Produção",
+      "tables": [
+        {
+          "headers": [
+            "LANDING PAGE",
+            "CLIENTE",
+            "OBJETIVO",
+            "CONVERSÃO",
+            "STATUS",
+            "AÇÕES"
+          ],
+          "rowCount": 4,
+          "minWidth": "960px",
+          "width": 1076.25,
+          "wrapWidth": 736
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 736,
+          "scrollWidth": 1076,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "+ Nova entrega",
+          "width": 113.890625,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 37.1875
+        },
+        {
+          "text": "Abrir",
+          "width": 54.9375,
+          "height": 33
+        }
+      ],
+      "smallTargetCount": 6,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "trafego",
+      "viewportName": "tablet-768",
+      "activeId": "page-trafego",
+      "topbarTitle": "Gestão de Tráfego",
+      "tables": [
+        {
+          "headers": [
+            "CAMPANHA",
+            "CLIENTE",
+            "PLATAFORMA",
+            "ORÇAMENTO DIÁRIO",
+            "CPC",
+            "CTR",
+            "CONV.",
+            "ROAS",
+            "STATUS"
+          ],
+          "rowCount": 8,
+          "minWidth": "1080px",
+          "width": 1080,
+          "wrapWidth": 686
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 686,
+          "scrollWidth": 1080,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "Sincronizar dados",
+          "width": 131.59375,
+          "height": 33
+        },
+        {
+          "text": "+ Teste A/B",
+          "width": 92.1875,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 3,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "analytics",
+      "viewportName": "tablet-768",
+      "activeId": "page-analytics",
+      "topbarTitle": "Dados & Analytics",
+      "tables": [
+        {
+          "headers": [
+            "CLIENTE",
+            "SESSÕES",
+            "BOUNCE RATE",
+            "CONV. RATE",
+            "ALCANCE SOCIAL",
+            "ENGAJ.",
+            "SCORE GERAL"
+          ],
+          "rowCount": 7,
+          "minWidth": "720px",
+          "width": 911.234375,
+          "wrapWidth": 686
+        },
+        {
+          "headers": [
+            "CLIENTE",
+            "INTEGRAÇÃO",
+            "STATUS",
+            "CONTA / PROPRIEDADE",
+            "ÚLTIMA SINCRONIZAÇÃO",
+            "ATUALIZADO POR",
+            "AÇÕES"
+          ],
+          "rowCount": 5,
+          "minWidth": "980px",
+          "width": 980,
+          "wrapWidth": 686
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 686,
+          "scrollWidth": 911,
+          "overflow": true
+        },
+        {
+          "width": 686,
+          "scrollWidth": 980,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "+ Nova integração",
+          "width": 131.390625,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Excluir",
+          "width": 65.34375,
+          "height": 33
+        }
+      ],
+      "smallTargetCount": 12,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "financeiro",
+      "viewportName": "tablet-768",
+      "activeId": "page-financeiro",
+      "topbarTitle": "Financeiro Interno",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "Exportar CSV",
+          "width": 104.734375,
+          "height": 33
+        },
+        {
+          "text": "+ Novo custo",
+          "width": 103.6875,
+          "height": 33
+        },
+        {
+          "text": "+ Nova cobrança",
+          "width": 126.015625,
+          "height": 33
+        },
+        {
+          "text": "+ Nova fatura",
+          "width": 103.578125,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Cobrar",
+          "width": 64.234375,
+          "height": 31
+        },
+        {
+          "text": "Cobrar",
+          "width": 66.234375,
+          "height": 33
+        },
+        {
+          "text": "Cobrar",
+          "width": 66.234375,
+          "height": 33
+        },
+        {
+          "text": "Nova cobrança",
+          "width": 114.5625,
+          "height": 33
+        },
+        {
+          "text": "Nova cobrança",
+          "width": 114.5625,
+          "height": 33
+        },
+        {
+          "text": "Nova cobrança",
+          "width": 114.5625,
+          "height": 33
+        },
+        {
+          "text": "Abrir link",
+          "width": 78.703125,
+          "height": 34
+        },
+        {
+          "text": "Copiar Pix",
+          "width": 85.765625,
+          "height": 34
+        },
+        {
+          "text": "Recebida",
+          "width": 80.28125,
+          "height": 34
+        },
+        {
+          "text": "Pendente",
+          "width": 81.5625,
+          "height": 34
+        },
+        {
+          "text": "Abrir link",
+          "width": 78.703125,
+          "height": 34
+        },
+        {
+          "text": "Boleto",
+          "width": 63.140625,
+          "height": 34
+        },
+        {
+          "text": "Recebida",
+          "width": 80.28125,
+          "height": 34
+        },
+        {
+          "text": "Pendente",
+          "width": 81.5625,
+          "height": 34
+        },
+        {
+          "text": "Recebida",
+          "width": 80.28125,
+          "height": 34
+        }
+      ],
+      "smallTargetCount": 29,
+      "cardActionCounts": [
+        {
+          "text": "VivaPet Centro Veterinário 24h",
+          "buttons": 4
+        },
+        {
+          "text": "Aurora Moda Feminina",
+          "buttons": 4
+        }
+      ],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "acesso-membros",
+      "viewportName": "tablet-768",
+      "activeId": "page-acesso",
+      "topbarTitle": "Controle de Acesso",
+      "tables": [
+        {
+          "headers": [
+            "MEMBRO",
+            "PERFIL",
+            "PRESENÇA",
+            "ÚLTIMO ACESSO",
+            "AÇÕES"
+          ],
+          "rowCount": 6,
+          "minWidth": "760px",
+          "width": 848.609375,
+          "wrapWidth": 736
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 736,
+          "scrollWidth": 849,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "+ Novo membro",
+          "width": 117.421875,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 54.921875,
+          "height": 16
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 54.921875,
+          "height": 16
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 54.921875,
+          "height": 16
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 54.921875,
+          "height": 16
+        },
+        {
+          "text": "Editar",
+          "width": 60,
+          "height": 33
+        },
+        {
+          "text": "Remover",
+          "width": 54.921875,
+          "height": 16
+        }
+      ],
+      "smallTargetCount": 13,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "acesso-perfis",
+      "viewportName": "tablet-768",
+      "activeId": "page-acesso",
+      "topbarTitle": "Controle de Acesso",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "+ Novo membro",
+          "width": 117.421875,
+          "height": 31
+        },
+        {
+          "text": "3",
+          "width": 40,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 2,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "home",
+      "viewportName": "mobile-375",
+      "activeId": "page-home",
+      "topbarTitle": "Visão Geral",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "3",
+          "width": 303,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 1,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 179.1875,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "perfil",
+      "viewportName": "mobile-375",
+      "activeId": "page-perfil",
+      "topbarTitle": "Meu Perfil",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "3",
+          "width": 303,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 1,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 40,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "kanban",
+      "viewportName": "mobile-375",
+      "activeId": "page-kanban",
+      "topbarTitle": "Gestão de Projetos",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "3",
+          "width": 303,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 1,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 152,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "calendario",
+      "viewportName": "mobile-375",
+      "activeId": "page-calendario",
+      "topbarTitle": "Calendário da Equipe",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "3",
+          "width": 303,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 1,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 264,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "crm-pipeline",
+      "viewportName": "mobile-375",
+      "activeId": "page-crm",
+      "topbarTitle": "CRM — Leads & Clientes",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "3",
+          "width": 303,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 1,
+      "cardActionCounts": [
+        {
+          "text": "Leonardo Tavares",
+          "buttons": 3
+        },
+        {
+          "text": "Larissa Gonçalves",
+          "buttons": 3
+        },
+        {
+          "text": "Fernanda Rocha",
+          "buttons": 3
+        },
+        {
+          "text": "Carlos Furlan",
+          "buttons": 3
+        },
+        {
+          "text": "Marcelo Ribeiro",
+          "buttons": 3
+        },
+        {
+          "text": "Juliana Martins",
+          "buttons": 3
+        },
+        {
+          "text": "Paulo Medeiros",
+          "buttons": 3
+        }
+      ],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 264,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "crm-clientes",
+      "viewportName": "mobile-375",
+      "activeId": "page-crm",
+      "topbarTitle": "CRM — Leads & Clientes",
+      "tables": [
+        {
+          "headers": [
+            "CLIENTE",
+            "SEGMENTO",
+            "PLANO",
+            "DESDE",
+            "MRR",
+            "STATUS",
+            "AÇÕES"
+          ],
+          "rowCount": 6,
+          "minWidth": "720px",
+          "width": 720,
+          "wrapWidth": 351
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 351,
+          "scrollWidth": 720,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "3",
+          "width": 303,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 1,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 264,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "crm-historico",
+      "viewportName": "mobile-375",
+      "activeId": "page-crm",
+      "topbarTitle": "CRM — Leads & Clientes",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "3",
+          "width": 303,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 1,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 264,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "campanhas",
+      "viewportName": "mobile-375",
+      "activeId": "page-campanhas",
+      "topbarTitle": "Planejamento de Campanhas",
+      "tables": [
+        {
+          "headers": [
+            "CAMPANHA",
+            "CLIENTE",
+            "CANAL",
+            "PÚBLICO-ALVO",
+            "ORÇAMENTO",
+            "INÍCIO",
+            "STATUS",
+            "AÇÕES"
+          ],
+          "rowCount": 8,
+          "minWidth": "680px",
+          "width": 1567.375,
+          "wrapWidth": 351
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 351,
+          "scrollWidth": 1567,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "3",
+          "width": 303,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 1,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 96,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "producao-design",
+      "viewportName": "mobile-375",
+      "activeId": "page-producao",
+      "topbarTitle": "Produção",
+      "tables": [
+        {
+          "headers": [
+            "ENTREGA",
+            "TIPO",
+            "STATUS",
+            "PRAZO",
+            "AÇÕES"
+          ],
+          "rowCount": 5,
+          "minWidth": "860px",
+          "width": 984.78125,
+          "wrapWidth": 351
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 351,
+          "scrollWidth": 985,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "3",
+          "width": 303,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 1,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 96,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "producao-copy",
+      "viewportName": "mobile-375",
+      "activeId": "page-producao",
+      "topbarTitle": "Produção",
+      "tables": [
+        {
+          "headers": [
+            "ENTREGA",
+            "CLIENTE",
+            "TIPO",
+            "PALAVRAS",
+            "DEADLINE",
+            "STATUS"
+          ],
+          "rowCount": 5,
+          "minWidth": "960px",
+          "width": 1011.515625,
+          "wrapWidth": 351
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 351,
+          "scrollWidth": 1012,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "3",
+          "width": 303,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 1,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 96,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "producao-lp",
+      "viewportName": "mobile-375",
+      "activeId": "page-producao",
+      "topbarTitle": "Produção",
+      "tables": [
+        {
+          "headers": [
+            "LANDING PAGE",
+            "CLIENTE",
+            "OBJETIVO",
+            "CONVERSÃO",
+            "STATUS",
+            "AÇÕES"
+          ],
+          "rowCount": 4,
+          "minWidth": "960px",
+          "width": 1076.25,
+          "wrapWidth": 351
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 351,
+          "scrollWidth": 1076,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "3",
+          "width": 303,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 1,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 96,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "trafego",
+      "viewportName": "mobile-375",
+      "activeId": "page-trafego",
+      "topbarTitle": "Gestão de Tráfego",
+      "tables": [
+        {
+          "headers": [
+            "CAMPANHA",
+            "CLIENTE",
+            "PLATAFORMA",
+            "ORÇAMENTO DIÁRIO",
+            "CPC",
+            "CTR",
+            "CONV.",
+            "ROAS",
+            "STATUS"
+          ],
+          "rowCount": 8,
+          "minWidth": "1080px",
+          "width": 1080,
+          "wrapWidth": 317
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 317,
+          "scrollWidth": 1080,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "3",
+          "width": 303,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 1,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 152,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "analytics",
+      "viewportName": "mobile-375",
+      "activeId": "page-analytics",
+      "topbarTitle": "Dados & Analytics",
+      "tables": [
+        {
+          "headers": [
+            "CLIENTE",
+            "SESSÕES",
+            "BOUNCE RATE",
+            "CONV. RATE",
+            "ALCANCE SOCIAL",
+            "ENGAJ.",
+            "SCORE GERAL"
+          ],
+          "rowCount": 7,
+          "minWidth": "680px",
+          "width": 911.234375,
+          "wrapWidth": 317
+        },
+        {
+          "headers": [
+            "CLIENTE",
+            "INTEGRAÇÃO",
+            "STATUS",
+            "CONTA / PROPRIEDADE",
+            "ÚLTIMA SINCRONIZAÇÃO",
+            "ATUALIZADO POR",
+            "AÇÕES"
+          ],
+          "rowCount": 5,
+          "minWidth": "980px",
+          "width": 980,
+          "wrapWidth": 317
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 317,
+          "scrollWidth": 911,
+          "overflow": true
+        },
+        {
+          "width": 317,
+          "scrollWidth": 980,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "3",
+          "width": 303,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 1,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 208,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "financeiro",
+      "viewportName": "mobile-375",
+      "activeId": "page-financeiro",
+      "topbarTitle": "Financeiro Interno",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "3",
+          "width": 303,
+          "height": 40
+        },
+        {
+          "text": "Abrir link",
+          "width": 283,
+          "height": 34
+        },
+        {
+          "text": "Copiar Pix",
+          "width": 283,
+          "height": 34
+        },
+        {
+          "text": "Recebida",
+          "width": 283,
+          "height": 34
+        },
+        {
+          "text": "Pendente",
+          "width": 283,
+          "height": 34
+        },
+        {
+          "text": "Abrir link",
+          "width": 283,
+          "height": 34
+        },
+        {
+          "text": "Boleto",
+          "width": 283,
+          "height": 34
+        },
+        {
+          "text": "Recebida",
+          "width": 283,
+          "height": 34
+        },
+        {
+          "text": "Pendente",
+          "width": 283,
+          "height": 34
+        },
+        {
+          "text": "Recebida",
+          "width": 283,
+          "height": 34
+        },
+        {
+          "text": "Pendente",
+          "width": 283,
+          "height": 34
+        },
+        {
+          "text": "Marcar pago",
+          "width": 283,
+          "height": 34
+        },
+        {
+          "text": "Em aberto",
+          "width": 283,
+          "height": 34
+        },
+        {
+          "text": "Marcar pago",
+          "width": 283,
+          "height": 34
+        },
+        {
+          "text": "Em aberto",
+          "width": 283,
+          "height": 34
+        },
+        {
+          "text": "Marcar pago",
+          "width": 283,
+          "height": 34
+        },
+        {
+          "text": "Em aberto",
+          "width": 283,
+          "height": 34
+        },
+        {
+          "text": "Marcar pago",
+          "width": 283,
+          "height": 34
+        },
+        {
+          "text": "Em aberto",
+          "width": 283,
+          "height": 34
+        }
+      ],
+      "smallTargetCount": 19,
+      "cardActionCounts": [
+        {
+          "text": "VivaPet Centro Veterinário 24h",
+          "buttons": 4
+        },
+        {
+          "text": "Aurora Moda Feminina",
+          "buttons": 4
+        }
+      ],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 320,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "acesso-membros",
+      "viewportName": "mobile-375",
+      "activeId": "page-acesso",
+      "topbarTitle": "Controle de Acesso",
+      "tables": [
+        {
+          "headers": [
+            "MEMBRO",
+            "PERFIL",
+            "PRESENÇA",
+            "ÚLTIMO ACESSO",
+            "AÇÕES"
+          ],
+          "rowCount": 6,
+          "minWidth": "680px",
+          "width": 848.609375,
+          "wrapWidth": 351
+        }
+      ],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [
+        {
+          "width": 351,
+          "scrollWidth": 849,
+          "overflow": true
+        }
+      ],
+      "smallTargets": [
+        {
+          "text": "3",
+          "width": 303,
+          "height": 40
+        },
+        {
+          "text": "Remover",
+          "width": 54.921875,
+          "height": 16
+        },
+        {
+          "text": "Remover",
+          "width": 54.921875,
+          "height": 16
+        },
+        {
+          "text": "Remover",
+          "width": 54.921875,
+          "height": 16
+        },
+        {
+          "text": "Remover",
+          "width": 54.921875,
+          "height": 16
+        },
+        {
+          "text": "Remover",
+          "width": 54.921875,
+          "height": 16
+        }
+      ],
+      "smallTargetCount": 6,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 96,
+      "breadcrumbCount": 0
+    },
+    {
+      "screenName": "acesso-perfis",
+      "viewportName": "mobile-375",
+      "activeId": "page-acesso",
+      "topbarTitle": "Controle de Acesso",
+      "tables": [],
+      "bodyOverflow": false,
+      "tableWrapOverflow": [],
+      "smallTargets": [
+        {
+          "text": "3",
+          "width": 303,
+          "height": 40
+        }
+      ],
+      "smallTargetCount": 1,
+      "cardActionCounts": [],
+      "forbidden": [],
+      "minFont": 10,
+      "topbarActionsHeight": 96,
+      "breadcrumbCount": 0
+    }
+  ],
+  "consoleMessages": []
+}

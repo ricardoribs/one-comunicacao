@@ -1,0 +1,3202 @@
+[
+  {
+    "viewport": "desktop-1280",
+    "scenario": "crm-clientes",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\desktop-1280-crm-clientes.png",
+    "metrics": {
+      "page": "page-crm",
+      "viewport": {
+        "width": 1280,
+        "height": 1500
+      },
+      "documentScrollWidth": 1280,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "crm-client-table",
+          "width": 980,
+          "scrollWidth": 980,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Cliente",
+              "width": 314,
+              "hidden": false
+            },
+            {
+              "text": "Segmento",
+              "width": 137,
+              "hidden": false
+            },
+            {
+              "text": "Plano",
+              "width": 176,
+              "hidden": false
+            },
+            {
+              "text": "Desde",
+              "width": 118,
+              "hidden": false
+            },
+            {
+              "text": "MRR",
+              "width": 118,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 118,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "history-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Registro",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Tipo",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Data",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Ação",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "desktop-1280",
+    "scenario": "crm-historico",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\desktop-1280-crm-historico.png",
+    "metrics": {
+      "page": "page-crm",
+      "viewport": {
+        "width": 1280,
+        "height": 1500
+      },
+      "documentScrollWidth": 1280,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "crm-client-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Segmento",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Plano",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Desde",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "MRR",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "history-table",
+          "width": 974,
+          "scrollWidth": 974,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Registro",
+              "width": 292,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 175,
+              "hidden": false
+            },
+            {
+              "text": "Tipo",
+              "width": 136,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 136,
+              "hidden": false
+            },
+            {
+              "text": "Data",
+              "width": 136,
+              "hidden": false
+            },
+            {
+              "text": "Ação",
+              "width": 97,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "desktop-1280",
+    "scenario": "campanhas",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\desktop-1280-campanhas.png",
+    "metrics": {
+      "page": "page-campanhas",
+      "viewport": {
+        "width": 1280,
+        "height": 1500
+      },
+      "documentScrollWidth": 1280,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "campaigns-table",
+          "width": 974,
+          "scrollWidth": 974,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Campanha",
+              "width": 195,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 156,
+              "hidden": false
+            },
+            {
+              "text": "Canal",
+              "width": 117,
+              "hidden": false
+            },
+            {
+              "text": "Público-Alvo",
+              "width": 175,
+              "hidden": false
+            },
+            {
+              "text": "Orçamento",
+              "width": 117,
+              "hidden": false
+            },
+            {
+              "text": "Início",
+              "width": 97,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 58,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 58,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "desktop-1280",
+    "scenario": "producao-copy",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\desktop-1280-producao-copy.png",
+    "metrics": {
+      "page": "page-producao",
+      "viewport": {
+        "width": 1280,
+        "height": 1500
+      },
+      "documentScrollWidth": 1280,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "prod-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Entrega",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Prazo",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "prod-copy-table",
+          "width": 974,
+          "scrollWidth": 974,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Arquivo",
+              "width": 312,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 156,
+              "hidden": false
+            },
+            {
+              "text": "Tipo de arquivo",
+              "width": 136,
+              "hidden": false
+            },
+            {
+              "text": "Tamanho",
+              "width": 117,
+              "hidden": false
+            },
+            {
+              "text": "Enviado por",
+              "width": 156,
+              "hidden": false
+            },
+            {
+              "text": "Ação",
+              "width": 97,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "prod-report-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Relatório",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Competência",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Resumo",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Ação",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "desktop-1280",
+    "scenario": "producao-lp",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\desktop-1280-producao-lp.png",
+    "metrics": {
+      "page": "page-producao",
+      "viewport": {
+        "width": 1280,
+        "height": 1500
+      },
+      "documentScrollWidth": 1280,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "prod-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Entrega",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Prazo",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "prod-copy-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Arquivo",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Tipo de arquivo",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Tamanho",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Enviado por",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Ação",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "prod-report-table",
+          "width": 974,
+          "scrollWidth": 974,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Relatório",
+              "width": 273,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 156,
+              "hidden": false
+            },
+            {
+              "text": "Competência",
+              "width": 136,
+              "hidden": false
+            },
+            {
+              "text": "Resumo",
+              "width": 312,
+              "hidden": false
+            },
+            {
+              "text": "Ação",
+              "width": 97,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "desktop-1280",
+    "scenario": "trafego",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\desktop-1280-trafego.png",
+    "metrics": {
+      "page": "page-trafego",
+      "viewport": {
+        "width": 1280,
+        "height": 1500
+      },
+      "documentScrollWidth": 1280,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "traffic-table",
+          "width": 924,
+          "scrollWidth": 924,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Campanha",
+              "width": 218,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 134,
+              "hidden": false
+            },
+            {
+              "text": "Plataforma",
+              "width": 101,
+              "hidden": false
+            },
+            {
+              "text": "Orçamento Diário",
+              "width": 101,
+              "hidden": false
+            },
+            {
+              "text": "CPC",
+              "width": 67,
+              "hidden": false
+            },
+            {
+              "text": "CTR",
+              "width": 67,
+              "hidden": false
+            },
+            {
+              "text": "Conv.",
+              "width": 67,
+              "hidden": false
+            },
+            {
+              "text": "ROAS",
+              "width": 84,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 84,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "desktop-1280",
+    "scenario": "analytics",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\desktop-1280-analytics.png",
+    "metrics": {
+      "page": "page-analytics",
+      "viewport": {
+        "width": 1280,
+        "height": 1500
+      },
+      "documentScrollWidth": 1280,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "analytics-performance-table",
+          "width": 924,
+          "scrollWidth": 924,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Cliente",
+              "width": 240,
+              "hidden": false
+            },
+            {
+              "text": "Leads",
+              "width": 92,
+              "hidden": false
+            },
+            {
+              "text": "Receita",
+              "width": 129,
+              "hidden": false
+            },
+            {
+              "text": "Impressões",
+              "width": 129,
+              "hidden": false
+            },
+            {
+              "text": "Cliques",
+              "width": 92,
+              "hidden": false
+            },
+            {
+              "text": "Período",
+              "width": 129,
+              "hidden": false
+            },
+            {
+              "text": "Score",
+              "width": 111,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "integrations-table",
+          "width": 924,
+          "scrollWidth": 924,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Cliente",
+              "width": 185,
+              "hidden": false
+            },
+            {
+              "text": "Integração",
+              "width": 166,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 111,
+              "hidden": false
+            },
+            {
+              "text": "Conta / Propriedade",
+              "width": 166,
+              "hidden": false
+            },
+            {
+              "text": "Última sincronização",
+              "width": 129,
+              "hidden": false
+            },
+            {
+              "text": "Atualizado por",
+              "width": 92,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 74,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "desktop-1280",
+    "scenario": "financeiro",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\desktop-1280-financeiro.png",
+    "metrics": {
+      "page": "page-financeiro",
+      "viewport": {
+        "width": 1280,
+        "height": 1500
+      },
+      "documentScrollWidth": 1280,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "finance-client-table",
+          "width": 924,
+          "scrollWidth": 924,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Cliente",
+              "width": 222,
+              "hidden": false
+            },
+            {
+              "text": "Faturado",
+              "width": 111,
+              "hidden": false
+            },
+            {
+              "text": "Custos",
+              "width": 111,
+              "hidden": false
+            },
+            {
+              "text": "Recebido",
+              "width": 111,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 111,
+              "hidden": false
+            },
+            {
+              "text": "Margem",
+              "width": 148,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 111,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "finance-launches-table",
+          "width": 560,
+          "scrollWidth": 560,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Tipo",
+              "width": 56,
+              "hidden": false
+            },
+            {
+              "text": "Registro",
+              "width": 134,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 78,
+              "hidden": false
+            },
+            {
+              "text": "Detalhe",
+              "width": 90,
+              "hidden": false
+            },
+            {
+              "text": "Valor",
+              "width": 67,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 67,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 67,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "desktop-1280",
+    "scenario": "acesso-membros",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\desktop-1280-acesso-membros.png",
+    "metrics": {
+      "page": "page-acesso",
+      "viewport": {
+        "width": 1280,
+        "height": 1500
+      },
+      "documentScrollWidth": 1280,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "access-member-table",
+          "width": 974,
+          "scrollWidth": 974,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Membro",
+              "width": 362,
+              "hidden": false
+            },
+            {
+              "text": "Perfil",
+              "width": 149,
+              "hidden": false
+            },
+            {
+              "text": "Presença",
+              "width": 155,
+              "hidden": false
+            },
+            {
+              "text": "Último acesso",
+              "width": 193,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 115,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "tablet-1024",
+    "scenario": "crm-clientes",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\tablet-1024-crm-clientes.png",
+    "metrics": {
+      "page": "page-crm",
+      "viewport": {
+        "width": 1024,
+        "height": 1400
+      },
+      "documentScrollWidth": 1024,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "crm-client-table",
+          "width": 980,
+          "scrollWidth": 980,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Cliente",
+              "width": 356,
+              "hidden": false
+            },
+            {
+              "text": "Segmento",
+              "width": 156,
+              "hidden": false
+            },
+            {
+              "text": "Plano",
+              "width": 200,
+              "hidden": false
+            },
+            {
+              "text": "Desde",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "MRR",
+              "width": 134,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 134,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "history-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Registro",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Tipo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Status",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Data",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ação",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "tablet-1024",
+    "scenario": "crm-historico",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\tablet-1024-crm-historico.png",
+    "metrics": {
+      "page": "page-crm",
+      "viewport": {
+        "width": 1024,
+        "height": 1400
+      },
+      "documentScrollWidth": 1024,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "crm-client-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Segmento",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Plano",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Desde",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "MRR",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "history-table",
+          "width": 758,
+          "scrollWidth": 758,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Registro",
+              "width": 303,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 167,
+              "hidden": false
+            },
+            {
+              "text": "Tipo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Status",
+              "width": 136,
+              "hidden": false
+            },
+            {
+              "text": "Data",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ação",
+              "width": 152,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "tablet-1024",
+    "scenario": "campanhas",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\tablet-1024-campanhas.png",
+    "metrics": {
+      "page": "page-campanhas",
+      "viewport": {
+        "width": 1024,
+        "height": 1400
+      },
+      "documentScrollWidth": 1024,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "campaigns-table",
+          "width": 758,
+          "scrollWidth": 758,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Campanha",
+              "width": 211,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 168,
+              "hidden": false
+            },
+            {
+              "text": "Canal",
+              "width": 126,
+              "hidden": false
+            },
+            {
+              "text": "Público-Alvo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Orçamento",
+              "width": 126,
+              "hidden": false
+            },
+            {
+              "text": "Início",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Status",
+              "width": 63,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 63,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "tablet-1024",
+    "scenario": "producao-copy",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\tablet-1024-producao-copy.png",
+    "metrics": {
+      "page": "page-producao",
+      "viewport": {
+        "width": 1024,
+        "height": 1400
+      },
+      "documentScrollWidth": 1024,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "prod-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Entrega",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Prazo",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "prod-copy-table",
+          "width": 960,
+          "scrollWidth": 960,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Arquivo",
+              "width": 357,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 179,
+              "hidden": false
+            },
+            {
+              "text": "Tipo de arquivo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Tamanho",
+              "width": 134,
+              "hidden": false
+            },
+            {
+              "text": "Enviado por",
+              "width": 179,
+              "hidden": false
+            },
+            {
+              "text": "Ação",
+              "width": 112,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "prod-report-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Relatório",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Competência",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Resumo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ação",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "tablet-1024",
+    "scenario": "producao-lp",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\tablet-1024-producao-lp.png",
+    "metrics": {
+      "page": "page-producao",
+      "viewport": {
+        "width": 1024,
+        "height": 1400
+      },
+      "documentScrollWidth": 1024,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "prod-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Entrega",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Prazo",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "prod-copy-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Arquivo",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Tipo de arquivo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Tamanho",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Enviado por",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Ação",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "prod-report-table",
+          "width": 960,
+          "scrollWidth": 960,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Relatório",
+              "width": 395,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 226,
+              "hidden": false
+            },
+            {
+              "text": "Competência",
+              "width": 198,
+              "hidden": false
+            },
+            {
+              "text": "Resumo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ação",
+              "width": 141,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "tablet-1024",
+    "scenario": "trafego",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\tablet-1024-trafego.png",
+    "metrics": {
+      "page": "page-trafego",
+      "viewport": {
+        "width": 1024,
+        "height": 1400
+      },
+      "documentScrollWidth": 1024,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "traffic-table",
+          "width": 708,
+          "scrollWidth": 708,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Campanha",
+              "width": 188,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 116,
+              "hidden": false
+            },
+            {
+              "text": "Plataforma",
+              "width": 87,
+              "hidden": false
+            },
+            {
+              "text": "Orçamento Diário",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "CPC",
+              "width": 58,
+              "hidden": false
+            },
+            {
+              "text": "CTR",
+              "width": 58,
+              "hidden": false
+            },
+            {
+              "text": "Conv.",
+              "width": 58,
+              "hidden": false
+            },
+            {
+              "text": "ROAS",
+              "width": 72,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 72,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "tablet-1024",
+    "scenario": "analytics",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\tablet-1024-analytics.png",
+    "metrics": {
+      "page": "page-analytics",
+      "viewport": {
+        "width": 1024,
+        "height": 1400
+      },
+      "documentScrollWidth": 1024,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "analytics-performance-table",
+          "width": 708,
+          "scrollWidth": 708,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Cliente",
+              "width": 256,
+              "hidden": false
+            },
+            {
+              "text": "Leads",
+              "width": 98,
+              "hidden": false
+            },
+            {
+              "text": "Receita",
+              "width": 138,
+              "hidden": false
+            },
+            {
+              "text": "Impressões",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Cliques",
+              "width": 98,
+              "hidden": false
+            },
+            {
+              "text": "Período",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Score",
+              "width": 118,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "integrations-table",
+          "width": 708,
+          "scrollWidth": 708,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Cliente",
+              "width": 173,
+              "hidden": false
+            },
+            {
+              "text": "Integração",
+              "width": 155,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 104,
+              "hidden": false
+            },
+            {
+              "text": "Conta / Propriedade",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Última sincronização",
+              "width": 121,
+              "hidden": false
+            },
+            {
+              "text": "Atualizado por",
+              "width": 86,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 69,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "tablet-1024",
+    "scenario": "financeiro",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\tablet-1024-financeiro.png",
+    "metrics": {
+      "page": "page-financeiro",
+      "viewport": {
+        "width": 1024,
+        "height": 1400
+      },
+      "documentScrollWidth": 1024,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "finance-client-table",
+          "width": 708,
+          "scrollWidth": 708,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Cliente",
+              "width": 241,
+              "hidden": false
+            },
+            {
+              "text": "Faturado",
+              "width": 127,
+              "hidden": false
+            },
+            {
+              "text": "Custos",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Recebido",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Status",
+              "width": 99,
+              "hidden": false
+            },
+            {
+              "text": "Margem",
+              "width": 127,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 113,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "finance-launches-table",
+          "width": 708,
+          "scrollWidth": 708,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Tipo",
+              "width": 84,
+              "hidden": false
+            },
+            {
+              "text": "Registro",
+              "width": 202,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 118,
+              "hidden": false
+            },
+            {
+              "text": "Detalhe",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Valor",
+              "width": 101,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 101,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 101,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "tablet-1024",
+    "scenario": "acesso-membros",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\tablet-1024-acesso-membros.png",
+    "metrics": {
+      "page": "page-acesso",
+      "viewport": {
+        "width": 1024,
+        "height": 1400
+      },
+      "documentScrollWidth": 1024,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "access-member-table",
+          "width": 920,
+          "scrollWidth": 920,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Membro",
+              "width": 427,
+              "hidden": false
+            },
+            {
+              "text": "Perfil",
+              "width": 178,
+              "hidden": false
+            },
+            {
+              "text": "Presença",
+              "width": 180,
+              "hidden": false
+            },
+            {
+              "text": "Último acesso",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ações",
+              "width": 135,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "tablet-768",
+    "scenario": "crm-clientes",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\tablet-768-crm-clientes.png",
+    "metrics": {
+      "page": "page-crm",
+      "viewport": {
+        "width": 768,
+        "height": 1400
+      },
+      "documentScrollWidth": 768,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "crm-client-table",
+          "width": 980,
+          "scrollWidth": 980,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Cliente",
+              "width": 473,
+              "hidden": false
+            },
+            {
+              "text": "Segmento",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Plano",
+              "width": 175,
+              "hidden": false
+            },
+            {
+              "text": "Desde",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "MRR",
+              "width": 105,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 228,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "history-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Registro",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Tipo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Status",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Data",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ação",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "tablet-768",
+    "scenario": "crm-historico",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\tablet-768-crm-historico.png",
+    "metrics": {
+      "page": "page-crm",
+      "viewport": {
+        "width": 768,
+        "height": 1400
+      },
+      "documentScrollWidth": 768,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "crm-client-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Segmento",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Plano",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Desde",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "MRR",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "history-table",
+          "width": 734,
+          "scrollWidth": 734,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Registro",
+              "width": 289,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 132,
+              "hidden": false
+            },
+            {
+              "text": "Tipo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Status",
+              "width": 144,
+              "hidden": false
+            },
+            {
+              "text": "Data",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ação",
+              "width": 168,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "tablet-768",
+    "scenario": "campanhas",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\tablet-768-campanhas.png",
+    "metrics": {
+      "page": "page-campanhas",
+      "viewport": {
+        "width": 768,
+        "height": 1400
+      },
+      "documentScrollWidth": 768,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "campaigns-table",
+          "width": 734,
+          "scrollWidth": 734,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Campanha",
+              "width": 306,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 245,
+              "hidden": false
+            },
+            {
+              "text": "Canal",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Público-Alvo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Orçamento",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Início",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Status",
+              "width": 92,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 92,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "tablet-768",
+    "scenario": "producao-copy",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\tablet-768-producao-copy.png",
+    "metrics": {
+      "page": "page-producao",
+      "viewport": {
+        "width": 768,
+        "height": 1400
+      },
+      "documentScrollWidth": 768,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "prod-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Entrega",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Prazo",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "prod-copy-table",
+          "width": 960,
+          "scrollWidth": 960,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Arquivo",
+              "width": 530,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 265,
+              "hidden": false
+            },
+            {
+              "text": "Tipo de arquivo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Tamanho",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Enviado por",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ação",
+              "width": 166,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "prod-report-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Relatório",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Competência",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Resumo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ação",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "tablet-768",
+    "scenario": "producao-lp",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\tablet-768-producao-lp.png",
+    "metrics": {
+      "page": "page-producao",
+      "viewport": {
+        "width": 768,
+        "height": 1400
+      },
+      "documentScrollWidth": 768,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "prod-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Entrega",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Prazo",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "prod-copy-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Arquivo",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Tipo de arquivo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Tamanho",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Enviado por",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ação",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "prod-report-table",
+          "width": 960,
+          "scrollWidth": 960,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Relatório",
+              "width": 498,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 284,
+              "hidden": false
+            },
+            {
+              "text": "Competência",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Resumo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ação",
+              "width": 178,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "tablet-768",
+    "scenario": "trafego",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\tablet-768-trafego.png",
+    "metrics": {
+      "page": "page-trafego",
+      "viewport": {
+        "width": 768,
+        "height": 1400
+      },
+      "documentScrollWidth": 768,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "traffic-table",
+          "width": 684,
+          "scrollWidth": 684,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Campanha",
+              "width": 199,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 88,
+              "hidden": false
+            },
+            {
+              "text": "Plataforma",
+              "width": 110,
+              "hidden": false
+            },
+            {
+              "text": "Orçamento Diário",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "CPC",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "CTR",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Conv.",
+              "width": 44,
+              "hidden": false
+            },
+            {
+              "text": "ROAS",
+              "width": 99,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 143,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "tablet-768",
+    "scenario": "analytics",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\tablet-768-analytics.png",
+    "metrics": {
+      "page": "page-analytics",
+      "viewport": {
+        "width": 768,
+        "height": 1400
+      },
+      "documentScrollWidth": 768,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "analytics-performance-table",
+          "width": 684,
+          "scrollWidth": 684,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Cliente",
+              "width": 371,
+              "hidden": false
+            },
+            {
+              "text": "Leads",
+              "width": 142,
+              "hidden": false
+            },
+            {
+              "text": "Receita",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Impressões",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Cliques",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Período",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Score",
+              "width": 171,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "integrations-table",
+          "width": 684,
+          "scrollWidth": 684,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Cliente",
+              "width": 174,
+              "hidden": false
+            },
+            {
+              "text": "Integração",
+              "width": 149,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 112,
+              "hidden": false
+            },
+            {
+              "text": "Conta / Propriedade",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Última sincronização",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Atualizado por",
+              "width": 62,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 187,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "tablet-768",
+    "scenario": "financeiro",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\tablet-768-financeiro.png",
+    "metrics": {
+      "page": "page-financeiro",
+      "viewport": {
+        "width": 768,
+        "height": 1400
+      },
+      "documentScrollWidth": 768,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "finance-client-table",
+          "width": 684,
+          "scrollWidth": 684,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Cliente",
+              "width": 315,
+              "hidden": false
+            },
+            {
+              "text": "Faturado",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Custos",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Recebido",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Status",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Margem",
+              "width": 178,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 192,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "finance-launches-table",
+          "width": 684,
+          "scrollWidth": 684,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Tipo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Registro",
+              "width": 300,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 84,
+              "hidden": false
+            },
+            {
+              "text": "Detalhe",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Valor",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Status",
+              "width": 132,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 168,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "tablet-768",
+    "scenario": "acesso-membros",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\tablet-768-acesso-membros.png",
+    "metrics": {
+      "page": "page-acesso",
+      "viewport": {
+        "width": 768,
+        "height": 1400
+      },
+      "documentScrollWidth": 768,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "access-member-table",
+          "width": 734,
+          "scrollWidth": 734,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Membro",
+              "width": 352,
+              "hidden": false
+            },
+            {
+              "text": "Perfil",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Presença",
+              "width": 176,
+              "hidden": false
+            },
+            {
+              "text": "Último acesso",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ações",
+              "width": 206,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "mobile-375",
+    "scenario": "crm-clientes",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\mobile-375-crm-clientes.png",
+    "metrics": {
+      "page": "page-crm",
+      "viewport": {
+        "width": 375,
+        "height": 1400
+      },
+      "documentScrollWidth": 375,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "crm-client-table",
+          "width": 349,
+          "scrollWidth": 349,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Cliente",
+              "width": 188,
+              "hidden": false
+            },
+            {
+              "text": "Segmento",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Plano",
+              "width": 70,
+              "hidden": false
+            },
+            {
+              "text": "Desde",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "MRR",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ações",
+              "width": 91,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "history-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Registro",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Tipo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Status",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Data",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ação",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "mobile-375",
+    "scenario": "crm-historico",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\mobile-375-crm-historico.png",
+    "metrics": {
+      "page": "page-crm",
+      "viewport": {
+        "width": 375,
+        "height": 1400
+      },
+      "documentScrollWidth": 375,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "crm-client-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Segmento",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Plano",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Desde",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "MRR",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ações",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "history-table",
+          "width": 349,
+          "scrollWidth": 349,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Registro",
+              "width": 168,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Tipo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Status",
+              "width": 84,
+              "hidden": false
+            },
+            {
+              "text": "Data",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ação",
+              "width": 98,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "mobile-375",
+    "scenario": "campanhas",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\mobile-375-campanhas.png",
+    "metrics": {
+      "page": "page-campanhas",
+      "viewport": {
+        "width": 375,
+        "height": 1400
+      },
+      "documentScrollWidth": 375,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "campaigns-table",
+          "width": 349,
+          "scrollWidth": 349,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Campanha",
+              "width": 218,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Canal",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Público-Alvo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Orçamento",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Início",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Status",
+              "width": 65,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 65,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "mobile-375",
+    "scenario": "producao-copy",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\mobile-375-producao-copy.png",
+    "metrics": {
+      "page": "page-producao",
+      "viewport": {
+        "width": 375,
+        "height": 1400
+      },
+      "documentScrollWidth": 375,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "prod-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Entrega",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Prazo",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "prod-copy-table",
+          "width": 960,
+          "scrollWidth": 960,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Arquivo",
+              "width": 731,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Tipo de arquivo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Tamanho",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Enviado por",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ação",
+              "width": 229,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "prod-report-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Relatório",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Competência",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Resumo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ação",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "mobile-375",
+    "scenario": "producao-lp",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\mobile-375-producao-lp.png",
+    "metrics": {
+      "page": "page-producao",
+      "viewport": {
+        "width": 375,
+        "height": 1400
+      },
+      "documentScrollWidth": 375,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "prod-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Entrega",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Prazo",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "prod-copy-table",
+          "width": 0,
+          "scrollWidth": 0,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Arquivo",
+              "width": 0,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Tipo de arquivo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Tamanho",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Enviado por",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ação",
+              "width": 0,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "prod-report-table",
+          "width": 960,
+          "scrollWidth": 960,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Relatório",
+              "width": 707,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Competência",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Resumo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ação",
+              "width": 253,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "mobile-375",
+    "scenario": "trafego",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\mobile-375-trafego.png",
+    "metrics": {
+      "page": "page-trafego",
+      "viewport": {
+        "width": 375,
+        "height": 1400
+      },
+      "documentScrollWidth": 375,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "traffic-table",
+          "width": 315,
+          "scrollWidth": 315,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Campanha",
+              "width": 113,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Plataforma",
+              "width": 63,
+              "hidden": false
+            },
+            {
+              "text": "Orçamento Diário",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "CPC",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "CTR",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Conv.",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "ROAS",
+              "width": 57,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 82,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "mobile-375",
+    "scenario": "analytics",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\mobile-375-analytics.png",
+    "metrics": {
+      "page": "page-analytics",
+      "viewport": {
+        "width": 375,
+        "height": 1400
+      },
+      "documentScrollWidth": 375,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "analytics-performance-table",
+          "width": 315,
+          "scrollWidth": 315,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Cliente",
+              "width": 171,
+              "hidden": false
+            },
+            {
+              "text": "Leads",
+              "width": 66,
+              "hidden": false
+            },
+            {
+              "text": "Receita",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Impressões",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Cliques",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Período",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Score",
+              "width": 79,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "integrations-table",
+          "width": 315,
+          "scrollWidth": 315,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Cliente",
+              "width": 88,
+              "hidden": false
+            },
+            {
+              "text": "Integração",
+              "width": 76,
+              "hidden": false
+            },
+            {
+              "text": "Status",
+              "width": 57,
+              "hidden": false
+            },
+            {
+              "text": "Conta / Propriedade",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Última sincronização",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Atualizado por",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ações",
+              "width": 95,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "mobile-375",
+    "scenario": "financeiro",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\mobile-375-financeiro.png",
+    "metrics": {
+      "page": "page-financeiro",
+      "viewport": {
+        "width": 375,
+        "height": 1400
+      },
+      "documentScrollWidth": 375,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "finance-client-table",
+          "width": 315,
+          "scrollWidth": 315,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Cliente",
+              "width": 145,
+              "hidden": false
+            },
+            {
+              "text": "Faturado",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Custos",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Recebido",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Status",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Margem",
+              "width": 82,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 88,
+              "hidden": false
+            }
+          ]
+        },
+        {
+          "className": "finance-launches-table",
+          "width": 315,
+          "scrollWidth": 315,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Tipo",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Registro",
+              "width": 157,
+              "hidden": false
+            },
+            {
+              "text": "Cliente",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Detalhe",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Valor",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Status",
+              "width": 69,
+              "hidden": false
+            },
+            {
+              "text": "Ações",
+              "width": 88,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "viewport": "mobile-375",
+    "scenario": "acesso-membros",
+    "screenshotPath": "C:\\Users\\ricar\\Downloads\\Projeto One\\qa-audit-artifacts\\current-run\\screenshots\\mobile-375-acesso-membros.png",
+    "metrics": {
+      "page": "page-acesso",
+      "viewport": {
+        "width": 375,
+        "height": 1400
+      },
+      "documentScrollWidth": 375,
+      "hasHorizontalPageOverflow": false,
+      "visibleTables": [
+        {
+          "className": "access-member-table",
+          "width": 402,
+          "scrollWidth": 402,
+          "hasOverflow": false,
+          "headers": [
+            {
+              "text": "Membro",
+              "width": 192,
+              "hidden": false
+            },
+            {
+              "text": "Perfil",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Presença",
+              "width": 126,
+              "hidden": false
+            },
+            {
+              "text": "Último acesso",
+              "width": 0,
+              "hidden": true
+            },
+            {
+              "text": "Ações",
+              "width": 84,
+              "hidden": false
+            }
+          ]
+        }
+      ]
+    }
+  }
+]
