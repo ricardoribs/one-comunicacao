@@ -408,6 +408,7 @@ const state = {
   calendarEvents: [],
   notifications: [],
   checklist: null,
+  loadFailures: new Set(),
   activePage: "home",
   calendar: {
     weekStart: null,
@@ -425,7 +426,7 @@ const state = {
 const UI = {
   empty: (msg = "Sem dados no período", sub = "", options = {}) => {
     const showIcon = options.icon === true || typeof options.icon === "string";
-    const showSub = Boolean(options.allowSub && sub);
+    const showSub = Boolean(sub) && options.allowSub !== false;
     return `
       <div class="empty-state${options.className ? ` ${options.className}` : ""}${showIcon ? "" : " is-no-icon"}">
         ${
@@ -540,11 +541,76 @@ const UI = {
           <div class="skeleton skeleton-text" style="width:40%"></div>
         </div>
       `
+    ).join(""),
+
+  skeletonPipeline: (columns = 5, cards = 2) =>
+    Array.from(
+      { length: columns },
+      () => `
+        <div class="pipe-col" aria-hidden="true">
+          <div class="skeleton skeleton-text" style="width:48%;height:16px;margin-bottom:12px"></div>
+          ${Array.from(
+            { length: cards },
+            () => `
+              <div class="pipe-card">
+                <div class="skeleton skeleton-text" style="width:56%"></div>
+                <div class="skeleton skeleton-text" style="width:72%"></div>
+                <div class="skeleton skeleton-text" style="width:42%"></div>
+              </div>
+            `
+          ).join("")}
+        </div>
+      `
+    ).join(""),
+
+  skeletonProgress: (rows = 4) =>
+    Array.from(
+      { length: rows },
+      () => `
+        <div aria-hidden="true">
+          <div class="progress-item-head">
+            <span class="skeleton skeleton-text" style="width:42%"></span>
+            <span class="skeleton skeleton-text" style="width:28%"></span>
+          </div>
+          <div class="skeleton skeleton-text" style="height:8px;width:100%;margin-bottom:0"></div>
+        </div>
+      `
+    ).join(""),
+
+  skeletonCalendarGrid: () => `
+    <div class="card-sm" aria-hidden="true">
+      <div class="skeleton skeleton-title"></div>
+      ${Array.from(
+        { length: 6 },
+        () => `<div class="skeleton skeleton-text" style="width:100%;height:48px"></div>`
+      ).join("")}
+    </div>
+  `,
+
+  skeletonCardList: (rows = 3) =>
+    Array.from(
+      { length: rows },
+      () => `
+        <div class="card card-sm" aria-hidden="true">
+          <div class="skeleton skeleton-text" style="width:52%"></div>
+          <div class="skeleton skeleton-text" style="width:72%"></div>
+          <div class="skeleton skeleton-text" style="width:44%"></div>
+        </div>
+      `
     ).join("")
 };
 let lastFocusedElement = null;
 const MOBILE_BREAKPOINT = 768;
 let lastSidebarTouchAt = 0;
+let pendingModalConfirmation = null;
+
+function renderRetryAction(action = "retry-refresh", label = "Tentar novamente") {
+  return `<button type="button" class="btn btn-outline btn-sm empty-state-action" data-action="${action}">${escapeHtml(label)}</button>`;
+}
+
+function hasLoadFailure(label) {
+  return state.loadFailures?.has?.(label);
+}
 
 function trapModalFocus(event) {
   const overlay = document.getElementById("modal-overlay");
@@ -1795,7 +1861,12 @@ function buildCalendarGridHtml(events, weekStart) {
 function buildCalendarUpcomingHtml(events) {
   const items = events.slice(0, 8);
   if (!items.length) {
-    return UI.empty("Nenhum evento nesta semana", "");
+    return UI.empty("Nenhum evento nesta semana", "Adicione um evento para preencher a agenda compartilhada.", {
+      icon: false,
+      actionHtml: canManageCalendarEvents()
+        ? `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-evento">Criar evento</button>`
+        : ""
+    });
   }
 
   return items
@@ -1822,7 +1893,17 @@ function buildCalendarUpcomingHtml(events) {
             canManage
               ? `<div class="calendar-upcoming-actions">
                   <button type="button" class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="novo-evento" data-id="${event.id}">Editar</button>
-                  <button type="button" class="btn btn-danger btn-sm" data-action="delete-calendar-event" data-id="${event.id}">Excluir</button>
+                  ${renderActionMenu(
+                    [
+                      renderActionMenuButton({
+                        label: "Excluir evento",
+                        action: "delete-calendar-event",
+                        id: event.id,
+                        className: "btn btn-danger-soft btn-sm"
+                      })
+                    ],
+                    { label: "Mais ações do evento" }
+                  )}
                 </div>`
               : ""
           }
@@ -1860,8 +1941,8 @@ function renderCalendar() {
   }
 
   if (state.calendar.loading) {
-    grid.innerHTML = UI.empty("Carregando agenda...", "Buscando os eventos da semana.");
-    upcoming.innerHTML = UI.empty("Carregando próximos eventos...", "");
+    grid.innerHTML = UI.skeletonCalendarGrid();
+    upcoming.innerHTML = UI.skeletonCardList(3);
     return;
   }
 
@@ -3000,6 +3081,45 @@ function renderResourceAction(
   )}">${escapeHtml(label)}</button>`;
 }
 
+function renderActionMenu(actions = [], { label = "Mais ações" } = {}) {
+  const items = actions.filter(Boolean).join("");
+  if (!items) {
+    return "";
+  }
+
+  return `
+    <details class="action-menu">
+      <summary class="btn btn-outline btn-sm action-menu-trigger" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}"><span aria-hidden="true">⋯</span></summary>
+      <div class="action-menu-panel">
+        ${items}
+      </div>
+    </details>
+  `;
+}
+
+function renderActionMenuButton({
+  label,
+  action,
+  id,
+  modal,
+  className = "btn btn-ghost btn-sm",
+  extra = "",
+  type = "button"
+}) {
+  const attributes = [
+    `type="${type}"`,
+    `class="${className}"`,
+    action ? `data-action="${action}"` : "",
+    modal ? `data-modal="${modal}"` : "",
+    id != null ? `data-id="${id}"` : "",
+    extra || ""
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return `<button ${attributes}>${escapeHtml(label)}</button>`;
+}
+
 const ACCESS_COUNTRY_LABELS = {
   BR: "Brasil",
   US: "Estados Unidos",
@@ -3073,9 +3193,9 @@ function renderAccessMembersTable(bodyHtml) {
         <thead>
           <tr>
             <th>Membro</th>
-            <th>Perfil</th>
+            <th class="hide-mobile">Perfil</th>
             <th>Presença</th>
-            <th>Último acesso</th>
+            <th class="hide-tablet">Último acesso</th>
             <th class="cell-actions" data-align="right">Ações</th>
           </tr>
         </thead>
@@ -3134,14 +3254,14 @@ function renderMemberRow(user, currentUserId) {
           </div>
         </div>
       </td>
-      <td><span class="sb-role-badge ${getRoleBadgeClass(user.role)}">${ROLE_LABELS[user.role] || user.role}</span></td>
+      <td class="hide-mobile"><span class="sb-role-badge ${getRoleBadgeClass(user.role)}">${ROLE_LABELS[user.role] || user.role}</span></td>
       <td>
         <span class="access-member-presence ${presence.tone}">
           <span class="access-member-presence-dot" aria-hidden="true"></span>
           <span>${escapeHtml(presence.label)}</span>
         </span>
       </td>
-      <td>
+      <td class="hide-tablet">
         <div class="access-member-last-access">
           <span class="access-member-last-time" title="${escapeHtml(lastAccessLabel)}">${escapeHtml(lastAccessLabel)}</span>
           ${lastAccessMeta}
@@ -3150,7 +3270,14 @@ function renderMemberRow(user, currentUserId) {
       <td class="cell-actions" data-align="right">
         <div class="access-member-actions">
           <button class="btn btn-outline btn-sm" type="button" data-access-edit="${user.id}">Editar</button>
-          ${canRemoveUser ? `<button class="access-remove-link" type="button" data-access-remove="${user.id}">Remover</button>` : ""}
+          ${canRemoveUser
+            ? renderActionMenu(
+                [
+                  `<button class="access-remove-link" type="button" data-access-remove="${user.id}">Remover membro</button>`
+                ],
+                { label: "Mais ações do membro" }
+              )
+            : ""}
         </div>
       </td>
     </tr>
@@ -4580,11 +4707,14 @@ function renderKanbanBrandManual(filteredTasks) {
       brandManual
         ? `<div class="muted-panel">${escapeHtmlWithBreaks(brandManual)}</div>`
         : UI.empty(
-            "Manual de marca ainda não cadastrado",
-            "Abra o cliente no CRM e registre tom de voz, referências e orientações práticas da conta.",
+            "Adicione o manual da marca",
+            "Centralize tom de voz, referências e orientações práticas da conta neste bloco.",
             {
               icon: false,
-              className: "is-plain"
+              className: "is-plain",
+              actionHtml: canManageClients()
+                ? `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-cliente" data-id="${client.id}">Editar cliente</button>`
+                : ""
             }
           )
     }
@@ -4619,9 +4749,12 @@ function renderKanban() {
                 .map(
                   (task) => `
                     <div class="k-card${canEditTasks ? " is-draggable" : ""}" data-task-card="1" data-task-id="${task.id}">
-                      <div class="k-card-client" title="${escapeHtml(task.client_name || "Interno")}">${escapeHtml(task.client_name || "Interno")}</div>
+                      <div class="k-card-head">
+                        <div class="k-card-client" title="${escapeHtml(task.client_name || "Interno")}">${escapeHtml(task.client_name || "Interno")}</div>
+                        ${canEditTasks ? '<span class="kanban-drag-handle" aria-hidden="true">⋮⋮</span>' : ""}
+                      </div>
                       <div class="k-card-title" title="${escapeHtml(task.title)}">${escapeHtml(task.title)}</div>
-                      <div class="k-card-desc" title="${escapeHtml(task.description || "")}">${escapeHtml(task.description || "Sem descrição.")}</div>
+                      ${task.description ? `<div class="k-card-desc" title="${escapeHtml(task.description)}">${escapeHtml(task.description)}</div>` : ""}
                       <div class="status-gap-top"><span class="badge badge-blue">${escapeHtml(formatTaskTypeLabel(task.type))}</span></div>
                       <div class="k-card-meta">
                         <span class="k-card-assignee" title="${escapeHtml(getTaskAssigneeTitle(task))}">${escapeHtml(getTaskAssigneeLabel(task))}</span>
@@ -4631,7 +4764,19 @@ function renderKanban() {
                         canEditTasks || canRemoveTasks
                           ? `<div class="actions-gap-top">
                               ${canEditTasks ? `<button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-tarefa" data-id="${task.id}">Editar</button>` : ""}
-                              ${canRemoveTasks ? `<button class="btn btn-danger-soft btn-sm" data-action="delete-task" data-id="${task.id}">Excluir</button>` : ""}
+                              ${renderActionMenu(
+                                [
+                                  canRemoveTasks
+                                    ? renderActionMenuButton({
+                                        label: "Excluir tarefa",
+                                        action: "delete-task",
+                                        id: task.id,
+                                        className: "btn btn-danger-soft btn-sm"
+                                      })
+                                    : ""
+                                ],
+                                { label: "Mais ações da tarefa" }
+                              )}
                             </div>`
                           : ""
                       }
@@ -4947,7 +5092,7 @@ function renderCRM() {
     },
     {
       label: "Taxa de Conversão",
-      value: `${conversionRate.toFixed(0)}%`,
+      value: `${conversionRate.toFixed(2)}%`,
       sub: closedContacts.length ? `${formatNumber(closedContacts.length)} conversões` : ""
     },
     {
@@ -4968,116 +5113,237 @@ function renderCRM() {
   ));
 
   const pipelineStages = ["Prospecção", "Contato feito", "Proposta", "Negociação", "Fechado"];
-  document.getElementById("pipeline-board").innerHTML = pipelineStages
-    .map((stage) => {
-      const contacts = state.contacts.filter((contact) => normalizePipelineStage(contact.lead_stage) === stage);
-      return `
-        <div class="pipe-col">
-          <div class="pipe-col-head">${stage} <span>${contacts.length}</span></div>
-          ${contacts
-            .map(
-              (contact) => `
-                <div class="pipe-card">
-                  <div class="pipe-lead-name" title="${escapeHtml(contact.name)}">${escapeHtml(contact.name)}</div>
-                  <div class="pipe-lead-company" title="${escapeHtml(contact.company || "—")}">${escapeHtml(contact.company || "—")}</div>
-                  <div class="pipe-lead-val">${formatCurrency(contact.estimated_value)}</div>
-                  <div class="item-card-actions">
-                    <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="novo-lead" data-id="${contact.id}">Editar</button>
-                    <button class="btn btn-ghost btn-sm" data-action="convert-lead" data-id="${contact.id}">Converter</button>
-                    <button class="btn btn-danger btn-sm" data-action="delete-lead" data-id="${contact.id}">Excluir</button>
-                  </div>
+  const pipelineBoard = document.getElementById("pipeline-board");
+  if (pipelineBoard) {
+    if (hasLoadFailure("CRM") && !state.contacts.length) {
+      pipelineBoard.innerHTML = UI.empty("Não foi possível carregar o pipeline.", "Tente novamente para recuperar os leads do CRM.", {
+        icon: false,
+        className: "is-plain",
+        actionHtml: renderRetryAction()
+      });
+    } else {
+      pipelineBoard.innerHTML = pipelineStages
+        .map((stage) => {
+          const contacts = state.contacts.filter((contact) => normalizePipelineStage(contact.lead_stage) === stage);
+          return `
+            <div class="pipe-col">
+              <div class="pipe-col-head">${stage} <span>${contacts.length}</span></div>
+              ${contacts
+                .map((contact) => {
+                  const canConvert = normalizePipelineStage(contact.lead_stage) !== "Fechado";
+                  return `
+                    <div class="pipe-card">
+                      <div class="pipe-lead-name" title="${escapeHtml(contact.name)}">${escapeHtml(contact.name)}</div>
+                      <div class="pipe-lead-company" title="${escapeHtml(contact.company || "—")}">${escapeHtml(contact.company || "—")}</div>
+                      <div class="pipe-lead-val">${formatCurrency(contact.estimated_value)}</div>
+                      <div class="item-card-actions">
+                        <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="novo-lead" data-id="${contact.id}">Editar</button>
+                        ${renderActionMenu(
+                          [
+                            canConvert
+                              ? renderActionMenuButton({
+                                  label: "Converter lead",
+                                  action: "convert-lead",
+                                  id: contact.id
+                                })
+                              : "",
+                            renderActionMenuButton({
+                              label: "Excluir lead",
+                              action: "delete-lead",
+                              id: contact.id,
+                              className: "btn btn-danger-soft btn-sm"
+                            })
+                          ],
+                          { label: "Mais ações do lead" }
+                        )}
+                      </div>
+                    </div>
+                  `;
+                })
+                .join("")
+                || `<div class="pipe-empty pipe-empty-minimal">
+                     ${
+                       stage === "Prospecção" && hasRoleDataAccess("contacts")
+                         ? `<button type="button" class="btn btn-pink btn-sm" data-action="open-modal" data-modal="novo-lead">Adicionar primeiro lead</button>`
+                         : ""
+                     }
+                   </div>`}
+            </div>
+          `;
+        })
+        .join("");
+    }
+  }
+
+  const clientsBody = document.getElementById("clientes-tbody");
+  if (clientsBody) {
+    clientsBody.innerHTML =
+      state.clients
+        .map((client) => {
+          const segmentLabel = String(client.segment || "").trim() || "—";
+          const planLabel = normalizeClientPlanLabel(client.plan);
+          const onDemandService = getOnDemandServiceLabel(client.plan);
+          const campaignsLabel = Number(client.campaigns_count || 0)
+            ? `${formatNumber(client.campaigns_count)} ${Number(client.campaigns_count) === 1 ? "campanha vinculada" : "campanhas vinculadas"}`
+            : "0 campanhas vinculadas";
+          const startedAtLabel = client.started_at ? formatDate(client.started_at) : "—";
+          const mrrValue = formatCurrencyValue(client.mrr);
+          const showMrrSub = Number(client.mrr || 0) > 0;
+          const mrrSub = showMrrSub ? "receita mensal recorrente" : "";
+
+          return `
+            <tr>
+              <td class="cell-stack crm-client-main">
+                <span class="cell-title" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span>
+                <span class="cell-sub" title="${escapeHtml(client.company || "—")}">${escapeHtml(client.company || "—")}</span>
+                <span class="cell-sub" title="${escapeHtml(campaignsLabel)}">${escapeHtml(campaignsLabel)}</span>
+              </td>
+              <td class="crm-client-cell crm-client-segment-cell hide-mobile">
+                <div class="crm-cell-center">
+                  <span class="crm-cell-text" title="${escapeHtml(segmentLabel)}">${escapeHtml(segmentLabel)}</span>
                 </div>
-              `
-            )
-            .join("")
-            || `<div class="pipe-empty pipe-empty-minimal">
-                 ${
-                   stage === "Prospecção" && hasRoleDataAccess("contacts")
-                     ? `<button type="button" class="btn btn-pink btn-sm" data-action="open-modal" data-modal="novo-lead">Adicionar primeiro lead</button>`
-                     : ""
-                 }
-               </div>`}
-        </div>
-      `;
-    })
-    .join("");
+              </td>
+              <td class="crm-client-cell crm-client-plan-cell">
+                <div class="crm-cell-center crm-cell-stack">
+                  <span class="badge ${getClientPlanBadgeClass(client.plan)}" title="${escapeHtml(planLabel)}">${escapeHtml(planLabel)}</span>
+                  ${onDemandService && planLabel === "Sob demanda" ? `<span class="cell-sub" title="${escapeHtml(onDemandService)}">${escapeHtml(onDemandService)}</span>` : ""}
+                </div>
+              </td>
+              <td class="crm-client-cell crm-client-since-cell hide-tablet">
+                <div class="crm-cell-center">
+                  <span class="crm-cell-text">${escapeHtml(startedAtLabel)}</span>
+                </div>
+              </td>
+              <td class="crm-client-cell crm-client-mrr-cell hide-phone">
+                <div class="crm-cell-mrr">
+                  <span class="${getValueToneClass(client.mrr)}">${mrrValue}</span>
+                  ${showMrrSub ? `<span class="cell-sub">${escapeHtml(mrrSub)}</span>` : ""}
+                </div>
+              </td>
+              <td class="cell-actions crm-client-actions-cell">
+                <div class="table-actions crm-client-actions">
+                  <button type="button" class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="novo-cliente" data-id="${client.id}">Editar</button>
+                  ${renderActionMenu(
+                    [
+                      renderActionMenuButton({
+                        label: "Registrar cobrança",
+                        action: "open-charge-modal",
+                        id: client.id
+                      }),
+                      renderActionMenuButton({
+                        label: "Excluir cliente",
+                        action: "delete-client",
+                        id: client.id,
+                        className: "btn btn-danger-soft btn-sm"
+                      })
+                    ],
+                    { label: "Mais ações do cliente" }
+                  )}
+                </div>
+              </td>
+            </tr>
+          `;
+        })
+        .join("")
+      || (hasLoadFailure("clientes")
+        ? UI.tableEmpty(6, "Não foi possível carregar os clientes.", "Atualize a listagem para tentar novamente.", {
+            icon: false,
+            actionHtml: renderRetryAction()
+          })
+        : UI.tableEmpty(6, "Nenhum cliente cadastrado", "Cadastre o primeiro cliente para organizar cobrança, plano e histórico.", {
+            icon: false,
+            actionHtml: canManageClients()
+              ? `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-cliente">Criar primeiro cliente</button>`
+              : ""
+          }));
+  }
 
-  document.getElementById("clientes-tbody").innerHTML =
-    state.clients
-      .map((client) => {
-        const segmentLabel = String(client.segment || "").trim() || "—";
-        const planLabel = normalizeClientPlanLabel(client.plan);
-        const onDemandService = getOnDemandServiceLabel(client.plan);
-        const campaignsLabel = Number(client.campaigns_count || 0)
-          ? `${formatNumber(client.campaigns_count)} ${Number(client.campaigns_count) === 1 ? "campanha vinculada" : "campanhas vinculadas"}`
-          : "—";
-        const startedAtLabel = client.started_at ? formatDate(client.started_at) : "—";
-        const mrrValue = formatCurrencyValue(client.mrr);
-        const showMrrSub = Number(client.mrr || 0) > 0;
-        const mrrSub = showMrrSub ? "receita mensal recorrente" : "";
+  const historyBody = document.getElementById("historico-tbody");
+  if (historyBody) {
+    const historyItems = [
+      ...state.reports.map((report) => ({
+        key: `report-${report.id}`,
+        title: report.title,
+        clientName: report.client_name || "—",
+        typeLabel: "Relatório",
+        statusLabel: "Publicado",
+        badgeClass: "badge-blue",
+        dateValue: report.report_month,
+        actionHtml: renderResourceAction(report.file_url, {
+          label: "Abrir",
+          className: "btn btn-ghost btn-sm",
+          missingMessage: "Relatório ainda não disponível para abertura."
+        })
+      })),
+      ...state.materials.map((material) => ({
+        key: `material-${material.id}`,
+        title: material.title,
+        clientName: material.client_name || "Operação interna",
+        typeLabel: "Entrega",
+        statusLabel: normalizeMaterialStatus(material.status),
+        badgeClass:
+          material.status === "Aprovado"
+            ? "badge-green"
+            : material.status === "Revisao"
+              ? "badge-yellow"
+              : "badge-gray",
+        dateValue: material.due_date || material.created_at,
+        actionHtml: renderResourceAction(material.url || material.file_url, {
+          label: "Abrir",
+          className: "btn btn-ghost btn-sm",
+          missingMessage: "Arquivo ainda não disponível para abertura."
+        })
+      })),
+      ...state.charges.map((charge) => ({
+        key: `charge-${charge.id}`,
+        title: charge.description || `Cobrança ${charge.client_name || charge.contact_name || ""}`.trim(),
+        clientName: charge.client_name || charge.contact_name || "—",
+        typeLabel: "Cobrança",
+        statusLabel: getChargeOperationalStatus(charge),
+        badgeClass: getFinanceStatusBadgeClass(getChargeOperationalStatus(charge)),
+        dateValue: charge.due_date || charge.created_at,
+        actionHtml: charge.payment_link
+          ? renderResourceAction(charge.payment_link, {
+              label: "Abrir",
+              className: "btn btn-ghost btn-sm"
+            })
+          : renderActionMenuButton({
+              label: "Cobrar",
+              action: "open-charge-modal",
+              id: charge.client_id,
+              className: "btn btn-ghost btn-sm"
+            })
+      }))
+    ]
+      .sort((left, right) => new Date(right.dateValue || 0).getTime() - new Date(left.dateValue || 0).getTime())
+      .slice(0, 8);
 
-        return `
-        <tr>
-          <td class="cell-stack crm-client-main">
-            <span class="cell-title" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span>
-            <span class="cell-sub" title="${escapeHtml(client.company || "—")}">${escapeHtml(client.company || "—")}</span>
-            <span class="cell-sub" title="${escapeHtml(campaignsLabel)}">${escapeHtml(campaignsLabel)}</span>
-          </td>
-          <td class="crm-client-cell crm-client-segment-cell">
-            <div class="crm-cell-center">
-              <span class="crm-cell-text" title="${escapeHtml(segmentLabel)}">${escapeHtml(segmentLabel)}</span>
-            </div>
-          </td>
-          <td class="crm-client-cell crm-client-plan-cell">
-            <div class="crm-cell-center crm-cell-stack">
-              <span class="badge ${getClientPlanBadgeClass(client.plan)}" title="${escapeHtml(planLabel)}">${escapeHtml(planLabel)}</span>
-              ${onDemandService && planLabel === "Sob demanda" ? `<span class="cell-sub" title="${escapeHtml(onDemandService)}">${escapeHtml(onDemandService)}</span>` : ""}
-            </div>
-          </td>
-          <td class="crm-client-cell crm-client-since-cell">
-            <div class="crm-cell-center">
-              <span class="crm-cell-text">${escapeHtml(startedAtLabel)}</span>
-            </div>
-          </td>
-          <td class="crm-client-cell crm-client-mrr-cell">
-            <div class="crm-cell-mrr">
-              <span class="${getValueToneClass(client.mrr)}">${mrrValue}</span>
-              ${showMrrSub ? `<span class="cell-sub">${escapeHtml(mrrSub)}</span>` : ""}
-            </div>
-          </td>
-          <td class="crm-client-cell crm-client-status-cell">
-            <div class="crm-cell-center">
-              <span class="badge badge-green">Ativo</span>
-            </div>
-          </td>
-          <td class="cell-actions crm-client-actions-cell">
-            <div class="table-actions crm-client-actions">
-              <button type="button" class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="novo-cliente" data-id="${client.id}">Editar</button>
-              <button type="button" class="btn btn-ghost btn-sm" data-action="open-charge-modal" data-id="${client.id}">Cobrar</button>
-              <button type="button" class="btn btn-sm btn-danger-link" data-action="delete-client" data-id="${client.id}">Excluir</button>
-            </div>
-          </td>
-        </tr>
-      `;
-      })
-      .join("") || UI.tableEmpty(7, "Nenhum cliente cadastrado");
-
-  document.getElementById("historico-list").innerHTML = [...state.reports, ...state.materials, ...state.charges]
-    .slice(0, 8)
-    .map(
-      (item) => `
-        <div class="card card-sm">
-          <div class="historic-card-head">
-            <div>
-              <div class="historic-card-title">${escapeHtml(item.title || item.description)}</div>
-              <div class="historic-card-sub">${escapeHtml(item.client_name || item.contact_name || "")}</div>
-            </div>
-            <span class="badge badge-gray">${escapeHtml(item.report_month ? "Relatório" : item.payment_method || item.status)}</span>
-          </div>
-        </div>
-      `
-    )
-    .join("") || UI.empty("Nenhum histórico disponível", "As movimentações comerciais e de relacionamento aparecerão aqui.");
+    historyBody.innerHTML = historyItems
+      .map(
+        (item) => `
+          <tr>
+            <td class="cell-stack">
+              <span class="cell-title" title="${escapeHtml(item.title || "—")}">${escapeHtml(item.title || "—")}</span>
+            </td>
+            <td class="hide-phone"><span class="cell-sub" title="${escapeHtml(item.clientName)}">${escapeHtml(item.clientName)}</span></td>
+            <td class="hide-tablet"><span class="badge badge-gray">${escapeHtml(item.typeLabel)}</span></td>
+            <td><span class="badge ${item.badgeClass}">${escapeHtml(item.statusLabel)}</span></td>
+            <td class="hide-tablet">${formatDate(item.dateValue)}</td>
+            <td class="cell-actions">${item.actionHtml}</td>
+          </tr>
+        `
+      )
+      .join("")
+      || ((hasLoadFailure("relatórios") || hasLoadFailure("produção") || hasLoadFailure("cobranças"))
+        ? UI.tableEmpty(6, "Não foi possível carregar o histórico.", "Atualize a tela para tentar novamente.", {
+            icon: false,
+            actionHtml: renderRetryAction()
+          })
+        : UI.tableEmpty(6, "Nenhum histórico disponível", "Relatórios, entregas e cobranças registradas aparecerão aqui.", {
+            icon: false,
+            actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-lead">Criar primeiro lead</button>`
+          }));
+  }
 }
 
 function renderCampaigns() {
@@ -5124,33 +5390,57 @@ function renderCampaigns() {
       const view = getCampaignViewModel(campaign);
       return `
         <tr>
-          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(view.name)}">${escapeHtml(view.name)}</span></td>
-          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(view.client_name)}">${escapeHtml(view.client_name)}</span></td>
-          <td><span class="badge ${getChannelBadgeClass(view.channel)}">${escapeHtml(view.channel)}</span></td>
-          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(view.audience)}">${escapeHtml(view.audience)}</span></td>
-          <td data-align="right"><span class="${getValueToneClass(view.budget)}">${formatCurrencyValue(view.budget)}</span></td>
-          <td>${formatDate(view.start_date)}</td>
+          <td>
+            <button type="button" class="table-row-link" data-action="open-modal" data-modal="nova-campanha" data-id="${view.id}" aria-label="Editar campanha ${escapeHtml(view.name)}">
+              <span class="cell-title" title="${escapeHtml(view.name)}">${escapeHtml(view.name)}</span>
+              <span class="cell-sub" title="${escapeHtml(view.audience || "Público não definido")}">${escapeHtml(view.audience || "Público não definido")}</span>
+            </button>
+          </td>
+          <td class="cell-stack hide-phone"><span class="cell-sub" title="${escapeHtml(view.client_name)}">${escapeHtml(view.client_name)}</span></td>
+          <td class="hide-mobile"><span class="badge ${getChannelBadgeClass(view.channel)}">${escapeHtml(view.channel)}</span></td>
+          <td class="cell-stack hide-tablet"><span class="cell-sub" title="${escapeHtml(view.audience)}">${escapeHtml(view.audience)}</span></td>
+          <td class="hide-mobile" data-align="right"><span class="${getValueToneClass(view.budget)}">${formatCurrencyValue(view.budget)}</span></td>
+          <td class="hide-tablet">${formatDate(view.start_date)}</td>
           <td><span class="badge ${getCampaignStatusBadgeClass(view.status)}">${escapeHtml(getDisplayText(view.status, "Planejamento"))}</span></td>
           <td class="cell-actions">
-            <div class="table-actions">
-              <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-campanha" data-id="${view.id}">Editar</button>
-              <button class="btn btn-danger btn-sm" data-action="delete-campaign" data-id="${view.id}">Excluir</button>
-            </div>
+            ${renderActionMenu(
+              [
+                renderActionMenuButton({
+                  label: "Editar campanha",
+                  action: "open-modal",
+                  modal: "nova-campanha",
+                  id: view.id
+                }),
+                renderActionMenuButton({
+                  label: "Excluir campanha",
+                  action: "delete-campaign",
+                  id: view.id,
+                  className: "btn btn-danger-soft btn-sm"
+                })
+              ],
+              { label: "Mais ações da campanha" }
+            )}
           </td>
         </tr>
       `;
     })
     .join("")
-    || UI.tableEmpty(
-      8,
-      "Nenhuma campanha cadastrada.",
-      "",
-      {
-        icon: false,
-        className: "campaign-empty-panel",
-        actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="nova-campanha">Criar primeira campanha</button>`,
-      }
-    );
+    || (hasLoadFailure("campanhas")
+      ? UI.tableEmpty(8, "Não foi possível carregar as campanhas.", "Atualize a tela para tentar novamente.", {
+          icon: false,
+          className: "campaign-empty-panel",
+          actionHtml: renderRetryAction()
+        })
+      : UI.tableEmpty(
+          8,
+          "Nenhuma campanha cadastrada.",
+          "Crie a primeira campanha para iniciar o planejamento e a operação de mídia.",
+          {
+            icon: false,
+            className: "campaign-empty-panel",
+            actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="nova-campanha">Criar primeira campanha</button>`,
+          }
+        ));
 }
 
 function renderProduction() {
@@ -5174,9 +5464,8 @@ function renderProduction() {
             <span class="cell-title" title="${escapeHtml(material.title)}">${escapeHtml(material.title)}</span>
             <span class="cell-sub" title="${escapeHtml(material.client_name)}">${escapeHtml(material.client_name)}</span>
           </td>
-          <td><span class="badge badge-blue">Design</span></td>
           <td><span class="badge ${statusClass}">${escapeHtml(statusLabel)}</span></td>
-          <td><span class="prod-deadline ${isOverdue ? "is-overdue" : ""}">${escapeHtml(deadlineLabel)}</span></td>
+          <td class="hide-mobile"><span class="prod-deadline ${isOverdue ? "is-overdue" : ""}">${escapeHtml(deadlineLabel)}</span></td>
           <td class="cell-actions">
             <div class="table-actions">
               ${renderResourceAction(material.url || material.file_url, {
@@ -5184,45 +5473,96 @@ function renderProduction() {
                 className: "btn btn-outline btn-sm",
                 missingMessage: "Arquivo ainda não disponível para abertura."
               })}
-              ${canEditProduction ? `<button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-entrega" data-id="${material.id}">Editar</button>` : ""}
-              ${canEditProduction ? `<span class="table-action-sep" aria-hidden="true"></span><button class="btn btn-sm btn-danger-link" data-action="delete-material" data-id="${material.id}">Excluir</button>` : ""}
+              ${canEditProduction
+                ? renderActionMenu(
+                    [
+                      renderActionMenuButton({
+                        label: "Editar entrega",
+                        action: "open-modal",
+                        modal: "nova-entrega",
+                        id: material.id
+                      }),
+                      renderActionMenuButton({
+                        label: "Excluir entrega",
+                        action: "delete-material",
+                        id: material.id,
+                        className: "btn btn-danger-soft btn-sm"
+                      })
+                    ],
+                    { label: "Mais ações da entrega" }
+                  )
+                : ""}
             </div>
           </td>
         </tr>
       `;
     })
-    .join("") || UI.tableEmpty(5, "Nenhuma entrega cadastrada", "Cadastre a primeira entrega para iniciar o fluxo de produção.");
+    .join("") || (hasLoadFailure("produção")
+      ? UI.tableEmpty(4, "Não foi possível carregar as entregas.", "Atualize a tela para tentar novamente.", {
+          icon: false,
+          actionHtml: renderRetryAction()
+        })
+      : UI.tableEmpty(4, "Nenhuma entrega cadastrada", "Cadastre a primeira entrega para iniciar o fluxo de produção.", {
+          icon: false,
+          actionHtml: canEditProduction
+            ? `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="nova-entrega">Criar primeira entrega</button>`
+            : ""
+        }));
 
   document.getElementById("copy-tbody").innerHTML = state.files
     .map(
       (file) => `
         <tr>
-          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(file.original_name)}">${escapeHtml(file.original_name)}</span></td>
-          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(file.client_name || "Interno")}">${escapeHtml(file.client_name || "Interno")}</span></td>
-          <td>${file.mime_type || "-"}</td>
-          <td data-align="right">${Math.round((file.size || 0) / 1024)} KB</td>
-          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(file.uploaded_by_name || "-")}">${escapeHtml(file.uploaded_by_name || "-")}</span></td>
+          <td class="cell-stack">
+            <span class="cell-title" title="${escapeHtml(file.original_name)}">${escapeHtml(file.original_name)}</span>
+            <span class="cell-sub" title="${escapeHtml(file.client_name || "Interno")}">${escapeHtml(file.client_name || "Interno")}</span>
+          </td>
+          <td class="cell-stack hide-phone"><span class="cell-sub" title="${escapeHtml(file.client_name || "Interno")}">${escapeHtml(file.client_name || "Interno")}</span></td>
+          <td class="hide-tablet">${escapeHtml(file.mime_type || "—")}</td>
+          <td class="hide-mobile" data-align="right">${Math.round((file.size || 0) / 1024)} KB</td>
+          <td class="cell-stack hide-mobile"><span class="cell-sub" title="${escapeHtml(file.uploaded_by_name || "-")}">${escapeHtml(file.uploaded_by_name || "-")}</span></td>
           <td class="cell-actions">${renderResourceAction(file.url, { label: "Abrir", className: "btn btn-ghost btn-sm" })}</td>
         </tr>
       `
     )
-    .join("") || UI.tableEmpty(6, "Nenhum arquivo disponível", "Os arquivos internos e aprovados aparecerão aqui.");
+    .join("") || (hasLoadFailure("arquivos")
+      ? UI.tableEmpty(6, "Não foi possível carregar os arquivos.", "Atualize a tela para tentar novamente.", {
+          icon: false,
+          actionHtml: renderRetryAction()
+        })
+      : UI.tableEmpty(6, "Nenhum arquivo disponível", "Os arquivos internos e aprovados aparecerão aqui.", {
+          icon: false,
+          actionHtml: canEditProduction
+            ? `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="nova-entrega">Adicionar arquivo</button>`
+            : ""
+        }));
 
   document.getElementById("lp-tbody").innerHTML = state.reports
     .map(
       (report) => `
         <tr>
-          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(report.title)}">${escapeHtml(report.title)}</span></td>
-          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(report.client_name)}">${escapeHtml(report.client_name)}</span></td>
-          <td>${formatDate(report.report_month)}</td>
-          <td class="cell-stack"><span class="cell-sub" title="${escapeHtml(report.summary || "-")}">${escapeHtml(report.summary || "-")}</span></td>
+          <td class="cell-stack">
+            <span class="cell-title" title="${escapeHtml(report.title)}">${escapeHtml(report.title)}</span>
+            <span class="cell-sub" title="${escapeHtml(report.client_name)}">${escapeHtml(report.client_name)}</span>
+          </td>
+          <td class="cell-stack hide-phone"><span class="cell-sub" title="${escapeHtml(report.client_name)}">${escapeHtml(report.client_name)}</span></td>
+          <td class="hide-mobile">${formatDate(report.report_month)}</td>
+          <td class="cell-stack hide-tablet">${report.summary ? `<span class="cell-sub" title="${escapeHtml(report.summary)}">${escapeHtml(report.summary)}</span>` : ""}</td>
           <td class="cell-actions">${renderResourceAction(report.file_url, {
             missingMessage: "Relatório ainda não disponível para abertura."
           })}</td>
         </tr>
       `
     )
-    .join("") || UI.tableEmpty(6, "Nenhum relatório disponível", "Os relatórios publicados e compartilhados aparecerão aqui.");
+    .join("") || (hasLoadFailure("relatórios")
+      ? UI.tableEmpty(5, "Não foi possível carregar os relatórios.", "Atualize a tela para tentar novamente.", {
+          icon: false,
+          actionHtml: renderRetryAction()
+        })
+      : UI.tableEmpty(5, "Nenhum relatório disponível", "Os relatórios publicados e compartilhados aparecerão aqui.", {
+          icon: false,
+          actionHtml: `<button type="button" class="btn btn-outline btn-sm empty-state-action" data-action="go-to" data-page="analytics">Abrir analytics</button>`
+        }));
 }
 
 function renderTraffic() {
@@ -5248,12 +5588,12 @@ function renderTraffic() {
     },
     {
       label: "ROAS Médio",
-      value: `${roas.toFixed(1)}x`,
+      value: `${roas.toFixed(2)}x`,
       sub: activeCampaigns.length ? `${formatNumber(activeClients)} contas acompanhadas` : "sem campanhas ativas"
     },
     {
       label: "CTR Médio",
-      value: `${ctr.toFixed(1)}%`,
+      value: `${ctr.toFixed(2)}%`,
       sub: totalClicks ? `${formatNumber(totalClicks)} cliques` : "todas as plataformas"
     },
     {
@@ -5291,14 +5631,18 @@ function renderTraffic() {
               <div>
                 <div class="progress-item-head">
                   <span>${escapeHtml(platform.label)}</span>
-                  <span class="text-strong">${formatCurrency(platform.budget)} · ROAS ${platformRoas.toFixed(1)}x</span>
+                  <span class="text-strong">${formatCurrency(platform.budget)} · ROAS ${platformRoas.toFixed(2)}x</span>
                 </div>
                 <div class="progress-bar"><div class="progress-fill" style="width:${((platform.budget / maxBudget) * 100).toFixed(1)}%"></div></div>
               </div>
             `;
           })
           .join("")
-      : UI.empty("Nenhuma campanha ativa", "As plataformas aparecerão aqui quando houver investimento real em mídia.");
+      : UI.empty("Nenhuma campanha ativa", "As plataformas aparecerão aqui quando houver investimento real em mídia.", {
+          icon: false,
+          className: "is-plain",
+          actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="nova-campanha">Criar campanha</button>`
+        });
   }
 
   document.getElementById("ab-list").innerHTML = activeCampaigns
@@ -5311,11 +5655,15 @@ function renderTraffic() {
             <div class="block-title-sm">${escapeHtml(view.name)}</div>
             <div class="block-text-xs">${escapeHtml(view.client_name)}</div>
           </div>
-          <span class="badge ${Number(view.roi || 0) === 0 ? "badge-gray" : "badge-blue"}">ROI ${Number(view.roi || 0).toFixed(1)}%</span>
+          <span class="badge ${Number(view.roi || 0) === 0 ? "badge-gray" : "badge-blue"}">ROI ${Number(view.roi || 0).toFixed(2)}%</span>
         </div>
       `;
     })
-    .join("") || UI.empty("Nenhuma campanha ativa", "Ative campanhas para acompanhar a performance de mídia.");
+    .join("") || UI.empty("Nenhuma campanha ativa", "Ative campanhas para acompanhar a performance de mídia.", {
+      icon: false,
+      className: "is-plain",
+      actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="nova-campanha">Criar campanha</button>`
+    });
 
   document.getElementById("trafego-tbody").innerHTML = state.campaigns
     .map((campaign) => {
@@ -5334,8 +5682,9 @@ function renderTraffic() {
         <tr>
           <td class="cell-stack traffic-campaign-main">
             <span class="cell-title" title="${escapeHtml(view.name)}">${escapeHtml(view.name)}</span>
+            <span class="cell-sub show-mobile-block" title="${escapeHtml(view.client_name)}">${escapeHtml(view.client_name)}</span>
           </td>
-          <td class="traffic-cell traffic-client-cell">
+          <td class="traffic-cell traffic-client-cell hide-phone">
             <div class="traffic-cell-left">
               <span class="cell-sub" title="${escapeHtml(view.client_name)}">${escapeHtml(view.client_name)}</span>
             </div>
@@ -5345,29 +5694,29 @@ function renderTraffic() {
               <span class="badge ${getChannelBadgeClass(view.channel)}">${escapeHtml(view.channel)}</span>
             </div>
           </td>
-          <td class="traffic-cell traffic-budget-cell">
+          <td class="traffic-cell traffic-budget-cell hide-tablet">
             <div class="traffic-cell-right">
               <span class="${getValueToneClass(budget)}">${formatCurrencyValue(budget)}</span>
             </div>
           </td>
-          <td class="traffic-cell traffic-cpc-cell">
+          <td class="traffic-cell traffic-cpc-cell hide-mobile">
             <div class="traffic-cell-right">
               <span class="${cpc > 0 ? "value-strong" : "value-zero"}">${formatCurrencyValue(cpc)}</span>
             </div>
           </td>
-          <td class="traffic-cell traffic-ctr-cell">
+          <td class="traffic-cell traffic-ctr-cell hide-mobile">
             <div class="traffic-cell-right">
               <span class="${ctrValue > 0 ? "value-strong" : "value-zero"}">${ctrValue.toFixed(2)}%</span>
             </div>
           </td>
-          <td class="traffic-cell traffic-conv-cell">
+          <td class="traffic-cell traffic-conv-cell hide-phone">
             <div class="traffic-cell-right">
               <span class="${conversionValue > 0 ? "value-strong" : "value-zero"}">${conversionValue.toFixed(2)}%</span>
             </div>
           </td>
           <td class="traffic-cell traffic-roas-cell">
             <div class="traffic-cell-right">
-              <span class="${roasValue > 0 ? "value-strong" : "value-zero"}">${roasValue.toFixed(1)}x</span>
+              <span class="${roasValue > 0 ? "value-strong" : "value-zero"}">${roasValue.toFixed(2)}x</span>
             </div>
           </td>
           <td class="traffic-cell traffic-status-cell">
@@ -5378,7 +5727,10 @@ function renderTraffic() {
         </tr>
       `;
     })
-    .join("") || UI.tableEmpty(9, "Nenhum dado de tráfego disponível", "Publique campanhas para visualizar métricas e evolução de mídia.");
+    .join("") || UI.tableEmpty(9, "Nenhum dado de tráfego disponível", "Publique campanhas para visualizar métricas e evolução de mídia.", {
+      icon: false,
+      actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="nova-campanha">Criar campanha</button>`
+    });
 }
 
 function getFilteredMetrics() {
@@ -5425,7 +5777,11 @@ function renderAnalytics() {
     if (!hasScopedClients()) {
       integrationsContainer.innerHTML = UI.empty(
         "Cadastre um cliente primeiro",
-        "As integrações do analytics são vinculadas por cliente. Quando houver clientes, você poderá registrar conexões reais aqui."
+        "As integrações do analytics são vinculadas por cliente. Quando houver clientes, você poderá registrar conexões reais aqui.",
+        {
+          icon: false,
+          actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-cliente">Criar cliente</button>`
+        }
       );
     } else {
       integrationsContainer.innerHTML = INTEGRATION_PROVIDERS.map((provider) => {
@@ -5433,7 +5789,7 @@ function renderAnalytics() {
         const integration = filteredIntegrations.find((item) => item.provider_key === provider.key);
         const subtitle = integration
           ? [integration.external_account_id, integration.external_property_id].filter(Boolean).join(" · ") || "Conexão registrada para este cliente"
-          : "Nenhuma conexão registrada para este cliente";
+          : "—";
 
         return `
           <div class="analytics-side-item">
@@ -5494,20 +5850,32 @@ function renderAnalytics() {
     .map(
       (metric) => `
         <tr>
-          <td class="cell-stack"><span class="cell-title" title="${escapeHtml(metric.client_name)}">${escapeHtml(metric.client_name)}</span></td>
+          <td class="cell-stack">
+            <span class="cell-title" title="${escapeHtml(metric.client_name)}">${escapeHtml(metric.client_name)}</span>
+            ${metric.campaign_name ? `<span class="cell-sub hide-mobile" title="${escapeHtml(metric.campaign_name)}">${escapeHtml(metric.campaign_name)}</span>` : ""}
+          </td>
           <td data-align="right"><span class="${getValueToneClass(metric.leads)}">${formatNumber(metric.leads)}</span></td>
-          <td data-align="right"><span class="${getValueToneClass(metric.revenue)}">${formatCurrencyValue(metric.revenue)}</span></td>
-          <td data-align="right"><span class="${getValueToneClass(metric.impressions)}">${formatNumber(metric.impressions)}</span></td>
-          <td data-align="right"><span class="${getValueToneClass(metric.clicks)}">${formatNumber(metric.clicks)}</span></td>
-          <td>${formatDate(metric.period)}</td>
+          <td class="hide-mobile" data-align="right"><span class="${getValueToneClass(metric.revenue)}">${formatCurrencyValue(metric.revenue)}</span></td>
+          <td class="hide-tablet" data-align="right"><span class="${getValueToneClass(metric.impressions)}">${formatNumber(metric.impressions)}</span></td>
+          <td class="hide-mobile" data-align="right"><span class="${getValueToneClass(metric.clicks)}">${formatNumber(metric.clicks)}</span></td>
+          <td class="hide-tablet">${formatDate(metric.period)}</td>
           <td><span class="badge ${getScoreBadgeClass(Math.min(Math.round(Number(metric.leads || 0)), 100))}">${Math.min(Math.round(Number(metric.leads || 0)), 100)}/100</span></td>
         </tr>
       `
     )
-    .join("") || UI.tableEmpty(7, "Nenhuma métrica consolidada.", "", {
-      icon: false,
-      className: "is-analytics-empty",
-    });
+    .join("") || (hasLoadFailure("métricas")
+      ? UI.tableEmpty(7, "Não foi possível carregar as métricas.", "Atualize a tela para tentar novamente.", {
+          icon: false,
+          className: "is-analytics-empty",
+          actionHtml: renderRetryAction()
+        })
+      : UI.tableEmpty(7, "Nenhuma métrica consolidada.", "Conecte clientes e publique campanhas para ver a leitura por conta.", {
+          icon: false,
+          className: "is-analytics-empty",
+          actionHtml: hasScopedClients()
+            ? `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="nova-integracao">Registrar integração</button>`
+            : `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-cliente">Criar cliente</button>`
+        }));
 
   const integrationsBody = document.getElementById("integrations-tbody");
   if (integrationsBody) {
@@ -5520,18 +5888,28 @@ function renderAnalytics() {
             <td><span class="badge ${getIntegrationStatusBadgeClass(integration.status)}">${escapeHtml(
               INTEGRATION_STATUS_LABELS[integration.status] || integration.status
             )}</span></td>
-            <td class="cell-stack">
-              <span class="cell-title" title="${escapeHtml(integration.external_account_id || "-")}">${escapeHtml(integration.external_account_id || "-")}</span>
-              <span class="cell-sub" title="${escapeHtml(integration.external_property_id || "-")}">${escapeHtml(integration.external_property_id || "Sem propriedade vinculada")}</span>
+            <td class="cell-stack hide-tablet">
+              <span class="cell-title" title="${escapeHtml(integration.external_account_id || "—")}">${escapeHtml(integration.external_account_id || "—")}</span>
+              ${integration.external_property_id ? `<span class="cell-sub" title="${escapeHtml(integration.external_property_id)}">${escapeHtml(integration.external_property_id)}</span>` : ""}
             </td>
-            <td>${formatDateTime(integration.last_sync_at)}</td>
-            <td class="cell-stack"><span class="cell-title" title="${escapeHtml(integration.updated_by_name || integration.created_by_name || "-")}">${escapeHtml(integration.updated_by_name || integration.created_by_name || "-")}</span></td>
+            <td class="hide-mobile">${formatDateTime(integration.last_sync_at)}</td>
+            <td class="cell-stack hide-phone"><span class="cell-title" title="${escapeHtml(integration.updated_by_name || integration.created_by_name || "—")}">${escapeHtml(integration.updated_by_name || integration.created_by_name || "—")}</span></td>
             <td class="cell-actions">
               ${
                 canManageIntegrations()
                   ? `<div class="table-actions">
                       <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-integracao" data-id="${integration.id}">Editar</button>
-                      <button class="btn btn-danger btn-sm" data-action="delete-integration" data-id="${integration.id}">Excluir</button>
+                      ${renderActionMenu(
+                        [
+                          renderActionMenuButton({
+                            label: "Excluir integração",
+                            action: "delete-integration",
+                            id: integration.id,
+                            className: "btn btn-danger-soft btn-sm"
+                          })
+                        ],
+                        { label: "Mais ações da integração" }
+                      )}
                     </div>`
                   : '<span class="cell-sub">Somente leitura</span>'
               }
@@ -5542,8 +5920,20 @@ function renderAnalytics() {
       .join("")
       || UI.tableEmpty(
         7,
-        hasScopedClients() ? "Nenhuma integração registrada" : "Nenhum cliente cadastrado",
-        ""
+        hasLoadFailure("integrações") ? "Não foi possível carregar as integrações" : hasScopedClients() ? "Nenhuma integração registrada" : "Nenhum cliente cadastrado",
+        hasLoadFailure("integrações")
+          ? "Atualize a tela para tentar novamente."
+          : hasScopedClients()
+            ? "Registre a primeira integração para habilitar leitura e sincronização."
+            : "Cadastre pelo menos um cliente para vincular integrações.",
+        {
+          icon: false,
+          actionHtml: hasLoadFailure("integrações")
+            ? renderRetryAction()
+            : hasScopedClients()
+              ? `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="nova-integracao">Registrar integração</button>`
+              : `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-cliente">Criar cliente</button>`
+        }
       );
   }
 }
@@ -5584,25 +5974,40 @@ function renderFinance() {
   document.getElementById("fin-clientes").innerHTML = finance.clientFinancials
     .map(
       ({ client, billedTotal, receivedTotal, costTotal, pendingTotal, overdueTotal, margin, operationalStatus }) => `
-        <div class="fin-row">
-          <div class="fin-cell fin-cell-client"><strong>${escapeHtml(client.name)}</strong></div>
-          <div class="fin-cell fin-cell-value">${formatCurrency(billedTotal)}</div>
-          <div class="fin-cell fin-cell-value">${formatCurrency(costTotal)}</div>
-          <div class="fin-cell fin-cell-value">${formatCurrency(receivedTotal)}</div>
-          <div class="fin-cell fin-cell-status"><span class="badge ${getFinanceStatusBadgeClass(operationalStatus)}">${escapeHtml(operationalStatus)}</span></div>
-          <div class="fin-cell fin-cell-margin ${margin >= 50 ? "margin-good" : margin >= 20 ? "margin-warn" : "margin-bad"}">${margin}%</div>
-          <div class="fin-cell fin-cell-action">
+        <tr>
+          <td class="cell-stack">
+            <span class="cell-title">${escapeHtml(client.name)}</span>
+            <span class="cell-sub hide-mobile">${escapeHtml(client.company || "Conta interna")}</span>
+            <span class="badge ${getFinanceStatusBadgeClass(operationalStatus)} finance-inline-status">${escapeHtml(operationalStatus)}</span>
+          </td>
+          <td class="hide-mobile" data-align="right"><span class="${getValueToneClass(billedTotal)}">${formatCurrencyValue(billedTotal)}</span></td>
+          <td class="hide-tablet" data-align="right"><span class="${getValueToneClass(costTotal)}">${formatCurrencyValue(costTotal)}</span></td>
+          <td class="hide-tablet" data-align="right"><span class="${getValueToneClass(receivedTotal)}">${formatCurrencyValue(receivedTotal)}</span></td>
+          <td class="hide-mobile"><span class="badge ${getFinanceStatusBadgeClass(operationalStatus)}">${escapeHtml(operationalStatus)}</span></td>
+          <td class="finance-margin-cell">
+            <span class="finance-margin-value ${margin >= 50 ? "margin-good" : margin >= 20 ? "margin-warn" : "margin-bad"}">${margin}%</span>
+            <div class="finance-margin-track"><div class="finance-margin-fill" style="width:${Math.max(Math.min(margin, 100), 0)}%"></div></div>
+          </td>
+          <td class="cell-actions">
             <button
               class="btn ${overdueTotal > 0 ? "btn-pink" : pendingTotal > 0 ? "btn-outline" : "btn-ghost"} btn-sm"
               data-action="open-charge-modal" data-id="${client.id}"
             >
-              ${overdueTotal > 0 || pendingTotal > 0 ? "Cobrar" : "Nova cobrança"}
+              Cobrar
             </button>
-          </div>
-        </div>
+          </td>
+        </tr>
       `
     )
-    .join("") || UI.empty("Nenhum cliente disponível", "Cadastre clientes para acompanhar receitas, custos e margem.");
+    .join("") || ((hasLoadFailure("clientes") || hasLoadFailure("cobranças") || hasLoadFailure("custos") || hasLoadFailure("faturas"))
+      ? UI.tableEmpty(7, "Não foi possível carregar a margem por cliente.", "Atualize a tela para tentar novamente.", {
+          icon: false,
+          actionHtml: renderRetryAction()
+        })
+      : UI.tableEmpty(7, "Nenhum cliente disponível", "Cadastre clientes para acompanhar receitas, custos e margem.", {
+          icon: false,
+          actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-cliente">Criar cliente</button>`
+        }));
 
   const costBuckets = [
     { label: "Mídia", value: finance.mediaCost },
@@ -5626,82 +6031,141 @@ function renderFinance() {
     .join("") || UI.empty("Nenhum custo registrado", "Os lançamentos de custo por categoria aparecerão aqui.");
 
   const canManageInvoices = ["admin", "comercial"].includes(state.session.user.role);
-  const costRows = finance.filteredCosts.map(
-    (entry) => `
-        <div class="charge-item">
-          <div class="charge-head">
-            <div>
-              <div class="charge-name">${escapeHtml(entry.client_name || "Equipe interna")}</div>
-              <div class="charge-sub">${escapeHtml(getCostCategoryLabel(entry.category))} · ${formatDate(entry.incurred_on || entry.created_at)} · ${formatCurrency(entry.amount)}</div>
-            </div>
-            <span class="badge badge-blue">${escapeHtml(getCostCategoryLabel(entry.category))}</span>
-          </div>
-          <div class="charge-desc">${escapeHtml(entry.description || "Custo lançado sem descrição complementar")}</div>
-        </div>
-    `
-  );
-  const chargeRows = finance.filteredCharges.map((charge) => {
-    const chargeStatus = getChargeOperationalStatus(charge);
-    const isChargeReceived = isChargeReceivedStatus(charge.status);
-    const canMarkReceived = canManageInvoices && !isChargeReceived;
-    const canMarkPending =
-      canManageInvoices
-      && !isChargeReceived
-      && !isChargeCancelledStatus(charge.status)
-      && String(chargeStatus).toLowerCase() !== "pendente";
+  const launchRows = [
+    ...finance.filteredCosts.map((entry) => ({
+      type: "Custo",
+      title: entry.description || getCostCategoryLabel(entry.category),
+      clientName: entry.client_name || "Equipe interna",
+      detail: `${getCostCategoryLabel(entry.category)} · ${formatDate(entry.incurred_on || entry.created_at)}`,
+      value: Number(entry.amount || 0),
+      statusLabel: "Lançado",
+      statusClass: "badge-blue",
+      actionHtml: '<span class="cell-sub">—</span>'
+    })),
+    ...finance.filteredCharges.map((charge) => {
+      const chargeStatus = getChargeOperationalStatus(charge);
+      const isChargeReceived = isChargeReceivedStatus(charge.status);
+      const canMarkReceived = canManageInvoices && !isChargeReceived;
+      const canMarkPending =
+        canManageInvoices
+        && !isChargeReceived
+        && !isChargeCancelledStatus(charge.status)
+        && String(chargeStatus).toLowerCase() !== "pendente";
 
-    return `
-        <div class="charge-item">
-          <div class="charge-head">
-            <div>
-            <div class="charge-name">${escapeHtml(charge.client_name || charge.contact_name || "Sem cliente")}</div>
-            <div class="charge-sub">${escapeHtml(charge.payment_method)} · vencimento ${formatDate(charge.due_date)} · ${formatCurrency(charge.amount)}</div>
-            </div>
-          <span class="badge ${getFinanceStatusBadgeClass(chargeStatus)}">${escapeHtml(chargeStatus)}</span>
-          </div>
-        <div class="charge-desc">${escapeHtml(charge.description || "Cobrança gerada sem observação complementar")}</div>
-        <div class="item-actions">
-          ${charge.payment_link ? `<button class="btn btn-ghost btn-sm" data-action="open-charge-resource" data-id="${charge.id}" data-resource="payment_link">Abrir link</button>` : ""}
-          ${charge.boleto_url ? `<button class="btn btn-ghost btn-sm" data-action="open-charge-resource" data-id="${charge.id}" data-resource="boleto_url">Boleto</button>` : ""}
-          ${charge.pix_copy_paste ? `<button class="btn btn-ghost btn-sm" data-action="copy-charge-pix" data-id="${charge.id}">Copiar Pix</button>` : ""}
-          ${canManageInvoices ? `
-            <button class="btn btn-ghost btn-sm" ${canMarkReceived ? `data-action="update-charge-status" data-id="${charge.id}" data-status="RECEIVED"` : "disabled"}>Recebida</button>
-            <button class="btn btn-ghost btn-sm" ${canMarkPending ? `data-action="update-charge-status" data-id="${charge.id}" data-status="PENDING"` : "disabled"}>Pendente</button>
-          ` : ""}
-        </div>
-      </div>
-    `
-  });
+      const primaryAction = charge.payment_link
+        ? `<button type="button" class="btn btn-ghost btn-sm" data-action="open-charge-resource" data-id="${charge.id}" data-resource="payment_link">Abrir</button>`
+        : charge.boleto_url
+          ? `<button type="button" class="btn btn-ghost btn-sm" data-action="open-charge-resource" data-id="${charge.id}" data-resource="boleto_url">Abrir</button>`
+          : charge.pix_copy_paste
+            ? `<button type="button" class="btn btn-ghost btn-sm" data-action="copy-charge-pix" data-id="${charge.id}">Pix</button>`
+            : `<button type="button" class="btn btn-ghost btn-sm" data-action="open-charge-modal" data-id="${charge.client_id}">Cobrar</button>`;
 
-  const invoiceRows = finance.filteredInvoices.map((invoice) => {
+      return {
+        type: "Cobrança",
+        title: charge.description || `Cobrança ${charge.client_name || charge.contact_name || ""}`.trim(),
+        clientName: charge.client_name || charge.contact_name || "—",
+        detail: `${charge.payment_method} · vencimento ${formatDate(charge.due_date)}`,
+        value: Number(charge.amount || 0),
+        statusLabel: chargeStatus,
+        statusClass: getFinanceStatusBadgeClass(chargeStatus),
+        actionHtml: `
+          <div class="table-actions">
+            ${primaryAction}
+            ${renderActionMenu(
+              [
+                canManageInvoices
+                  ? renderActionMenuButton({
+                      label: "Marcar recebida",
+                      action: "update-charge-status",
+                      id: charge.id,
+                      className: "btn btn-ghost btn-sm",
+                      extra: canMarkReceived ? 'data-status="RECEIVED"' : "disabled"
+                    })
+                  : "",
+                canManageInvoices
+                  ? renderActionMenuButton({
+                      label: "Voltar para pendente",
+                      action: "update-charge-status",
+                      id: charge.id,
+                      className: "btn btn-ghost btn-sm",
+                      extra: canMarkPending ? 'data-status="PENDING"' : "disabled"
+                    })
+                  : ""
+              ],
+              { label: "Mais ações da cobrança" }
+            )}
+          </div>
+        `
+      };
+    }),
+    ...finance.filteredInvoices.map((invoice) => {
+      const statusLabel = getInvoiceOperationalStatus(invoice);
       const isInvoicePaid = isInvoicePaidStatus(invoice.status);
       const canMarkInvoicePaid = canManageInvoices && !isInvoicePaid;
       const canMarkInvoiceOpen = canManageInvoices && !isInvoicePaid && !isInvoiceCancelledStatus(invoice.status) && !isInvoiceOpenStatus(invoice.status);
 
-      return `
-        <div class="invoice-item">
-          <div class="invoice-head">
-            <div>
-              <div class="invoice-name">${escapeHtml(invoice.client_name)}</div>
-              <div class="invoice-sub">Vencimento ${formatDate(invoice.due_date)} · ${formatCurrency(invoice.amount)}</div>
-            </div>
-            <span class="badge ${getFinanceStatusBadgeClass(getInvoiceOperationalStatus(invoice))}">${escapeHtml(getInvoiceOperationalStatus(invoice))}</span>
-          </div>
-          ${
-            canManageInvoices
-              ? `<div class="item-actions">
-                  <button class="btn btn-ghost btn-sm" ${canMarkInvoicePaid ? `data-action="update-invoice-status" data-id="${invoice.id}" data-status="Pago"` : "disabled"}>Marcar pago</button>
-                  <button class="btn btn-ghost btn-sm" ${canMarkInvoiceOpen ? `data-action="update-invoice-status" data-id="${invoice.id}" data-status="Em aberto"` : "disabled"}>Em aberto</button>
-                </div>`
-              : ""
-          }
-        </div>
-      `;
-    });
+      return {
+        type: "Fatura",
+        title: `Fatura ${invoice.client_name || "—"}`,
+        clientName: invoice.client_name || "—",
+        detail: `Vencimento ${formatDate(invoice.due_date)}`,
+        value: Number(invoice.amount || 0),
+        statusLabel,
+        statusClass: getFinanceStatusBadgeClass(statusLabel),
+        actionHtml: canManageInvoices
+          ? renderActionMenu(
+              [
+                renderActionMenuButton({
+                  label: "Marcar como paga",
+                  action: "update-invoice-status",
+                  id: invoice.id,
+                  className: "btn btn-ghost btn-sm",
+                  extra: canMarkInvoicePaid ? 'data-status="Pago"' : "disabled"
+                }),
+                renderActionMenuButton({
+                  label: "Voltar para em aberto",
+                  action: "update-invoice-status",
+                  id: invoice.id,
+                  className: "btn btn-ghost btn-sm",
+                  extra: canMarkInvoiceOpen ? 'data-status="Em aberto"' : "disabled"
+                })
+              ],
+              { label: "Mais ações da fatura" }
+            )
+          : '<span class="cell-sub">Somente leitura</span>'
+      };
+    })
+  ];
 
   document.getElementById("fin-comissoes").innerHTML =
-    [...costRows, ...chargeRows, ...invoiceRows].join("")
-    || UI.empty("Nenhum lançamento financeiro cadastrado", "Use o filtro de período ou registre custos, cobranças e faturas.");
+    launchRows
+      .map(
+        (row) => `
+          <tr>
+            <td class="hide-mobile"><span class="badge badge-gray">${escapeHtml(row.type)}</span></td>
+            <td class="cell-stack">
+              <span class="cell-title">${escapeHtml(row.title || "—")}</span>
+              <span class="badge badge-gray finance-type-inline">${escapeHtml(row.type)}</span>
+              <span class="cell-sub">${escapeHtml(row.detail)}</span>
+            </td>
+            <td class="hide-phone"><span class="cell-sub">${escapeHtml(row.clientName)}</span></td>
+            <td class="hide-tablet"><span class="cell-sub">${escapeHtml(row.detail)}</span></td>
+            <td class="hide-mobile" data-align="right"><span class="${getValueToneClass(row.value)}">${formatCurrencyValue(row.value)}</span></td>
+            <td><span class="badge ${row.statusClass}">${escapeHtml(row.statusLabel)}</span></td>
+            <td class="cell-actions">${row.actionHtml}</td>
+          </tr>
+        `
+      )
+      .join("")
+    || ((hasLoadFailure("cobranças") || hasLoadFailure("custos") || hasLoadFailure("faturas"))
+      ? UI.tableEmpty(7, "Não foi possível carregar os lançamentos financeiros.", "Atualize a tela para tentar novamente.", {
+          icon: false,
+          actionHtml: renderRetryAction()
+        })
+      : UI.tableEmpty(7, "Nenhum lançamento financeiro cadastrado", "Registre custos, cobranças ou faturas para alimentar o histórico financeiro.", {
+          icon: false,
+          actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-custo">Registrar custo</button>`
+        }));
 
   bindLegacyInlineHandlers(document.getElementById("page-financeiro"));
 }
@@ -5805,6 +6269,12 @@ function bindDataActions() {
         return deleteCalendarEvent(id);
       case "open-charge-modal":
         return openChargeModalForClient(id);
+      case "retry-refresh":
+        return refreshData();
+      case "retry-calendar":
+        return loadCalendarEvents(state.calendar.weekStart || new Date(), { force: true });
+      case "confirm-modal-action":
+        return confirmModalAction();
       case "close-modal":
         return closeModal();
       case "close-modal-bg":
@@ -5840,7 +6310,15 @@ function renderAccessV2() {
 
   document.getElementById("membros-tbody").innerHTML = renderAccessMembersTable(
     sortedUsers.map((user) => renderMemberRow(user, state.session.user.id)).join("")
-      || UI.tableEmpty(5, "Nenhum membro cadastrado", "Crie o primeiro usuário interno para liberar o acesso da equipe.", { icon: false })
+      || (hasLoadFailure("controle de acesso")
+        ? UI.tableEmpty(5, "Não foi possível carregar os membros.", "Atualize a tela para tentar novamente.", {
+            icon: false,
+            actionHtml: renderRetryAction()
+          })
+        : UI.tableEmpty(5, "Nenhum membro cadastrado", "Crie o primeiro usuário interno para liberar o acesso da equipe.", {
+            icon: false,
+            actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-membro">Adicionar membro</button>`
+          }))
   );
 
   const roleCards = {
@@ -5859,11 +6337,13 @@ function renderAccessV2() {
 
 async function refreshData() {
   const roleDataAccess = ROLE_DATA_ACCESS[state.session.user.role] || {};
+  const resourceFailures = [];
   const fetchFailures = [];
   const loadResource = async (label, loader, fallback) => {
     try {
       return await loader();
     } catch (error) {
+      resourceFailures.push(label);
       if (!NON_BLOCKING_MODULE_FAILURES.has(label)) {
         fetchFailures.push(label);
       }
@@ -5923,7 +6403,27 @@ async function refreshData() {
 
   const clientsBody = document.getElementById("clientes-tbody");
   if (clientsBody) {
-    clientsBody.innerHTML = UI.skeletonRows(7, 4);
+    clientsBody.innerHTML = UI.skeletonRows(6, 4);
+  }
+
+  const historyBody = document.getElementById("historico-tbody");
+  if (historyBody) {
+    historyBody.innerHTML = UI.skeletonRows(6, 4);
+  }
+
+  const financeClientsBody = document.getElementById("fin-clientes");
+  if (financeClientsBody) {
+    financeClientsBody.innerHTML = UI.skeletonRows(7, 4);
+  }
+
+  const financeLaunchesBody = document.getElementById("fin-comissoes");
+  if (financeLaunchesBody) {
+    financeLaunchesBody.innerHTML = UI.skeletonRows(7, 4);
+  }
+
+  const designBody = document.getElementById("prod-design-tbody");
+  if (designBody) {
+    designBody.innerHTML = UI.skeletonRows(4, 4);
   }
 
   const filesBody = document.getElementById("copy-tbody");
@@ -5943,17 +6443,12 @@ async function refreshData() {
 
   const pipelineBoard = document.getElementById("pipeline-board");
   if (pipelineBoard) {
-    pipelineBoard.innerHTML = UI.empty("Carregando pipeline...", "Buscando dados do CRM.");
-  }
-
-  const designGrid = document.getElementById("design-grid");
-  if (designGrid) {
-    designGrid.innerHTML = UI.empty("Carregando entregas...", "Buscando materiais e arquivos.");
+    pipelineBoard.innerHTML = UI.skeletonPipeline(5, 2);
   }
 
   const platformBreakdown = document.getElementById("traffic-platform-breakdown");
   if (platformBreakdown) {
-    platformBreakdown.innerHTML = UI.empty("Carregando tráfego...", "Buscando métricas e campanhas.");
+    platformBreakdown.innerHTML = UI.skeletonProgress(4);
   }
 
   const resourceLoaders = [
@@ -5997,6 +6492,7 @@ async function refreshData() {
   state.charges = toArray(charges);
   state.integrations = toArray(integrations);
   state.checklist = normalizeChecklistSnapshot(checklist);
+  state.loadFailures = new Set(resourceFailures);
 
   const scopedClients = getScopedClientOptions();
   const hasSelectedKanbanClient = scopedClients.some((client) => String(client.id) === String(state.filters.kanbanClient));
@@ -6283,12 +6779,161 @@ function modalFormWrapper(title, body, submitLabel = "Salvar") {
     <form id="modal-form" autocomplete="off">
       <div class="modal-title" id="modal-dialog-title">${escapeHtml(title)}</div>
       <div class="form-grid">${body}</div>
+      <div class="form-status" id="modal-form-status" role="alert"></div>
       <div class="modal-actions">
         <button type="button" class="btn btn-outline" data-action="close-modal">Cancelar</button>
         <button type="submit" id="modal-submit-btn" class="btn btn-pink">${escapeHtml(submitLabel)}</button>
       </div>
     </form>
   `;
+}
+
+function setFormStatus(form, message = "") {
+  const statusNode = form?.querySelector("#modal-form-status");
+  if (!statusNode) {
+    return;
+  }
+
+  statusNode.textContent = message;
+  statusNode.classList.toggle("is-visible", Boolean(message));
+}
+
+function clearFieldError(field) {
+  const wrapper = field?.closest?.(".field");
+  if (!wrapper) {
+    return;
+  }
+
+  wrapper.classList.remove("is-error");
+  field.removeAttribute("aria-invalid");
+  wrapper.querySelector(".field-error")?.remove();
+}
+
+function showFieldError(field, message) {
+  const wrapper = field?.closest?.(".field");
+  if (!wrapper) {
+    return;
+  }
+
+  clearFieldError(field);
+  wrapper.classList.add("is-error");
+  field.setAttribute("aria-invalid", "true");
+
+  const errorNode = document.createElement("div");
+  errorNode.className = "field-error";
+  errorNode.textContent = message;
+  wrapper.appendChild(errorNode);
+}
+
+function clearFormErrors(form) {
+  if (!form) {
+    return;
+  }
+
+  setFormStatus(form, "");
+  form.querySelectorAll(".field input, .field select, .field textarea").forEach(clearFieldError);
+}
+
+function validateFormFields(form) {
+  if (!form) {
+    return true;
+  }
+
+  clearFormErrors(form);
+
+  const fields = [...form.querySelectorAll("input, select, textarea")].filter((field) => field.willValidate !== false);
+  let firstInvalidField = null;
+
+  fields.forEach((field) => {
+    if (field.checkValidity()) {
+      return;
+    }
+
+    showFieldError(field, field.validationMessage || "Revise este campo.");
+    if (!firstInvalidField) {
+      firstInvalidField = field;
+    }
+  });
+
+  if (firstInvalidField) {
+    firstInvalidField.focus();
+    return false;
+  }
+
+  return true;
+}
+
+function bindModalFieldValidation(form) {
+  if (!form || form.dataset.boundFieldValidation === "1") {
+    return;
+  }
+
+  form.querySelectorAll("input, select, textarea").forEach((field) => {
+    field.addEventListener("input", () => clearFieldError(field));
+    field.addEventListener("change", () => clearFieldError(field));
+    field.addEventListener(
+      "invalid",
+      (event) => {
+        event.preventDefault();
+        showFieldError(field, field.validationMessage || "Revise este campo.");
+      },
+      true
+    );
+  });
+
+  form.dataset.boundFieldValidation = "1";
+}
+
+function openConfirmationModal({
+  title,
+  description,
+  confirmLabel = "Confirmar ação",
+  confirmClassName = "btn btn-danger"
+}) {
+  const modal = document.getElementById("modal-content");
+  lastFocusedElement = document.activeElement;
+  modal.innerHTML = `
+    <div class="modal-title" id="modal-dialog-title">${escapeHtml(title)}</div>
+    <p class="metric-note">${escapeHtml(description)}</p>
+    <div class="form-status" id="modal-form-status" role="alert"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-outline" data-action="close-modal">Cancelar</button>
+      <button type="button" id="modal-confirm-btn" class="${confirmClassName}" data-action="confirm-modal-action">${escapeHtml(confirmLabel)}</button>
+    </div>
+  `;
+  document.getElementById("modal-overlay").classList.add("open");
+  document.getElementById("modal-overlay").setAttribute("aria-hidden", "false");
+  bindLegacyInlineHandlers(document.getElementById("modal-overlay"));
+}
+
+async function confirmModalAction() {
+  if (!pendingModalConfirmation) {
+    closeModal();
+    return;
+  }
+
+  const button = document.getElementById("modal-confirm-btn");
+  const statusNode = document.getElementById("modal-form-status");
+  if (statusNode) {
+    statusNode.textContent = "";
+    statusNode.classList.remove("is-visible");
+  }
+
+  await FORM.submit(
+    { querySelector: () => button },
+    async () => {
+      try {
+        await pendingModalConfirmation();
+        closeModal();
+      } catch (error) {
+        if (statusNode) {
+          statusNode.textContent = error.message;
+          statusNode.classList.add("is-visible");
+        }
+      }
+    },
+    { button, loadingText: "Confirmando..." }
+  )();
 }
 
 function clientOptions(selectedId) {
@@ -6916,7 +7561,8 @@ function openModal(type, id = null) {
         ${buildClientAddressFields(client)}
         <div class="field form-full"><label>Manual da marca</label><textarea name="brand_manual" placeholder="Tom de voz, referências, restrições, roteiro da marca, orientações de gravação, edição, design e postagem.">${escapeHtml(client.brand_manual || "")}</textarea></div>
         <div class="field form-full"><label>Observações</label><textarea name="notes">${escapeHtml(client.notes || "")}</textarea></div>
-      `
+      `,
+      client.id ? "Salvar cliente" : "Criar cliente"
     );
   }
 
@@ -6937,7 +7583,8 @@ function openModal(type, id = null) {
         <div class="field"><label>Coluna</label><select name="column_name">${taskColumnOptions(task.column_name || getTaskColumnName(task))}</select></div>
         <div class="field"><label>Prazo</label><input type="date" name="deadline" value="${(task.deadline || task.due_date) ? String(task.deadline || task.due_date).slice(0, 10) : ""}"></div>
         <div class="field form-full"><label>Descrição</label><textarea name="description">${escapeHtml(task.description || "")}</textarea></div>
-      `
+      `,
+      task.id ? "Salvar tarefa" : "Criar tarefa"
     );
   }
 
@@ -6969,7 +7616,7 @@ function openModal(type, id = null) {
           eventRecord.description || ""
         )}</textarea></div>
       `,
-      eventRecord.id ? "Atualizar" : "Salvar"
+      eventRecord.id ? "Salvar evento" : "Criar evento"
     );
   }
 
@@ -7001,7 +7648,8 @@ function openModal(type, id = null) {
         <div class="field"><label>País</label><input name="country" value="${escapeHtml(contact.country || "Brasil")}"></div>
         <div class="field form-full"><label>Mensagem</label><textarea name="message">${escapeHtml(contact.message || "")}</textarea></div>
         <div class="field form-full"><label>Observações</label><textarea name="notes">${escapeHtml(contact.notes || "")}</textarea></div>
-      `
+      `,
+      contact.id ? "Salvar lead" : "Criar lead"
     );
   }
 
@@ -7018,7 +7666,8 @@ function openModal(type, id = null) {
         <div class="field"><label>Início</label><input type="date" name="start_date" value="${campaign.start_date ? String(campaign.start_date).slice(0, 10) : ""}"></div>
         <div class="field"><label>Status</label><select name="status"><option value="Ativa" ${campaign.status === "Ativa" ? "selected" : ""}>Ativa</option><option value="Pausada" ${campaign.status === "Pausada" ? "selected" : ""}>Pausada</option><option value="Encerrada" ${campaign.status === "Encerrada" ? "selected" : ""}>Encerrada</option><option value="Planejamento" ${campaign.status === "Planejamento" ? "selected" : ""}>Planejamento</option></select></div>
         <div class="field form-full"><label>Objetivo</label><textarea name="objective">${escapeHtml(campaign.objective || "")}</textarea></div>
-      `
+      `,
+      campaign.id ? "Salvar campanha" : "Criar campanha"
     );
   }
 
@@ -7033,7 +7682,7 @@ function openModal(type, id = null) {
         <div class="field"><label>Status</label><select name="status"><option ${material.status === "Pendente" ? "selected" : ""}>Pendente</option><option ${material.status === "Aprovado" ? "selected" : ""}>Aprovado</option><option ${material.status === "Revisao" ? "selected" : ""}>Revisão</option></select></div>
         <div class="field form-full"><label>Arquivo</label><input type="file" name="file" accept=".jpg,.jpeg,.png,.webp,.gif,.heic,.heif,.pdf,.zip,.docx,.xlsx,.mp4,.mov,.webm"><div class="field-help">Formatos aceitos: imagem, PDF, ZIP, DOCX, XLSX, MP4, MOV e WEBM.</div></div>
       `,
-      material.id ? "Atualizar" : "Salvar"
+      material.id ? "Salvar entrega" : "Criar entrega"
     );
   }
 
@@ -7051,7 +7700,8 @@ function openModal(type, id = null) {
         <div class="field"><label>Perfil</label><select name="role"><option value="admin" ${user.role === "admin" ? "selected" : ""}>Admin</option><option value="gestor" ${user.role === "gestor" ? "selected" : ""}>Gestor</option><option value="designer" ${user.role === "designer" ? "selected" : ""}>Designer</option><option value="comercial" ${user.role === "comercial" ? "selected" : ""}>Comercial</option><option value="dev" ${user.role === "dev" ? "selected" : ""}>Dev</option><option value="client" ${user.role === "client" ? "selected" : ""}>Cliente</option></select></div>
         <div class="field"><label>Cliente vinculado</label><select name="client_id"><option value="">Nenhum</option>${clientOptions(user.client_id)}</select></div>
         <div class="field form-full"><label>Senha ${user.id ? "(opcional)" : ""}</label><input type="password" name="password" ${user.id ? "" : "required"}><div class="field-help">${passwordHelp}</div></div>
-      `
+      `,
+      user.id ? "Salvar membro" : "Adicionar membro"
     );
   }
 
@@ -7084,7 +7734,7 @@ function openModal(type, id = null) {
         <div class="field"><label>Última sincronização</label><input type="datetime-local" name="last_sync_at" value="${formatDateTimeLocalValue(integration.last_sync_at)}"></div>
         <div class="field form-full"><label>Último erro / observação</label><textarea name="last_error" placeholder="Descreva o erro atual ou uma observação de configuração.">${escapeHtml(integration.last_error || "")}</textarea><div class="field-help">Este MVP registra o estado real no sistema por cliente. A conexão OAuth automática pode ser acoplada depois.</div></div>
       `,
-      integration.id ? "Atualizar" : "Salvar"
+      integration.id ? "Salvar integração" : "Criar integração"
     );
   }
 
@@ -7096,7 +7746,8 @@ function openModal(type, id = null) {
         <div class="field"><label>Valor</label><input type="number" step="0.01" name="amount" required></div>
         <div class="field"><label>Status</label><select name="status">${invoiceStatusOptions("Em aberto")}</select></div>
         <div class="field"><label>Vencimento</label><input type="date" name="due_date"></div>
-      `
+      `,
+      "Criar fatura"
     );
   }
 
@@ -7110,9 +7761,10 @@ function openModal(type, id = null) {
         <div class="field"><label>Método</label><select name="payment_method"><option value="BOLETO">Boleto</option><option value="PIX">Pix</option><option value="PAYMENT_LINK">Link de pagamento</option></select></div>
         <div class="field"><label>Valor</label><input type="number" step="0.01" name="amount" required></div>
         <div class="field"><label>Vencimento</label><input type="date" name="due_date"></div>
-        <div class="field"><label>Referencia externa</label><input name="external_reference" value=""></div>
+        <div class="field"><label>Referência externa</label><input name="external_reference" value=""></div>
         <div class="field form-full"><label>Descrição</label><textarea name="description">${escapeHtml(`Cobrança ${client.name || ""}`)}</textarea></div>
-      `
+      `,
+      "Criar cobrança"
     );
   }
 
@@ -7127,7 +7779,8 @@ function openModal(type, id = null) {
         <div class="field"><label>Valor</label><input type="text" name="amount_display" inputmode="decimal" autocomplete="off" placeholder="0,00" required><input type="hidden" name="amount" value=""></div>
         <div class="field"><label>Data</label><input type="date" name="incurred_on" value="${new Date().toISOString().slice(0, 10)}"></div>
         <div class="field form-full"><label>Descrição</label><textarea name="description" required placeholder="Ex.: impulsionamento do cliente, diária de produção, deslocamento."></textarea></div>
-      `
+      `,
+      "Registrar custo"
     );
   }
 
@@ -7146,6 +7799,7 @@ function openModal(type, id = null) {
   const form = document.getElementById("modal-form");
   if (form) {
     form.onsubmit = (event) => submitModal(event, type, id);
+    bindModalFieldValidation(form);
     hardenInputPrivacy(form);
     if (type === "novo-cliente") {
       initClientAddressAssist(form);
@@ -7181,6 +7835,10 @@ function openModal(type, id = null) {
 
 async function submitModal(event, type, id) {
   event.preventDefault();
+  clearFormErrors(event.target);
+  if (!validateFormFields(event.target)) {
+    return;
+  }
   const formData = new FormData(event.target);
   const submitButton = document.getElementById("modal-submit-btn");
 
@@ -7380,11 +8038,12 @@ async function submitModal(event, type, id) {
     },
     { loadingText: "Salvando...", button: submitButton }
   )(event).catch((error) => {
-    showToast(error.message);
+    setFormStatus(event.target, error.message);
   });
 }
 
 function closeModal() {
+  pendingModalConfirmation = null;
   document.getElementById("modal-overlay").classList.remove("open");
   document.getElementById("modal-overlay").setAttribute("aria-hidden", "true");
   lastFocusedElement?.focus?.();
@@ -7396,74 +8055,124 @@ function closeModalIfBg(event) {
   }
 }
 
+function requestDestructiveConfirmation({
+  title,
+  description,
+  confirmLabel,
+  successMessage,
+  request
+}) {
+  pendingModalConfirmation = async () => {
+    await request();
+    if (successMessage) {
+      showToast(successMessage);
+    }
+  };
+
+  openConfirmationModal({
+    title,
+    description,
+    confirmLabel,
+    confirmClassName: "btn btn-danger"
+  });
+}
+
 async function deleteClient(id) {
-  try {
-    await apiFetch(`/clients/${id}`, { method: "DELETE" });
-    await refreshData();
-    showToast("Cliente removido com sucesso.");
-  } catch (error) {
-    showToast(error.message);
-  }
+  const client = state.clients.find((item) => Number(item.id) === Number(id));
+  requestDestructiveConfirmation({
+    title: "Excluir cliente",
+    description: `Remova ${client?.name || "este cliente"} e os vínculos exibidos no painel. Esta ação não deve competir com a edição normal.`,
+    confirmLabel: "Excluir cliente",
+    successMessage: "Cliente removido com sucesso.",
+    request: async () => {
+      await apiFetch(`/clients/${id}`, { method: "DELETE" });
+      await refreshData();
+    }
+  });
 }
 
 async function deleteCalendarEvent(id) {
-  try {
-    await apiFetch(`/calendar-events/${id}`, { method: "DELETE" });
-    await loadCalendarEvents(state.calendar.weekStart || new Date(), { force: true });
-    showToast("Evento removido com sucesso.");
-  } catch (error) {
-    showToast(error.message);
-  }
+  const eventItem = state.calendarEvents.find((item) => Number(item.id) === Number(id));
+  requestDestructiveConfirmation({
+    title: "Excluir evento",
+    description: `Remova ${eventItem?.title || "este evento"} da agenda da equipe.`,
+    confirmLabel: "Excluir evento",
+    successMessage: "Evento removido com sucesso.",
+    request: async () => {
+      await apiFetch(`/calendar-events/${id}`, { method: "DELETE" });
+      await loadCalendarEvents(state.calendar.weekStart || new Date(), { force: true });
+    }
+  });
 }
 
 async function deleteCampaign(id) {
-  try {
-    await apiFetch(`/campaigns/${id}`, { method: "DELETE" });
-    await refreshData();
-    showToast("Campanha removida com sucesso.");
-  } catch (error) {
-    showToast(error.message);
-  }
+  const campaign = state.campaigns.find((item) => Number(item.id) === Number(id));
+  requestDestructiveConfirmation({
+    title: "Excluir campanha",
+    description: `Remova ${campaign?.name || "esta campanha"} do planejamento e do acompanhamento de mídia.`,
+    confirmLabel: "Excluir campanha",
+    successMessage: "Campanha removida com sucesso.",
+    request: async () => {
+      await apiFetch(`/campaigns/${id}`, { method: "DELETE" });
+      await refreshData();
+    }
+  });
 }
 
 async function deleteTask(id) {
-  try {
-    await apiFetch(`/tasks/${id}`, { method: "DELETE" });
-    await refreshData();
-    showToast("Tarefa removida com sucesso.");
-  } catch (error) {
-    showToast(error.message);
-  }
+  const task = state.tasks.find((item) => Number(item.id) === Number(id));
+  requestDestructiveConfirmation({
+    title: "Excluir tarefa",
+    description: `Remova ${task?.title || "esta tarefa"} do fluxo do kanban.`,
+    confirmLabel: "Excluir tarefa",
+    successMessage: "Tarefa removida com sucesso.",
+    request: async () => {
+      await apiFetch(`/tasks/${id}`, { method: "DELETE" });
+      await refreshData();
+    }
+  });
 }
 
 async function deleteIntegration(id) {
-  try {
-    await apiFetch(`/integrations/${id}`, { method: "DELETE" });
-    await refreshData();
-    showToast("Integração removida com sucesso.");
-  } catch (error) {
-    showToast(error.message);
-  }
+  const integration = state.integrations.find((item) => Number(item.id) === Number(id));
+  requestDestructiveConfirmation({
+    title: "Excluir integração",
+    description: `Remova a conexão ${getIntegrationProviderLabel(integration?.provider_key)} deste cliente.`,
+    confirmLabel: "Excluir integração",
+    successMessage: "Integração removida com sucesso.",
+    request: async () => {
+      await apiFetch(`/integrations/${id}`, { method: "DELETE" });
+      await refreshData();
+    }
+  });
 }
 
 async function deleteMaterial(id) {
-  try {
-    await apiFetch(`/materials/${id}`, { method: "DELETE" });
-    await refreshData();
-    showToast("Entrega removida com sucesso.");
-  } catch (error) {
-    showToast(error.message);
-  }
+  const material = state.materials.find((item) => Number(item.id) === Number(id));
+  requestDestructiveConfirmation({
+    title: "Excluir entrega",
+    description: `Remova ${material?.title || "esta entrega"} da produção.`,
+    confirmLabel: "Excluir entrega",
+    successMessage: "Entrega removida com sucesso.",
+    request: async () => {
+      await apiFetch(`/materials/${id}`, { method: "DELETE" });
+      await refreshData();
+    }
+  });
 }
 
 async function deleteLead(id) {
-  try {
-    await apiFetch(`/contacts/${id}`, { method: "DELETE" });
-    await refreshData();
-    showToast("Lead removido com sucesso.");
-  } catch (error) {
-    showToast(error.message);
-  }
+  const lead = state.contacts.find((item) => Number(item.id) === Number(id));
+  requestDestructiveConfirmation({
+    title: "Excluir lead",
+    description: `Remova ${lead?.name || "este lead"} do pipeline comercial.`,
+    confirmLabel: "Excluir lead",
+    successMessage: "Lead removido com sucesso.",
+    request: async () => {
+      await apiFetch(`/contacts/${id}`, { method: "DELETE" });
+      await refreshData();
+    }
+  });
 }
 
 async function convertLead(id) {
@@ -7546,13 +8255,17 @@ function openChargeModalForClient(clientId) {
 }
 
 async function deleteUser(id) {
-  try {
-    await apiFetch(`/users/${id}`, { method: "DELETE" });
-    await refreshData();
-    showToast("Usuário removido com sucesso.");
-  } catch (error) {
-    showToast(error.message);
-  }
+  const user = state.users.find((item) => Number(item.id) === Number(id));
+  requestDestructiveConfirmation({
+    title: "Remover membro",
+    description: `Remova ${user?.name || "este membro"} do painel interno.`,
+    confirmLabel: "Remover membro",
+    successMessage: "Usuário removido com sucesso.",
+    request: async () => {
+      await apiFetch(`/users/${id}`, { method: "DELETE" });
+      await refreshData();
+    }
+  });
 }
 
 async function boot() {
