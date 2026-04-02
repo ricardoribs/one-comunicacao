@@ -220,7 +220,7 @@ body.sidebar-open #sidebar-backdrop{display:block;opacity:1}
 /* CARDS */
 .card,.kpi-card,.access-card,.modal-box,.kanban-col,.pipe-col,.k-card,.pipe-card,.card-sm{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-0)}
 .card,.card-sm,.access-card{padding:var(--space-5) var(--space-6)}
-.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-4);margin-bottom:var(--space-8);align-items:stretch}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-5);margin-bottom:var(--space-8);align-items:stretch}
 .kpi-card{min-height:120px;height:auto;padding:var(--space-5);display:flex;flex-direction:column;justify-content:space-between;overflow:visible}
 .kpi-card-link{width:100%;appearance:none;text-align:left;cursor:pointer}
 .kpi-card-link:hover{transform:translateY(-1px);box-shadow:0 10px 26px rgba(13,13,15,.06);border-color:rgba(232,52,105,.28)}
@@ -272,6 +272,9 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 .value-strong{font-weight:600;color:var(--text)}
 .value-zero{font-weight:500;color:var(--muted)}
 .show-mobile-inline,.show-mobile-block{display:none !important}
+
+#page-home .page-body > .two-col + .two-col,
+#page-analytics .page-body > .two-col + .card{margin-top:var(--space-6)}
 
 /* FORM */
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)}
@@ -716,6 +719,8 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-crm #crm-clientes .crm-client-actions .btn{width:100%;max-width:112px;justify-content:center}
 #page-crm #crm-clientes .crm-client-actions .btn-danger-link{padding:0}
 #page-crm #crm-clientes .crm-client-table tbody tr + tr td{border-top:1px solid rgba(13,13,15,.05)}
+#page-kanban .kanban-top-grid{align-items:start;grid-auto-rows:auto}
+#page-kanban .kanban-top-grid > .card{height:auto}
 #page-kanban .kanban-top-grid.is-single-card{grid-template-columns:minmax(0,1fr)}
 #page-kanban .brand-manual-card.is-hidden{display:none}
 #page-analytics #analytics-tbody .empty-state.is-analytics-empty{min-height:198px;justify-content:center;align-items:center;text-align:center}
@@ -724,6 +729,9 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-campanhas .table-wrap.is-empty td{padding:0}
 #page-campanhas .campaign-empty-panel{padding:var(--space-10) var(--space-6)}
 #page-campanhas .campaign-empty-panel .empty-state-sub{max-width:360px}
+#page-campanhas .campaigns-table th.cell-actions,#page-campanhas .campaigns-table td.cell-actions{width:72px;padding-left:var(--space-2);padding-right:var(--space-2);white-space:nowrap}
+#page-campanhas .campaigns-table .table-actions{justify-content:center;flex-wrap:nowrap}
+#page-campanhas .campaigns-table .action-menu-trigger{width:36px;min-width:36px;height:36px;min-height:36px;font-size:16px}
 #page-crm .pipe-empty{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:var(--space-3);padding:var(--space-5) 0;color:var(--muted)}
 #page-crm .pipe-empty.pipe-empty-minimal{gap:var(--space-2);padding:var(--space-4) 0 var(--space-3)}
 #page-crm .pipe-empty-title{font-size:var(--text-sm);font-weight:600;color:var(--text)}
@@ -910,14 +918,24 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-analytics .analytics-performance-table th:nth-child(6),#page-analytics .analytics-performance-table td:nth-child(6){width:152px}
 #page-analytics .analytics-performance-table th:nth-child(7),#page-analytics .analytics-performance-table td:nth-child(7){width:108px}
 #page-analytics .analytics-performance-table td:nth-child(1) .cell-title,#page-analytics .analytics-performance-table td:nth-child(1) .cell-sub{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.45}
-#page-analytics .integrations-table{min-width:1080px}
-#page-analytics .integrations-table th:nth-child(1),#page-analytics .integrations-table td:nth-child(1){width:auto;min-width:260px}
-#page-analytics .integrations-table th:nth-child(2),#page-analytics .integrations-table td:nth-child(2){width:180px}
-#page-analytics .integrations-table th:nth-child(3),#page-analytics .integrations-table td:nth-child(3){width:128px}
-#page-analytics .integrations-table th:nth-child(4),#page-analytics .integrations-table td:nth-child(4){width:220px}
-#page-analytics .integrations-table th:nth-child(5),#page-analytics .integrations-table td:nth-child(5){width:168px}
-#page-analytics .integrations-table th:nth-child(6),#page-analytics .integrations-table td:nth-child(6){width:160px}
-#page-analytics .integrations-table th:nth-child(7),#page-analytics .integrations-table td:nth-child(7){width:132px}
+#page-analytics .integrations-table{min-width:980px}
+#page-analytics .integrations-table th:nth-child(1),#page-analytics .integrations-table td:nth-child(1),#page-analytics .integrations-table .integration-client-cell{width:auto;min-width:260px}
+#page-analytics .integrations-table th:nth-child(2),#page-analytics .integrations-table td:nth-child(2),#page-analytics .integrations-table .integration-provider-cell{width:168px}
+#page-analytics .integrations-table th:nth-child(3),#page-analytics .integrations-table td:nth-child(3),#page-analytics .integrations-table .integration-status-cell{width:128px}
+#page-analytics .integrations-table th:nth-child(4),#page-analytics .integrations-table td:nth-child(4),#page-analytics .integrations-table .integration-account-cell{width:210px}
+#page-analytics .integrations-table th:nth-child(5),#page-analytics .integrations-table td:nth-child(5),#page-analytics .integrations-table .integration-sync-cell{width:152px}
+#page-analytics .integrations-table th:nth-child(6),#page-analytics .integrations-table td:nth-child(6),#page-analytics .integrations-table .integration-owner-cell{width:148px}
+#page-analytics .integrations-table th:nth-child(7),#page-analytics .integrations-table td:nth-child(7),#page-analytics .integrations-table .integration-actions-cell{width:112px}
+#page-analytics .integrations-table .integration-client-cell,
+#page-analytics .integrations-table .integration-provider-cell,
+#page-analytics .integrations-table .integration-account-cell{white-space:normal}
+#page-analytics .integrations-table .integration-client-cell .cell-title,
+#page-analytics .integrations-table .integration-provider-cell .cell-title,
+#page-analytics .integrations-table .integration-account-cell .cell-title,
+#page-analytics .integrations-table .integration-account-cell .cell-sub{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.45}
+#page-analytics .integrations-table .integration-sync-cell,
+#page-analytics .integrations-table .integration-owner-cell{white-space:nowrap}
+#page-analytics .integrations-table .integration-actions-cell .table-actions{justify-content:flex-end;flex-wrap:nowrap}
 #page-financeiro .finance-client-table{table-layout:auto}
 #page-financeiro .finance-client-table th:nth-child(1),#page-financeiro .finance-client-table td:nth-child(1){width:32%;min-width:280px}
 #page-financeiro .finance-client-table th:nth-child(2),#page-financeiro .finance-client-table td:nth-child(2){width:120px;text-align:right}
@@ -947,6 +965,8 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-financeiro .finance-launches-table .table-actions{justify-content:flex-end;flex-wrap:nowrap}
 #page-financeiro .finance-launches-table th,#page-financeiro .finance-launches-table td{padding-left:var(--space-2);padding-right:var(--space-2)}
 #page-financeiro .finance-launches-table td:nth-child(5){font-variant-numeric:tabular-nums}
+#page-analytics .integrations-table td.integration-sync-cell,
+#page-analytics .integrations-table td.integration-owner-cell{font-variant-numeric:tabular-nums}
 #page-crm #crm-clientes .crm-client-table th:nth-child(1),#page-crm #crm-clientes .crm-client-table td:nth-child(1){width:32%}
 #page-crm #crm-clientes .crm-client-table th:nth-child(2),#page-crm #crm-clientes .crm-client-table td:nth-child(2){width:14%}
 #page-crm #crm-clientes .crm-client-table th:nth-child(3),#page-crm #crm-clientes .crm-client-table td:nth-child(3){width:18%}
@@ -956,8 +976,8 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-acesso #acesso-membros .access-member-actions{justify-content:flex-end;flex-wrap:wrap}
 
 /* RESPONSIVE */
-@media(min-width:1600px){
-  #page-financeiro .finance-bottom-grid{grid-template-columns:minmax(0,320px) minmax(0,1fr);align-items:start}
+@media(max-width:1366px){
+  #page-analytics .integrations-table th:nth-child(6),#page-analytics .integrations-table td:nth-child(6),#page-analytics .integrations-table .integration-owner-cell{display:none !important}
 }
 @media(max-width:1280px){
   #page-financeiro .finance-launch-type-col,#page-financeiro .finance-launch-client-col{display:none !important}
@@ -1317,7 +1337,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
     </div>
 
     <div class="two-col mt-5">
-      <div class="card brand-manual-card">
+      <div class="card">
         <div class="section-header"><div><div class="section-title">Tarefas Urgentes</div><div class="section-sub">Fila operacional real</div></div></div>
         <div class="urgent-list">
           <div class="skeleton skeleton-text" style="width:62%;height:18px"></div>
@@ -1396,7 +1416,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   </div>
   <div class="page-body">
     <div class="two-col kanban-top-grid">
-      <div class="card brand-manual-card">
+      <div class="card">
         <div class="section-header">
           <div>
             <div class="section-title">Checklist diário</div>
@@ -1405,7 +1425,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
         </div>
         <div class="stack-sm" id="kanban-daily-checklist"></div>
       </div>
-      <div class="card">
+      <div class="card brand-manual-card">
         <div class="section-header">
           <div>
             <div class="section-title">Manual da marca</div>
