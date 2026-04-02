@@ -1,0 +1,244 @@
+<section id="page-campanhas" class="app-screen active">
+  <div class="topbar">
+    <div><div class="topbar-title">Planejamento de Campanhas</div><div class="topbar-sub">Estratégia, público-alvo e orçamento</div></div>
+    <div class="topbar-actions">
+      <button class="btn btn-pink btn-sm" data-action="open-modal" data-modal="nova-campanha">+ Nova campanha</button>
+    <div class="notification-shell" data-notification-shell="1" data-notification-bound="1">
+    <button type="button" class="notification-trigger" data-notification-toggle="1" aria-label="Abrir notificações" aria-expanded="false">
+      <span class="notification-trigger-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+          <path d="M12 3a5 5 0 0 0-5 5v2.6c0 .7-.2 1.4-.6 2l-1.2 1.9A1 1 0 0 0 6 16h12a1 1 0 0 0 .8-1.5l-1.2-1.9a3.8 3.8 0 0 1-.6-2V8a5 5 0 0 0-5-5Zm0 18a2.5 2.5 0 0 0 2.3-1.5h-4.6A2.5 2.5 0 0 0 12 21Z"></path>
+        </svg>
+      </span>
+      <span class="notification-badge">3</span>
+    </button>
+    <div class="notification-panel" role="dialog" aria-label="Notificações">
+      <div class="notification-panel-head">
+        <div>
+          <strong>Notificações</strong>
+          <span>3 novas</span>
+        </div>
+        <button type="button" class="notification-mark-all" data-notification-mark-all="1">Marcar como lidas</button>
+      </div>
+      <div class="notification-list">
+            <button type="button" class="notification-item is-unread" data-notification-item="1" data-notification-id="1303" data-notification-entity-type="calendar_event" data-notification-entity-id="1402">
+              <div class="notification-item-head">
+                <span class="notification-dot" aria-hidden="true"></span>
+                <div class="notification-item-main">
+                  <div class="notification-item-title">Evento de calendário em 1h</div>
+                  <div class="notification-item-body">Reunião de alinhamento com Atlas Logística.</div>
+                  <div class="notification-item-meta">
+                    <span>há 6 horas</span>
+                    <span class="notification-item-action">Abrir calendário</span>
+                  </div>
+                </div>
+              </div>
+            </button>
+          
+            <button type="button" class="notification-item" data-notification-item="1" data-notification-id="1302" data-notification-entity-type="contact" data-notification-entity-id="203">
+              <div class="notification-item-head">
+                <span class="notification-dot" aria-hidden="true"></span>
+                <div class="notification-item-main">
+                  <div class="notification-item-title">Lead avançou para proposta</div>
+                  <div class="notification-item-body">Marcelo Ribeiro chegou à etapa de proposta comercial.</div>
+                  <div class="notification-item-meta">
+                    <span>há 10 horas</span>
+                    <span class="notification-item-action">Abrir</span>
+                  </div>
+                </div>
+              </div>
+            </button>
+          
+            <button type="button" class="notification-item is-unread" data-notification-item="1" data-notification-id="1301" data-notification-entity-type="task" data-notification-entity-id="402">
+              <div class="notification-item-head">
+                <span class="notification-dot" aria-hidden="true"></span>
+                <div class="notification-item-main">
+                  <div class="notification-item-title">Tarefa vence hoje</div>
+                  <div class="notification-item-body">Subir criativos em stories para Harmonia Oral.</div>
+                  <div class="notification-item-meta">
+                    <span>há 11 horas</span>
+                    <span class="notification-item-action">Abrir tarefa</span>
+                  </div>
+                </div>
+              </div>
+            </button>
+          
+            <button type="button" class="notification-item is-unread" data-notification-item="1" data-notification-id="1304" data-notification-entity-type="charge" data-notification-entity-id="1102">
+              <div class="notification-item-head">
+                <span class="notification-dot" aria-hidden="true"></span>
+                <div class="notification-item-main">
+                  <div class="notification-item-title">Cobrança atrasada</div>
+                  <div class="notification-item-body">Aurora Moda está com cobrança vencida pendente.</div>
+                  <div class="notification-item-meta">
+                    <span>ontem</span>
+                    <span class="notification-item-action">Abrir</span>
+                  </div>
+                </div>
+              </div>
+            </button>
+          </div>
+    </div>
+  </div></div>
+  </div>
+  <div class="page-body">
+    <div class="kpi-grid" id="campaigns-kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Campanhas Ativas</div>
+          <div class="kpi-val">6</div>
+          <div class="kpi-sub">4 clientes em mídia</div>
+        </div>
+      
+        <div class="kpi-card">
+          <div class="kpi-label">Orçamento Total</div>
+          <div class="kpi-val">R$&nbsp;27.000,00</div>
+          <div class="kpi-sub">em tráfego pago</div>
+        </div>
+      
+        <div class="kpi-card">
+          <div class="kpi-label">Leads Gerados</div>
+          <div class="kpi-val">0</div>
+          <div class="kpi-sub">dados consolidados</div>
+        </div>
+      
+        <div class="kpi-card">
+          <div class="kpi-label">CPL Médio</div>
+          <div class="kpi-val">R$&nbsp;0,00</div>
+          <div class="kpi-sub">sem leads registrados</div>
+        </div>
+      </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Campanha</th><th>Cliente</th><th>Canal</th><th>Público-Alvo</th><th>Orçamento</th><th>Início</th><th>Status</th><th>Ações</th></tr></thead>
+        <tbody id="campanhas-tbody">
+        <tr>
+          <td class="cell-stack"><span class="cell-title" title="Implante Guiado Abril 2026">Implante Guiado Abril 2026</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Clínica Harmonia Oral Premium">Clínica Harmonia Oral Premium</span></td>
+          <td><span class="badge badge-blue">Meta Ads</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Mulheres e homens 28-54 com interesse em implantes e reabilitação oral na Grande São Paulo">Mulheres e homens 28-54 com interesse em implantes e reabilitação oral na Grande São Paulo</span></td>
+          <td data-align="right"><span class="value-strong">R$&nbsp;5.200,00</span></td>
+          <td>17/03/2026</td>
+          <td><span class="badge badge-green">Ativa</span></td>
+          <td class="cell-actions">
+            <div class="table-actions">
+              <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-campanha" data-id="301">Editar</button>
+              <button class="btn btn-danger btn-sm" data-action="delete-campaign" data-id="301">Excluir</button>
+            </div>
+          </td>
+        </tr>
+      
+        <tr>
+          <td class="cell-stack"><span class="cell-title" title="Lentes de Contato Dental | Recuperação de Leads">Lentes de Contato Dental | Recuperação de Leads</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Clínica Harmonia Oral Premium">Clínica Harmonia Oral Premium</span></td>
+          <td><span class="badge badge-gray">Google Ads</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Busca por lentes, facetas e harmonização facial premium">Busca por lentes, facetas e harmonização facial premium</span></td>
+          <td data-align="right"><span class="value-strong">R$&nbsp;6.100,00</span></td>
+          <td>09/03/2026</td>
+          <td><span class="badge badge-green">Ativa</span></td>
+          <td class="cell-actions">
+            <div class="table-actions">
+              <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-campanha" data-id="302">Editar</button>
+              <button class="btn btn-danger btn-sm" data-action="delete-campaign" data-id="302">Excluir</button>
+            </div>
+          </td>
+        </tr>
+      
+        <tr>
+          <td class="cell-stack"><span class="cell-title" title="Logística B2B para Indústrias do Sul">Logística B2B para Indústrias do Sul</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Grupo Atlas Logística Integrada">Grupo Atlas Logística Integrada</span></td>
+          <td><span class="badge badge-gray">LinkedIn Ads</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Diretores de supply chain e compras industriais">Diretores de supply chain e compras industriais</span></td>
+          <td data-align="right"><span class="value-strong">R$&nbsp;7.400,00</span></td>
+          <td>21/03/2026</td>
+          <td><span class="badge badge-green">Ativa</span></td>
+          <td class="cell-actions">
+            <div class="table-actions">
+              <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-campanha" data-id="303">Editar</button>
+              <button class="btn btn-danger btn-sm" data-action="delete-campaign" data-id="303">Excluir</button>
+            </div>
+          </td>
+        </tr>
+      
+        <tr>
+          <td class="cell-stack"><span class="cell-title" title="Coleção Outono Inverno Aurora">Coleção Outono Inverno Aurora</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Aurora Moda Feminina">Aurora Moda Feminina</span></td>
+          <td><span class="badge badge-blue">Meta Ads</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Mulheres 21-39 interessadas em moda contemporânea e consumo recorrente">Mulheres 21-39 interessadas em moda contemporânea e consumo recorrente</span></td>
+          <td data-align="right"><span class="value-strong">R$&nbsp;3.800,00</span></td>
+          <td>24/03/2026</td>
+          <td><span class="badge badge-green">Ativa</span></td>
+          <td class="cell-actions">
+            <div class="table-actions">
+              <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-campanha" data-id="304">Editar</button>
+              <button class="btn btn-danger btn-sm" data-action="delete-campaign" data-id="304">Excluir</button>
+            </div>
+          </td>
+        </tr>
+      
+        <tr>
+          <td class="cell-stack"><span class="cell-title" title="Plantão Veterinário 24h Região Norte">Plantão Veterinário 24h Região Norte</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="VivaPet Centro Veterinário 24h">VivaPet Centro Veterinário 24h</span></td>
+          <td><span class="badge badge-gray">Google Ads</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Buscas emergenciais por pronto atendimento veterinário 24 horas">Buscas emergenciais por pronto atendimento veterinário 24 horas</span></td>
+          <td data-align="right"><span class="value-strong">R$&nbsp;2.900,00</span></td>
+          <td>28/03/2026</td>
+          <td><span class="badge badge-green">Ativa</span></td>
+          <td class="cell-actions">
+            <div class="table-actions">
+              <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-campanha" data-id="305">Editar</button>
+              <button class="btn btn-danger btn-sm" data-action="delete-campaign" data-id="305">Excluir</button>
+            </div>
+          </td>
+        </tr>
+      
+        <tr>
+          <td class="cell-stack"><span class="cell-title" title="Matrículas 2026 | Educação Bilíngue Integral">Matrículas 2026 | Educação Bilíngue Integral</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Escola Bilíngue Raízes">Escola Bilíngue Raízes</span></td>
+          <td><span class="badge badge-blue">Meta Ads</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Famílias com filhos de 2 a 10 anos em raio de 8 km da escola">Famílias com filhos de 2 a 10 anos em raio de 8 km da escola</span></td>
+          <td data-align="right"><span class="value-strong">R$&nbsp;3.400,00</span></td>
+          <td>18/03/2026</td>
+          <td><span class="badge badge-yellow">Pausada</span></td>
+          <td class="cell-actions">
+            <div class="table-actions">
+              <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-campanha" data-id="306">Editar</button>
+              <button class="btn btn-danger btn-sm" data-action="delete-campaign" data-id="306">Excluir</button>
+            </div>
+          </td>
+        </tr>
+      
+        <tr>
+          <td class="cell-stack"><span class="cell-title" title="Lançamento Residencial Horizonte Park">Lançamento Residencial Horizonte Park</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Construtora Horizonte Urbano">Construtora Horizonte Urbano</span></td>
+          <td><span class="badge badge-gray">Google Ads</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Público de alta renda buscando imóvel novo com lazer completo">Público de alta renda buscando imóvel novo com lazer completo</span></td>
+          <td data-align="right"><span class="value-zero">R$&nbsp;0,00</span></td>
+          <td>14/04/2026</td>
+          <td><span class="badge badge-gray">Planejamento</span></td>
+          <td class="cell-actions">
+            <div class="table-actions">
+              <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-campanha" data-id="307">Editar</button>
+              <button class="btn btn-danger btn-sm" data-action="delete-campaign" data-id="307">Excluir</button>
+            </div>
+          </td>
+        </tr>
+      
+        <tr>
+          <td class="cell-stack"><span class="cell-title" title="Remarketing Atlas para Oportunidades Frias">Remarketing Atlas para Oportunidades Frias</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Grupo Atlas Logística Integrada">Grupo Atlas Logística Integrada</span></td>
+          <td><span class="badge badge-blue">Meta Ads</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Visitantes recentes da landing page corporativa e leads sem resposta">Visitantes recentes da landing page corporativa e leads sem resposta</span></td>
+          <td data-align="right"><span class="value-strong">R$&nbsp;1.600,00</span></td>
+          <td>27/03/2026</td>
+          <td><span class="badge badge-green">Ativa</span></td>
+          <td class="cell-actions">
+            <div class="table-actions">
+              <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-campanha" data-id="308">Editar</button>
+              <button class="btn btn-danger btn-sm" data-action="delete-campaign" data-id="308">Excluir</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+      </table>
+    </div>
+  </div>
+</section>

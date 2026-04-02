@@ -1,0 +1,284 @@
+<section id="page-producao" class="app-screen active">
+  <div class="topbar">
+    <div><div class="topbar-title">Produção</div><div class="topbar-sub">Design, copy e landing pages</div></div>
+    <div class="topbar-actions">
+      <button id="btn-new-delivery" class="btn btn-pink btn-sm" data-action="open-modal" data-modal="nova-entrega">+ Nova entrega</button>
+    <div class="notification-shell" data-notification-shell="1" data-notification-bound="1">
+    <button type="button" class="notification-trigger" data-notification-toggle="1" aria-label="Abrir notificações" aria-expanded="false">
+      <span class="notification-trigger-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+          <path d="M12 3a5 5 0 0 0-5 5v2.6c0 .7-.2 1.4-.6 2l-1.2 1.9A1 1 0 0 0 6 16h12a1 1 0 0 0 .8-1.5l-1.2-1.9a3.8 3.8 0 0 1-.6-2V8a5 5 0 0 0-5-5Zm0 18a2.5 2.5 0 0 0 2.3-1.5h-4.6A2.5 2.5 0 0 0 12 21Z"></path>
+        </svg>
+      </span>
+      <span class="notification-badge">3</span>
+    </button>
+    <div class="notification-panel" role="dialog" aria-label="Notificações">
+      <div class="notification-panel-head">
+        <div>
+          <strong>Notificações</strong>
+          <span>3 novas</span>
+        </div>
+        <button type="button" class="notification-mark-all" data-notification-mark-all="1">Marcar como lidas</button>
+      </div>
+      <div class="notification-list">
+            <button type="button" class="notification-item is-unread" data-notification-item="1" data-notification-id="1303" data-notification-entity-type="calendar_event" data-notification-entity-id="1402">
+              <div class="notification-item-head">
+                <span class="notification-dot" aria-hidden="true"></span>
+                <div class="notification-item-main">
+                  <div class="notification-item-title">Evento de calendário em 1h</div>
+                  <div class="notification-item-body">Reunião de alinhamento com Atlas Logística.</div>
+                  <div class="notification-item-meta">
+                    <span>há 6 horas</span>
+                    <span class="notification-item-action">Abrir calendário</span>
+                  </div>
+                </div>
+              </div>
+            </button>
+          
+            <button type="button" class="notification-item" data-notification-item="1" data-notification-id="1302" data-notification-entity-type="contact" data-notification-entity-id="203">
+              <div class="notification-item-head">
+                <span class="notification-dot" aria-hidden="true"></span>
+                <div class="notification-item-main">
+                  <div class="notification-item-title">Lead avançou para proposta</div>
+                  <div class="notification-item-body">Marcelo Ribeiro chegou à etapa de proposta comercial.</div>
+                  <div class="notification-item-meta">
+                    <span>há 10 horas</span>
+                    <span class="notification-item-action">Abrir</span>
+                  </div>
+                </div>
+              </div>
+            </button>
+          
+            <button type="button" class="notification-item is-unread" data-notification-item="1" data-notification-id="1301" data-notification-entity-type="task" data-notification-entity-id="402">
+              <div class="notification-item-head">
+                <span class="notification-dot" aria-hidden="true"></span>
+                <div class="notification-item-main">
+                  <div class="notification-item-title">Tarefa vence hoje</div>
+                  <div class="notification-item-body">Subir criativos em stories para Harmonia Oral.</div>
+                  <div class="notification-item-meta">
+                    <span>há 11 horas</span>
+                    <span class="notification-item-action">Abrir tarefa</span>
+                  </div>
+                </div>
+              </div>
+            </button>
+          
+            <button type="button" class="notification-item is-unread" data-notification-item="1" data-notification-id="1304" data-notification-entity-type="charge" data-notification-entity-id="1102">
+              <div class="notification-item-head">
+                <span class="notification-dot" aria-hidden="true"></span>
+                <div class="notification-item-main">
+                  <div class="notification-item-title">Cobrança atrasada</div>
+                  <div class="notification-item-body">Aurora Moda está com cobrança vencida pendente.</div>
+                  <div class="notification-item-meta">
+                    <span>ontem</span>
+                    <span class="notification-item-action">Abrir</span>
+                  </div>
+                </div>
+              </div>
+            </button>
+          </div>
+    </div>
+  </div></div>
+  </div>
+  <div class="page-body">
+    <div class="tabs">
+      <div class="tab" id="prod-tab-design" data-action="set-tab" data-group="prod" data-tab="design">Design</div>
+      <div class="tab" id="prod-tab-copy" data-action="set-tab" data-group="prod" data-tab="copy">Copywriting</div>
+      <div class="tab active" id="prod-tab-lp" data-action="set-tab" data-group="prod" data-tab="lp">Landing Pages</div>
+    </div>
+    <div id="prod-design" style="display: none;">
+      <div class="table-wrap prod-table-wrap">
+        <table class="prod-table">
+          <thead>
+            <tr>
+              <th>Entrega</th>
+              <th>Tipo</th>
+              <th>Status</th>
+              <th>Prazo</th>
+              <th class="cell-actions">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="prod-design-tbody">
+        <tr>
+          <td class="cell-stack">
+            <span class="cell-title" title="Carrossel de implantes guiados com depoimentos">Carrossel de implantes guiados com depoimentos</span>
+            <span class="cell-sub" title="Clínica Harmonia Oral Premium">Clínica Harmonia Oral Premium</span>
+          </td>
+          <td><span class="badge badge-blue">Design</span></td>
+          <td><span class="badge badge-pink">Pendente</span></td>
+          <td><span class="prod-deadline ">02/04/2026</span></td>
+          <td class="cell-actions">
+            <div class="table-actions">
+              <a class="btn btn-outline btn-sm" href="https://example.com/material-1.pdf" target="_blank" rel="noopener noreferrer">Arquivo</a>
+              <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-entrega" data-id="501">Editar</button>
+              <span class="table-action-sep" aria-hidden="true"></span><button class="btn btn-sm btn-danger-link" data-action="delete-material" data-id="501">Excluir</button>
+            </div>
+          </td>
+        </tr>
+      
+        <tr>
+          <td class="cell-stack">
+            <span class="cell-title" title="KV institucional para transporte fracionado com promessa de SLA">KV institucional para transporte fracionado com promessa de SLA</span>
+            <span class="cell-sub" title="Grupo Atlas Logística Integrada">Grupo Atlas Logística Integrada</span>
+          </td>
+          <td><span class="badge badge-blue">Design</span></td>
+          <td><span class="badge badge-yellow">Revisão</span></td>
+          <td><span class="prod-deadline ">03/04/2026</span></td>
+          <td class="cell-actions">
+            <div class="table-actions">
+              <a class="btn btn-outline btn-sm" href="https://example.com/material-2.pdf" target="_blank" rel="noopener noreferrer">Arquivo</a>
+              <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-entrega" data-id="502">Editar</button>
+              <span class="table-action-sep" aria-hidden="true"></span><button class="btn btn-sm btn-danger-link" data-action="delete-material" data-id="502">Excluir</button>
+            </div>
+          </td>
+        </tr>
+      
+        <tr>
+          <td class="cell-stack">
+            <span class="cell-title" title="Peças da coleção cápsula de outono com foco em recorrência">Peças da coleção cápsula de outono com foco em recorrência</span>
+            <span class="cell-sub" title="Aurora Moda Feminina">Aurora Moda Feminina</span>
+          </td>
+          <td><span class="badge badge-blue">Design</span></td>
+          <td><span class="badge badge-green">Aprovado</span></td>
+          <td><span class="prod-deadline is-overdue">29/03/2026</span></td>
+          <td class="cell-actions">
+            <div class="table-actions">
+              <a class="btn btn-outline btn-sm" href="https://example.com/material-3.pdf" target="_blank" rel="noopener noreferrer">Arquivo</a>
+              <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-entrega" data-id="503">Editar</button>
+              <span class="table-action-sep" aria-hidden="true"></span><button class="btn btn-sm btn-danger-link" data-action="delete-material" data-id="503">Excluir</button>
+            </div>
+          </td>
+        </tr>
+      
+        <tr>
+          <td class="cell-stack">
+            <span class="cell-title" title="Criativos de urgência controlada para pronto atendimento 24h">Criativos de urgência controlada para pronto atendimento 24h</span>
+            <span class="cell-sub" title="VivaPet Centro Veterinário 24h">VivaPet Centro Veterinário 24h</span>
+          </td>
+          <td><span class="badge badge-blue">Design</span></td>
+          <td><span class="badge badge-pink">Pendente</span></td>
+          <td><span class="prod-deadline is-overdue">30/03/2026</span></td>
+          <td class="cell-actions">
+            <div class="table-actions">
+              <button type="button" class="btn btn-outline btn-sm" data-action="toast" data-message="Arquivo ainda não disponível para abertura.">Arquivo</button>
+              <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-entrega" data-id="504">Editar</button>
+              <span class="table-action-sep" aria-hidden="true"></span><button class="btn btn-sm btn-danger-link" data-action="delete-material" data-id="504">Excluir</button>
+            </div>
+          </td>
+        </tr>
+      
+        <tr>
+          <td class="cell-stack">
+            <span class="cell-title" title="Peça institucional para campanha de matrículas 2026">Peça institucional para campanha de matrículas 2026</span>
+            <span class="cell-sub" title="Escola Bilíngue Raízes">Escola Bilíngue Raízes</span>
+          </td>
+          <td><span class="badge badge-blue">Design</span></td>
+          <td><span class="badge badge-yellow">Revisão</span></td>
+          <td><span class="prod-deadline ">05/04/2026</span></td>
+          <td class="cell-actions">
+            <div class="table-actions">
+              <a class="btn btn-outline btn-sm" href="https://example.com/material-5.pdf" target="_blank" rel="noopener noreferrer">Arquivo</a>
+              <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-entrega" data-id="505">Editar</button>
+              <span class="table-action-sep" aria-hidden="true"></span><button class="btn btn-sm btn-danger-link" data-action="delete-material" data-id="505">Excluir</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+        </table>
+      </div>
+    </div>
+    <div id="prod-copy" class="hidden-panel" style="display: none;">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Entrega</th><th>Cliente</th><th>Tipo</th><th>Palavras</th><th>Deadline</th><th>Status</th></tr></thead>
+          <tbody id="copy-tbody">
+        <tr>
+          <td class="cell-stack"><span class="cell-title" title="briefing_implante_guiado_v11_aprovacao-final.pdf">briefing_implante_guiado_v11_aprovacao-final.pdf</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Clínica Harmonia Oral Premium">Clínica Harmonia Oral Premium</span></td>
+          <td>application/pdf</td>
+          <td data-align="right">2422 KB</td>
+          <td class="cell-stack"><span class="cell-sub" title="Ana Souza">Ana Souza</span></td>
+          <td class="cell-actions"><a class="btn btn-ghost btn-sm" href="https://example.com/file-1.pdf" target="_blank" rel="noopener noreferrer">Abrir</a></td>
+        </tr>
+      
+        <tr>
+          <td class="cell-stack"><span class="cell-title" title="naming_de_campanhas_q2_2026_planilha_operacional.xlsx">naming_de_campanhas_q2_2026_planilha_operacional.xlsx</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Grupo Atlas Logística Integrada">Grupo Atlas Logística Integrada</span></td>
+          <td>application/vnd.ms-excel</td>
+          <td data-align="right">844 KB</td>
+          <td class="cell-stack"><span class="cell-sub" title="Ricardo Matos">Ricardo Matos</span></td>
+          <td class="cell-actions"><a class="btn btn-ghost btn-sm" href="https://example.com/file-2.xlsx" target="_blank" rel="noopener noreferrer">Abrir</a></td>
+        </tr>
+      
+        <tr>
+          <td class="cell-stack"><span class="cell-title" title="apresentacao_resultados_aurora_marco_versao_cliente.pptx">apresentacao_resultados_aurora_marco_versao_cliente.pptx</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Aurora Moda Feminina">Aurora Moda Feminina</span></td>
+          <td>application/vnd.ms-powerpoint</td>
+          <td data-align="right">6000 KB</td>
+          <td class="cell-stack"><span class="cell-sub" title="Bruno Lima">Bruno Lima</span></td>
+          <td class="cell-actions"><a class="btn btn-ghost btn-sm" href="https://example.com/file-3.pptx" target="_blank" rel="noopener noreferrer">Abrir</a></td>
+        </tr>
+      
+        <tr>
+          <td class="cell-stack"><span class="cell-title" title="roteiro_lp_vivapet_pronto_atendimento.txt">roteiro_lp_vivapet_pronto_atendimento.txt</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="VivaPet Centro Veterinário 24h">VivaPet Centro Veterinário 24h</span></td>
+          <td>text/plain</td>
+          <td data-align="right">6 KB</td>
+          <td class="cell-stack"><span class="cell-sub" title="Carla Mendes">Carla Mendes</span></td>
+          <td class="cell-actions"><a class="btn btn-ghost btn-sm" href="https://example.com/file-4.txt" target="_blank" rel="noopener noreferrer">Abrir</a></td>
+        </tr>
+      
+        <tr>
+          <td class="cell-stack"><span class="cell-title" title="manual_de_marca_escola_raizes_v2.pdf">manual_de_marca_escola_raizes_v2.pdf</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Escola Bilíngue Raízes">Escola Bilíngue Raízes</span></td>
+          <td>application/pdf</td>
+          <td data-align="right">1387 KB</td>
+          <td class="cell-stack"><span class="cell-sub" title="Diego Freitas">Diego Freitas</span></td>
+          <td class="cell-actions"><a class="btn btn-ghost btn-sm" href="https://example.com/file-5.pdf" target="_blank" rel="noopener noreferrer">Abrir</a></td>
+        </tr>
+      </tbody>
+        </table>
+      </div>
+    </div>
+    <div id="prod-lp" class="hidden-panel" style="display: block;">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Landing Page</th><th>Cliente</th><th>Objetivo</th><th>Conversão</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="lp-tbody">
+        <tr>
+          <td class="cell-stack"><span class="cell-title" title="Relatório mensal de março">Relatório mensal de março</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Clínica Harmonia Oral Premium">Clínica Harmonia Oral Premium</span></td>
+          <td>28/02/2026</td>
+          <td class="cell-stack"><span class="cell-sub" title="Leads qualificados acima da meta, CPL em queda e ROAS em evolução.">Leads qualificados acima da meta, CPL em queda e ROAS em evolução.</span></td>
+          <td class="cell-actions"><a class="btn btn-ghost btn-sm" href="https://example.com/report-1.pdf" target="_blank" rel="noopener noreferrer">Abrir</a></td>
+        </tr>
+      
+        <tr>
+          <td class="cell-stack"><span class="cell-title" title="Relatório comercial de março">Relatório comercial de março</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Grupo Atlas Logística Integrada">Grupo Atlas Logística Integrada</span></td>
+          <td>28/02/2026</td>
+          <td class="cell-stack"><span class="cell-sub" title="Pipeline enterprise ainda concentrado em três contas principais.">Pipeline enterprise ainda concentrado em três contas principais.</span></td>
+          <td class="cell-actions"><a class="btn btn-ghost btn-sm" href="https://example.com/report-2.pdf" target="_blank" rel="noopener noreferrer">Abrir</a></td>
+        </tr>
+      
+        <tr>
+          <td class="cell-stack"><span class="cell-title" title="Fechamento da coleção outono">Fechamento da coleção outono</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="Aurora Moda Feminina">Aurora Moda Feminina</span></td>
+          <td>28/02/2026</td>
+          <td class="cell-stack"><span class="cell-sub" title="Receita incremental impulsionada por remarketing e criativos de produto.">Receita incremental impulsionada por remarketing e criativos de produto.</span></td>
+          <td class="cell-actions"><a class="btn btn-ghost btn-sm" href="https://example.com/report-3.pdf" target="_blank" rel="noopener noreferrer">Abrir</a></td>
+        </tr>
+      
+        <tr>
+          <td class="cell-stack"><span class="cell-title" title="Resumo operacional do plantão 24h">Resumo operacional do plantão 24h</span></td>
+          <td class="cell-stack"><span class="cell-sub" title="VivaPet Centro Veterinário 24h">VivaPet Centro Veterinário 24h</span></td>
+          <td>28/02/2026</td>
+          <td class="cell-stack"><span class="cell-sub" title="Picos de busca concentrados em noites e finais de semana.">Picos de busca concentrados em noites e finais de semana.</span></td>
+          <td class="cell-actions"><button type="button" class="btn btn-ghost btn-sm" data-action="toast" data-message="Relatório ainda não disponível para abertura.">Abrir</button></td>
+        </tr>
+      </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
