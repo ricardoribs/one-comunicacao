@@ -6142,14 +6142,15 @@ function renderFinance() {
       .map(
         (row) => `
           <tr>
-            <td class="hide-mobile"><span class="badge badge-gray">${escapeHtml(row.type)}</span></td>
+            <td class="finance-launch-type-col hide-mobile"><span class="badge badge-gray">${escapeHtml(row.type)}</span></td>
             <td class="cell-stack">
               <span class="cell-title">${escapeHtml(row.title || "—")}</span>
-              <span class="badge badge-gray finance-type-inline">${escapeHtml(row.type)}</span>
-              <span class="cell-sub">${escapeHtml(row.detail)}</span>
+              <span class="badge badge-gray finance-launch-type-inline">${escapeHtml(row.type)}</span>
+              <span class="cell-sub finance-launch-client-inline">${escapeHtml(row.clientName)}</span>
+              <span class="cell-sub finance-launch-detail-inline">${escapeHtml(row.detail)}</span>
             </td>
-            <td class="hide-phone"><span class="cell-sub">${escapeHtml(row.clientName)}</span></td>
-            <td class="hide-tablet"><span class="cell-sub">${escapeHtml(row.detail)}</span></td>
+            <td class="finance-launch-client-col hide-phone"><span class="cell-sub">${escapeHtml(row.clientName)}</span></td>
+            <td class="finance-launch-detail-col hide-tablet"><span class="cell-sub">${escapeHtml(row.detail)}</span></td>
             <td class="hide-mobile" data-align="right"><span class="${getValueToneClass(row.value)}">${formatCurrencyValue(row.value)}</span></td>
             <td><span class="badge ${row.statusClass}">${escapeHtml(row.statusLabel)}</span></td>
             <td class="cell-actions">${row.actionHtml}</td>
