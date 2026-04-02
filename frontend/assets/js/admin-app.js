@@ -5515,7 +5515,7 @@ function renderProduction() {
         <tr>
           <td class="cell-stack">
             <span class="cell-title" title="${escapeHtml(file.original_name)}">${escapeHtml(file.original_name)}</span>
-            <span class="cell-sub" title="${escapeHtml(file.client_name || "Interno")}">${escapeHtml(file.client_name || "Interno")}</span>
+            <span class="cell-sub show-mobile-block" title="${escapeHtml(file.client_name || "Interno")}">${escapeHtml(file.client_name || "Interno")}</span>
           </td>
           <td class="cell-stack hide-phone"><span class="cell-sub" title="${escapeHtml(file.client_name || "Interno")}">${escapeHtml(file.client_name || "Interno")}</span></td>
           <td class="hide-tablet">${escapeHtml(file.mime_type || "—")}</td>
@@ -5543,7 +5543,7 @@ function renderProduction() {
         <tr>
           <td class="cell-stack">
             <span class="cell-title" title="${escapeHtml(report.title)}">${escapeHtml(report.title)}</span>
-            <span class="cell-sub" title="${escapeHtml(report.client_name)}">${escapeHtml(report.client_name)}</span>
+            <span class="cell-sub show-mobile-block" title="${escapeHtml(report.client_name)}">${escapeHtml(report.client_name)}</span>
           </td>
           <td class="cell-stack hide-phone"><span class="cell-sub" title="${escapeHtml(report.client_name)}">${escapeHtml(report.client_name)}</span></td>
           <td class="hide-mobile">${formatDate(report.report_month)}</td>
