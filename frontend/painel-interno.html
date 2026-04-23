@@ -1013,6 +1013,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .topbar{padding:0 var(--space-6)}
   .topbar-title{font-size:var(--text-lg)}
   .kpi-grid{grid-template-columns:1fr 1fr}
+  #page-campanhas .campaigns-kpi-grid{grid-template-columns:1fr 1fr}
   .two-col{grid-template-columns:1fr}
   .three-col{grid-template-columns:1fr 1fr}
   .access-grid{grid-template-columns:1fr 1fr}
@@ -1085,6 +1086,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   #page-crm .crm-tabbar-track::-webkit-scrollbar{display:none}
   #page-crm .crm-page-tab{white-space:nowrap}
   #page-crm .crm-pipeline-col{flex-basis:260px;width:260px}
+  #page-campanhas .campaigns-kpi-grid{grid-template-columns:1fr}
   #page-calendario .calendar-week-grid{min-width:820px}
   #page-acesso #acesso-membros .access-member-table{min-width:0}
   #page-perfil .profile-grid{grid-template-columns:1fr}
@@ -1193,6 +1195,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   #page-crm .crm-topbar-separator{display:none}
   #page-crm .crm-pipeline-col{flex-basis:88vw;width:88vw}
   #page-crm .crm-data-table{min-width:760px}
+  #page-campanhas .campaigns-kpi-grid{grid-template-columns:1fr}
   #page-acesso #acesso-membros .access-member-table{min-width:0}
   #page-perfil .profile-meta-grid{grid-template-columns:1fr}
   #page-perfil .profile-actions .btn{flex:1 1 100%;justify-content:center}
@@ -1478,6 +1481,54 @@ td{padding:16px;font-size:14px;color:var(--text)}
 #page-crm .crm-history-date{font-size:14px;font-weight:500;color:var(--text)}
 #page-crm .crm-empty-row{padding:32px 24px}
 #page-crm .crm-empty-row .empty-state{min-height:auto}
+#page-campanhas{background:var(--gray)}
+#page-campanhas .page-body{background:var(--gray)}
+#page-campanhas .campaigns-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;margin-bottom:32px}
+#page-campanhas .campaigns-kpi-card{display:flex;flex-direction:column;justify-content:space-between;min-height:120px;padding:24px;background:var(--white);border:1px solid var(--border);border-radius:14px}
+#page-campanhas .campaigns-kpi-label{margin-bottom:12px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#7b7b7b}
+#page-campanhas .campaigns-kpi-value{font-size:30px;font-weight:700;line-height:1.08;letter-spacing:-.03em;color:var(--text)}
+#page-campanhas .campaigns-kpi-sub{margin-top:8px;font-size:13px;font-weight:500;color:var(--muted)}
+#page-campanhas .campaigns-table-shell{background:var(--white);border:1px solid var(--border);border-radius:14px;box-shadow:rgba(0,0,0,.02) 0 2px 6px;overflow:hidden}
+#page-campanhas .campaigns-table-scroll{overflow-x:auto}
+#page-campanhas .campaigns-table-scroll::-webkit-scrollbar{height:6px;width:6px}
+#page-campanhas .campaigns-table-scroll::-webkit-scrollbar-track{background:transparent}
+#page-campanhas .campaigns-table-scroll::-webkit-scrollbar-thumb{background:#dddddd;border-radius:3px}
+#page-campanhas .campaigns-table-scroll::-webkit-scrollbar-thumb:hover{background:#c1c1c1}
+#page-campanhas .campaigns-data-table{width:100%;min-width:800px;border-collapse:collapse;table-layout:auto}
+#page-campanhas .campaigns-data-table thead{background:#fcfcfc;border-bottom:1px solid var(--border)}
+#page-campanhas .campaigns-data-table th{padding:16px 24px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#7b7b7b;text-align:left;white-space:nowrap}
+#page-campanhas .campaigns-data-table td{padding:20px 24px;vertical-align:middle;border-bottom:1px solid var(--border)}
+#page-campanhas .campaigns-data-table tbody tr:last-child td{border-bottom:none}
+#page-campanhas .campaigns-data-table tbody tr:hover{background:#fafafa}
+#page-campanhas .campaigns-data-table th:nth-child(1),#page-campanhas .campaigns-data-table td:nth-child(1){width:25%}
+#page-campanhas .campaigns-data-table th:nth-child(2),#page-campanhas .campaigns-data-table td:nth-child(2){width:1%;white-space:nowrap}
+#page-campanhas .campaigns-data-table th:nth-child(4),#page-campanhas .campaigns-data-table td:nth-child(4){width:1%;white-space:nowrap;text-align:right}
+#page-campanhas .campaigns-data-table th:nth-child(5),#page-campanhas .campaigns-data-table td:nth-child(5){width:1%;white-space:nowrap;text-align:center}
+#page-campanhas .campaigns-data-table th:nth-child(6),#page-campanhas .campaigns-data-table td:nth-child(6){width:1%;white-space:nowrap;text-align:right}
+#page-campanhas .campaigns-name{display:block;margin:0 0 4px;font-size:15px;font-weight:600;line-height:1.35;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#page-campanhas .campaigns-client{display:block;margin:0;font-size:13px;font-weight:500;line-height:1.45;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#page-campanhas .campaigns-channel-badge{display:inline-block;padding:4px 10px;font-size:11px;font-weight:700;line-height:1.2;border-radius:8px}
+#page-campanhas .campaigns-channel-badge.is-google{background:#f3f4f6;color:#5f6773}
+#page-campanhas .campaigns-channel-badge.is-instagram-meta{background:#f0f4f8;color:#3366cc}
+#page-campanhas .campaigns-channel-badge.is-meta{background:#eff6ff;color:#2563eb}
+#page-campanhas .campaigns-channel-badge.is-neutral{background:#f3f4f6;color:#5f6773}
+#page-campanhas .campaigns-audience-cell{width:100%;max-width:0}
+#page-campanhas .campaigns-audience-group{position:relative}
+#page-campanhas .campaigns-audience{margin:0;font-size:14px;font-weight:500;line-height:1.45;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default}
+#page-campanhas .campaigns-audience-tooltip{position:absolute;left:0;bottom:calc(100% + 8px);display:none;min-width:300px;max-width:420px;padding:12px;background:#1f2937;color:#fff;font-size:12px;line-height:1.5;border-radius:8px;box-shadow:0 16px 32px rgba(13,13,15,.16);white-space:normal;z-index:10}
+#page-campanhas .campaigns-audience-group:hover .campaigns-audience-tooltip{display:block}
+#page-campanhas .campaigns-budget{margin:0;font-size:15px;font-weight:700;line-height:1.25;letter-spacing:-.02em;color:var(--text)}
+#page-campanhas .campaigns-status-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;font-size:11px;font-weight:700;line-height:1.2;border-radius:999px}
+#page-campanhas .campaigns-status-dot{width:6px;height:6px;border-radius:999px;flex-shrink:0;background:currentColor}
+#page-campanhas .campaigns-status-pill.is-active{background:#f0fdf4;color:#15803d}
+#page-campanhas .campaigns-status-pill.is-paused{background:#fffbeb;color:#b45309}
+#page-campanhas .campaigns-status-pill.is-planning{background:#f5f5f5;color:#6a6a6a}
+#page-campanhas .campaigns-row-actions{display:flex;justify-content:flex-end}
+#page-campanhas .campaigns-row-actions .action-menu-trigger{width:32px;min-width:32px;height:32px;min-height:32px;padding:0;border-radius:999px;border:1px solid var(--border);background:var(--white);color:#6b7280;box-shadow:none}
+#page-campanhas .campaigns-row-actions .action-menu-trigger:hover{background:#f9fafb;border-color:var(--border);color:var(--text);transform:none}
+#page-campanhas .campaigns-table-shell.is-empty thead{display:none}
+#page-campanhas .campaigns-empty-row{padding:32px 24px}
+#page-campanhas .campaigns-empty-row .empty-state{min-height:auto}
 #page-kanban .page-body{padding-top:24px}
 #page-kanban .kanban-top-grid{gap:16px;margin-bottom:8px}
 #page-kanban .kanban-checklist-card{padding:16px 20px;border-radius:14px}
@@ -1932,17 +1983,28 @@ td{padding:16px;font-size:14px;color:var(--text)}
     </div>
   </div>
   <div class="page-body">
-    <div class="kpi-grid" id="campaigns-kpi-grid">
-      <div class="kpi-card"><div class="kpi-label">Campanhas Ativas</div><div class="kpi-val">0</div><div class="kpi-sub">0 clientes</div></div>
-      <div class="kpi-card"><div class="kpi-label">Orçamento Total</div><div class="kpi-val">R$0,00</div><div class="kpi-sub">em tráfego pago</div></div>
-      <div class="kpi-card"><div class="kpi-label">Leads Gerados</div><div class="kpi-val">0</div><div class="kpi-sub">sem dados consolidados</div></div>
-      <div class="kpi-card"><div class="kpi-label">CPL Médio</div><div class="kpi-val">R$0,00</div><div class="kpi-sub">sem campanhas ativas</div></div>
+    <div class="campaigns-kpi-grid" id="campaigns-kpi-grid">
+      <div class="campaigns-kpi-card"><div class="campaigns-kpi-label">Campanhas Ativas</div><div class="campaigns-kpi-value">0</div><div class="campaigns-kpi-sub">0 clientes em mídia</div></div>
+      <div class="campaigns-kpi-card"><div class="campaigns-kpi-label">Orçamento Total</div><div class="campaigns-kpi-value">R$ 0,00</div><div class="campaigns-kpi-sub">em tráfego pago</div></div>
+      <div class="campaigns-kpi-card"><div class="campaigns-kpi-label">Leads Gerados</div><div class="campaigns-kpi-value">0</div><div class="campaigns-kpi-sub">dados consolidados</div></div>
+      <div class="campaigns-kpi-card"><div class="campaigns-kpi-label">CPL Médio</div><div class="campaigns-kpi-value">R$ 0,00</div><div class="campaigns-kpi-sub">0 leads no período</div></div>
     </div>
-    <div class="table-wrap">
-      <table class="campaigns-table">
-        <thead><tr><th>Campanha</th><th class="hide-phone">Cliente</th><th class="hide-mobile">Canal</th><th class="hide-tablet">Público-Alvo</th><th class="hide-mobile">Orçamento</th><th class="hide-tablet">Início</th><th>Status</th><th class="cell-actions">Ações</th></tr></thead>
-        <tbody id="campanhas-tbody"></tbody>
-      </table>
+    <div class="campaigns-table-shell" id="campaigns-table-shell">
+      <div class="campaigns-table-scroll">
+        <table class="campaigns-data-table">
+          <thead>
+            <tr>
+              <th>Campanha / Cliente</th>
+              <th>Canal</th>
+              <th>Público-Alvo</th>
+              <th>Orçamento</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="campanhas-tbody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </section>
