@@ -4594,6 +4594,21 @@ function bindDailyChecklistInteractions(container) {
   });
 
   container.addEventListener("click", async (event) => {
+    const historyToggle = event.target.closest("[data-checklist-history-toggle]");
+    if (historyToggle) {
+      event.preventDefault();
+      const panel = container.querySelector("[data-checklist-history-panel]");
+      if (!panel) {
+        return;
+      }
+
+      const willOpen = panel.hidden;
+      panel.hidden = !willOpen;
+      historyToggle.setAttribute("aria-expanded", String(willOpen));
+      historyToggle.textContent = willOpen ? "Ocultar histórico" : "Ver histórico";
+      return;
+    }
+
     const clearHistoryButton = event.target.closest("[data-checklist-clear-history]");
     if (clearHistoryButton) {
       event.preventDefault();
@@ -4628,81 +4643,82 @@ function renderKanbanChecklist(filteredTasks) {
   const checklistStore = getChecklistStore();
   const historyGroups = getChecklistHistoryGroups(checklistStore.history);
   const dueTasks = getKanbanTasksForToday(filteredTasks);
-  const completedItems = checklistStore.activeItems.filter((item) => item.done).length;
+  const overdueTasks = dueTasks.filter((task) => isOverdueDate(task.due_date || task.deadline));
+  const dueSummaryTask = overdueTasks[0] || dueTasks[0] || null;
+  const dueSummaryBadge = dueSummaryTask
+    ? overdueTasks.length
+      ? `<span class="badge badge-red">${overdueTasks.length} ${overdueTasks.length === 1 ? "Atrasada" : "Atrasadas"}</span>`
+      : '<span class="badge badge-yellow">Hoje</span>'
+    : "";
 
   container.innerHTML = `
-    <div class="section-sub">Checklist pessoal de ${escapeHtml(state.session?.user?.name || "usuário atual")}.</div>
-    <form class="checklist-composer" data-checklist-form>
-      <input
-        type="text"
-        name="checklist-item"
-        class="checklist-input"
-        maxlength="120"
-        placeholder="Adicionar item"
-        autocomplete="new-password"
-        autocorrect="off"
-        autocapitalize="none"
-        spellcheck="false"
-        aria-label="Novo item do checklist"
-      >
-      <button type="submit" class="btn btn-outline btn-sm">Adicionar</button>
-    </form>
-    <div class="checklist-progress">
-      ${
-        checklistStore.activeItems.length
-          ? `${completedItems} de ${checklistStore.activeItems.length} itens concluídos hoje`
-          : "Nenhum item aberto para hoje"
-      }
-    </div>
-    <div class="checklist-list">
+    <div class="kanban-checklist-shell">
+      <div class="kanban-checklist-toolbar">
+        <form class="kanban-focus-form" data-checklist-form>
+          <span class="kanban-focus-icon" aria-hidden="true"></span>
+          <div class="kanban-focus-field">
+            <input
+              type="text"
+              name="checklist-item"
+              class="checklist-input"
+              maxlength="120"
+              placeholder="Adicione o primeiro item para focar hoje..."
+              autocomplete="new-password"
+              autocorrect="off"
+              autocapitalize="none"
+              spellcheck="false"
+              aria-label="Novo item do checklist"
+            >
+          </div>
+          <button type="submit" class="btn btn-outline btn-sm">Adicionar</button>
+        </form>
+        ${
+          dueSummaryTask || historyGroups.length
+            ? `<div class="kanban-quick-meta">
+                ${
+                  dueSummaryTask
+                    ? `<div class="kanban-due-summary">
+                        ${dueSummaryBadge}
+                        <span class="kanban-due-title" title="${escapeHtml(dueSummaryTask.title)}">${escapeHtml(dueSummaryTask.title)}</span>
+                      </div>`
+                    : ""
+                }
+                ${
+                  historyGroups.length
+                    ? '<button type="button" class="kanban-history-toggle" data-checklist-history-toggle="1" aria-expanded="false">Ver histórico</button>'
+                    : ""
+                }
+              </div>`
+            : ""
+        }
+      </div>
       ${
         checklistStore.activeItems.length
           ? checklistStore.activeItems
               .map(
                 (item) => `
-                  <label class="checklist-row${item.done ? " is-done" : ""}">
-                    <span class="checklist-row-main">
+                  <div class="kanban-checklist-item${item.done ? " is-done" : ""}">
+                    <label class="kanban-checklist-main">
                       <input type="checkbox" data-daily-checklist="${item.id}" ${item.done ? "checked" : ""}>
-                      <span class="checklist-row-label">${escapeHtml(item.label)}</span>
-                    </span>
-                    <span class="badge ${item.done ? "badge-green" : "badge-gray"}">${item.done ? "Feito" : "Pendente"}</span>
-                    <button type="button" class="btn btn-ghost btn-sm checklist-remove" data-checklist-remove="${item.id}">Remover</button>
-                  </label>
+                      <span class="kanban-checklist-label">${escapeHtml(item.label)}</span>
+                    </label>
+                    <button type="button" class="kanban-checklist-remove" data-checklist-remove="${item.id}" aria-label="Remover item">&times;</button>
+                  </div>
                 `
               )
               .join("")
-          : UI.empty("Comece pela primeira prioridade do dia.", "Adicione o primeiro item para acompanhar daqui.", {
-              icon: false,
-              className: "is-plain"
-            })
+          : ""
       }
-    </div>
-    <div class="section-header"><div class="section-title">Entregas do dia</div></div>
-    ${
-      dueTasks.length
-        ? dueTasks
-            .map(
-              (task) => `
-                <div class="item-row">
-                  <div>
-                    <div class="block-title-sm">${escapeHtml(task.title)}</div>
-                    <div class="block-text-xs" title="${escapeHtml(getTaskAssigneeTitle(task))}">${escapeHtml(task.client_name || "Interno")} · ${escapeHtml(getTaskAssigneeLabel(task))}</div>
-                  </div>
-                  <span class="badge ${isOverdueDate(task.due_date || task.deadline) ? "badge-pink" : "badge-today"}">${isOverdueDate(task.due_date || task.deadline) ? "Atrasada" : "Hoje"}</span>
-                </div>
-              `
-            )
-            .join("")
-        : UI.empty("Sem tarefas vencendo hoje.", "Quando houver prioridade imediata, ela aparece aqui.", {
-            icon: false,
-            className: "is-plain"
-          })
-    }
-    <div class="section-header checklist-history-head">
-      <div class="section-title">Histórico do checklist</div>
-      ${historyGroups.length ? '<button type="button" class="btn btn-ghost btn-sm" data-checklist-clear-history="1">Limpar histórico</button>' : ""}
-    </div>
-    <div class="checklist-history">
+      ${
+        historyGroups.length
+          ? `<div class="kanban-history-panel" data-checklist-history-panel hidden>
+              <div class="kanban-history-head">
+                <div class="kanban-history-title">Últimos 30 dias</div>
+                <button type="button" class="kanban-history-clear" data-checklist-clear-history="1">Limpar histórico</button>
+              </div>
+              <div class="kanban-history-list">`
+          : ""
+      }
       ${
         historyGroups.length
           ? historyGroups
@@ -4735,11 +4751,9 @@ function renderKanbanChecklist(filteredTasks) {
                 `
               )
               .join("")
-          : UI.empty("Nenhum checklist concluído ainda.", "", {
-              icon: false,
-              className: "is-plain"
-            })
+          : ""
       }
+      ${historyGroups.length ? "</div></div>" : ""}
     </div>
   `;
 
