@@ -5532,92 +5532,132 @@ function renderCampaigns() {
   const clientsCount = new Set(campaignsForSummary.map((campaign) => campaign.client_id).filter(Boolean)).size;
   const averageCpl = totalLeads ? totalBudget / totalLeads : 0;
 
-  renderKpiCards(campaignsKpiGrid, [
-    {
-      label: "Campanhas Ativas",
-      value: formatNumber(activeCampaigns.length),
-      sub: activeCampaigns.length
-        ? `${formatNumber(clientsCount)} ${clientsCount === 1 ? "cliente em mídia" : "clientes em mídia"}`
-        : ""
-    },
-    {
-      label: "Orçamento Total",
-      value: formatCurrency(totalBudget),
-      sub: campaignsForSummary.length ? "em tráfego pago" : "sem orçamento alocado"
-    },
-    {
-      label: "Leads Gerados",
-      value: formatNumber(totalLeads),
-      sub: campaignsForSummary.length ? "dados consolidados" : "sem dados consolidados"
-    },
-    {
-      label: "CPL Médio",
-      value: formatCurrency(averageCpl),
-      sub: totalLeads ? `${formatNumber(totalLeads)} leads no período` : "sem leads registrados"
-    }
-  ]);
-
-  const campaignsWrap = document.querySelector("#page-campanhas .table-wrap");
-  if (campaignsWrap) {
-    campaignsWrap.classList.toggle("is-empty", state.campaigns.length === 0);
+  if (campaignsKpiGrid) {
+    campaignsKpiGrid.innerHTML = [
+      {
+        label: "Campanhas Ativas",
+        value: formatNumber(activeCampaigns.length),
+        sub: `${formatNumber(clientsCount)} ${clientsCount === 1 ? "cliente em mídia" : "clientes em mídia"}`
+      },
+      {
+        label: "Orçamento Total",
+        value: formatCurrency(totalBudget),
+        sub: "em tráfego pago"
+      },
+      {
+        label: "Leads Gerados",
+        value: formatNumber(totalLeads),
+        sub: "dados consolidados"
+      },
+      {
+        label: "CPL Médio",
+        value: formatCurrency(averageCpl),
+        sub: `${formatNumber(totalLeads)} leads no período`
+      }
+    ]
+      .map(
+        (item) => `
+          <div class="campaigns-kpi-card">
+            <div class="campaigns-kpi-label">${escapeHtml(item.label)}</div>
+            <div class="campaigns-kpi-value">${escapeHtml(item.value)}</div>
+            <div class="campaigns-kpi-sub">${escapeHtml(item.sub)}</div>
+          </div>
+        `
+      )
+      .join("");
   }
 
-  document.getElementById("campanhas-tbody").innerHTML = state.campaigns
+  const campaignsTableShell = document.getElementById("campaigns-table-shell");
+  if (campaignsTableShell) {
+    campaignsTableShell.classList.toggle("is-empty", state.campaigns.length === 0);
+  }
+
+  const campaignsBody = document.getElementById("campanhas-tbody");
+  if (!campaignsBody) {
+    return;
+  }
+
+  if (!state.campaigns.length) {
+    campaignsBody.innerHTML = `
+      <tr>
+        <td colspan="6" class="campaigns-empty-row">
+          ${
+            hasLoadFailure("campanhas")
+              ? UI.empty("Não foi possível carregar as campanhas.", "Atualize a tela para tentar novamente.", {
+                  icon: false,
+                  className: "campaign-empty-panel",
+                  actionHtml: renderRetryAction()
+                })
+              : UI.empty(
+                  "Nenhuma campanha cadastrada.",
+                  "Crie a primeira campanha para iniciar o planejamento e a operação de mídia.",
+                  {
+                    icon: false,
+                    className: "campaign-empty-panel",
+                    actionHtml: '<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="nova-campanha">Criar primeira campanha</button>',
+                  }
+                )
+          }
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  campaignsBody.innerHTML = state.campaigns
     .map((campaign) => {
       const view = getCampaignViewModel(campaign);
+      const audienceLabel = view.audience && view.audience !== "—" ? view.audience : "Público não definido";
+      const statusLabel = getDisplayText(view.status, "Planejamento");
+
       return `
         <tr>
           <td>
-            <button type="button" class="table-row-link" data-action="open-modal" data-modal="nova-campanha" data-id="${view.id}" aria-label="Editar campanha ${escapeHtml(view.name)}">
-              <span class="cell-title" title="${escapeHtml(view.name)}">${escapeHtml(view.name)}</span>
-              <span class="cell-sub" title="${escapeHtml(view.audience || "Público não definido")}">${escapeHtml(view.audience || "Público não definido")}</span>
-            </button>
+            <p class="campaigns-name" title="${escapeHtml(view.name)}">${escapeHtml(view.name)}</p>
+            <p class="campaigns-client" title="${escapeHtml(view.client_name)}">${escapeHtml(view.client_name)}</p>
           </td>
-          <td class="cell-stack hide-phone"><span class="cell-sub" title="${escapeHtml(view.client_name)}">${escapeHtml(view.client_name)}</span></td>
-          <td class="hide-mobile"><span class="badge ${getChannelBadgeClass(view.channel)}">${escapeHtml(view.channel)}</span></td>
-          <td class="cell-stack hide-tablet"><span class="cell-sub" title="${escapeHtml(view.audience)}">${escapeHtml(view.audience)}</span></td>
-          <td class="hide-mobile" data-align="right"><span class="${getValueToneClass(view.budget)}">${formatCurrencyValue(view.budget)}</span></td>
-          <td class="hide-tablet">${formatDate(view.start_date)}</td>
-          <td><span class="badge ${getCampaignStatusBadgeClass(view.status)}">${escapeHtml(getDisplayText(view.status, "Planejamento"))}</span></td>
-          <td class="cell-actions">
-            ${renderActionMenu(
-              [
-                renderActionMenuButton({
-                  label: "Editar campanha",
-                  action: "open-modal",
-                  modal: "nova-campanha",
-                  id: view.id
-                }),
-                renderActionMenuButton({
-                  label: "Excluir campanha",
-                  action: "delete-campaign",
-                  id: view.id,
-                  className: "btn btn-danger-soft btn-sm"
-                })
-              ],
-              { label: "Mais ações da campanha" }
-            )}
+          <td>
+            <span class="campaigns-channel-badge ${getCampaignPlannerChannelClass(view.channel)}">${escapeHtml(view.channel)}</span>
+          </td>
+          <td class="campaigns-audience-cell">
+            <div class="campaigns-audience-group">
+              <p class="campaigns-audience">${escapeHtml(audienceLabel)}</p>
+              <div class="campaigns-audience-tooltip">${escapeHtml(audienceLabel)}</div>
+            </div>
+          </td>
+          <td>
+            <p class="campaigns-budget">${escapeHtml(formatCurrencyValue(view.budget))}</p>
+          </td>
+          <td>
+            <span class="campaigns-status-pill ${getCampaignPlannerStatusClass(statusLabel)}">
+              <span class="campaigns-status-dot" aria-hidden="true"></span>${escapeHtml(statusLabel)}
+            </span>
+          </td>
+          <td>
+            <div class="campaigns-row-actions">
+              ${renderActionMenu(
+                [
+                  renderActionMenuButton({
+                    label: "Editar campanha",
+                    action: "open-modal",
+                    modal: "nova-campanha",
+                    id: view.id
+                  }),
+                  renderActionMenuButton({
+                    label: "Excluir campanha",
+                    action: "delete-campaign",
+                    id: view.id,
+                    className: "btn btn-danger-soft btn-sm"
+                  })
+                ],
+                { label: "Mais ações da campanha" }
+              )}
+            </div>
           </td>
         </tr>
       `;
     })
-    .join("")
-    || (hasLoadFailure("campanhas")
-      ? UI.tableEmpty(8, "Não foi possível carregar as campanhas.", "Atualize a tela para tentar novamente.", {
-          icon: false,
-          className: "campaign-empty-panel",
-          actionHtml: renderRetryAction()
-        })
-      : UI.tableEmpty(
-          8,
-          "Nenhuma campanha cadastrada.",
-          "Crie a primeira campanha para iniciar o planejamento e a operação de mídia.",
-          {
-            icon: false,
-            className: "campaign-empty-panel",
-            actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="nova-campanha">Criar primeira campanha</button>`,
-          }
-        ));
+    .join("");
 }
 
 function renderProduction() {
@@ -6541,7 +6581,13 @@ async function refreshData() {
 
   const campaignsKpis = document.getElementById("campaigns-kpi-grid");
   if (campaignsKpis) {
-    campaignsKpis.innerHTML = UI.skeletonKpis(4);
+    campaignsKpis.innerHTML = Array.from({ length: 4 }, () => `
+      <div class="campaigns-kpi-card">
+        <div class="skeleton skeleton-text" style="width:52%"></div>
+        <div class="skeleton skeleton-kpi"></div>
+        <div class="skeleton skeleton-text" style="width:42%"></div>
+      </div>
+    `).join("");
   }
 
   const trafficKpis = document.getElementById("traffic-kpi-grid");
@@ -6561,7 +6607,7 @@ async function refreshData() {
 
   const campaignsBody = document.getElementById("campanhas-tbody");
   if (campaignsBody) {
-    campaignsBody.innerHTML = UI.skeletonRows(8, 4);
+    campaignsBody.innerHTML = UI.skeletonRows(6, 4);
   }
 
   const membersBody = document.getElementById("membros-tbody");
