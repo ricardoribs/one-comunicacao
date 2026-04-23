@@ -4014,10 +4014,11 @@ function renderBarChart(containerId, values, labels, formatter) {
 
   const max = Math.max(...values, 1);
   const hasAnyValue = values.some((value) => Number(value || 0) > 0);
+  const peak = hasAnyValue ? Math.max(...values.map((value) => Number(value || 0)), 0) : 0;
   container.innerHTML = values
     .map(
       (value, index) => `
-        <div class="bar-item">
+        <div class="bar-item${peak > 0 && Number(value || 0) === peak ? " is-peak" : ""}">
           <div class="bar-meta">
             <div class="bar-label">${escapeHtml(labels[index])}</div>
             <div class="bar-val">${escapeHtml(formatter(value))}</div>
@@ -4103,7 +4104,8 @@ function renderHome() {
         label: "Faturamento",
         value: formatCurrency(state.dashboard.summary.revenue),
         sub: state.invoices.length ? `${state.invoices.length} faturas no sistema` : "Sem faturas lançadas",
-        page: "financeiro"
+        page: "financeiro",
+        valueClass: " is-currency"
       });
     } else if (hasRoleDataAccess("materials")) {
       homeCards.push({
@@ -4135,7 +4137,7 @@ function renderHome() {
             ${item.page ? `aria-label="Abrir ${item.label}"` : `aria-disabled="true" tabindex="-1"`}
           >
             <div class="kpi-label">${escapeHtml(item.label)}</div>
-            <div class="kpi-val">${escapeHtml(item.label === "Faturamento" ? item.value : formatNumber(item.value))}</div>
+            <div class="kpi-val${item.valueClass || ""}">${escapeHtml(item.label === "Faturamento" ? item.value : formatNumber(item.value))}</div>
             <div class="kpi-sub">${escapeHtml(item.sub)}</div>
           </button>
         `
@@ -4226,7 +4228,7 @@ function renderHome() {
             return `
               <div class="inline-metrics ${isEmpty ? "inline-metrics-empty" : ""}">
                 <span class="inline-metrics-label">${stage}</span>
-                <div class="inline-metrics-meta"><span class="badge ${isEmpty ? "badge-gray badge-zero" : "badge-pink"}">${formatLeadCount(stageContacts.length)}</span><span class="inline-metrics-value">${formatCurrency(totalValue)}</span></div>
+                <div class="inline-metrics-meta"><span class="inline-metrics-count">${formatLeadCount(stageContacts.length)}</span><span class="inline-metrics-value">${formatCurrency(totalValue)}</span></div>
               </div>
             `;
           })
