@@ -2496,6 +2496,21 @@ function getCampaignStatusBadgeClass(status) {
   return "badge-gray";
 }
 
+function getCampaignPlannerChannelClass(channel) {
+  const value = normalizeLooseText(channel);
+  if (value.includes("google")) return "is-google";
+  if (value.includes("instagram") && value.includes("meta")) return "is-instagram-meta";
+  if (value.includes("meta") || value.includes("facebook")) return "is-meta";
+  return "is-neutral";
+}
+
+function getCampaignPlannerStatusClass(status) {
+  const value = normalizeLooseText(status);
+  if (value.includes("ativa")) return "is-active";
+  if (value.includes("paus")) return "is-paused";
+  return "is-planning";
+}
+
 function getScoreBadgeClass(value) {
   const score = Number(value || 0);
   if (score >= 90) return "badge-green";
