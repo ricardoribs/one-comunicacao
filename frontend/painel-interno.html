@@ -1069,6 +1069,10 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .team-list .item-row{grid-template-columns:1fr;row-gap:var(--space-2)}
   .team-list .item-row .badge{justify-self:start}
   .team-member-row,.charge-head,.invoice-head,.historic-card-head,.progress-item-head,.urgent-item,.item-row{flex-direction:column;align-items:flex-start}
+  #page-kanban .kanban-focus-form{flex-basis:100%}
+  #page-kanban .kanban-quick-meta{justify-content:flex-start}
+  #page-kanban .kanban-due-title{max-width:none}
+  #page-kanban .kanban-checklist-card{padding:16px}
   .checklist-composer,.checklist-row{grid-template-columns:1fr}
   .checklist-row{justify-items:start}
   .checklist-remove{padding:0}
@@ -1339,8 +1343,8 @@ td{padding:16px;font-size:14px;color:var(--text)}
 .kanban-col.is-drop-target .kanban-col-dropzone{border-color:#f3b2be;background:rgba(255,56,92,.05)}
 .k-card{border:1px solid var(--border);border-radius:14px;padding:16px;background:var(--white)}
 .k-card:hover{transform:none;border-color:#d3d3d3;box-shadow:0 6px 12px rgba(0,0,0,.04)}
-.k-card.is-overdue{border-color:#ead78a;box-shadow:0 0 0 1px rgba(234,215,138,.45)}
-.k-card.is-highlighted{border-color:#f1d26b;box-shadow:0 0 0 1px rgba(241,210,107,.32)}
+.k-card.is-overdue{border-color:var(--border);box-shadow:none}
+.k-card.is-highlighted{border-color:var(--border);box-shadow:0 0 0 1px rgba(34,34,34,.06)}
 .k-card-client{color:var(--muted);font-size:12px;font-weight:500;letter-spacing:0;text-transform:none;margin-bottom:8px}
 .k-card-title{font-size:15px;line-height:1.45;margin-bottom:10px}
 .k-card-desc{font-size:13px;line-height:1.6;color:var(--muted)}
@@ -1407,6 +1411,37 @@ td{padding:16px;font-size:14px;color:var(--text)}
 #page-home .bar-track{height:8px;border-radius:999px;background:#f2f2f2}
 #page-home .bar-fill{border-radius:999px;background:#dddddd}
 #page-home .bar-item.is-peak .bar-fill{background:var(--pink)}
+#page-kanban .page-body{padding-top:24px}
+#page-kanban .kanban-top-grid{gap:16px;margin-bottom:8px}
+#page-kanban .kanban-checklist-card{padding:16px 20px;border-radius:14px}
+#page-kanban .kanban-checklist-shell{display:flex;flex-direction:column;gap:14px}
+#page-kanban .kanban-checklist-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+#page-kanban .kanban-focus-form{flex:1 1 560px;display:flex;align-items:center;gap:12px;min-width:0}
+#page-kanban .kanban-focus-icon{width:20px;height:20px;border:2px solid var(--border);border-radius:6px;flex-shrink:0}
+#page-kanban .kanban-focus-field{display:flex;align-items:center;flex:1;min-width:0}
+#page-kanban .kanban-focus-form .checklist-input{min-height:auto;padding:0;border:none;border-radius:0;background:transparent;font-size:15px;font-weight:500}
+#page-kanban .kanban-focus-form .checklist-input:focus{border:none;box-shadow:none}
+#page-kanban .kanban-focus-form .checklist-input::placeholder{color:#9a9a9a}
+#page-kanban .kanban-focus-form .btn{min-height:36px;padding:0 16px;border-radius:8px}
+#page-kanban .kanban-quick-meta{display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:flex-end}
+#page-kanban .kanban-due-summary{display:flex;align-items:center;gap:10px;min-width:0}
+#page-kanban .kanban-due-title{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:500;color:var(--muted)}
+#page-kanban .kanban-history-toggle,#page-kanban .kanban-history-clear{border:none;background:none;padding:0;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer}
+#page-kanban .kanban-history-toggle:hover,#page-kanban .kanban-history-clear:hover{color:var(--text);text-decoration:underline}
+#page-kanban .kanban-checklist-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--border)}
+#page-kanban .kanban-checklist-main{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
+#page-kanban .kanban-checklist-item input[type="checkbox"]{width:16px;height:16px;accent-color:var(--pink)}
+#page-kanban .kanban-checklist-label{font-size:14px;line-height:1.4;color:var(--text);word-break:break-word}
+#page-kanban .kanban-checklist-item.is-done .kanban-checklist-label{text-decoration:line-through;color:var(--muted)}
+#page-kanban .kanban-checklist-remove{border:none;background:none;padding:0 4px;font-size:18px;line-height:1;color:#a0a0a0;cursor:pointer}
+#page-kanban .kanban-checklist-remove:hover{color:var(--text)}
+#page-kanban .kanban-history-panel{border-top:1px solid var(--border);padding-top:14px}
+#page-kanban .kanban-history-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+#page-kanban .kanban-history-title{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+#page-kanban .kanban-history-list{display:flex;flex-direction:column;gap:14px}
+#page-kanban .checklist-history-group{gap:12px}
+#page-kanban .kanban-scroll-top{margin-top:8px}
+#page-kanban .kanban{padding-top:0}
 #login-screen{background:var(--gray)}
 .login-shell{width:100%;min-height:100vh;display:flex;flex-direction:column;background:var(--gray)}
 .login-topbar{height:72px;padding:0 40px;background:var(--gray);border-bottom:none}
@@ -1693,14 +1728,12 @@ td{padding:16px;font-size:14px;color:var(--text)}
   </div>
   <div class="page-body">
     <div class="two-col kanban-top-grid">
-      <div class="card">
-        <div class="section-header">
-          <div>
-            <div class="section-title">Checklist diário</div>
-            <div class="section-sub">Prioridades do dia por perfil e entregas com vencimento imediato.</div>
+      <div class="card kanban-checklist-card">
+        <div id="kanban-daily-checklist" class="kanban-checklist-shell">
+          <div class="kanban-checklist-toolbar">
+            <div class="skeleton skeleton-text" style="width:100%;height:40px"></div>
           </div>
         </div>
-        <div class="stack-sm" id="kanban-daily-checklist"></div>
       </div>
       <div class="card brand-manual-card">
         <div class="section-header">
