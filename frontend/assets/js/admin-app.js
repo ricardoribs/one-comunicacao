@@ -3829,6 +3829,23 @@ function syncNavigation() {
     link.classList.toggle("active", page === state.activePage);
   });
 
+  document.querySelectorAll(".mobile-tab-link").forEach((link) => {
+    const page = link.dataset.page;
+    const isAllowed = allowed.includes(page);
+    link.style.display = isAllowed ? "inline-flex" : "none";
+    link.classList.toggle("active", page === state.activePage);
+  });
+
+  const mobileTabbar = document.querySelector(".mobile-tabbar");
+  if (mobileTabbar) {
+    const visibleCount = Array.from(mobileTabbar.querySelectorAll(".mobile-tab-link")).filter(
+      (link) => link.style.display !== "none"
+    ).length;
+    mobileTabbar.style.gridTemplateColumns = visibleCount
+      ? `repeat(${visibleCount}, minmax(0, 1fr))`
+      : "";
+  }
+
   document.querySelectorAll(".sb-section").forEach((section) => {
     let next = section.nextElementSibling;
     let hasVisibleLinks = false;
