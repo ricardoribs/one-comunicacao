@@ -1044,6 +1044,8 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .pipeline{grid-template-columns:repeat(3,minmax(180px,1fr))}
   .access-grid{grid-template-columns:1fr 1fr}
   .two-col,.form-grid{grid-template-columns:1fr}
+  #page-crm .crm-tabbar{padding:0 var(--space-4)}
+  #page-crm .page-body{padding-top:24px}
 }
 @media(max-width:768px){
   :root{--sidebar:0px}
@@ -1078,6 +1080,11 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .checklist-remove{padding:0}
   .team-member-row .badge{margin-left:0}
   .table-actions,.item-actions,.modal-actions{flex-wrap:wrap}
+  #page-crm .crm-topbar-actions{width:100%}
+  #page-crm .crm-tabbar-track{gap:24px;overflow-x:auto;scrollbar-width:none}
+  #page-crm .crm-tabbar-track::-webkit-scrollbar{display:none}
+  #page-crm .crm-page-tab{white-space:nowrap}
+  #page-crm .crm-pipeline-col{flex-basis:260px;width:260px}
   #page-calendario .calendar-week-grid{min-width:820px}
   #page-acesso #acesso-membros .access-member-table{min-width:0}
   #page-perfil .profile-grid{grid-template-columns:1fr}
@@ -1182,7 +1189,10 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .login-footer{padding:var(--space-4)}
   .login-footer-links{flex-wrap:wrap;gap:var(--space-4)}
   #page-calendario .calendar-upcoming-actions .btn{flex:1 1 100%}
-  #page-crm #crm-clientes .crm-client-table{min-width:0}
+  #page-crm .crm-kpi-grid{grid-template-columns:1fr}
+  #page-crm .crm-topbar-separator{display:none}
+  #page-crm .crm-pipeline-col{flex-basis:88vw;width:88vw}
+  #page-crm .crm-data-table{min-width:760px}
   #page-acesso #acesso-membros .access-member-table{min-width:0}
   #page-perfil .profile-meta-grid{grid-template-columns:1fr}
   #page-perfil .profile-actions .btn{flex:1 1 100%;justify-content:center}
@@ -1411,6 +1421,63 @@ td{padding:16px;font-size:14px;color:var(--text)}
 #page-home .bar-track{height:8px;border-radius:999px;background:#f2f2f2}
 #page-home .bar-fill{border-radius:999px;background:#dddddd}
 #page-home .bar-item.is-peak .bar-fill{background:var(--pink)}
+#page-crm{background:var(--gray)}
+#page-crm .page-body{background:var(--gray);padding-top:32px}
+#page-crm .topbar-actions{gap:12px}
+#page-crm .crm-topbar-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#page-crm .crm-topbar-separator{width:1px;height:24px;background:var(--border)}
+#page-crm .topbar-actions .btn{min-height:40px;padding:0 18px;border-radius:8px;font-size:14px}
+#page-crm .crm-tabbar{padding:0 var(--space-8);background:var(--white);border-bottom:1px solid var(--border)}
+#page-crm .crm-tabbar-track{display:flex;align-items:center;gap:32px}
+#page-crm .crm-page-tab{padding:0 0 16px;border:none;border-bottom:2px solid transparent;background:none;font-size:15px;font-weight:500;color:var(--muted);cursor:pointer}
+#page-crm .crm-page-tab:hover{color:var(--text)}
+#page-crm .crm-page-tab.active{color:var(--text);border-bottom-color:var(--ink);font-weight:600}
+#page-crm .crm-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px;margin-bottom:40px}
+#page-crm .crm-kpi-card{display:flex;flex-direction:column;justify-content:space-between;min-height:120px;padding:24px;background:var(--white);border:1px solid var(--border);border-radius:14px}
+#page-crm .crm-kpi-label{margin-bottom:12px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#7b7b7b}
+#page-crm .crm-kpi-value{font-size:30px;font-weight:700;line-height:1.08;letter-spacing:-.03em;color:var(--text)}
+#page-crm .crm-kpi-value.is-currency{font-size:30px}
+#page-crm .crm-kpi-sub{margin-top:8px;font-size:13px;font-weight:500;color:var(--muted)}
+#page-crm .crm-pipeline-board{display:flex;gap:24px;overflow-x:auto;padding-bottom:16px}
+#page-crm .crm-pipeline-board::-webkit-scrollbar{height:6px}
+#page-crm .crm-pipeline-board::-webkit-scrollbar-track{background:transparent}
+#page-crm .crm-pipeline-board::-webkit-scrollbar-thumb{background:#dddddd;border-radius:3px}
+#page-crm .crm-pipeline-board::-webkit-scrollbar-thumb:hover{background:#c1c1c1}
+#page-crm .crm-pipeline-col{display:flex;flex-direction:column;flex:0 0 280px;width:280px;background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+#page-crm .crm-pipeline-head{display:flex;align-items:center;justify-content:space-between;padding:20px;border-bottom:1px solid var(--border);background:#fcfcfc}
+#page-crm .crm-pipeline-stage{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text)}
+#page-crm .crm-pipeline-count{font-size:12px;font-weight:600;color:#9a9a9a}
+#page-crm .crm-pipeline-body{display:flex;flex-direction:column;gap:16px;flex:1;padding:20px}
+#page-crm .crm-pipeline-card{display:flex;flex-direction:column;min-height:188px;padding:20px;background:var(--white);border:1px solid var(--border);border-radius:14px}
+#page-crm .crm-pipeline-name{font-size:16px;font-weight:600;line-height:1.35;color:var(--text)}
+#page-crm .crm-pipeline-company{margin-top:4px;margin-bottom:16px;font-size:13px;font-weight:500;color:var(--muted)}
+#page-crm .crm-pipeline-value{margin-bottom:24px;font-size:20px;font-weight:700;line-height:1.15;letter-spacing:-.02em;color:var(--text)}
+#page-crm .crm-pipeline-footer{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+#page-crm .crm-text-action{display:inline-flex;align-items:center;border:none;background:none;padding:0;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;text-decoration:none}
+#page-crm .crm-text-action:hover{text-decoration:underline}
+#page-crm .crm-pipeline-footer .action-menu-trigger,#page-crm .crm-row-actions .action-menu-trigger{width:32px;min-width:32px;height:32px;min-height:32px;padding:0;border-radius:999px;border:1px solid var(--border);background:var(--white);color:#888;box-shadow:none}
+#page-crm .crm-pipeline-footer .action-menu-trigger:hover,#page-crm .crm-row-actions .action-menu-trigger:hover{background:#fafafa;border-color:var(--border);color:var(--text);transform:none}
+#page-crm .crm-pipeline-empty{display:flex;align-items:center;justify-content:center;min-height:120px;padding:16px;border:1px dashed var(--border);border-radius:14px;color:var(--muted);font-size:13px;text-align:center}
+#page-crm .crm-table-shell{background:var(--white);border:1px solid var(--border);border-radius:14px;overflow-x:auto}
+#page-crm .crm-data-table{width:100%;min-width:980px;border-collapse:collapse}
+#page-crm .crm-data-table thead{background:#fcfcfc;border-bottom:1px solid var(--border)}
+#page-crm .crm-data-table th{padding:16px 24px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#7b7b7b;text-align:left;white-space:nowrap}
+#page-crm .crm-data-table td{padding:20px 24px;vertical-align:top;border-bottom:1px solid var(--border)}
+#page-crm .crm-data-table tbody tr:last-child td{border-bottom:none}
+#page-crm .crm-data-table tbody tr:hover{background:#fafafa}
+#page-crm .crm-cell-right{text-align:right}
+#page-crm .crm-client-cell-primary,#page-crm .crm-history-cell-primary{min-width:240px}
+#page-crm .crm-row-title{font-size:15px;font-weight:600;line-height:1.4;color:var(--text)}
+#page-crm .crm-row-sub{margin-top:4px;font-size:13px;font-weight:500;line-height:1.45;color:var(--muted)}
+#page-crm .crm-row-sub.is-dark{margin-top:0;color:var(--text)}
+#page-crm .crm-row-sub.is-tight{margin-top:0}
+#page-crm .crm-row-meta{margin-top:8px;font-size:12px;line-height:1.4;color:#9a9a9a}
+#page-crm .crm-mrr-value{font-size:15px;font-weight:700;line-height:1.3;letter-spacing:-.02em;color:var(--text)}
+#page-crm .crm-mrr-sub{margin-top:2px;font-size:11px;line-height:1.35;color:#9a9a9a}
+#page-crm .crm-row-actions{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+#page-crm .crm-history-date{font-size:14px;font-weight:500;color:var(--text)}
+#page-crm .crm-empty-row{padding:32px 24px}
+#page-crm .crm-empty-row .empty-state{min-height:auto}
 #page-kanban .page-body{padding-top:24px}
 #page-kanban .kanban-top-grid{gap:16px;margin-bottom:8px}
 #page-kanban .kanban-checklist-card{padding:16px 20px;border-radius:14px}
@@ -1795,38 +1862,41 @@ td{padding:16px;font-size:14px;color:var(--text)}
   <div class="topbar">
     <div><div class="topbar-title">CRM — Leads & Clientes</div><div class="topbar-sub">Pipeline de vendas e histórico</div></div>
     <div class="topbar-actions">
-      <button class="btn btn-outline btn-sm" data-action="set-tab" data-group="crm" data-tab="pipeline">Pipeline</button>
-      <button class="btn btn-outline btn-sm" data-action="set-tab" data-group="crm" data-tab="clientes">Clientes</button>
-      <button class="btn btn-pink btn-sm" data-action="open-modal" data-modal="novo-lead">+ Novo lead</button>
+      <div class="crm-topbar-actions">
+        <button id="btn-new-client" class="btn btn-outline btn-sm" data-action="open-modal" data-modal="novo-cliente">+ Novo cliente</button>
+        <div class="crm-topbar-separator" id="crm-topbar-separator" aria-hidden="true"></div>
+        <button id="btn-new-lead-crm" class="btn btn-pink btn-sm" data-action="open-modal" data-modal="novo-lead">+ Novo lead</button>
+      </div>
+    </div>
+  </div>
+  <div class="crm-tabbar">
+    <div class="crm-tabbar-track">
+      <button type="button" class="crm-page-tab active" id="crm-tab-pipeline" data-action="set-tab" data-group="crm" data-tab="pipeline">Pipeline</button>
+      <button type="button" class="crm-page-tab" id="crm-tab-clientes" data-action="set-tab" data-group="crm" data-tab="clientes">Clientes Ativos</button>
+      <button type="button" class="crm-page-tab" id="crm-tab-historico" data-action="set-tab" data-group="crm" data-tab="historico">Histórico</button>
     </div>
   </div>
   <div class="page-body">
-    <div class="tabs">
-      <div class="tab active" id="crm-tab-pipeline" data-action="set-tab" data-group="crm" data-tab="pipeline">Pipeline</div>
-      <div class="tab" id="crm-tab-clientes" data-action="set-tab" data-group="crm" data-tab="clientes">Clientes Ativos</div>
-      <div class="tab" id="crm-tab-historico" data-action="set-tab" data-group="crm" data-tab="historico">Histórico</div>
-    </div>
     <div id="crm-pipeline">
-      <div class="kpi-grid crm-kpi-grid mt-5" id="crm-kpi-grid">
-        <div class="kpi-card"><div class="kpi-label">Total no Funil</div><div class="kpi-val">0</div><div class="kpi-sub">leads ativos</div></div>
-        <div class="kpi-card"><div class="kpi-label">Valor Potencial</div><div class="kpi-val">R$0,00</div><div class="kpi-sub">no pipeline</div></div>
-        <div class="kpi-card"><div class="kpi-label">Taxa de Conversão</div><div class="kpi-val">0%</div><div class="kpi-sub">sem conversões ainda</div></div>
-        <div class="kpi-card"><div class="kpi-label">Ticket Médio</div><div class="kpi-val">R$0,00</div><div class="kpi-sub">por cliente</div></div>
-        <div class="kpi-card"><div class="kpi-label">Ciclo de Venda</div><div class="kpi-val">0d</div><div class="kpi-sub">em média</div></div>
+      <div class="crm-kpi-grid" id="crm-kpi-grid">
+        <div class="crm-kpi-card"><div class="crm-kpi-label">Total no Funil</div><div class="crm-kpi-value">0</div><div class="crm-kpi-sub">0 leads</div></div>
+        <div class="crm-kpi-card"><div class="crm-kpi-label">Valor Potencial</div><div class="crm-kpi-value is-currency">R$ 0,00</div><div class="crm-kpi-sub">no pipeline</div></div>
+        <div class="crm-kpi-card"><div class="crm-kpi-label">Taxa de Conversão</div><div class="crm-kpi-value">0.00%</div><div class="crm-kpi-sub">0 conversões</div></div>
+        <div class="crm-kpi-card"><div class="crm-kpi-label">Ticket Médio</div><div class="crm-kpi-value is-currency">R$ 0,00</div><div class="crm-kpi-sub">por lead convertido</div></div>
       </div>
-      <div class="pipeline" id="pipeline-board"></div>
+      <div class="pipeline crm-pipeline-board" id="pipeline-board"></div>
     </div>
     <div id="crm-clientes" class="hidden-panel">
-      <div class="table-wrap">
-        <table class="crm-client-table">
+      <div class="crm-table-shell">
+        <table class="crm-data-table crm-clients-table">
           <thead>
             <tr>
               <th>Cliente</th>
-              <th class="hide-mobile">Segmento</th>
+              <th>Segmento</th>
               <th>Plano</th>
-              <th class="hide-tablet">Desde</th>
-              <th class="hide-phone">MRR</th>
-              <th class="cell-actions">Ações</th>
+              <th>Desde</th>
+              <th class="crm-cell-right">MRR</th>
+              <th class="crm-cell-right">Ações</th>
             </tr>
           </thead>
           <tbody id="clientes-tbody"></tbody>
@@ -1834,16 +1904,16 @@ td{padding:16px;font-size:14px;color:var(--text)}
       </div>
     </div>
     <div id="crm-historico" class="hidden-panel">
-      <div class="table-wrap">
-        <table class="history-table">
+      <div class="crm-table-shell">
+        <table class="crm-data-table crm-history-table">
           <thead>
             <tr>
               <th>Registro</th>
-              <th class="hide-phone">Cliente</th>
-              <th class="hide-tablet">Tipo</th>
+              <th>Cliente</th>
+              <th>Tipo</th>
               <th>Status</th>
-              <th class="hide-tablet">Data</th>
-              <th class="cell-actions">Ação</th>
+              <th>Data</th>
+              <th class="crm-cell-right">Ação</th>
             </tr>
           </thead>
           <tbody id="historico-tbody"></tbody>

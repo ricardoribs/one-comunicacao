@@ -5176,6 +5176,25 @@ function bindKanbanBoardInteractions() {
 
 function renderCRM() {
   const crmKpiGrid = document.getElementById("crm-kpi-grid");
+  const pipelineBoard = document.getElementById("pipeline-board");
+  const clientsBody = document.getElementById("clientes-tbody");
+  const historyBody = document.getElementById("historico-tbody");
+  const newClientButton = document.getElementById("btn-new-client");
+  const newLeadButton = document.getElementById("btn-new-lead-crm");
+  const topbarSeparator = document.getElementById("crm-topbar-separator");
+  const canEditClients = canManageClients();
+  const canManageLeads = hasRoleDataAccess("contacts");
+
+  if (newClientButton) {
+    newClientButton.style.display = canEditClients ? "" : "none";
+  }
+  if (newLeadButton) {
+    newLeadButton.style.display = canManageLeads ? "" : "none";
+  }
+  if (topbarSeparator) {
+    topbarSeparator.style.display = canEditClients && canManageLeads ? "" : "none";
+  }
+
   const closedContacts = state.contacts.filter((contact) => normalizePipelineStage(contact.lead_stage) === "Fechado");
   const activeContacts = state.contacts.filter((contact) => normalizePipelineStage(contact.lead_stage) !== "Fechado");
   const activePipelineValue = sumBy(activeContacts, (contact) => contact.estimated_value);
@@ -5184,201 +5203,224 @@ function renderCRM() {
   const averageTicket = closedContacts.length ? closedPipelineValue / closedContacts.length : 0;
   const averageCycle = getAverageSalesCycleDays(closedContacts);
 
-  renderKpiCards(crmKpiGrid, [
-    {
-      label: "Total no Funil",
-      value: formatNumber(activeContacts.length),
-      sub: activeContacts.length ? `${formatLeadCount(activeContacts.length)}` : ""
-    },
-    {
-      label: "Valor Potencial",
-      value: formatCurrency(activePipelineValue),
-      sub: activeContacts.length ? "no pipeline" : ""
-    },
-    {
-      label: "Taxa de Conversão",
-      value: `${conversionRate.toFixed(2)}%`,
-      sub: closedContacts.length ? `${formatNumber(closedContacts.length)} conversões` : ""
-    },
-    {
-      label: "Ticket Médio",
-      value: formatCurrency(averageTicket),
-      sub: closedContacts.length ? "por lead convertido" : ""
-    }
-  ].concat(
-    closedContacts.length
-      ? [
-          {
-            label: "Ciclo de Venda",
-            value: `${formatNumber(averageCycle)}d`,
-            sub: "em média"
-          }
-        ]
-      : []
-  ));
+  if (crmKpiGrid) {
+    const crmCards = [
+      {
+        label: "Total no Funil",
+        value: formatNumber(activeContacts.length),
+        sub: `${formatLeadCount(activeContacts.length)}`
+      },
+      {
+        label: "Valor Potencial",
+        value: formatCurrency(activePipelineValue),
+        sub: "no pipeline",
+        valueClass: " is-currency"
+      },
+      {
+        label: "Taxa de Conversão",
+        value: `${conversionRate.toFixed(2)}%`,
+        sub: `${formatNumber(closedContacts.length)} ${closedContacts.length === 1 ? "conversão" : "conversões"}`
+      },
+      {
+        label: "Ticket Médio",
+        value: formatCurrency(averageTicket),
+        sub: "por lead convertido",
+        valueClass: " is-currency"
+      }
+    ];
 
-  const pipelineStages = ["Prospecção", "Contato feito", "Proposta", "Negociação", "Fechado"];
-  const pipelineBoard = document.getElementById("pipeline-board");
-  if (pipelineBoard) {
-    if (hasLoadFailure("CRM") && !state.contacts.length) {
-      pipelineBoard.innerHTML = UI.empty("Não foi possível carregar o pipeline.", "Tente novamente para recuperar os leads do CRM.", {
-        icon: false,
-        className: "is-plain",
-        actionHtml: renderRetryAction()
+    if (closedContacts.length) {
+      crmCards.push({
+        label: "Ciclo de Venda",
+        value: `${formatNumber(averageCycle)}d`,
+        sub: "em média"
       });
-    } else {
-      pipelineBoard.innerHTML = pipelineStages
-        .map((stage) => {
-          const contacts = state.contacts.filter((contact) => normalizePipelineStage(contact.lead_stage) === stage);
-          return `
-            <div class="pipe-col">
-              <div class="pipe-col-head">${stage} <span>${contacts.length}</span></div>
-              ${contacts
-                .map((contact) => {
-                  const canConvert = normalizePipelineStage(contact.lead_stage) !== "Fechado";
-                  return `
-                    <div class="pipe-card">
-                      <div class="pipe-lead-name" title="${escapeHtml(contact.name)}">${escapeHtml(contact.name)}</div>
-                      <div class="pipe-lead-company" title="${escapeHtml(contact.company || "—")}">${escapeHtml(contact.company || "—")}</div>
-                      <div class="pipe-lead-val">${formatCurrency(contact.estimated_value)}</div>
-                      <div class="item-card-actions">
-                        <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="novo-lead" data-id="${contact.id}">Editar</button>
-                        ${renderActionMenu(
-                          [
-                            canConvert
-                              ? renderActionMenuButton({
-                                  label: "Converter lead",
-                                  action: "convert-lead",
-                                  id: contact.id
-                                })
-                              : "",
-                            renderActionMenuButton({
-                              label: "Excluir lead",
-                              action: "delete-lead",
-                              id: contact.id,
-                              className: "btn btn-danger-soft btn-sm"
-                            })
-                          ],
-                          { label: "Mais ações do lead" }
-                        )}
-                      </div>
-                    </div>
-                  `;
-                })
-                .join("")
-                || `<div class="pipe-empty pipe-empty-minimal">
-                     ${
-                       stage === "Prospecção" && hasRoleDataAccess("contacts")
-                         ? `<button type="button" class="btn btn-pink btn-sm" data-action="open-modal" data-modal="novo-lead">Adicionar primeiro lead</button>`
-                         : ""
-                     }
-                   </div>`}
+    }
+
+    crmKpiGrid.innerHTML = crmCards
+      .map(
+        (item) => `
+          <div class="crm-kpi-card">
+            <div class="crm-kpi-label">${escapeHtml(item.label)}</div>
+            <div class="crm-kpi-value${item.valueClass || ""}">${escapeHtml(item.value)}</div>
+            <div class="crm-kpi-sub">${escapeHtml(item.sub)}</div>
+          </div>
+        `
+      )
+      .join("");
+  }
+
+  if (pipelineBoard) {
+    const pipelineStages = ["Prospecção", "Contato feito", "Proposta", "Negociação", "Fechado"];
+    pipelineBoard.innerHTML = pipelineStages
+      .map((stage) => {
+        const contacts = state.contacts.filter((contact) => normalizePipelineStage(contact.lead_stage) === stage);
+        return `
+          <div class="crm-pipeline-col">
+            <div class="crm-pipeline-head">
+              <h3 class="crm-pipeline-stage">${escapeHtml(stage)}</h3>
+              <span class="crm-pipeline-count">${contacts.length}</span>
             </div>
+            <div class="crm-pipeline-body">
+              ${
+                contacts.length
+                  ? contacts
+                      .map((contact) => {
+                        const canConvert = normalizePipelineStage(contact.lead_stage) !== "Fechado";
+                        const menuHtml = canManageLeads
+                          ? renderActionMenu(
+                              [
+                                canConvert
+                                  ? renderActionMenuButton({
+                                      label: "Converter lead",
+                                      action: "convert-lead",
+                                      id: contact.id
+                                    })
+                                  : "",
+                                renderActionMenuButton({
+                                  label: "Excluir lead",
+                                  action: "delete-lead",
+                                  id: contact.id,
+                                  className: "btn btn-danger-soft btn-sm"
+                                })
+                              ],
+                              { label: "Mais ações do lead" }
+                            )
+                          : "";
+
+                        return `
+                          <div class="crm-pipeline-card">
+                            <p class="crm-pipeline-name" title="${escapeHtml(contact.name || "Lead sem nome")}">${escapeHtml(contact.name || "Lead sem nome")}</p>
+                            <p class="crm-pipeline-company" title="${escapeHtml(contact.company || "—")}">${escapeHtml(contact.company || "—")}</p>
+                            <p class="crm-pipeline-value">${escapeHtml(formatCurrency(contact.estimated_value))}</p>
+                            <div class="crm-pipeline-footer">
+                              ${
+                                canManageLeads
+                                  ? `<button type="button" class="crm-text-action" data-action="open-modal" data-modal="novo-lead" data-id="${contact.id}">Editar</button>`
+                                  : '<span class="crm-text-action">Lead</span>'
+                              }
+                              ${menuHtml}
+                            </div>
+                          </div>
+                        `;
+                      })
+                      .join("")
+                  : '<div class="crm-pipeline-empty">Sem leads nesta etapa.</div>'
+              }
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+  }
+
+  if (clientsBody) {
+    if (!state.clients.length) {
+      clientsBody.innerHTML = `
+        <tr>
+          <td colspan="6" class="crm-empty-row">
+            ${
+              hasLoadFailure("clientes")
+                ? UI.empty("Não foi possível carregar os clientes.", "Atualize a listagem para tentar novamente.", {
+                    icon: false,
+                    actionHtml: renderRetryAction()
+                  })
+                : UI.empty("Nenhum cliente cadastrado", "Cadastre o primeiro cliente para organizar cobrança, plano e histórico.", {
+                    icon: false,
+                    actionHtml: canEditClients
+                      ? '<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-cliente">Criar primeiro cliente</button>'
+                      : ""
+                  })
+            }
+          </td>
+        </tr>
+      `;
+    } else {
+      clientsBody.innerHTML = state.clients
+        .map((client) => {
+          const segmentLabel = String(client.segment || "").trim() || "—";
+          const planLabel = normalizeClientPlanLabel(client.plan);
+          const campaignsCount = Number(client.campaigns_count || 0);
+          const campaignsLabel = `${formatNumber(campaignsCount)} ${campaignsCount === 1 ? "campanha vinculada" : "campanhas vinculadas"}`;
+          const startedAtLabel = client.started_at ? formatDate(client.started_at) : "—";
+          const mrrValue = formatCurrencyValue(client.mrr);
+          const actionMenu = canEditClients
+            ? renderActionMenu(
+                [
+                  renderActionMenuButton({
+                    label: "Registrar cobrança",
+                    action: "open-charge-modal",
+                    id: client.id
+                  }),
+                  renderActionMenuButton({
+                    label: "Excluir cliente",
+                    action: "delete-client",
+                    id: client.id,
+                    className: "btn btn-danger-soft btn-sm"
+                  })
+                ],
+                { label: "Mais ações do cliente" }
+              )
+            : "";
+
+          return `
+            <tr>
+              <td class="crm-client-cell-primary">
+                <p class="crm-row-title" title="${escapeHtml(client.name || "—")}">${escapeHtml(client.name || "—")}</p>
+                <p class="crm-row-sub" title="${escapeHtml(client.company || "—")}">${escapeHtml(client.company || "—")}</p>
+                <p class="crm-row-meta">${escapeHtml(campaignsLabel)}</p>
+              </td>
+              <td>
+                <p class="crm-row-sub is-dark">${escapeHtml(segmentLabel)}</p>
+              </td>
+              <td>
+                <span class="badge ${getClientPlanBadgeClass(client.plan)}">${escapeHtml(planLabel)}</span>
+              </td>
+              <td>
+                <p class="crm-row-sub is-dark">${escapeHtml(startedAtLabel)}</p>
+              </td>
+              <td class="crm-cell-right">
+                <p class="crm-mrr-value">${escapeHtml(mrrValue)}</p>
+                <p class="crm-mrr-sub">receita mensal</p>
+              </td>
+              <td class="crm-cell-right">
+                <div class="crm-row-actions">
+                  ${
+                    canEditClients
+                      ? `<button type="button" class="crm-text-action" data-action="open-modal" data-modal="novo-cliente" data-id="${client.id}">Editar</button>`
+                      : ""
+                  }
+                  ${actionMenu}
+                </div>
+              </td>
+            </tr>
           `;
         })
         .join("");
     }
   }
 
-  const clientsBody = document.getElementById("clientes-tbody");
-  if (clientsBody) {
-    clientsBody.innerHTML =
-      state.clients
-        .map((client) => {
-          const segmentLabel = String(client.segment || "").trim() || "—";
-          const planLabel = normalizeClientPlanLabel(client.plan);
-          const onDemandService = getOnDemandServiceLabel(client.plan);
-          const campaignsLabel = Number(client.campaigns_count || 0)
-            ? `${formatNumber(client.campaigns_count)} ${Number(client.campaigns_count) === 1 ? "campanha vinculada" : "campanhas vinculadas"}`
-            : "0 campanhas vinculadas";
-          const startedAtLabel = client.started_at ? formatDate(client.started_at) : "—";
-          const mrrValue = formatCurrencyValue(client.mrr);
-          const showMrrSub = Number(client.mrr || 0) > 0;
-          const mrrSub = showMrrSub ? "receita mensal recorrente" : "";
-
-          return `
-            <tr>
-              <td class="cell-stack crm-client-main">
-                <span class="cell-title" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span>
-                <span class="cell-sub" title="${escapeHtml(client.company || "—")}">${escapeHtml(client.company || "—")}</span>
-                <span class="cell-sub" title="${escapeHtml(campaignsLabel)}">${escapeHtml(campaignsLabel)}</span>
-              </td>
-              <td class="crm-client-cell crm-client-segment-cell hide-mobile">
-                <div class="crm-cell-center">
-                  <span class="crm-cell-text" title="${escapeHtml(segmentLabel)}">${escapeHtml(segmentLabel)}</span>
-                </div>
-              </td>
-              <td class="crm-client-cell crm-client-plan-cell">
-                <div class="crm-cell-center crm-cell-stack">
-                  <span class="badge ${getClientPlanBadgeClass(client.plan)}" title="${escapeHtml(planLabel)}">${escapeHtml(planLabel)}</span>
-                  ${onDemandService && planLabel === "Sob demanda" ? `<span class="cell-sub" title="${escapeHtml(onDemandService)}">${escapeHtml(onDemandService)}</span>` : ""}
-                </div>
-              </td>
-              <td class="crm-client-cell crm-client-since-cell hide-tablet">
-                <div class="crm-cell-center">
-                  <span class="crm-cell-text">${escapeHtml(startedAtLabel)}</span>
-                </div>
-              </td>
-              <td class="crm-client-cell crm-client-mrr-cell hide-phone">
-                <div class="crm-cell-mrr">
-                  <span class="${getValueToneClass(client.mrr)}">${mrrValue}</span>
-                  ${showMrrSub ? `<span class="cell-sub">${escapeHtml(mrrSub)}</span>` : ""}
-                </div>
-              </td>
-              <td class="cell-actions crm-client-actions-cell">
-                <div class="table-actions crm-client-actions">
-                  <button type="button" class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="novo-cliente" data-id="${client.id}">Editar</button>
-                  ${renderActionMenu(
-                    [
-                      renderActionMenuButton({
-                        label: "Registrar cobrança",
-                        action: "open-charge-modal",
-                        id: client.id
-                      }),
-                      renderActionMenuButton({
-                        label: "Excluir cliente",
-                        action: "delete-client",
-                        id: client.id,
-                        className: "btn btn-danger-soft btn-sm"
-                      })
-                    ],
-                    { label: "Mais ações do cliente" }
-                  )}
-                </div>
-              </td>
-            </tr>
-          `;
-        })
-        .join("")
-      || (hasLoadFailure("clientes")
-        ? UI.tableEmpty(6, "Não foi possível carregar os clientes.", "Atualize a listagem para tentar novamente.", {
-            icon: false,
-            actionHtml: renderRetryAction()
-          })
-        : UI.tableEmpty(6, "Nenhum cliente cadastrado", "Cadastre o primeiro cliente para organizar cobrança, plano e histórico.", {
-            icon: false,
-            actionHtml: canManageClients()
-              ? `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-cliente">Criar primeiro cliente</button>`
-              : ""
-          }));
-  }
-
-  const historyBody = document.getElementById("historico-tbody");
   if (historyBody) {
     const historyItems = [
-      ...state.reports.map((report) => ({
-        key: `report-${report.id}`,
-        title: report.title,
-        clientName: report.client_name || "—",
-        typeLabel: "Relatório",
-        statusLabel: "Publicado",
-        badgeClass: "badge-blue",
-        dateValue: report.report_month,
-        actionHtml: renderResourceAction(report.file_url, {
-          label: "Abrir",
-          className: "btn btn-ghost btn-sm",
-          missingMessage: "Relatório ainda não disponível para abertura."
-        })
+      ...state.charges.map((charge) => ({
+        key: `charge-${charge.id}`,
+        title: charge.description || `Cobrança ${charge.client_name || charge.contact_name || ""}`.trim(),
+        clientName: charge.client_name || charge.contact_name || "—",
+        typeLabel: "Cobrança",
+        statusLabel: getChargeOperationalStatus(charge),
+        badgeClass: getFinanceStatusBadgeClass(getChargeOperationalStatus(charge)),
+        dateValue: charge.due_date || charge.created_at,
+        actionHtml: charge.payment_link
+          ? renderResourceAction(charge.payment_link, {
+              label: "Abrir",
+              className: "crm-text-action"
+            })
+          : renderActionMenuButton({
+              label: "Abrir",
+              action: "open-charge-modal",
+              id: charge.client_id,
+              className: "crm-text-action"
+            })
       })),
       ...state.materials.map((material) => ({
         key: `material-${material.id}`,
@@ -5395,59 +5437,74 @@ function renderCRM() {
         dateValue: material.due_date || material.created_at,
         actionHtml: renderResourceAction(material.url || material.file_url, {
           label: "Abrir",
-          className: "btn btn-ghost btn-sm",
+          className: "crm-text-action",
           missingMessage: "Arquivo ainda não disponível para abertura."
         })
       })),
-      ...state.charges.map((charge) => ({
-        key: `charge-${charge.id}`,
-        title: charge.description || `Cobrança ${charge.client_name || charge.contact_name || ""}`.trim(),
-        clientName: charge.client_name || charge.contact_name || "—",
-        typeLabel: "Cobrança",
-        statusLabel: getChargeOperationalStatus(charge),
-        badgeClass: getFinanceStatusBadgeClass(getChargeOperationalStatus(charge)),
-        dateValue: charge.due_date || charge.created_at,
-        actionHtml: charge.payment_link
-          ? renderResourceAction(charge.payment_link, {
-              label: "Abrir",
-              className: "btn btn-ghost btn-sm"
-            })
-          : renderActionMenuButton({
-              label: "Cobrar",
-              action: "open-charge-modal",
-              id: charge.client_id,
-              className: "btn btn-ghost btn-sm"
-            })
+      ...state.reports.map((report) => ({
+        key: `report-${report.id}`,
+        title: report.title,
+        clientName: report.client_name || "—",
+        typeLabel: "Relatório",
+        statusLabel: "Publicado",
+        badgeClass: "badge-blue",
+        dateValue: report.report_month,
+        actionHtml: renderResourceAction(report.file_url, {
+          label: "Abrir",
+          className: "crm-text-action",
+          missingMessage: "Relatório ainda não disponível para abertura."
+        })
       }))
     ]
       .sort((left, right) => new Date(right.dateValue || 0).getTime() - new Date(left.dateValue || 0).getTime())
       .slice(0, 8);
 
-    historyBody.innerHTML = historyItems
-      .map(
-        (item) => `
-          <tr>
-            <td class="cell-stack">
-              <span class="cell-title" title="${escapeHtml(item.title || "—")}">${escapeHtml(item.title || "—")}</span>
-            </td>
-            <td class="hide-phone"><span class="cell-sub" title="${escapeHtml(item.clientName)}">${escapeHtml(item.clientName)}</span></td>
-            <td class="hide-tablet"><span class="badge badge-gray">${escapeHtml(item.typeLabel)}</span></td>
-            <td><span class="badge ${item.badgeClass}">${escapeHtml(item.statusLabel)}</span></td>
-            <td class="hide-tablet">${formatDate(item.dateValue)}</td>
-            <td class="cell-actions">${item.actionHtml}</td>
-          </tr>
-        `
-      )
-      .join("")
-      || ((hasLoadFailure("relatórios") || hasLoadFailure("produção") || hasLoadFailure("cobranças"))
-        ? UI.tableEmpty(6, "Não foi possível carregar o histórico.", "Atualize a tela para tentar novamente.", {
-            icon: false,
-            actionHtml: renderRetryAction()
-          })
-        : UI.tableEmpty(6, "Nenhum histórico disponível", "Relatórios, entregas e cobranças registradas aparecerão aqui.", {
-            icon: false,
-            actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-lead">Criar primeiro lead</button>`
-          }));
+    if (!historyItems.length) {
+      historyBody.innerHTML = `
+        <tr>
+          <td colspan="6" class="crm-empty-row">
+            ${
+              hasLoadFailure("relatórios") || hasLoadFailure("produção") || hasLoadFailure("cobranças")
+                ? UI.empty("Não foi possível carregar o histórico.", "Atualize a tela para tentar novamente.", {
+                    icon: false,
+                    actionHtml: renderRetryAction()
+                  })
+                : UI.empty("Nenhum histórico disponível", "Relatórios, entregas e cobranças registradas aparecerão aqui.", {
+                    icon: false,
+                    actionHtml: canManageLeads
+                      ? '<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-lead">Criar primeiro lead</button>'
+                      : ""
+                  })
+            }
+          </td>
+        </tr>
+      `;
+    } else {
+      historyBody.innerHTML = historyItems
+        .map(
+          (item) => `
+            <tr>
+              <td class="crm-history-cell-primary">
+                <p class="crm-row-title" title="${escapeHtml(item.title || "—")}">${escapeHtml(item.title || "—")}</p>
+              </td>
+              <td>
+                <p class="crm-row-sub is-tight">${escapeHtml(item.clientName || "—")}</p>
+              </td>
+              <td>
+                <span class="badge badge-gray">${escapeHtml(item.typeLabel)}</span>
+              </td>
+              <td>
+                <span class="badge ${item.badgeClass}">${escapeHtml(item.statusLabel)}</span>
+              </td>
+              <td>
+                <span class="crm-history-date">${escapeHtml(formatDate(item.dateValue))}</span>
+              </td>
+              <td class="crm-cell-right">${item.actionHtml}</td>
+            </tr>
+          `
+        )
+        .join("");
+    }
   }
 }
 
@@ -6658,7 +6715,7 @@ async function refreshData() {
     integrationsButton.remove();
   }
 
-  const crmActions = document.querySelector("#page-crm .topbar-actions");
+  const crmActions = document.querySelector("#page-crm .crm-topbar-actions");
   const newClientButton = document.getElementById("btn-new-client");
   if (crmActions && canManageClients() && !newClientButton) {
     const button = document.createElement("button");
@@ -6669,8 +6726,8 @@ async function refreshData() {
     button.dataset.modal = "novo-cliente";
     crmActions.prepend(button);
   }
-  if (newClientButton && !canManageClients()) {
-    newClientButton.remove();
+  if (newClientButton) {
+    newClientButton.style.display = canManageClients() ? "" : "none";
   }
 
   const newDeliveryButton = document.getElementById("btn-new-delivery");
