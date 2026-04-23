@@ -2601,6 +2601,77 @@ function getTaskDeadlineLabel(task) {
   return `Prazo · ${dateLabel}`;
 }
 
+function getKanbanCardBadge(task) {
+  if (normalizeTaskStatusLabel(task?.status) === "Concluido") {
+    return { className: "badge badge-green", label: "Concluída", title: getTaskDeadlineLabel(task) };
+  }
+
+  const deadlineLabel = getTaskDeadlineLabel(task).split(" · ")[0];
+
+  if (deadlineLabel === "Atrasada") {
+    return { className: "badge badge-red", label: "Atrasada", title: getTaskDeadlineLabel(task) };
+  }
+  if (deadlineLabel === "Hoje") {
+    return { className: "badge badge-yellow", label: "Hoje", title: getTaskDeadlineLabel(task) };
+  }
+  if (deadlineLabel === "Amanhã") {
+    return { className: "badge badge-yellow", label: "Amanhã", title: getTaskDeadlineLabel(task) };
+  }
+  if (deadlineLabel === "Concluída") {
+    return { className: "badge badge-green", label: "Concluída", title: getTaskDeadlineLabel(task) };
+  }
+
+  const typeLabel = formatTaskTypeLabel(task?.type);
+  return { className: "badge badge-kanban-type", label: typeLabel, title: typeLabel };
+}
+
+function getTaskAssigneeUsers(task = {}) {
+  const userMap = new Map();
+  [...toArray(state.team), ...toArray(state.users)].forEach((user) => {
+    const id = Number(user?.id);
+    if (Number.isInteger(id) && id > 0 && !userMap.has(id)) {
+      userMap.set(id, user);
+    }
+  });
+
+  return getTaskAssigneeIds(task)
+    .map((id) => userMap.get(Number(id)))
+    .filter(Boolean);
+}
+
+function renderKanbanAssigneeStack(task) {
+  const assigneeUsers = getTaskAssigneeUsers(task);
+  const assigneeNames = assigneeUsers.length ? assigneeUsers.map((user) => user.name).filter(Boolean) : getTaskAssigneeNames(task);
+  const title = getTaskAssigneeTitle(task);
+  const palette = ["av-blue", "av-pink", "av-green", "av-yellow"];
+  const visibleUsers = assigneeUsers.slice(0, 2);
+  const visibleNames = assigneeNames.slice(0, 2);
+  const totalCount = assigneeNames.length;
+
+  let avatarsHtml = "";
+
+  if (visibleUsers.length) {
+    avatarsHtml = visibleUsers
+      .map((user, index) => renderUserAvatar(user, `avatar ${palette[index % palette.length]} kanban-assignee-avatar`))
+      .join("");
+  } else if (visibleNames.length) {
+    avatarsHtml = visibleNames
+      .map(
+        (name, index) =>
+          `<div class="avatar ${palette[index % palette.length]} kanban-assignee-avatar">${escapeHtml(getInitials(name || "ONE"))}</div>`
+      )
+      .join("");
+  } else {
+    avatarsHtml = '<div class="avatar av-blue kanban-assignee-avatar">EQ</div>';
+  }
+
+  if (totalCount > 2) {
+    avatarsHtml += `<div class="avatar kanban-assignee-avatar kanban-assignee-more">+${totalCount - 2}</div>`;
+  }
+
+  return `<div class="kanban-assignee-stack" title="${escapeHtml(title)}">${avatarsHtml}</div>`;
+}
+
 function showToast(message) {
   const toast = document.getElementById("toast");
   toast.textContent = message;
@@ -4763,19 +4834,20 @@ function renderKanban() {
           <div class="kanban-col-body" data-kanban-dropzone="${column.key}">
             ${
               tasks
-                .map(
-                  (task) => `
-                    <div class="k-card${canEditTasks ? " is-draggable" : ""}" data-task-card="1" data-task-id="${task.id}">
+                .map((task) => {
+                  const cardBadge = getKanbanCardBadge(task);
+                  const isOverdue = getDeadlineClass(task) === "deadline-late";
+                  return `
+                    <div class="k-card${canEditTasks ? " is-draggable" : ""}${isOverdue ? " is-overdue" : ""}" data-task-card="1" data-task-id="${task.id}">
                       <div class="k-card-head">
                         <div class="k-card-client" title="${escapeHtml(task.client_name || "Interno")}">${escapeHtml(task.client_name || "Interno")}</div>
                         ${canEditTasks ? '<span class="kanban-drag-handle" aria-hidden="true">⋮⋮</span>' : ""}
                       </div>
                       <div class="k-card-title" title="${escapeHtml(task.title)}">${escapeHtml(task.title)}</div>
                       ${task.description ? `<div class="k-card-desc" title="${escapeHtml(task.description)}">${escapeHtml(task.description)}</div>` : ""}
-                      <div class="status-gap-top"><span class="badge badge-blue">${escapeHtml(formatTaskTypeLabel(task.type))}</span></div>
                       <div class="k-card-meta">
-                        <span class="k-card-assignee" title="${escapeHtml(getTaskAssigneeTitle(task))}">${escapeHtml(getTaskAssigneeLabel(task))}</span>
-                        <span class="k-card-deadline ${getDeadlineClass(task)}">${escapeHtml(getTaskDeadlineLabel(task))}</span>
+                        <span class="${cardBadge.className}" title="${escapeHtml(cardBadge.title)}">${escapeHtml(cardBadge.label)}</span>
+                        ${renderKanbanAssigneeStack(task)}
                       </div>
                       ${
                         canEditTasks || canRemoveTasks
@@ -4798,8 +4870,8 @@ function renderKanban() {
                           : ""
                       }
                     </div>
-                  `
-                )
+                  `;
+                })
                 .join("")
                 || UI.empty("Coluna sem tarefas.", "As próximas entregas desta etapa aparecem aqui.", {
                   icon: false,
