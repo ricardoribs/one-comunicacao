@@ -8,6 +8,16 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script>
+window.tailwind = window.tailwind || {};
+window.tailwind.config = {
+  darkMode: 'class',
+  corePlugins: {
+    preflight: false
+  }
+};
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -1560,6 +1570,35 @@ td{padding:16px;font-size:14px;color:var(--text)}
 #page-kanban .checklist-history-group{gap:12px}
 #page-kanban .kanban-scroll-top{margin-top:8px}
 #page-kanban .kanban{padding-top:0}
+body[data-active-page="kanban"]{overflow:hidden}
+body[data-active-page="kanban"] #sidebar,body[data-active-page="kanban"] #mobile-nav-toggle,body[data-active-page="kanban"] #sidebar-backdrop,body[data-active-page="kanban"] .mobile-tabbar{display:none!important}
+body[data-active-page="kanban"] #app-main{margin-left:0!important;min-height:100vh;height:100vh;background:transparent}
+body[data-active-page="kanban"] #page-kanban.active{display:block;min-height:100vh;height:100vh}
+#page-kanban{background:#fff;color:#222222}
+#page-kanban.dark{background:#1A1A1A;color:#fff}
+#page-kanban .one-kanban-exact{font-family:'Inter',sans-serif;transition:background-color .3s,color .3s}
+#page-kanban .custom-scroll::-webkit-scrollbar{height:8px;width:6px}
+#page-kanban .custom-scroll::-webkit-scrollbar-track{background:transparent}
+#page-kanban .custom-scroll::-webkit-scrollbar-thumb{background:#dddddd;border-radius:4px}
+#page-kanban.dark .custom-scroll::-webkit-scrollbar-thumb{background:#3f3f3f}
+#page-kanban .custom-scroll::-webkit-scrollbar-thumb:hover{background:#c1c1c1}
+#page-kanban .dark-scroll::-webkit-scrollbar{width:4px}
+#page-kanban .dark-scroll::-webkit-scrollbar-track{background:transparent}
+#page-kanban .dark-scroll::-webkit-scrollbar-thumb{background:#3f3f3f;border-radius:2px}
+#page-kanban .dark-scroll::-webkit-scrollbar-thumb:hover{background:#6a6a6a}
+#page-kanban.dark .hairline-border{border-color:#333333}
+#page-kanban .hairline-border{border:1px solid #dddddd}
+#page-kanban .rausch-bg{background-color:#ff385c}
+#page-kanban .rausch-text{color:#ff385c}
+#page-kanban .line-clamp-3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+#page-kanban .kanban-col{min-height:0}
+#page-kanban .kanban-col.is-drop-target .kanban-exact-column-body{background:rgba(255,56,92,.05);box-shadow:inset 0 0 0 1px rgba(255,56,92,.22);border-radius:10px}
+#page-kanban .k-card.is-draggable{cursor:grab;user-select:none;touch-action:none}
+#page-kanban .k-card.is-pointer-dragging{cursor:grabbing;transition:none;box-shadow:0 18px 34px rgba(13,13,15,.18)}
+#page-kanban .k-card.is-dragging{opacity:1}
+#page-kanban .k-card-placeholder{pointer-events:none;border:1px dashed rgba(255,56,92,.28);background:rgba(255,56,92,.05);box-shadow:none;border-radius:8px}
+#page-kanban .kanban-exact-column-body{min-height:0}
+#page-kanban .kanban-exact-overdue-empty{opacity:.72}
 #login-screen{background:var(--gray)}
 .login-shell{width:100%;min-height:100vh;display:flex;flex-direction:column;background:var(--gray)}
 .login-topbar{height:72px;padding:0 40px;background:var(--gray);border-bottom:none}
@@ -1831,42 +1870,143 @@ td{padding:16px;font-size:14px;color:var(--text)}
 
 <!-- KANBAN -->
 <section id="page-kanban" class="app-screen">
-  <div class="topbar">
-    <div><div class="topbar-title">Gestão de Projetos</div><div class="topbar-sub">Kanban · Tarefas em tempo real</div></div>
-    <div class="topbar-actions">
-      <select class="btn btn-outline btn-sm btn-select" onchange="filterKanban(this.value)">
-        <option value="">Todos os clientes</option>
-        <option value="Demo Health Clinic">Demo Health Clinic</option>
-        <option value="Demo Retail Store">Demo Retail Store</option>
-        <option value="Demo Learning Institute">Demo Learning Institute</option>
-        <option value="Horizonte">Horizonte</option>
-      </select>
-      <button class="btn btn-pink btn-sm" data-action="open-modal" data-modal="nova-tarefa">+ Nova tarefa</button>
-    </div>
-  </div>
-  <div class="page-body">
-    <div class="two-col kanban-top-grid">
-      <div class="card kanban-checklist-card">
-        <div id="kanban-daily-checklist" class="kanban-checklist-shell">
-          <div class="kanban-checklist-toolbar">
-            <div class="skeleton skeleton-text" style="width:100%;height:40px"></div>
-          </div>
+  <div id="kanban-exact-root" class="one-kanban-exact flex h-screen overflow-hidden bg-white text-[#222222] dark:bg-[#1A1A1A] dark:text-white">
+    <aside class="w-64 flex-shrink-0 flex flex-col bg-[#222222] border-r border-[#333333] z-20">
+      <div class="p-6 h-20 flex items-center gap-3 border-b border-[#333333]">
+        <div class="rausch-bg w-8 h-8 rounded-[8px] flex items-center justify-center text-white font-bold text-sm">O</div>
+        <div>
+          <span class="text-lg font-bold tracking-tight text-white block leading-none">ONE</span>
+          <span class="text-[10px] uppercase font-semibold text-gray-400 tracking-widest mt-1 block">Painel Interno</span>
         </div>
       </div>
-      <div class="card brand-manual-card">
-        <div class="section-header">
-          <div>
-            <div class="section-title">Manual da marca</div>
-            <div class="section-sub">Tom de voz, roteiro, restrições e orientações da conta selecionada.</div>
+
+      <div class="p-6 border-b border-[#333333] mb-2">
+        <p id="kanban-shell-user-name" class="text-sm font-bold text-white">Ricardo Ribeiro</p>
+        <p id="kanban-shell-user-role" class="text-[11px] font-medium text-gray-400 mt-0.5">Software Engineer</p>
+      </div>
+
+      <nav class="flex-1 px-3 space-y-1 overflow-y-auto dark-scroll">
+        <div class="flex items-center gap-3 px-3 mb-3 mt-4">
+          <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Principal</span>
+          <div class="h-px bg-[#333333] flex-1"></div>
+        </div>
+        <a href="#" data-action="go-to" data-page="home" class="kanban-shell-nav-link flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-[8px] transition-colors">
+          <div class="flex items-center gap-3">
+            <div class="w-1.5 h-1.5 rounded-full bg-transparent"></div> Visão Geral
+          </div>
+        </a>
+
+        <div class="flex items-center gap-3 px-3 mb-3 mt-8">
+          <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Operações</span>
+          <div class="h-px bg-[#333333] flex-1"></div>
+        </div>
+        
+        <a href="#" data-action="go-to" data-page="kanban" class="kanban-shell-nav-link flex items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-white bg-white/10 rounded-[8px]">
+          <div class="flex items-center gap-3">
+            <div class="w-1.5 h-1.5 rounded-full rausch-bg"></div> Kanban
+          </div>
+          <span data-count-for="kanban" class="bg-[#333333] text-gray-300 text-[10px] px-2 py-0.5 rounded-full font-bold">16</span>
+        </a>
+
+        <a href="#" data-action="go-to" data-page="calendario" class="kanban-shell-nav-link flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-[8px] transition-colors">
+          <div class="w-1.5 h-1.5 rounded-full bg-transparent"></div> Calendário
+        </a>
+        <a href="#" data-action="go-to" data-page="crm" class="kanban-shell-nav-link flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-[8px] transition-colors">
+          <div class="w-1.5 h-1.5 rounded-full bg-transparent"></div> CRM / Leads
+        </a>
+        <a href="#" data-action="go-to" data-page="campanhas" class="kanban-shell-nav-link flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-[8px] transition-colors">
+          <div class="w-1.5 h-1.5 rounded-full bg-transparent"></div> Campanhas
+        </a>
+
+        <div class="flex items-center gap-3 px-3 mb-3 mt-8">
+          <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Produção</span>
+          <div class="h-px bg-[#333333] flex-1"></div>
+        </div>
+        <a href="#" data-action="go-to" data-page="producao" class="kanban-shell-nav-link flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-[8px] transition-colors">
+          <div class="flex items-center gap-3">
+            <div class="w-1.5 h-1.5 rounded-full bg-transparent"></div> Produção
+          </div>
+          <span data-count-for="producao" class="bg-[#333333] text-gray-300 text-[10px] px-2 py-0.5 rounded-full font-bold">14</span>
+        </a>
+        <a href="#" data-action="go-to" data-page="trafego" class="kanban-shell-nav-link flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-[8px] transition-colors">
+          <div class="w-1.5 h-1.5 rounded-full bg-transparent"></div> Tráfego Pago
+        </a>
+
+        <div class="flex items-center gap-3 px-3 mb-3 mt-8">
+          <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Inteligência</span>
+          <div class="h-px bg-[#333333] flex-1"></div>
+        </div>
+        <a href="#" data-action="go-to" data-page="analytics" class="kanban-shell-nav-link flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-[8px] transition-colors">
+          <div class="w-1.5 h-1.5 rounded-full bg-transparent"></div> Analytics
+        </a>
+        <a href="#" data-action="go-to" data-page="financeiro" class="kanban-shell-nav-link flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-[8px] transition-colors">
+          <div class="w-1.5 h-1.5 rounded-full bg-transparent"></div> Financeiro
+        </a>
+
+        <div class="flex items-center gap-3 px-3 mb-3 mt-8">
+          <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Configurações</span>
+          <div class="h-px bg-[#333333] flex-1"></div>
+        </div>
+        <a href="#" data-action="go-to" data-page="perfil" class="kanban-shell-nav-link flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-[8px] transition-colors">
+          <div class="w-1.5 h-1.5 rounded-full bg-transparent"></div> Meu Perfil
+        </a>
+        <a href="#" data-action="go-to" data-page="acesso" class="kanban-shell-nav-link flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-[8px] transition-colors mb-4">
+          <div class="w-1.5 h-1.5 rounded-full bg-transparent"></div> Controle de Acesso
+        </a>
+      </nav>
+      
+      <div class="p-6 border-t border-[#333333] mt-auto">
+        <a href="#" data-action="do-logout" class="text-[13px] font-medium text-gray-400 hover:text-white transition-colors">Sair do painel</a>
+      </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#1A1A1A] h-screen">
+      <header class="min-h-[80px] py-5 border-b border-[#dddddd] dark:border-[#333333] px-8 flex flex-col md:flex-row md:items-center justify-between gap-4 flex-shrink-0 bg-white dark:bg-[#222222] z-10 transition-colors">
+        <div>
+          <h1 class="text-[28px] font-bold tracking-tight leading-tight">Gestão de Projetos</h1>
+          <p class="text-[13px] text-[#6a6a6a] dark:text-gray-400 font-medium mt-0.5">Kanban · Tarefas em tempo real</p>
+        </div>
+        
+        <div class="flex items-center gap-3 flex-wrap">
+          <button type="button" onclick="toggleTheme()" class="w-9 h-[36px] flex items-center justify-center rounded-full border border-[#dddddd] dark:border-[#333333] hover:bg-gray-50 dark:hover:bg-white/5 transition-colors mr-2" title="Alternar tema">
+            <svg id="theme-icon-sun" class="w-4 h-4 hidden dark:block text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0V3a1 1 0 102 0v2zm4.243 1.757a1 1 0 10-1.414-1.414l-1.414 1.414a1 1 0 101.414 1.414l1.414-1.414zM17 11a1 1 0 100-2h-2a1 1 0 100 2h2zm-1.757 4.243a1 1 0 10-1.414-1.414l-1.414 1.414a1 1 0 101.414 1.414l1.414-1.414zM11 17a1 1 0 10-2 0v2a1 1 0 102 0v-2zm-4.243-1.757a1 1 0 101.414 1.414l1.414-1.414a1 1 0 10-1.414-1.414l-1.414 1.414zM3 9a1 1 0 100 2h2a1 1 0 100-2H3zm1.757-4.243a1 1 0 101.414 1.414l1.414-1.414a1 1 0 10-1.414-1.414l-1.414 1.414z" clip-rule="evenodd"/></svg>
+            <svg id="theme-icon-moon" class="w-4 h-4 block dark:hidden text-[#222222]" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+          </button>
+          
+          <select id="kanban-client-filter" class="h-[36px] px-3 text-[13px] font-medium border border-[#dddddd] dark:border-[#333333] rounded-[8px] bg-white dark:bg-transparent hover:bg-gray-50 dark:hover:bg-white/5 transition-colors outline-none cursor-pointer" onchange="filterKanban(this.value)">
+            <option value="">Todos os clientes</option>
+            <option>Demo Restaurant</option>
+            <option>Demo Events Expo</option>
+          </select>
+          <button type="button" data-action="open-modal" data-modal="nova-tarefa" class="h-[36px] inline-flex items-center justify-center px-5 text-[13px] font-medium text-white rausch-bg rounded-[8px] hover:scale-[0.98] transition-transform shadow-sm">+ Nova tarefa</button>
+          <button type="button" class="w-9 h-[36px] hairline-border rounded-full flex items-center justify-center hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ml-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="flex-1 flex flex-col p-8 overflow-hidden">
+        <div class="flex flex-col xl:flex-row items-center gap-6 mb-8 flex-shrink-0 w-full">
+          <div id="kanban-exact-quick-focus" class="flex-1 flex items-center gap-3 bg-white dark:bg-[#222222] border border-[#dddddd] dark:border-[#333333] rounded-[8px] px-2 py-2 shadow-sm w-full">
+            <form id="kanban-focus-form" data-checklist-form class="flex-1 flex items-center gap-3 min-w-0">
+              <div class="w-5 h-5 ml-2 border-2 border-gray-300 dark:border-gray-500 rounded-sm flex-shrink-0"></div>
+              <input id="kanban-focus-input" type="text" name="checklist-item" placeholder="Adicione o primeiro item para focar hoje..." class="flex-1 bg-transparent border-none focus:ring-0 text-[14px] font-medium text-[#222222] dark:text-white outline-none placeholder-gray-400">
+              <button type="submit" class="px-4 py-1.5 bg-[#f2f2f2] dark:bg-[#333333] hover:bg-[#e2e2e2] dark:hover:bg-[#444444] text-[13px] font-semibold text-[#222222] dark:text-white rounded-[6px] transition-colors flex-shrink-0">Adicionar</button>
+            </form>
+          </div>
+
+          <div id="kanban-exact-overdue" class="flex items-center justify-between gap-6 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/50 rounded-[8px] px-5 py-3 w-full xl:w-auto flex-shrink-0">
+            <div class="flex items-center gap-3">
+              <span class="flex items-center justify-center w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-[10px] font-bold">1</span>
+              <p class="text-[13px] font-medium text-red-700 dark:text-red-400">Tarefa atrasada: <span class="font-bold">Alinhamento de cobertura...</span></p>
+            </div>
+            <button type="button" class="text-[12px] font-bold text-red-700 dark:text-red-400 hover:underline">Revisar</button>
           </div>
         </div>
-        <div id="kanban-brand-manual"></div>
+
+        <div id="kanban-board" class="flex-1 overflow-x-auto custom-scroll flex gap-6 pb-4"></div>
       </div>
-    </div>
-    <div class="kanban-scroll-top is-hidden" id="kanban-top-scroll" aria-label="Rolagem horizontal superior do kanban">
-      <div class="kanban-scroll-top-track" id="kanban-top-scroll-track"></div>
-    </div>
-    <div class="kanban" id="kanban-board"></div>
+    </main>
   </div>
 </section>
 
