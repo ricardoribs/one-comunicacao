@@ -2406,20 +2406,22 @@ function renderKpiCards(container, cards) {
 }
 
 function setSidebarCount(page, value) {
-  const countNode = document.querySelector(`.sb-link[data-page="${page}"] .count`);
-  if (!countNode) {
+  const countNodes = document.querySelectorAll(`[data-count-for="${page}"]`);
+  if (!countNodes.length) {
     return;
   }
 
   const total = Number(value || 0);
-  if (total <= 0) {
-    countNode.textContent = "0";
-    countNode.style.display = "none";
-    return;
-  }
+  countNodes.forEach((countNode) => {
+    if (total <= 0) {
+      countNode.textContent = "0";
+      countNode.style.display = "none";
+      return;
+    }
 
-  countNode.textContent = formatNumber(total);
-  countNode.style.display = "inline-flex";
+    countNode.textContent = formatNumber(total);
+    countNode.style.display = "inline-flex";
+  });
 }
 
 function renderSidebarCounts() {
@@ -3812,6 +3814,34 @@ function setRoleUI(user) {
   badge.textContent = ROLE_LABELS[user.role] || user.role;
   badge.className = `sb-role-badge ${getRoleBadgeClass(user.role)}`;
   document.getElementById("home-welcome").textContent = `Olá, ${user.name}.`;
+
+  const kanbanUserName = document.getElementById("kanban-shell-user-name");
+  const kanbanUserRole = document.getElementById("kanban-shell-user-role");
+  if (kanbanUserName) {
+    kanbanUserName.textContent = user.name || "Ricardo Ribeiro";
+  }
+  if (kanbanUserRole) {
+    kanbanUserRole.textContent = user.job_title || ROLE_LABELS[user.role] || user.role || "Software Engineer";
+  }
+}
+
+function syncKanbanTheme() {
+  const kanbanPage = document.getElementById("page-kanban");
+  if (!kanbanPage) {
+    return;
+  }
+
+  kanbanPage.classList.toggle("dark", localStorage.getItem("one-theme") === "dark");
+}
+
+function toggleTheme() {
+  const kanbanPage = document.getElementById("page-kanban");
+  if (!kanbanPage) {
+    return;
+  }
+
+  kanbanPage.classList.toggle("dark");
+  localStorage.setItem("one-theme", kanbanPage.classList.contains("dark") ? "dark" : "light");
 }
 
 function isMobileViewport() {
@@ -3909,6 +3939,8 @@ function closeSidebar() {
 
 function syncNavigation() {
   const allowed = PAGE_ACCESS[state.session.user.role] || [];
+  document.body.dataset.activePage = state.activePage;
+
   document.querySelectorAll(".sb-link").forEach((link) => {
     const page = link.dataset.page;
     link.style.display = allowed.includes(page) ? "flex" : "none";
@@ -4650,129 +4682,60 @@ function bindDailyChecklistInteractions(container) {
 }
 
 function renderKanbanChecklist(filteredTasks) {
-  const container = document.getElementById("kanban-daily-checklist");
-  if (!container) {
+  const form = document.getElementById("kanban-focus-form");
+  const input = document.getElementById("kanban-focus-input");
+  const overdueContainer = document.getElementById("kanban-exact-overdue");
+
+  if (!form || !input || !overdueContainer) {
     return;
   }
 
-  const checklistStore = getChecklistStore();
-  const historyGroups = getChecklistHistoryGroups(checklistStore.history);
+  if (form.dataset.boundChecklist !== "1") {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const nextLabel = String(input.value || "").trim();
+      if (!nextLabel) {
+        showToast("Digite um item para adicionar ao checklist.");
+        input.focus();
+        return;
+      }
+
+      try {
+        const currentStore = getChecklistStore();
+        await persistChecklistItems([...currentStore.activeItems, createChecklistItem(nextLabel)]);
+        input.value = "";
+        renderKanban();
+        showToast("Item adicionado ao foco do dia.");
+      } catch (error) {
+        showToast(error.message);
+      }
+    });
+
+    form.dataset.boundChecklist = "1";
+  }
+
   const dueTasks = getKanbanTasksForToday(filteredTasks);
   const overdueTasks = dueTasks.filter((task) => isOverdueDate(task.due_date || task.deadline));
   const dueSummaryTask = overdueTasks[0] || dueTasks[0] || null;
-  const dueSummaryBadge = dueSummaryTask
-    ? overdueTasks.length
-      ? `<span class="badge badge-red">${overdueTasks.length} ${overdueTasks.length === 1 ? "Atrasada" : "Atrasadas"}</span>`
-      : '<span class="badge badge-yellow">Hoje</span>'
-    : "";
+  const summaryCount = overdueTasks.length || (dueSummaryTask ? 1 : 0);
+  const summaryPrefix = overdueTasks.length
+    ? "Tarefa atrasada:"
+    : dueSummaryTask
+      ? "Acompanhamento:"
+      : "Tudo em dia:";
+  const summaryTitle = dueSummaryTask ? dueSummaryTask.title : "Sem tarefas atrasadas no momento.";
+  const reviewButtonHtml = dueSummaryTask && canManageTasks()
+    ? `<button type="button" data-action="open-modal" data-modal="nova-tarefa" data-id="${dueSummaryTask.id}" class="text-[12px] font-bold text-red-700 dark:text-red-400 hover:underline">Revisar</button>`
+    : '<button type="button" class="text-[12px] font-bold text-red-700 dark:text-red-400 hover:underline invisible">Revisar</button>';
 
-  container.innerHTML = `
-    <div class="kanban-checklist-shell">
-      <div class="kanban-checklist-toolbar">
-        <form class="kanban-focus-form" data-checklist-form>
-          <span class="kanban-focus-icon" aria-hidden="true"></span>
-          <div class="kanban-focus-field">
-            <input
-              type="text"
-              name="checklist-item"
-              class="checklist-input"
-              maxlength="120"
-              placeholder="Adicione o primeiro item para focar hoje..."
-              autocomplete="new-password"
-              autocorrect="off"
-              autocapitalize="none"
-              spellcheck="false"
-              aria-label="Novo item do checklist"
-            >
-          </div>
-          <button type="submit" class="btn btn-outline btn-sm">Adicionar</button>
-        </form>
-        ${
-          dueSummaryTask || historyGroups.length
-            ? `<div class="kanban-quick-meta">
-                ${
-                  dueSummaryTask
-                    ? `<div class="kanban-due-summary">
-                        ${dueSummaryBadge}
-                        <span class="kanban-due-title" title="${escapeHtml(dueSummaryTask.title)}">${escapeHtml(dueSummaryTask.title)}</span>
-                      </div>`
-                    : ""
-                }
-                ${
-                  historyGroups.length
-                    ? '<button type="button" class="kanban-history-toggle" data-checklist-history-toggle="1" aria-expanded="false">Ver histórico</button>'
-                    : ""
-                }
-              </div>`
-            : ""
-        }
-      </div>
-      ${
-        checklistStore.activeItems.length
-          ? checklistStore.activeItems
-              .map(
-                (item) => `
-                  <div class="kanban-checklist-item${item.done ? " is-done" : ""}">
-                    <label class="kanban-checklist-main">
-                      <input type="checkbox" data-daily-checklist="${item.id}" ${item.done ? "checked" : ""}>
-                      <span class="kanban-checklist-label">${escapeHtml(item.label)}</span>
-                    </label>
-                    <button type="button" class="kanban-checklist-remove" data-checklist-remove="${item.id}" aria-label="Remover item">&times;</button>
-                  </div>
-                `
-              )
-              .join("")
-          : ""
-      }
-      ${
-        historyGroups.length
-          ? `<div class="kanban-history-panel" data-checklist-history-panel hidden>
-              <div class="kanban-history-head">
-                <div class="kanban-history-title">Últimos 30 dias</div>
-                <button type="button" class="kanban-history-clear" data-checklist-clear-history="1">Limpar histórico</button>
-              </div>
-              <div class="kanban-history-list">`
-          : ""
-      }
-      ${
-        historyGroups.length
-          ? historyGroups
-              .map(
-                (group) => `
-                  <div class="checklist-history-group">
-                    <div class="checklist-history-title">${escapeHtml(group.title)}</div>
-                    ${group.entries
-                      .map(
-                        (entry) => `
-                          <div class="checklist-history-card">
-                            <div class="checklist-history-meta">${formatDate(entry.date)} · ${entry.items.length} ${entry.items.length === 1 ? "item" : "itens"}</div>
-                            <div class="checklist-history-list">
-                              ${entry.items
-                                .map(
-                                  (item) => `
-                                    <div class="checklist-history-item">
-                                      <span class="badge badge-green">Feito</span>
-                                      <span>${escapeHtml(item.label)}</span>
-                                    </div>
-                                  `
-                                )
-                                .join("")}
-                            </div>
-                          </div>
-                        `
-                      )
-                      .join("")}
-                  </div>
-                `
-              )
-              .join("")
-          : ""
-      }
-      ${historyGroups.length ? "</div></div>" : ""}
+  overdueContainer.innerHTML = `
+    <div class="flex items-center gap-3">
+      <span class="flex items-center justify-center w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-[10px] font-bold">${summaryCount}</span>
+      <p class="text-[13px] font-medium text-red-700 dark:text-red-400${dueSummaryTask ? "" : " kanban-exact-overdue-empty"}">${summaryPrefix} <span class="font-bold">${escapeHtml(summaryTitle)}</span></p>
     </div>
+    ${reviewButtonHtml}
   `;
-
-  bindDailyChecklistInteractions(container);
 }
 
 function resolveKanbanClient(filteredTasks) {
@@ -4835,79 +4798,116 @@ function renderKanbanBrandManual(filteredTasks) {
                 ? `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-cliente" data-id="${client.id}">Editar cliente</button>`
                 : ""
             }
-          )
+      )
     }
+  `;
+}
+
+function getKanbanCardMenuButton(task, canEditTasks) {
+  if (!canEditTasks) {
+    return `
+      <button type="button" class="text-gray-400 hover:text-[#222222] dark:hover:text-white" tabindex="-1" aria-hidden="true">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/></svg>
+      </button>
+    `;
+  }
+
+  return `
+    <button type="button" data-action="open-modal" data-modal="nova-tarefa" data-id="${task.id}" class="text-gray-400 hover:text-[#222222] dark:hover:text-white">
+      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/></svg>
+    </button>
+  `;
+}
+
+function getKanbanPrimaryAssigneeInitials(task) {
+  const assigneeUsers = getTaskAssigneeUsers(task);
+  const assigneeNames = assigneeUsers.length ? assigneeUsers.map((user) => user.name).filter(Boolean) : getTaskAssigneeNames(task);
+  const fallbackName = state.session?.user?.name || "Ricardo Ribeiro";
+  return getInitials(assigneeNames[0] || fallbackName) || "RR";
+}
+
+function getKanbanDeadlineChip(task) {
+  const deadlineLabel = getTaskDeadlineLabel(task).split(" · ")[0];
+
+  if (deadlineLabel === "Atrasada") {
+    return '<span class="text-[11px] font-bold bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-2 py-0.5 rounded">Atrasada</span>';
+  }
+  if (deadlineLabel === "Hoje") {
+    return '<span class="text-[11px] font-bold bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 px-2 py-0.5 rounded">Hoje</span>';
+  }
+  if (deadlineLabel === "Amanhã") {
+    return '<span class="text-[11px] font-bold bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 px-2 py-0.5 rounded">Amanhã</span>';
+  }
+
+  return "";
+}
+
+function renderKanbanCard(task, columnKey, canEditTasks) {
+  const cardBaseClass = columnKey === "done"
+    ? "bg-white dark:bg-[#222222] border border-[#dddddd] dark:border-[#333333] rounded-[8px] p-4 shadow-sm cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
+    : "bg-white dark:bg-[#222222] border border-[#dddddd] dark:border-[#333333] rounded-[8px] p-4 shadow-sm cursor-pointer hover:shadow-[rgba(0,0,0,0.06)_0_4px_12px] transition-shadow";
+  const titleClass = columnKey === "done"
+    ? "text-[14px] font-bold leading-tight mb-2 line-through text-[#6a6a6a] dark:text-gray-400"
+    : "text-[14px] font-bold leading-tight mb-2";
+  const descriptionHtml = task.description && columnKey !== "done"
+    ? `<p class="text-[13px] font-medium text-[#6a6a6a] dark:text-gray-400 leading-relaxed line-clamp-3">${escapeHtml(task.description)}</p>`
+    : "";
+  const deadlineChip = getKanbanDeadlineChip(task);
+  const footerHtml = columnKey === "doing"
+    ? `
+      <div class="flex items-center justify-between mt-4 pt-4 border-t border-[#f2f2f2] dark:border-[#333333]">
+        ${deadlineChip || '<span class="text-[11px] font-bold px-2 py-0.5 rounded opacity-0">Atrasada</span>'}
+        <div class="w-6 h-6 rounded-full bg-[#f2f2f2] dark:bg-[#444] flex items-center justify-center text-[9px] font-bold">${escapeHtml(getKanbanPrimaryAssigneeInitials(task))}</div>
+      </div>
+    `
+    : "";
+
+  return `
+    <div class="k-card ${cardBaseClass}${canEditTasks ? " is-draggable" : ""}" data-task-card="1" data-task-id="${task.id}">
+      <div class="flex justify-between items-start mb-2">
+        <span class="text-[10px] font-bold text-[#6a6a6a] dark:text-gray-400 uppercase tracking-widest">${escapeHtml(task.client_name || "Interno")}</span>
+        ${getKanbanCardMenuButton(task, canEditTasks)}
+      </div>
+      <h4 class="${titleClass}">${escapeHtml(task.title)}</h4>
+      ${descriptionHtml}
+      ${footerHtml}
+    </div>
   `;
 }
 
 function renderKanban() {
   const columns = [
-    { key: "backlog", label: "Backlog" },
-    { key: "todo", label: "A Fazer" },
-    { key: "doing", label: "Em Progresso" },
-    { key: "done", label: "Concluído" }
+    { key: "backlog", label: "Backlog", dotClass: "bg-gray-300 dark:bg-gray-600" },
+    { key: "todo", label: "A Fazer", dotClass: "bg-blue-400" },
+    { key: "doing", label: "Em Progresso", dotClass: "bg-yellow-400" },
+    { key: "done", label: "Concluído", dotClass: "bg-green-500" }
   ];
   const filtered = state.filters.kanbanClient
     ? state.tasks.filter((task) => String(task.client_id) === String(state.filters.kanbanClient))
     : state.tasks;
   const canEditTasks = canManageTasks();
-  const canRemoveTasks = canDeleteTasks();
 
+  syncKanbanTheme();
   renderKanbanChecklist(filtered);
-  renderKanbanBrandManual(filtered);
 
   document.getElementById("kanban-board").innerHTML = columns
     .map((column) => {
       const tasks = filtered.filter((task) => getTaskColumnName(task) === column.key);
       return `
-        <div class="kanban-col" data-kanban-column="${column.key}" data-kanban-dropzone="${column.key}">
-          <div class="kanban-col-title">${column.label} <span class="col-count">${tasks.length}</span></div>
-          <div class="kanban-col-body" data-kanban-dropzone="${column.key}">
+        <div class="w-[300px] flex-shrink-0 flex flex-col kanban-col" data-kanban-column="${column.key}" data-kanban-dropzone="${column.key}">
+          <div class="flex justify-between items-center mb-4 px-1">
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 rounded-full ${column.dotClass}"></div>
+              <h3 class="text-[11px] font-bold text-[#6a6a6a] dark:text-gray-400 uppercase tracking-widest">${column.label}</h3>
+            </div>
+            <span class="text-[11px] font-bold bg-[#f2f2f2] dark:bg-[#333333] text-[#6a6a6a] dark:text-gray-300 px-2 py-0.5 rounded-full">${tasks.length}</span>
+          </div>
+          <div class="kanban-exact-column-body flex flex-col gap-3 overflow-y-auto custom-scroll pr-1 pb-2" data-kanban-dropzone="${column.key}">
             ${
               tasks
-                .map((task) => {
-                  const cardBadge = getKanbanCardBadge(task);
-                  const isOverdue = getDeadlineClass(task) === "deadline-late";
-                  return `
-                    <div class="k-card${canEditTasks ? " is-draggable" : ""}${isOverdue ? " is-overdue" : ""}" data-task-card="1" data-task-id="${task.id}">
-                      <div class="k-card-head">
-                        <div class="k-card-client" title="${escapeHtml(task.client_name || "Interno")}">${escapeHtml(task.client_name || "Interno")}</div>
-                        ${canEditTasks ? '<span class="kanban-drag-handle" aria-hidden="true">⋮⋮</span>' : ""}
-                      </div>
-                      <div class="k-card-title" title="${escapeHtml(task.title)}">${escapeHtml(task.title)}</div>
-                      ${task.description ? `<div class="k-card-desc" title="${escapeHtml(task.description)}">${escapeHtml(task.description)}</div>` : ""}
-                      <div class="k-card-meta">
-                        <span class="${cardBadge.className}" title="${escapeHtml(cardBadge.title)}">${escapeHtml(cardBadge.label)}</span>
-                        ${renderKanbanAssigneeStack(task)}
-                      </div>
-                      ${
-                        canEditTasks || canRemoveTasks
-                          ? `<div class="actions-gap-top">
-                              ${canEditTasks ? `<button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-tarefa" data-id="${task.id}">Editar</button>` : ""}
-                              ${renderActionMenu(
-                                [
-                                  canRemoveTasks
-                                    ? renderActionMenuButton({
-                                        label: "Excluir tarefa",
-                                        action: "delete-task",
-                                        id: task.id,
-                                        className: "btn btn-danger-soft btn-sm"
-                                      })
-                                    : ""
-                                ],
-                                { label: "Mais ações da tarefa" }
-                              )}
-                            </div>`
-                          : ""
-                      }
-                    </div>
-                  `;
-                })
+                .map((task) => renderKanbanCard(task, column.key, canEditTasks))
                 .join("")
-                || UI.empty("Coluna sem tarefas.", "As próximas entregas desta etapa aparecem aqui.", {
-                  icon: false,
-                  className: "is-plain is-compact"
-                })
+                || `<div class="rounded-[8px] border border-dashed border-[#dddddd] dark:border-[#333333] px-4 py-6 text-[13px] font-medium text-[#6a6a6a] dark:text-gray-400 bg-transparent">Sem tarefas nesta etapa.</div>`
             }
             <div class="kanban-col-dropzone" data-kanban-dropzone="${column.key}" aria-hidden="true"></div>
           </div>
@@ -6728,7 +6728,7 @@ async function refreshData() {
     state.filters.analyticsClient = "";
   }
 
-  const kanbanFilter = document.querySelector("#page-kanban select");
+  const kanbanFilter = document.getElementById("kanban-client-filter");
   if (kanbanFilter) {
     kanbanFilter.innerHTML = `<option value="">Todos os clientes</option>${scopedClients
       .map((client) => `<option value="${client.id}">${escapeHtml(client.name)}</option>`)
@@ -8578,6 +8578,7 @@ window.clearChecklistHistory = clearChecklistHistory;
 window.showToast = showToast;
 window.toggleSidebar = toggleSidebar;
 window.closeSidebar = closeSidebar;
+window.toggleTheme = toggleTheme;
 
 boot();
 
