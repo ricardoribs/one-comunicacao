@@ -32,15 +32,21 @@
             white-space: nowrap;
             display: flex;
             width: 100%;
+            cursor: grab;
+            user-select: none;
+            touch-action: pan-y;
         }
+        .marquee-wrapper.is-dragging { cursor: grabbing; }
         .marquee-track {
             display: flex;
             gap: 4rem;
-            animation: marquee 30s linear infinite;
+            flex-shrink: 0;
+            will-change: transform;
+            transform: translate3d(0, 0, 0);
         }
-        @keyframes marquee {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
+        .marquee-track img {
+            pointer-events: none;
+            -webkit-user-drag: none;
         }
 
         /* FAQ Accordion Nativo Limpo */
@@ -404,6 +410,7 @@
         // Lógica simples para os vídeos
         document.addEventListener('DOMContentLoaded', () => {
             const mediaEls = document.querySelectorAll('video[data-src]');
+            const marqueeWrappers = document.querySelectorAll('.marquee-wrapper');
 
             const loadVideo = (video) => {
                 if (!video || video.dataset.loaded === 'true') return;
@@ -423,6 +430,99 @@
             }, { rootMargin: '200px' });
 
             mediaEls.forEach((video) => observer.observe(video));
+
+            marqueeWrappers.forEach((wrapper) => {
+                const track = wrapper.querySelector('.marquee-track');
+                if (!track) return;
+
+                let loopWidth = 0;
+                let offset = 0;
+                let isDragging = false;
+                let activePointerId = null;
+                let lastPointerX = 0;
+                let lastFrameTime = performance.now();
+                let resumeAutoAt = 0;
+                const autoSpeed = 40;
+                const resumeDelay = 900;
+
+                const normalizeOffset = () => {
+                    if (!loopWidth) return;
+                    while (offset <= -loopWidth) offset += loopWidth;
+                    while (offset > 0) offset -= loopWidth;
+                };
+
+                const renderOffset = () => {
+                    normalizeOffset();
+                    track.style.transform = `translate3d(${offset}px, 0, 0)`;
+                };
+
+                const measureLoop = () => {
+                    loopWidth = track.scrollWidth / 2;
+                    renderOffset();
+                };
+
+                const startDrag = (event) => {
+                    if (event.pointerType === 'mouse' && event.button !== 0) return;
+                    isDragging = true;
+                    activePointerId = event.pointerId;
+                    lastPointerX = event.clientX;
+                    resumeAutoAt = 0;
+                    wrapper.classList.add('is-dragging');
+                    wrapper.setPointerCapture?.(event.pointerId);
+                    event.preventDefault();
+                };
+
+                const moveDrag = (event) => {
+                    if (!isDragging || event.pointerId !== activePointerId) return;
+                    const deltaX = event.clientX - lastPointerX;
+                    lastPointerX = event.clientX;
+                    offset += deltaX;
+                    renderOffset();
+                };
+
+                const endDrag = (event) => {
+                    if (!isDragging || event.pointerId !== activePointerId) return;
+                    isDragging = false;
+                    activePointerId = null;
+                    resumeAutoAt = performance.now() + resumeDelay;
+                    wrapper.classList.remove('is-dragging');
+                    wrapper.releasePointerCapture?.(event.pointerId);
+                };
+
+                const tick = (now) => {
+                    const delta = now - lastFrameTime;
+                    lastFrameTime = now;
+
+                    if (!isDragging && now >= resumeAutoAt && loopWidth > 0) {
+                        offset -= (delta / 1000) * autoSpeed;
+                        renderOffset();
+                    }
+
+                    window.requestAnimationFrame(tick);
+                };
+
+                wrapper.addEventListener('pointerdown', startDrag);
+                wrapper.addEventListener('pointermove', moveDrag);
+                wrapper.addEventListener('pointerup', endDrag);
+                wrapper.addEventListener('pointercancel', endDrag);
+                wrapper.addEventListener('lostpointercapture', () => {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    activePointerId = null;
+                    resumeAutoAt = performance.now() + resumeDelay;
+                    wrapper.classList.remove('is-dragging');
+                });
+
+                if ('ResizeObserver' in window) {
+                    new ResizeObserver(measureLoop).observe(track);
+                } else {
+                    window.addEventListener('resize', measureLoop);
+                }
+
+                window.addEventListener('load', measureLoop, { once: true });
+                measureLoop();
+                window.requestAnimationFrame(tick);
+            });
         });
     </script>
 </body>
