@@ -5663,51 +5663,100 @@ function renderCampaigns() {
 
 function renderProduction() {
   const canEditProduction = canManageMaterials();
+  const productionTableEmpty = (cols, title, sub, actionHtml = "") => `
+    <tr>
+      <td colspan="${cols}" class="px-6 py-10 text-center">
+        <div class="text-[15px] font-semibold text-[#222222]">${escapeHtml(title)}</div>
+        ${sub ? `<div class="text-[13px] text-[#6a6a6a] font-medium mt-1">${escapeHtml(sub)}</div>` : ""}
+        ${actionHtml ? `<div class="mt-4 flex items-center justify-center">${actionHtml}</div>` : ""}
+      </td>
+    </tr>
+  `;
+  const getProductionStatusClasses = (status) => {
+    const normalized = String(status || "").trim().toLowerCase();
+    if (normalized === "aprovado" || normalized === "concluído" || normalized === "concluido") {
+      return "bg-green-50 text-green-700";
+    }
+    if (normalized === "revisão" || normalized === "revisao") {
+      return "bg-yellow-50 text-yellow-700";
+    }
+    return "bg-red-50 text-red-600";
+  };
+  const renderProductionMenuButton = ({ label, action, id, modal, extra = "", type = "button" }) => `
+    <button
+      type="${type}"
+      class="prod-menu-item"
+      ${action ? `data-action="${action}"` : ""}
+      ${modal ? `data-modal="${modal}"` : ""}
+      ${id != null ? `data-id="${id}"` : ""}
+      ${extra || ""}
+    >
+      ${escapeHtml(label)}
+    </button>
+  `;
+  const renderProductionMenu = (actions = [], label = "Mais ações") => {
+    const items = actions.filter(Boolean).join("");
+    if (!items) {
+      return "";
+    }
+
+    return `
+      <details class="prod-menu relative">
+        <summary
+          class="w-8 h-8 rounded-full hairline-border flex items-center justify-center hover:bg-gray-50 transition-colors cursor-pointer"
+          aria-label="${escapeHtml(label)}"
+          title="${escapeHtml(label)}"
+        >
+          <span class="text-gray-500 font-bold mb-1">...</span>
+        </summary>
+        <div class="prod-menu-panel">
+          ${items}
+        </div>
+      </details>
+    `;
+  };
   document.getElementById("prod-design-tbody").innerHTML = state.materials
-    .map((material) => {
+    .map((material, index) => {
       const deadlineValue = material.due_date || material.deadline || null;
       const deadlineLabel = deadlineValue ? formatDate(deadlineValue) : "—";
       const isOverdue = deadlineValue ? isOverdueDate(deadlineValue) : false;
       const statusLabel = normalizeMaterialStatus(material.status);
-      const statusClass =
-        material.status === "Aprovado"
-          ? "badge-green"
-          : material.status === "Revisao"
-            ? "badge-yellow"
-            : "badge-pink";
 
       return `
-        <tr>
-          <td class="cell-stack">
-            <span class="cell-title" title="${escapeHtml(material.title)}">${escapeHtml(material.title)}</span>
-            <span class="cell-sub" title="${escapeHtml(material.client_name)}">${escapeHtml(material.client_name)}</span>
+        <tr class="${index < state.materials.length - 1 ? "border-b border-[#dddddd]" : ""} hover:bg-gray-50 transition-colors">
+          <td class="px-6 py-4 align-middle w-full max-w-0">
+            <p class="text-[15px] font-semibold ink-black leading-tight mb-1 truncate">${escapeHtml(material.title)}</p>
+            <p class="text-[13px] ash-gray font-medium truncate">${escapeHtml(material.client_name || "Interno")}</p>
           </td>
-          <td><span class="badge ${statusClass}">${escapeHtml(statusLabel)}</span></td>
-          <td class="hide-mobile"><span class="prod-deadline ${isOverdue ? "is-overdue" : ""}">${escapeHtml(deadlineLabel)}</span></td>
-          <td class="cell-actions">
-            <div class="table-actions">
+          <td class="px-6 py-4 align-middle whitespace-nowrap w-px">
+            <span class="inline-block px-2.5 py-1 text-[11px] font-bold rounded-full ${getProductionStatusClasses(statusLabel)}">${escapeHtml(statusLabel)}</span>
+          </td>
+          <td class="px-6 py-4 align-middle text-center whitespace-nowrap w-px">
+            <span class="text-[14px] ${isOverdue ? "text-red-600" : "text-gray-400"} font-medium">${escapeHtml(deadlineLabel)}</span>
+          </td>
+          <td class="px-6 py-4 align-middle text-right whitespace-nowrap w-px">
+            <div class="flex items-center gap-2 justify-end">
               ${renderResourceAction(material.url || material.file_url, {
                 label: "Arquivo",
-                className: "btn btn-outline btn-sm",
+                className: "px-3 py-1.5 text-[13px] font-semibold ink-black hairline-border rounded-[8px] hover:bg-gray-50",
                 missingMessage: "Arquivo ainda não disponível para abertura."
               })}
               ${canEditProduction
-                ? renderActionMenu(
+                ? renderProductionMenu(
                     [
-                      renderActionMenuButton({
+                      renderProductionMenuButton({
                         label: "Editar entrega",
                         action: "open-modal",
                         modal: "nova-entrega",
                         id: material.id
                       }),
-                      renderActionMenuButton({
+                      renderProductionMenuButton({
                         label: "Excluir entrega",
                         action: "delete-material",
-                        id: material.id,
-                        className: "btn btn-danger-soft btn-sm"
+                        id: material.id
                       })
                     ],
-                    { label: "Mais ações da entrega" }
+                    "Mais ações da entrega"
                   )
                 : ""}
             </div>
@@ -5716,71 +5765,83 @@ function renderProduction() {
       `;
     })
     .join("") || (hasLoadFailure("produção")
-      ? UI.tableEmpty(4, "Não foi possível carregar as entregas.", "Atualize a tela para tentar novamente.", {
-          icon: false,
-          actionHtml: renderRetryAction()
-        })
-      : UI.tableEmpty(4, "Nenhuma entrega cadastrada", "Cadastre a primeira entrega para iniciar o fluxo de produção.", {
-          icon: false,
-          actionHtml: canEditProduction
-            ? `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="nova-entrega">Criar primeira entrega</button>`
-            : ""
-        }));
+      ? productionTableEmpty(4, "Não foi possível carregar as entregas.", "Atualize a tela para tentar novamente.", renderRetryAction())
+      : productionTableEmpty(4, "Nenhuma entrega cadastrada", "Cadastre a primeira entrega para iniciar o fluxo de produção.", canEditProduction
+        ? '<button type="button" class="px-5 py-2 text-sm font-medium text-white bg-[#ff385c] rounded-[8px] hover:scale-[0.98] transition-transform" data-action="open-modal" data-modal="nova-entrega">+ Nova entrega</button>'
+        : ""));
 
   document.getElementById("copy-tbody").innerHTML = state.files
     .map(
-      (file) => `
-        <tr>
-          <td class="cell-stack">
-            <span class="cell-title" title="${escapeHtml(file.original_name)}">${escapeHtml(file.original_name)}</span>
-            <span class="cell-sub show-mobile-block" title="${escapeHtml(file.client_name || "Interno")}">${escapeHtml(file.client_name || "Interno")}</span>
+      (file, index) => `
+        <tr class="${index < state.files.length - 1 ? "border-b border-[#dddddd]" : ""} hover:bg-gray-50 transition-colors">
+          <td class="px-6 py-5 align-middle w-1/3 max-w-0">
+            <p class="text-[14px] font-semibold ink-black truncate">${escapeHtml(file.original_name)}</p>
           </td>
-          <td class="cell-stack hide-phone"><span class="cell-sub" title="${escapeHtml(file.client_name || "Interno")}">${escapeHtml(file.client_name || "Interno")}</span></td>
-          <td class="hide-tablet">${escapeHtml(file.mime_type || "—")}</td>
-          <td class="hide-mobile" data-align="right">${Math.round((file.size || 0) / 1024)} KB</td>
-          <td class="cell-stack hide-mobile"><span class="cell-sub" title="${escapeHtml(file.uploaded_by_name || "-")}">${escapeHtml(file.uploaded_by_name || "-")}</span></td>
-          <td class="cell-actions">${renderResourceAction(file.url, { label: "Abrir", className: "btn btn-ghost btn-sm" })}</td>
+          <td class="px-6 py-5 align-middle w-1/3 max-w-0">
+            <p class="text-[13px] ash-gray font-medium truncate">${escapeHtml(file.client_name || "Interno")}</p>
+          </td>
+          <td class="px-6 py-5 align-middle whitespace-nowrap w-px">
+            <p class="text-[13px] font-medium ink-black">${escapeHtml(file.mime_type || "—")}</p>
+          </td>
+          <td class="px-6 py-5 align-middle whitespace-nowrap w-px">
+            <p class="text-[13px] font-medium ink-black">${Math.round((file.size || 0) / 1024)} KB</p>
+          </td>
+          <td class="px-6 py-5 align-middle whitespace-nowrap w-px">
+            <p class="text-[13px] font-medium ash-gray">${escapeHtml(file.uploaded_by_name || "-")}</p>
+          </td>
+          <td class="px-6 py-5 align-middle text-right whitespace-nowrap w-px">
+            ${renderResourceAction(file.url, {
+              label: "Abrir",
+              className: "text-[13px] font-semibold ink-black hover:underline"
+            })}
+          </td>
         </tr>
       `
     )
     .join("") || (hasLoadFailure("arquivos")
-      ? UI.tableEmpty(6, "Não foi possível carregar os arquivos.", "Atualize a tela para tentar novamente.", {
-          icon: false,
-          actionHtml: renderRetryAction()
-        })
-      : UI.tableEmpty(6, "Nenhum arquivo disponível", "Os arquivos internos e aprovados aparecerão aqui.", {
-          icon: false,
-          actionHtml: canEditProduction
-            ? `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="nova-entrega">Adicionar arquivo</button>`
-            : ""
-        }));
+      ? productionTableEmpty(6, "Não foi possível carregar os arquivos.", "Atualize a tela para tentar novamente.", renderRetryAction())
+      : productionTableEmpty(6, "Nenhum arquivo disponível", "Os arquivos internos e aprovados aparecerão aqui.", canEditProduction
+        ? '<button type="button" class="px-5 py-2 text-sm font-medium text-white bg-[#ff385c] rounded-[8px] hover:scale-[0.98] transition-transform" data-action="open-modal" data-modal="nova-entrega">+ Nova entrega</button>'
+        : ""));
 
   document.getElementById("lp-tbody").innerHTML = state.reports
     .map(
-      (report) => `
-        <tr>
-          <td class="cell-stack">
-            <span class="cell-title" title="${escapeHtml(report.title)}">${escapeHtml(report.title)}</span>
-            <span class="cell-sub show-mobile-block" title="${escapeHtml(report.client_name)}">${escapeHtml(report.client_name)}</span>
+      (report, index) => `
+        <tr class="${index < state.reports.length - 1 ? "border-b border-[#dddddd]" : ""} hover:bg-gray-50 transition-colors">
+          <td class="px-6 py-5 align-middle w-1/3 max-w-0">
+            <p class="text-[14px] font-semibold ink-black leading-tight mb-1 truncate">${escapeHtml(report.title)}</p>
+            <p class="text-[13px] ash-gray font-medium truncate">${escapeHtml(report.client_name || "Interno")}</p>
           </td>
-          <td class="cell-stack hide-phone"><span class="cell-sub" title="${escapeHtml(report.client_name)}">${escapeHtml(report.client_name)}</span></td>
-          <td class="hide-mobile">${formatDate(report.report_month)}</td>
-          <td class="cell-stack hide-tablet">${report.summary ? `<span class="cell-sub" title="${escapeHtml(report.summary)}">${escapeHtml(report.summary)}</span>` : ""}</td>
-          <td class="cell-actions">${renderResourceAction(report.file_url, {
-            missingMessage: "Relatório ainda não disponível para abertura."
-          })}</td>
+          <td class="px-6 py-5 align-middle whitespace-nowrap w-px">
+            <p class="text-[14px] font-medium ink-black">${formatDate(report.report_month)}</p>
+          </td>
+          <td class="px-6 py-5 align-middle w-full max-w-0">
+            ${
+              report.summary
+                ? `
+                  <div class="group relative">
+                    <p class="text-[14px] font-medium ink-black truncate cursor-default">${escapeHtml(report.summary)}</p>
+                    <div class="absolute left-0 bottom-full mb-2 hidden group-hover:block w-auto min-w-[300px] bg-gray-800 text-white text-[12px] p-3 rounded-[8px] z-10 shadow-lg whitespace-normal">
+                      ${escapeHtml(report.summary)}
+                    </div>
+                  </div>
+                `
+                : '<p class="text-[14px] font-medium text-gray-400">—</p>'
+            }
+          </td>
+          <td class="px-6 py-5 align-middle text-right whitespace-nowrap w-px">
+            ${renderResourceAction(report.file_url, {
+              label: "Abrir",
+              className: "text-[13px] font-semibold ink-black hover:underline",
+              missingMessage: "Relatório ainda não disponível para abertura."
+            })}
+          </td>
         </tr>
       `
     )
     .join("") || (hasLoadFailure("relatórios")
-      ? UI.tableEmpty(5, "Não foi possível carregar os relatórios.", "Atualize a tela para tentar novamente.", {
-          icon: false,
-          actionHtml: renderRetryAction()
-        })
-      : UI.tableEmpty(5, "Nenhum relatório disponível", "Os relatórios publicados e compartilhados aparecerão aqui.", {
-          icon: false,
-          actionHtml: `<button type="button" class="btn btn-outline btn-sm empty-state-action" data-action="go-to" data-page="analytics">Abrir analytics</button>`
-        }));
+      ? productionTableEmpty(4, "Não foi possível carregar os relatórios.", "Atualize a tela para tentar novamente.", renderRetryAction())
+      : productionTableEmpty(4, "Nenhum relatório disponível", "Os relatórios publicados e compartilhados aparecerão aqui.", '<button type="button" class="px-4 py-2 text-sm font-medium text-[#222222] bg-white border border-[#dddddd] rounded-[8px] hover:bg-gray-50 transition-colors" data-action="go-to" data-page="analytics">Abrir analytics</button>'));
 }
 
 function renderTraffic() {
@@ -6970,9 +7031,20 @@ function setTab(group, tab) {
   }
 
   if (group === "prod") {
-    document.getElementById("prod-design").style.display = tab === "design" ? "block" : "none";
-    document.getElementById("prod-copy").style.display = tab === "copy" ? "block" : "none";
-    document.getElementById("prod-lp").style.display = tab === "lp" ? "block" : "none";
+    const prodPanels = {
+      design: document.getElementById("prod-design"),
+      copy: document.getElementById("prod-copy"),
+      lp: document.getElementById("prod-lp")
+    };
+    Object.entries(prodPanels).forEach(([panelTab, panel]) => {
+      if (!panel) {
+        return;
+      }
+      const isActive = panelTab === tab;
+      panel.style.display = isActive ? "block" : "none";
+      panel.classList.toggle("block", isActive);
+      panel.classList.toggle("hidden", !isActive);
+    });
   }
 
   if (group === "acesso") {
@@ -6981,7 +7053,16 @@ function setTab(group, tab) {
   }
 
   document.querySelectorAll(`[id^="${group}-tab-"]`).forEach((node) => {
-    node.classList.toggle("active", node.id === `${group}-tab-${tab}`);
+    const isActive = node.id === `${group}-tab-${tab}`;
+    node.classList.toggle("active", isActive);
+    if (group === "prod" && node.classList.contains("prod-tab-btn")) {
+      node.classList.toggle("border-[#222222]", isActive);
+      node.classList.toggle("text-[#222222]", isActive);
+      node.classList.toggle("font-semibold", isActive);
+      node.classList.toggle("border-transparent", !isActive);
+      node.classList.toggle("text-[#6a6a6a]", !isActive);
+      node.classList.toggle("font-medium", !isActive);
+    }
   });
 }
 
