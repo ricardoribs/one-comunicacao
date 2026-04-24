@@ -1,425 +1,676 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/assets/svg/one-favicon.svg" />
-    <title>ONE | Comunicação Integrada</title>
-    <meta name="description" content="ONE Comunicação Integrada. Estratégias de comunicação empresarial, marketing, publicidade, jornalismo e relações públicas para conectar marcas e pessoas com propósito." />
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f7f7f7; /* Soft Cloud */
-            color: #222222; /* Ink Black */
-            -webkit-font-smoothing: antialiased;
-        }
-        .ink-black { color: #222222; }
-        .ash-gray { color: #6a6a6a; }
-        .hairline-border { border: 1px solid #dddddd; }
-        .rausch-bg { background-color: #ff385c; }
-        .rausch-text { color: #ff385c; }
-
-        /* Animação do Carrossel de Marcas */
-        .marquee-wrapper {
-            overflow: hidden;
-            white-space: nowrap;
-            display: flex;
-            width: 100%;
-        }
-        .marquee-track {
-            display: flex;
-            gap: 4rem;
-            animation: marquee 30s linear infinite;
-        }
-        @keyframes marquee {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-
-        /* FAQ Accordion Nativo Limpo */
-        details > summary {
-            list-style: none;
-        }
-        details > summary::-webkit-details-marker {
-            display: none;
-        }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" type="image/svg+xml" href="/assets/svg/one-favicon.svg" />
+<title>ONE | Comunicação Integrada</title>
+<meta
+  name="description"
+  content="ONE Comunicação Integrada. Estratégias de comunicação empresarial, marketing, publicidade, jornalismo e relações públicas para conectar marcas e pessoas com propósito."
+/>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Inter:wght@400;500;600;700;800&family=Barlow:wght@500;600;700;800&display=swap"
+  rel="stylesheet"
+/>
+<link rel="stylesheet" href="/assets/css/home.css" />
 </head>
-<body class="bg-white">
+<body>
+<nav id="navbar" class="site-nav">
+  <div class="container nav-shell">
+    <a class="logo" href="#hero" aria-label="ONE Comunicação Integrada">
+      <img src="/assets/svg/one-logo-dark.svg" alt="ONE Comunicação Integrada" />
+    </a>
+    <div class="nav-links" aria-label="Navegação principal">
+      <a href="#hero">Home</a>
+      <a href="#about">Sobre</a>
+      <a href="#services">Serviços</a>
+      <a href="#plans">Planos</a>
+      <a href="#contact">Contato</a>
+    </div>
+    <div class="nav-actions">
+      <a class="btn btn-ghost" href="https://wa.me/5599985480961" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+      <button type="button" class="btn btn-primary" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Solicitar proposta</button>
+    </div>
+    <button
+      type="button"
+      class="hamburger"
+      aria-label="Abrir menu"
+      aria-expanded="false"
+      aria-controls="mobile-menu"
+      onclick="toggleMobile()"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+</nav>
 
-    <header class="bg-[#222222] border-b border-gray-800 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-8 h-20 flex items-center justify-between relative">
-            
-            <div class="flex items-center gap-2">
-                <div class="rausch-bg w-8 h-8 rounded-[8px] flex items-center justify-center text-white font-bold text-sm">O</div>
-                <span class="text-xl font-bold tracking-tight text-white">ONE</span>
-            </div>
+<div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+  <a class="mobile-menu-logo" href="#hero" onclick="toggleMobile()">
+    <img src="/assets/svg/one-logo-dark.svg" alt="ONE Comunicação Integrada" />
+  </a>
+  <a href="#about" onclick="toggleMobile()">Sobre</a>
+  <a href="#clients" onclick="toggleMobile()">Clientes</a>
+  <a href="#services" onclick="toggleMobile()">Serviços</a>
+  <a href="#process" onclick="toggleMobile()">Como trabalhamos</a>
+  <a href="#plans" onclick="toggleMobile()">Planos</a>
+  <a href="#faq" onclick="toggleMobile()">Perguntas frequentes</a>
+  <a href="#contact" onclick="toggleMobile()">Contato</a>
+  <a class="btn btn-ghost" href="https://wa.me/5599985480961" target="_blank" rel="noopener noreferrer">Falar no WhatsApp</a>
+  <button type="button" class="btn btn-primary" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'});toggleMobile()">Solicitar proposta</button>
+</div>
 
-            <nav class="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-8 text-[14px] font-medium text-gray-300">
-                <a href="#about" class="hover:text-white transition-colors">Sobre</a>
-                <a href="#services" class="hover:text-white transition-colors">Serviços</a>
-                <a href="#process" class="hover:text-white transition-colors">Como Trabalhamos</a>
-                <a href="#faq" class="hover:text-white transition-colors">FAQ</a>
-            </nav>
-
-            <div class="flex items-center gap-6">
-                <a href="/painel-interno.html" class="hidden md:block text-[14px] font-medium text-gray-300 hover:text-white transition-colors">Acesso Restrito</a>
-                <a href="https://wa.me/5599985480961" target="_blank" class="px-5 py-2.5 text-[14px] font-semibold text-white rausch-bg rounded-[8px] hover:scale-[0.98] transition-transform shadow-sm">
-                    Solicitar proposta
-                </a>
-            </div>
+<main>
+  <section id="hero" class="hero-section">
+    <div class="container hero-grid">
+      <div class="hero-copy reveal">
+        <span class="section-eyebrow">Comunicação Empresarial Integrada</span>
+        <h1 class="hero-heading">Conectando marcas a pessoas com propósito</h1>
+        <p class="hero-lead">
+          Na One Comunicação Integrada, transformamos ideias em conexões entre marcas e clientes. Com expertise em
+          Comunicação Empresarial, unimos Marketing, Publicidade, Jornalismo e Relações Públicas para entregar estratégias
+          inovadoras que fortalecem sua presença no mercado e aproximam você do seu público.
+        </p>
+        <p class="hero-lead">
+          Mais do que comunicar, criamos estratégias autênticas, que geram impacto positivo para empresas, pessoas e a
+          sociedade. Nosso propósito é simples: integrar, inovar e transformar.
+        </p>
+        <div class="hero-actions">
+          <button type="button" class="btn btn-primary" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Solicitar proposta</button>
+          <a class="btn btn-ghost" href="https://wa.me/5599985480961" target="_blank" rel="noopener noreferrer">Falar com especialista</a>
         </div>
-    </header>
+        <div class="hero-metrics">
+          <div class="metric-card">
+            <strong>+2</strong>
+            <span>anos no mercado</span>
+          </div>
+          <div class="metric-card">
+            <strong>+60</strong>
+            <span>empresas atendidas</span>
+          </div>
+          <div class="metric-card">
+            <strong>+10</strong>
+            <span>cidades alcançadas</span>
+          </div>
+        </div>
+      </div>
 
-    <section class="bg-[#222222] text-white pt-20 pb-28 px-4 text-center">
-        <div class="max-w-4xl mx-auto mb-14">
-            <span class="inline-block px-3 py-1 mb-6 text-[11px] font-bold uppercase tracking-widest border border-gray-700 text-gray-300 rounded-full">
-                Comunicação Empresarial Integrada
-            </span>
-            <h1 class="text-5xl md:text-7xl font-bold tracking-tight leading-[1.05] mb-6">
-                Conectando marcas a pessoas com <span class="text-[#ff385c]">propósito.</span>
-            </h1>
-            <p class="text-lg md:text-xl text-gray-400 font-medium max-w-2xl mx-auto leading-relaxed mb-10">
-                Transformamos ideias em conexões reais. Marketing, Publicidade, Jornalismo e Relações Públicas trabalhando no mesmo fluxo para acelerar o seu negócio.
-            </p>
-            
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a href="#contact" class="w-full sm:w-auto px-8 py-3.5 text-[15px] font-semibold text-white rausch-bg rounded-[8px] hover:scale-[0.98] transition-transform">
-                    Começar meu projeto
-                </a>
-                <a href="#process" class="w-full sm:w-auto px-8 py-3.5 text-[15px] font-semibold text-white border border-gray-600 rounded-[8px] hover:bg-gray-800 transition-colors">
-                    Ver como trabalhamos
-                </a>
-            </div>
+      <div class="hero-media reveal">
+        <div class="hero-video-shell">
+          <span class="video-chip">Vídeo institucional</span>
+          <video
+            class="hero-video"
+            muted
+            loop
+            playsinline
+            autoplay
+            preload="none"
+            data-src="/assets/media/vem-ser-nosso-cliente.mov"
+            aria-label="Vídeo institucional da One Comunicação Integrada"
+          ></video>
+          <span class="hero-video-fallback">Vídeo institucional da ONE</span>
+          <div class="video-brand">
+            <img src="/assets/svg/one-logo-dark.svg" alt="ONE Comunicação Integrada" />
+            <span>Marketing, Publicidade, Jornalismo e Relações Públicas no mesmo fluxo.</span>
+          </div>
+        </div>
+        <div class="hero-side-card">
+          <span class="card-kicker">Nossa atuação</span>
+          <h3>Comunicação estratégica do planejamento à execução.</h3>
+          <div class="hero-pill-list">
+            <span class="hero-pill">Cronograma mensal</span>
+            <span class="hero-pill">Design gráfico</span>
+            <span class="hero-pill">Social media</span>
+            <span class="hero-pill">Copywriting</span>
+            <span class="hero-pill">Cobertura de eventos</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="about" class="about-section">
+    <div class="container about-grid">
+      <article class="about-card reveal">
+        <span class="section-eyebrow">Sobre a One</span>
+        <h2 class="section-heading">Impulsionamos resultados com comunicação estratégica!</h2>
+        <p class="section-copy">
+          Na One Comunicação Integrada, acreditamos que a comunicação é a chave para transformar negócios e conectar
+          marcas às pessoas certas. Atuamos de forma integrada, alinhando criatividade, estratégia e inovação.
+        </p>
+        <p class="section-copy">
+          Do planejamento à execução, nossa missão é elevar a performance da sua empresa com campanhas assertivas,
+          posicionamento de marca sólido e estratégias personalizadas que fortalecem sua marca e seus resultados.
+        </p>
+        <div class="value-grid">
+          <div class="value-card">
+            <strong>Marketing</strong>
+            <span>Planejamento, performance e presença digital com direção clara.</span>
+          </div>
+          <div class="value-card">
+            <strong>Publicidade</strong>
+            <span>Campanhas criativas com foco em posicionamento e conversão.</span>
+          </div>
+          <div class="value-card">
+            <strong>Jornalismo</strong>
+            <span>Conteúdo institucional com apuração, ritmo e leitura de contexto.</span>
+          </div>
+          <div class="value-card">
+            <strong>Relações Públicas</strong>
+            <span>Conexões estratégicas entre marca, público, imprensa e sociedade.</span>
+          </div>
+        </div>
+      </article>
+
+      <aside class="about-panel reveal">
+        <div class="about-panel-brand">
+          <img src="/assets/svg/one-logo-soft.svg" alt="ONE Comunicação Integrada" />
+        </div>
+        <p class="about-panel-copy">
+          Mais do que comunicar, construímos uma operação criativa que aproxima empresas das pessoas certas com discurso,
+          imagem e estratégia no mesmo ritmo do negócio.
+        </p>
+        <div class="about-pills">
+          <span class="about-pill">Integrar</span>
+          <span class="about-pill">Inovar</span>
+          <span class="about-pill">Transformar</span>
+        </div>
+        <div class="about-contact">
+          <div class="about-contact-row">
+            <strong>Base</strong>
+            <span>Imperatriz, MA</span>
+          </div>
+          <div class="about-contact-row">
+            <strong>Endereço</strong>
+            <span>Av. Pedro Neiva de Santana, 4414</span>
+          </div>
+          <div class="about-contact-row">
+            <strong>Hub</strong>
+            <span>Aprimore Hub de Negócios</span>
+          </div>
+          <div class="about-contact-row">
+            <strong>Instagram</strong>
+            <span>@onecomunicintegrada</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section id="clients" class="clients-section">
+    <div class="container">
+      <div class="clients-frame reveal">
+        <div class="section-title-block">
+          <span class="section-eyebrow section-eyebrow-light">Clientes</span>
+          <h2 class="section-heading section-heading-light">Marcas e instituições que já caminham com a ONE.</h2>
+          <p class="section-copy section-copy-light">
+            Empresas e instituições que confiam na comunicação da One em diferentes frentes de atuação.
+          </p>
         </div>
 
-        <div class="max-w-4xl mx-auto relative rounded-[20px] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-gray-800 bg-[#1a1a1a] aspect-video">
-            <div class="absolute inset-0 flex flex-col items-center justify-center text-gray-600 z-0">
-                <div class="rausch-bg w-16 h-16 rounded-[16px] flex items-center justify-center text-white font-bold text-2xl mb-4 opacity-50">O</div>
-                <p class="text-sm font-medium tracking-widest uppercase">Carregando vídeo institucional...</p>
-            </div>
-            <video 
-                class="w-full h-full object-cover relative z-10" 
-                muted loop playsinline autoplay preload="auto" 
-                data-src="/assets/media/vem-ser-nosso-cliente.mov">
-            </video>
+        <div class="marquee" data-logo-carousel aria-label="Carrossel de logos dos clientes">
+          <div class="marquee-track">
+            <span class="client-logo"><img src="/assets/svg/shopcar.png" alt="Shop Car Auto Posto" /></span>
+            <span class="client-logo"><img src="/assets/svg/uniao-do-brasil.svg" alt="Laticínios União" /></span>
+            <span class="client-logo"><img src="/assets/svg/cdl-mulher.svg" alt="CDL Mulher" /></span>
+            <span class="client-logo"><img src="/assets/svg/sorriso-facil.svg" alt="Sorriso Fácil" /></span>
+            <span class="client-logo"><img src="/assets/svg/rural-pecas.svg" alt="Rural Peças" /></span>
+            <span class="client-logo"><img src="/assets/svg/radical-fitness-clean.png" alt="Radical Fitness" /></span>
+          </div>
         </div>
-    </section>
 
-    <section class="py-12 bg-white border-b border-[#dddddd] overflow-hidden">
-        <div class="max-w-7xl mx-auto px-8 mb-8 text-center">
-            <p class="text-[12px] font-bold text-gray-400 uppercase tracking-widest">Marcas que confiam na ONE</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="services" class="services-section">
+    <div class="container">
+      <div class="services-header reveal">
+        <div class="section-title-block">
+          <span class="section-eyebrow">Serviços</span>
+          <h2 class="section-heading">Criatividade, estratégia e execução no mesmo fluxo.</h2>
         </div>
-        <div class="marquee-wrapper">
-            <div class="marquee-track items-center opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-                <img src="/assets/svg/shopcar.png" alt="Shop Car" class="h-10 object-contain" />
-                <img src="/assets/svg/uniao-do-brasil.svg" alt="União" class="h-10 object-contain" />
-                <img src="/assets/svg/cdl-mulher.svg" alt="CDL" class="h-10 object-contain" />
-                <img src="/assets/svg/sorriso-facil.svg" alt="Sorriso Fácil" class="h-10 object-contain" />
-                <img src="/assets/svg/rural-pecas.svg" alt="Rural Peças" class="h-10 object-contain" />
-                <img src="/assets/svg/radical-fitness-clean.png" alt="Radical" class="h-10 object-contain" />
-                <img src="/assets/svg/shopcar.png" alt="Shop Car" class="h-10 object-contain" />
-                <img src="/assets/svg/uniao-do-brasil.svg" alt="União" class="h-10 object-contain" />
-                <img src="/assets/svg/cdl-mulher.svg" alt="CDL" class="h-10 object-contain" />
-                <img src="/assets/svg/sorriso-facil.svg" alt="Sorriso Fácil" class="h-10 object-contain" />
-                <img src="/assets/svg/rural-pecas.svg" alt="Rural Peças" class="h-10 object-contain" />
-                <img src="/assets/svg/radical-fitness-clean.png" alt="Radical" class="h-10 object-contain" />
-            </div>
+        <p class="section-copy">
+          Atuamos com frentes complementares para organizar a rotina de comunicação da sua empresa, aproximar a marca do
+          público certo e sustentar resultados com consistência.
+        </p>
+      </div>
+
+      <div class="services-grid">
+        <article class="service-card reveal">
+          <div class="service-card-top">
+            <span class="service-index">01</span>
+            <span class="service-tag">Planejamento</span>
+          </div>
+          <h3>Elaboração de cronograma mensal</h3>
+          <p>Elaboramos um cronograma de conteúdo mensal com base nos objetivos que desejam ser atingidos para o seu negócio.</p>
+        </article>
+
+        <article class="service-card reveal">
+          <div class="service-card-top">
+            <span class="service-index">02</span>
+            <span class="service-tag">Criação</span>
+          </div>
+          <h3>Design Gráfico</h3>
+          <p>Elaboramos conteúdos gráficos como banners, flyers, camisas, outdoor, artes virtuais ou impressas e outros.</p>
+        </article>
+
+        <article class="service-card reveal">
+          <div class="service-card-top">
+            <span class="service-index">03</span>
+            <span class="service-tag">Presença digital</span>
+          </div>
+          <h3>Social Media</h3>
+          <p>
+            Incluímos de 1 a 2 visitas semanais de um criador de conteúdo até o seu negócio para atender os objetivos com
+            maior contato e proximidade às suas demandas comunicacionais.
+          </p>
+        </article>
+
+        <article class="service-card reveal">
+          <div class="service-card-top">
+            <span class="service-index">04</span>
+            <span class="service-tag">Posicionamento</span>
+          </div>
+          <h3>Copywriting</h3>
+          <p>Escrevemos legendas e textos de maneira assertiva ao seu objetivo, seja para vendas, engajamento com o público ou fortalecimento de marca.</p>
+        </article>
+
+        <article class="service-card reveal">
+          <div class="service-card-top">
+            <span class="service-index">05</span>
+            <span class="service-tag">Cobertura</span>
+          </div>
+          <h3>Cobertura de evento</h3>
+          <p>
+            Oferecemos captação de imagens e vídeos, alinhamento e direcionamento à imprensa no local, além da alimentação
+            em tempo real das redes sociais com stories instantâneos.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="videos" class="showcase-section">
+    <div class="container">
+      <div class="showcase-card reveal">
+        <div class="section-title-block">
+          <span class="section-eyebrow">Vídeos e cobertura</span>
+          <h2 class="section-heading">Conteúdo com ritmo de operação real, em tempo real quando precisa.</h2>
+          <p class="section-copy">
+            Das visitas de criação ao acompanhamento de eventos institucionais, a captação acontece com direção estratégica
+            para virar material relevante nas redes sociais, na imprensa e na percepção de marca.
+          </p>
         </div>
-    </section>
+        <button type="button" class="btn btn-primary" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Quero falar sobre meu projeto</button>
+      </div>
+    </div>
+  </section>
 
-    <section id="services" class="py-24 bg-[#f7f7f7]">
-        <div class="max-w-6xl mx-auto px-8">
-            <div class="text-center mb-16 max-w-2xl mx-auto">
-                <span class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3 block">Nossos Serviços</span>
-                <h2 class="text-3xl md:text-4xl font-bold ink-black tracking-tight mb-4">Tudo o que sua marca precisa para decolar</h2>
-                <p class="text-[15px] ash-gray font-medium leading-relaxed">
-                    Atuamos com frentes complementares para organizar a rotina de comunicação, aproximar a marca do público certo e sustentar resultados.
-                </p>
-            </div>
+  <section id="process" class="workflow-section">
+    <div class="container">
+      <div class="section-title-block reveal">
+        <span class="section-eyebrow">Como trabalhamos</span>
+        <h2 class="section-heading">Combos gradativos para acompanhar o momento da sua empresa.</h2>
+        <p class="section-copy">Na One Comunicação trabalhamos com combos de serviços gradativos, além de soluções adicionais sob demanda.</p>
+      </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div class="bg-white hairline-border rounded-[14px] p-8 hover:shadow-[rgba(0,0,0,0.04)_0_8px_24px] transition-shadow">
-                    <div class="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-[#ff385c] mb-6">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                    </div>
-                    <h3 class="text-[18px] font-bold ink-black mb-3">Cronograma de Conteúdo</h3>
-                    <p class="text-[14px] ash-gray font-medium leading-relaxed">Elaboramos um planejamento mensal com base nos objetivos do negócio, sem achismos e com direção clara.</p>
-                </div>
+      <div class="workflow-grid">
+        <article class="workflow-card reveal">
+          <span class="card-kicker">Combo</span>
+          <h3>Combo ONE</h3>
+          <ul class="workflow-list">
+            <li>Elaboração de cronograma mensal</li>
+            <li>Tráfego Pago</li>
+          </ul>
+        </article>
 
-                <div class="bg-white hairline-border rounded-[14px] p-8 hover:shadow-[rgba(0,0,0,0.04)_0_8px_24px] transition-shadow">
-                    <div class="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-[#ff385c] mb-6">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                    </div>
-                    <h3 class="text-[18px] font-bold ink-black mb-3">Design Gráfico</h3>
-                    <p class="text-[14px] ash-gray font-medium leading-relaxed">Artes visuais de alto padrão: banners, flyers, identidades visuais, outdoors e materiais impressos/digitais.</p>
-                </div>
+        <article class="workflow-card reveal">
+          <span class="card-kicker">Combo</span>
+          <h3>Combo ONE Start</h3>
+          <ul class="workflow-list">
+            <li>Elaboração de cronograma mensal</li>
+            <li>Tráfego Pago</li>
+            <li>Social Media</li>
+            <li>Design Gráfico</li>
+            <li>Edição de conteúdos</li>
+          </ul>
+        </article>
 
-                <div class="bg-white hairline-border rounded-[14px] p-8 hover:shadow-[rgba(0,0,0,0.04)_0_8px_24px] transition-shadow">
-                    <div class="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-[#ff385c] mb-6">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path></svg>
-                    </div>
-                    <h3 class="text-[18px] font-bold ink-black mb-3">Social Media</h3>
-                    <p class="text-[14px] ash-gray font-medium leading-relaxed">Gestão de redes com 1 a 2 visitas semanais in loco para captação de conteúdo humano e rotina real da empresa.</p>
-                </div>
+        <article class="workflow-card workflow-card-featured reveal">
+          <span class="card-kicker">Combo</span>
+          <h3>Combo ONE Master</h3>
+          <ul class="workflow-list">
+            <li>Elaboração de cronograma mensal</li>
+            <li>Tráfego Pago</li>
+            <li>Social Media</li>
+            <li>Design Gráfico</li>
+            <li>Edição de conteúdos</li>
+            <li>Publicação do conteúdo nas redes sociais</li>
+            <li>Acompanhamento dos seus clientes nas redes sociais</li>
+          </ul>
+        </article>
 
-                <div class="bg-white hairline-border rounded-[14px] p-8 hover:shadow-[rgba(0,0,0,0.04)_0_8px_24px] transition-shadow">
-                    <div class="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-[#ff385c] mb-6">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                    </div>
-                    <h3 class="text-[18px] font-bold ink-black mb-3">Copywriting</h3>
-                    <p class="text-[14px] ash-gray font-medium leading-relaxed">Textos persuasivos focados no seu objetivo: vendas diretas, engajamento, retenção ou fortalecimento de marca.</p>
-                </div>
+        <article class="workflow-card workflow-card-secondary reveal">
+          <span class="card-kicker">Escala</span>
+          <h3>Formato modular</h3>
+          <ul class="workflow-list">
+            <li>Base recorrente com escopo claro</li>
+            <li>Expansão gradual conforme o momento da empresa</li>
+            <li>Complementos ativados só quando fizer sentido</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
 
-                <div class="bg-white hairline-border rounded-[14px] p-8 hover:shadow-[rgba(0,0,0,0.04)_0_8px_24px] transition-shadow">
-                    <div class="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-[#ff385c] mb-6">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                    </div>
-                    <h3 class="text-[18px] font-bold ink-black mb-3">Cobertura de Eventos</h3>
-                    <p class="text-[14px] ash-gray font-medium leading-relaxed">Captação em tempo real, assessoria de imprensa no local e alimentação de stories e feeds instantâneos.</p>
-                </div>
+  <section id="plans" class="plans-section">
+    <div class="container">
+      <div class="section-title-block reveal">
+        <span class="section-eyebrow">Sob demanda</span>
+        <h2 class="section-heading">Serviços avulsos para reforçar momentos específicos da operação.</h2>
+        <p class="section-copy">
+          Os combos resolvem a base recorrente. Quando o momento pede cobertura, imprensa, fotografia ou mídia isolada,
+          a ONE encaixa o complemento sem repetir escopo.
+        </p>
+      </div>
 
-                <div class="bg-white hairline-border rounded-[14px] p-8 hover:shadow-[rgba(0,0,0,0.04)_0_8px_24px] transition-shadow">
-                    <div class="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-[#ff385c] mb-6">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                    </div>
-                    <h3 class="text-[18px] font-bold ink-black mb-3">Tráfego Pago</h3>
-                    <p class="text-[14px] ash-gray font-medium leading-relaxed">Campanhas patrocinadas no Google e Meta Ads para acelerar captação de leads e vendas com ROI mensurável.</p>
-                </div>
-            </div>
+      <div class="plans-grid">
+        <article class="plan-card reveal">
+          <h3>Cobertura e imprensa</h3>
+          <p class="plan-summary">
+            Ativa a presença da marca em eventos, ativações, anúncios institucionais e pautas que precisam de registro e
+            circulação imediata.
+          </p>
+          <ul class="plan-list">
+            <li>Cobertura de eventos</li>
+            <li>Releases para imprensa</li>
+            <li>Direcionamento de pauta e presença institucional</li>
+          </ul>
+        </article>
+
+        <article class="plan-card reveal">
+          <h3>Conteúdo complementar</h3>
+          <p class="plan-summary">
+            Entradas pontuais para reforçar calendário editorial, ampliar repertório visual e manter constância sem
+            ampliar o combo principal.
+          </p>
+          <ul class="plan-list">
+            <li>Newsletter</li>
+            <li>Fotografia</li>
+            <li>Captação complementar para campanhas</li>
+          </ul>
+        </article>
+
+        <article class="plan-card plan-card-featured reveal">
+          <span class="plan-ribbon">Flexível</span>
+          <h3>Mídia e aceleração</h3>
+          <p class="plan-summary">
+            Quando a empresa precisa ativar resultado rápido ou complementar uma campanha já em curso, a operação entra
+            com mídia isolada e apoio tático.
+          </p>
+          <p class="plan-note">Formato avulso, sem duplicar o combo recorrente</p>
+          <ul class="plan-list">
+            <li>Tráfego pago como serviço isolado</li>
+            <li>Ajuste de campanha por objetivo</li>
+            <li>Suporte de performance para ações pontuais</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="plan-stats reveal">
+        <div class="plan-stat">
+          <strong>+100</strong>
+          <span>projetos finalizados</span>
         </div>
-    </section>
-
-    <section id="process" class="py-24 bg-white">
-        <div class="max-w-6xl mx-auto px-8">
-            <div class="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
-                <div class="max-w-2xl">
-                    <span class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3 block">Formatos de Atuação</span>
-                    <h2 class="text-3xl md:text-4xl font-bold ink-black tracking-tight">Combos gradativos para acompanhar o momento da empresa</h2>
-                </div>
-                <p class="text-[15px] ash-gray font-medium max-w-md">
-                    Base recorrente com escopo claro. A operação expande gradualmente ou adiciona serviços avulsos apenas quando o projeto exigir.
-                </p>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="hairline-border rounded-[14px] p-8 flex flex-col">
-                    <span class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Plano Inicial</span>
-                    <h3 class="text-[22px] font-bold ink-black mb-6">Combo ONE</h3>
-                    <ul class="space-y-4 mb-8 flex-1 text-[14px] font-medium ink-black">
-                        <li class="flex items-start gap-3">
-                            <svg class="w-5 h-5 text-[#dddddd] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                            Elaboração de cronograma
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <svg class="w-5 h-5 text-[#dddddd] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                            Tráfego Pago
-                        </li>
-                    </ul>
-                </div>
-
-                <div class="hairline-border rounded-[14px] p-8 flex flex-col relative overflow-hidden shadow-[rgba(0,0,0,0.06)_0_12px_32px]">
-                    <div class="absolute top-0 left-0 w-full h-1 rausch-bg"></div>
-                    <span class="text-[11px] font-bold rausch-text uppercase tracking-widest mb-2">Mais Escolhido</span>
-                    <h3 class="text-[22px] font-bold ink-black mb-6">Combo ONE Start</h3>
-                    <ul class="space-y-4 mb-8 flex-1 text-[14px] font-medium ink-black">
-                        <li class="flex items-start gap-3">
-                            <svg class="w-5 h-5 text-[#ff385c] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                            Tudo do plano anterior
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <svg class="w-5 h-5 text-[#ff385c] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                            Social Media
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <svg class="w-5 h-5 text-[#ff385c] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                            Design Gráfico
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <svg class="w-5 h-5 text-[#ff385c] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                            Edição de conteúdos
-                        </li>
-                    </ul>
-                </div>
-
-                <div class="hairline-border rounded-[14px] p-8 flex flex-col bg-[#fcfcfc]">
-                    <span class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Operação Total</span>
-                    <h3 class="text-[22px] font-bold ink-black mb-6">Combo Master</h3>
-                    <ul class="space-y-4 mb-8 flex-1 text-[14px] font-medium ink-black">
-                        <li class="flex items-start gap-3">
-                            <svg class="w-5 h-5 text-[#dddddd] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                            Tudo do plano Start
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <svg class="w-5 h-5 text-[#dddddd] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                            Publicação agendada nas redes
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <svg class="w-5 h-5 text-[#dddddd] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                            Acompanhamento e resposta aos clientes nas mídias
-                        </li>
-                    </ul>
-                </div>
-            </div>
+        <div class="plan-stat">
+          <strong>+50</strong>
+          <span>coberturas de eventos em tempo real</span>
         </div>
-    </section>
+      </div>
+    </div>
+  </section>
 
-    <section id="faq" class="py-24 bg-[#f7f7f7]">
-        <div class="max-w-3xl mx-auto px-8">
-            <div class="text-center mb-12">
-                <span class="text-[11px] font-bold text-[#ff385c] uppercase tracking-widest mb-3 block">Dúvidas</span>
-                <h2 class="text-3xl font-bold ink-black tracking-tight">Perguntas frequentes</h2>
-                <p class="text-[14px] ash-gray font-medium mt-2">Tudo que você precisa saber antes de iniciar o projeto.</p>
-            </div>
+  <section id="faq" class="faq-section">
+    <div class="container faq-layout">
+      <div class="faq-intro reveal">
+        <span class="section-eyebrow">Perguntas frequentes</span>
+        <h2 class="section-heading">As dúvidas que costumam aparecer antes da decisão.</h2>
+        <p class="section-copy">
+          Se sua empresa ainda está avaliando o formato ideal, prazo de contrato ou composição dos combos, estas respostas
+          ajudam a decidir com mais clareza.
+        </p>
+      </div>
 
-            <div class="space-y-2">
-                <details class="border-b border-[#dddddd] pb-6 pt-4 cursor-pointer group">
-                    <summary class="text-[18px] font-semibold ink-black outline-none flex justify-between items-center">
-                        Posso ter flexibilidade de serviços entre os combos?
-                        <span class="text-gray-400 group-open:rotate-45 transition-transform text-2xl font-light">+</span>
-                    </summary>
-                    <p class="text-[15px] ash-gray font-medium mt-4 leading-relaxed pr-8">
-                        Sim, sabemos que existem serviços que muitas vezes não são necessários para a realidade da sua empresa, com isso trabalhamos de forma flexível adaptando os módulos ao seu negócio.
-                    </p>
-                </details>
+      <div class="faq-list">
+        <details class="faq-item reveal" open>
+          <summary>Posso ter flexibilidade de serviços entre os combos?</summary>
+          <div class="faq-answer">
+            Sim, sabemos que existem serviços que muitas vezes não são necessários para a realidade da sua empresa, com
+            isso trabalhamos de forma flexível entre os serviços de cada combo.
+          </div>
+        </details>
 
-                <details class="border-b border-[#dddddd] pb-6 pt-4 cursor-pointer group">
-                    <summary class="text-[18px] font-semibold ink-black outline-none flex justify-between items-center">
-                        Qual o prazo de contratos?
-                        <span class="text-gray-400 group-open:rotate-45 transition-transform text-2xl font-light">+</span>
-                    </summary>
-                    <p class="text-[15px] ash-gray font-medium mt-4 leading-relaxed pr-8">
-                        Nossos contratos são válidos entre 6 meses a 1 ano, podendo ser renovados. Acreditamos que esse prazo é o ideal, pois serviços de marketing e posicionamento precisam de constância para gerar crescimento real.
-                    </p>
-                </details>
+        <details class="faq-item reveal">
+          <summary>Qual o prazo de contratos?</summary>
+          <div class="faq-answer">
+            Nossos contratos são válidos entre 6 meses a 1 ano, podendo ser renovados para os meses seguintes.
+            Acreditamos que esse prazo deve ser feito pois serviços de marketing são tangíveis ao crescimento.
+          </div>
+        </details>
 
-                <details class="border-b border-[#dddddd] pb-6 pt-4 cursor-pointer group">
-                    <summary class="text-[18px] font-semibold ink-black outline-none flex justify-between items-center">
-                        Quais serviços são cobrados à parte?
-                        <span class="text-gray-400 group-open:rotate-45 transition-transform text-2xl font-light">+</span>
-                    </summary>
-                    <p class="text-[15px] ash-gray font-medium mt-4 leading-relaxed pr-8">
-                        Cobertura de eventos extras, disparos de Releases para imprensa, Newsletters e Sessões Fotográficas estruturadas de produto não fazem parte do plano base. Eles entram como serviços avulsos sob demanda.
-                    </p>
-                </details>
-            </div>
+        <details class="faq-item reveal">
+          <summary>Quais serviços não fazem parte do plano?</summary>
+          <div class="faq-answer">
+            Cobertura de eventos, Releases, Newsletters, Sessões Fotográficas e Tráfego Pago não fazem parte do plano
+            mensal da One. Estes serviços, quando solicitados, possuem valores diferentes do plano.
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" class="contact-section">
+    <div class="container contact-grid">
+      <div class="contact-panel reveal">
+        <span class="section-eyebrow">Contato</span>
+        <h2 class="section-heading">Fale sobre sua empresa e a gente retorna com o melhor formato.</h2>
+        <p class="section-copy">
+          Conte o momento atual do negócio, a demanda principal e o que precisa sair do papel agora. Com isso, a equipe
+          consegue montar uma conversa mais objetiva e uma proposta mais precisa.
+        </p>
+
+        <div class="contact-cards">
+          <a class="contact-card" href="https://wa.me/5599985480961" target="_blank" rel="noopener noreferrer">
+            <span class="contact-card-label">WhatsApp</span>
+            <strong>(99) 98548-0961</strong>
+            <span>Atendimento direto com a equipe ONE.</span>
+          </a>
+
+          <a class="contact-card" href="https://instagram.com/onecomunicintegrada" target="_blank" rel="noopener noreferrer">
+            <span class="contact-card-label">Instagram</span>
+            <strong>@onecomunicintegrada</strong>
+            <span>Bastidores, campanhas, coberturas e rotina de criação.</span>
+          </a>
+
+          <div class="contact-card">
+            <span class="contact-card-label">Endereço</span>
+            <strong>Av. Pedro Neiva de Santana, 4414</strong>
+            <span>Aprimore Hub de Negócios · Imperatriz, MA.</span>
+          </div>
         </div>
-    </section>
+      </div>
 
-    <section id="contact" class="py-24 bg-white">
-        <div class="max-w-6xl mx-auto px-8 grid grid-cols-1 lg:grid-cols-2 gap-16">
-            <div>
-                <span class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3 block">Vamos Conversar</span>
-                <h2 class="text-3xl md:text-4xl font-bold ink-black tracking-tight mb-6">Pronto para acelerar a comunicação da sua marca?</h2>
-                <p class="text-[15px] ash-gray font-medium leading-relaxed mb-10">
-                    Conte o momento atual do negócio e o que precisa sair do papel. Nossa equipe montará uma proposta técnica e comercial alinhada aos seus objetivos.
-                </p>
-
-                <div class="space-y-6">
-                    <div class="flex items-start gap-4">
-                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 flex-shrink-0">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                        </div>
-                        <div>
-                            <p class="text-[13px] font-bold text-gray-500 uppercase tracking-widest">WhatsApp Direto</p>
-                            <a href="https://wa.me/5599985480961" target="_blank" class="text-[16px] font-semibold ink-black hover:text-[#ff385c]">(99) 98548-0961</a>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-start gap-4">
-                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 flex-shrink-0">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        </div>
-                        <div>
-                            <p class="text-[13px] font-bold text-gray-500 uppercase tracking-widest">Sede</p>
-                            <p class="text-[16px] font-semibold ink-black">Aprimore Hub de Negócios</p>
-                            <p class="text-[14px] ash-gray">Av. Pedro Neiva de Santana, 4414 - Imperatriz, MA</p>
-                        </div>
-                    </div>
-                </div>
+      <div class="contact-form-wrap reveal">
+        <form class="contact-form" onsubmit="handleForm(event)" novalidate>
+          <div class="contact-form-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="f-name">Nome</label>
+                <input type="text" id="f-name" placeholder="Nome e sobrenome" required />
+              </div>
+              <div class="form-group">
+                <label for="f-phone">WhatsApp</label>
+                <input type="tel" id="f-phone" placeholder="(99) 98548-0961" required />
+              </div>
             </div>
-
-            <div class="bg-white hairline-border rounded-[14px] p-8 shadow-[rgba(0,0,0,0.04)_0_8px_24px]">
-                <form class="space-y-5">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div>
-                            <label class="block text-[13px] font-semibold ink-black mb-2">Nome</label>
-                            <input type="text" placeholder="Seu nome" class="w-full px-4 py-3 rounded-[8px] hairline-border text-[14px] focus:outline-none focus:ring-2 focus:ring-[#222222]" required>
-                        </div>
-                        <div>
-                            <label class="block text-[13px] font-semibold ink-black mb-2">WhatsApp</label>
-                            <input type="tel" placeholder="(99) 90000-0000" class="w-full px-4 py-3 rounded-[8px] hairline-border text-[14px] focus:outline-none focus:ring-2 focus:ring-[#222222]" required>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-[13px] font-semibold ink-black mb-2">Empresa</label>
-                        <input type="text" placeholder="Nome do seu negócio" class="w-full px-4 py-3 rounded-[8px] hairline-border text-[14px] focus:outline-none focus:ring-2 focus:ring-[#222222]">
-                    </div>
-
-                    <div>
-                        <label class="block text-[13px] font-semibold ink-black mb-2">Momento atual</label>
-                        <textarea placeholder="Como podemos ajudar a sua marca hoje?" rows="4" class="w-full px-4 py-3 rounded-[8px] hairline-border text-[14px] focus:outline-none focus:ring-2 focus:ring-[#222222] resize-none"></textarea>
-                    </div>
-
-                    <button type="submit" class="w-full py-4 text-[15px] font-semibold text-white rausch-bg rounded-[8px] hover:scale-[0.98] transition-transform mt-2">
-                        Enviar solicitação
-                    </button>
-                    <p class="text-center text-[12px] ash-gray mt-4">Nossa equipe responderá em até 24h úteis.</p>
-                </form>
+            <div class="form-group">
+              <label for="f-email">E-mail</label>
+              <input type="email" id="f-email" placeholder="seu@email.com" required />
             </div>
-        </div>
-    </section>
-
-    <footer class="bg-[#f7f7f7] border-t border-[#dddddd] py-12 px-8">
-        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-            <div class="flex items-center gap-2">
-                <div class="bg-gray-300 w-6 h-6 rounded flex items-center justify-center text-white font-bold text-[10px]">O</div>
-                <span class="text-[14px] font-bold tracking-tight ink-black">ONE Comunicação</span>
+            <div class="form-group">
+              <label for="f-company">Empresa</label>
+              <input type="text" id="f-company" placeholder="Nome da sua empresa" />
             </div>
-            
-            <div class="text-[13px] font-medium ash-gray">
-                © 2026 ONE Comunicação Integrada. CNPJ: XX.XXX.XXX/0001-XX.
+            <div class="form-group">
+              <label for="f-service">Serviço de interesse</label>
+              <select id="f-service">
+                <option value="">Selecione...</option>
+                <option>Elaboração de cronograma mensal</option>
+                <option>Design Gráfico</option>
+                <option>Social Media</option>
+                <option>Copywriting</option>
+                <option>Cobertura de Evento</option>
+                <option>Combo ONE</option>
+                <option>Combo ONE Start</option>
+                <option>Combo ONE Master</option>
+                <option>Tráfego Pago</option>
+                <option>Outro</option>
+              </select>
             </div>
-            
-            <div class="flex items-center gap-6 text-[13px] font-medium">
-                <a href="https://instagram.com/onecomunicintegrada" target="_blank" class="ash-gray hover:text-[#222222]">Instagram</a>
-                <a href="/painel-interno.html" class="ash-gray hover:text-[#222222]">Login Equipe</a>
+            <div class="form-group">
+              <label for="f-msg">Mensagem</label>
+              <textarea
+                id="f-msg"
+                placeholder="Qual é a demanda principal agora? O que precisa sair do papel?"
+                maxlength="1000"
+                aria-describedby="f-msg-count"
+              ></textarea>
+              <div id="f-msg-count">0/1000 caracteres</div>
             </div>
-        </div>
-    </footer>
+            <div class="form-group">
+              <label class="consent-row">
+                <input type="checkbox" id="f-consent" required />
+                <span>
+                  Concordo com a coleta e o tratamento dos meus dados para contato comercial, conforme a
+                  <a href="/politica-de-privacidade.html" target="_blank" rel="noopener noreferrer">Política de Privacidade</a>
+                  e os
+                  <a href="/termos-de-uso.html" target="_blank" rel="noopener noreferrer">Termos de Uso</a>.
+                </span>
+              </label>
+            </div>
+          </div>
+          <button type="submit" id="contact-submit" class="btn btn-primary contact-submit">Enviar mensagem</button>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
 
-    <script>
-        // Lógica simples para os vídeos
-        document.addEventListener('DOMContentLoaded', () => {
-            const mediaEls = document.querySelectorAll('video[data-src]');
-            
-            const loadVideo = (video) => {
-                if (!video || video.dataset.loaded === 'true') return;
-                video.src = video.getAttribute('data-src');
-                video.dataset.loaded = 'true';
-                video.load();
-                video.play().catch(() => {});
-            };
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <img class="footer-logo" src="/assets/svg/one-logo-dark.svg" alt="ONE Comunicação Integrada" />
+        <p>Conectando marcas a pessoas com propósito por meio de uma comunicação integrada, estratégica e criativa.</p>
+      </div>
 
-            const observer = new IntersectionObserver((entries, obs) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        loadVideo(entry.target);
-                        obs.unobserve(entry.target);
-                    }
-                });
-            }, { rootMargin: '200px' });
+      <div class="footer-col">
+        <h4>Navegação</h4>
+        <ul>
+          <li><a href="#about">Sobre</a></li>
+          <li><a href="#services">Serviços</a></li>
+          <li><a href="#plans">Planos</a></li>
+          <li><a href="#contact">Contato</a></li>
+          <li><a href="/painel-interno.html">Painel interno</a></li>
+        </ul>
+      </div>
 
-            mediaEls.forEach((video) => observer.observe(video));
-        });
-    </script>
+      <div class="footer-col">
+        <h4>Combos</h4>
+        <ul>
+          <li><a href="#process">Combo ONE</a></li>
+          <li><a href="#process">Combo ONE Start</a></li>
+          <li><a href="#plans">Combo ONE Master</a></li>
+          <li><a href="#faq">Perguntas frequentes</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Contato</h4>
+        <ul>
+          <li><a href="https://wa.me/5599985480961" target="_blank" rel="noopener noreferrer">(99) 98548-0961</a></li>
+          <li><a href="https://instagram.com/onecomunicintegrada" target="_blank" rel="noopener noreferrer">@onecomunicintegrada</a></li>
+          <li><a href="#contact">Av. Pedro Neiva de Santana, 4414</a></li>
+          <li><a href="#contact">Aprimore Hub de Negócios</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2026 ONE Comunicação Integrada. Todos os direitos reservados.</span>
+      <div class="social-links">
+        <a href="https://instagram.com/onecomunicintegrada" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Instagram">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3.25" y="3.25" width="17.5" height="17.5" rx="5.25" stroke="currentColor" stroke-width="1.5" />
+            <circle cx="12" cy="12" r="4.1" stroke="currentColor" stroke-width="1.5" />
+            <circle cx="17.35" cy="6.65" r="1.15" fill="currentColor" />
+          </svg>
+        </a>
+        <a href="https://wa.me/5599985480961" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="WhatsApp">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12.05 4C7.74 4 4.25 7.39 4.25 11.58c0 1.66.55 3.19 1.49 4.43L4.8 20l4.14-.9a8 8 0 0 0 3.11.62c4.31 0 7.8-3.39 7.8-7.58S16.36 4 12.05 4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+            <path d="M9.36 8.86c.18-.4.37-.41.54-.42h.46c.15 0 .36.05.55.44.18.39.63 1.52.68 1.63.05.1.08.23.02.36-.06.13-.1.21-.2.32-.1.11-.2.24-.29.32-.1.09-.2.18-.08.36.11.19.5.8 1.08 1.29.74.63 1.36.83 1.55.92.18.08.29.07.4-.05.1-.12.45-.51.57-.68.12-.18.24-.15.4-.09.17.06 1.06.49 1.24.58.18.09.3.13.34.2.04.07.04.43-.1.84-.15.41-.86.8-1.17.85-.3.05-.69.07-1.11-.07-.26-.08-.59-.2-1.02-.39-1.8-.78-2.98-2.61-3.08-2.74-.1-.14-.73-.96-.73-1.83 0-.87.46-1.3.62-1.47Z" fill="currentColor" />
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script src="/assets/js/config.js"></script>
+<script src="/assets/js/app-core.js"></script>
+<script src="/assets/js/utils/form.js"></script>
+<script src="/assets/js/index-app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const mediaEls = document.querySelectorAll('video[data-src]');
+  if (!mediaEls.length) return;
+
+  const loadVideo = (video) => {
+    if (!video || video.dataset.loaded === 'true') return;
+    const src = video.getAttribute('data-src');
+    if (!src) return;
+    video.src = src;
+    video.dataset.loaded = 'true';
+    video.load();
+    const playAttempt = video.play();
+    if (playAttempt && typeof playAttempt.catch === 'function') {
+      playAttempt.catch(() => {});
+    }
+  };
+
+  if (!('IntersectionObserver' in window)) {
+    mediaEls.forEach(loadVideo);
+    return;
+  }
+
+  const observer = new IntersectionObserver((entries, obs) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      loadVideo(entry.target);
+      obs.unobserve(entry.target);
+    });
+  }, { rootMargin: '180px 0px' });
+
+  mediaEls.forEach((video) => observer.observe(video));
+});
+</script>
 </body>
 </html>
