@@ -3809,7 +3809,8 @@ async function saveProfileNotificationPreferences(event) {
 
 function setRoleUI(user) {
   document.getElementById("sb-name").textContent = user.name;
-  document.getElementById("sb-role-label").textContent = "";
+  document.getElementById("sb-role-label").textContent =
+    user.job_title || ROLE_LABELS[user.role] || user.role || "Software Engineer";
   const badge = document.getElementById("sb-badge");
   badge.textContent = ROLE_LABELS[user.role] || user.role;
   badge.className = `sb-role-badge ${getRoleBadgeClass(user.role)}`;
