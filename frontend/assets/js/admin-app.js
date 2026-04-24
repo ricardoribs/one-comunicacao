@@ -6885,31 +6885,201 @@ function renderAccessV2() {
     return String(left.name || "").localeCompare(String(right.name || ""), "pt-BR");
   });
 
-  document.getElementById("membros-tbody").innerHTML = renderAccessMembersTable(
-    sortedUsers.map((user) => renderMemberRow(user, state.session.user.id)).join("")
-      || (hasLoadFailure("controle de acesso")
-        ? UI.tableEmpty(5, "Não foi possível carregar os membros.", "Atualize a tela para tentar novamente.", {
-            icon: false,
-            actionHtml: renderRetryAction()
-          })
-        : UI.tableEmpty(5, "Nenhum membro cadastrado", "Crie o primeiro usuário interno para liberar o acesso da equipe.", {
-            icon: false,
-            actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-membro">Adicionar membro</button>`
-          }))
-  );
+  const membersBody = document.getElementById("membros-tbody");
+  const profilesGrid = document.getElementById("perfis-grid");
 
-  const roleCards = {
-    Admin: ["Clientes", "Campanhas", "Kanban", "Produção", "Tráfego", "Analytics", "Financeiro", "Controle de acesso"],
-    Gestor: ["Dashboard interno", "Kanban", "CRM", "Campanhas", "Produção", "Tráfego", "Analytics", "Cobranças"],
-    Designer: ["Dashboard interno", "Kanban", "Produção"],
-    Comercial: ["Dashboard interno", "Kanban", "CRM", "Campanhas", "Produção", "Financeiro"],
-    Dev: ["Dashboard interno", "Kanban", "Produção", "Analytics"],
-    Cliente: ["Dashboard", "Campanhas", "Relatórios", "Faturas", "Mensagens"]
+  const roleConfig = {
+    admin: {
+      label: "Admin",
+      badgeClass: "bg-red-50 text-red-700",
+      avatarClass: "bg-pink-50 text-pink-700",
+      avatarBorder: ""
+    },
+    dev: {
+      label: "Desenvolvimento",
+      badgeClass: "bg-blue-50 text-blue-700",
+      avatarClass: "bg-[#f2f2f2] text-[#222222]",
+      avatarBorder: ""
+    },
+    comercial: {
+      label: "Comercial",
+      badgeClass: "bg-orange-50 text-orange-700",
+      avatarClass: "bg-[#f2f2f2] text-[#222222]",
+      avatarBorder: ""
+    },
+    gestor: {
+      label: "Gestor",
+      badgeClass: "bg-green-50 text-green-700",
+      avatarClass: "bg-[#f2f2f2] text-[#222222]",
+      avatarBorder: ""
+    },
+    designer: {
+      label: "Designer",
+      badgeClass: "bg-[#f0f4f8] text-[#3366cc]",
+      avatarClass: "bg-[#f2f2f2] text-[#222222]",
+      avatarBorder: ""
+    },
+    client: {
+      label: "Cliente",
+      badgeClass: "bg-gray-100 text-gray-600 hairline-border",
+      avatarClass: "bg-gray-100 text-gray-600",
+      avatarBorder: "hairline-border"
+    }
   };
 
-  document.getElementById("perfis-grid").innerHTML = Object.entries(roleCards)
-    .map(([role, permissions]) => renderRoleCard(role, permissions))
-    .join("");
+  const getMemberRoleConfig = (role) => roleConfig[String(role || "").toLowerCase()] || {
+    label: ROLE_LABELS[String(role || "").toLowerCase()] || getDisplayText(role, "Membro"),
+    badgeClass: "bg-gray-100 text-gray-600 hairline-border",
+    avatarClass: "bg-[#f2f2f2] text-[#222222]",
+    avatarBorder: ""
+  };
+
+  const getPresenceDotClass = (presenceTone) => {
+    if (presenceTone === "is-online") {
+      return "bg-green-500";
+    }
+    if (presenceTone === "is-inactive") {
+      return "bg-red-400";
+    }
+    return "bg-gray-300";
+  };
+
+  const renderAccessMenuButton = ({ label, action, id, className = "" }) => `
+    <button
+      type="button"
+      class="w-full text-left px-3 py-2 text-[13px] font-medium rounded-[8px] hover:bg-gray-50 transition-colors ${className}"
+      ${action ? `data-action="${action}"` : ""}
+      ${id != null ? `data-id="${id}"` : ""}
+    >
+      ${escapeHtml(label)}
+    </button>
+  `;
+
+  const renderAccessMenu = (actions = [], label = "Mais ações") => {
+    const items = actions.filter(Boolean).join("");
+    if (!items) {
+      return `
+        <button type="button" class="w-8 h-8 rounded-full hairline-border flex items-center justify-center text-gray-400 cursor-default" aria-label="${escapeHtml(label)}" disabled>
+          <span class="text-gray-500 font-bold mb-1">...</span>
+        </button>
+      `;
+    }
+
+    return `
+      <details class="access-menu relative">
+        <summary class="w-8 h-8 rounded-full hairline-border flex items-center justify-center hover:bg-gray-100 transition-colors cursor-pointer" aria-label="${escapeHtml(label)}">
+          <span class="text-gray-500 font-bold mb-1">...</span>
+        </summary>
+        <div class="absolute right-0 top-[calc(100%+8px)] z-30 flex flex-col gap-1 min-w-[188px] p-2 bg-white border border-[#dddddd] rounded-[10px] shadow-[0_16px_32px_rgba(0,0,0,0.12)]">
+          ${items}
+        </div>
+      </details>
+    `;
+  };
+
+  if (membersBody) {
+    membersBody.innerHTML = sortedUsers.length
+      ? sortedUsers
+          .map((user, index, list) => {
+            const roleMeta = getMemberRoleConfig(user.role);
+            const presence = getMemberPresenceMeta(user);
+            const lastAccess = user.last_seen_at || user.last_login_at;
+            const lastAccessLabel = lastAccess ? formatDateTime(lastAccess) : "—";
+            const locationLabel = formatAccessLocationLabel(user.last_seen_location);
+            const canRemoveUser = Number(user.id) !== Number(state.session.user.id) && String(user.role || "").toLowerCase() !== "admin";
+            const rowClass = index < list.length - 1
+              ? "border-b border-[#dddddd] hover:bg-gray-50 transition-colors"
+              : "hover:bg-gray-50 transition-colors";
+
+            return `
+              <tr class="${rowClass}">
+                <td class="pl-6 pr-4 py-4 align-middle w-[35%] max-w-0">
+                  <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-full ${roleMeta.avatarClass} ${roleMeta.avatarBorder} flex flex-shrink-0 items-center justify-center text-[13px] font-bold">${escapeHtml(getInitials(user.name || "ONE"))}</div>
+                    <div class="group relative truncate w-full">
+                      <p class="text-[14px] font-semibold ink-black truncate cursor-default">${escapeHtml(user.name || "—")}</p>
+                      <p class="text-[13px] ash-gray font-medium truncate mt-0.5">${escapeHtml(user.email || "—")}</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-4 py-4 align-middle whitespace-nowrap w-px">
+                  <span class="inline-block px-2.5 py-1 text-[11px] font-bold rounded-full ${roleMeta.badgeClass}">${escapeHtml(roleMeta.label)}</span>
+                </td>
+                <td class="px-4 py-4 align-middle whitespace-nowrap w-px">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full ${getPresenceDotClass(presence.tone)}"></span>
+                    <span class="text-[13px] font-medium ink-black">${escapeHtml(presence.label)}</span>
+                  </div>
+                </td>
+                <td class="px-4 py-4 align-middle w-[35%] max-w-0">
+                  <p class="text-[13px] font-medium ${lastAccess ? "ink-black" : "ash-gray"} truncate">${escapeHtml(lastAccessLabel)}</p>
+                  ${locationLabel ? `<p class="text-[12px] ash-gray truncate mt-0.5">${escapeHtml(locationLabel)}</p>` : ""}
+                </td>
+                <td class="pl-4 pr-6 py-4 align-middle whitespace-nowrap w-px">
+                  <div class="flex items-center justify-end gap-2">
+                    <button class="h-8 px-3 flex items-center justify-center text-[13px] font-semibold ink-black hairline-border bg-white rounded-[8px] hover:bg-gray-50 transition-colors" type="button" data-access-edit="${user.id}">Editar</button>
+                    ${renderAccessMenu(
+                      canRemoveUser
+                        ? [
+                            renderAccessMenuButton({
+                              label: "Remover membro",
+                              action: "noop",
+                              id: user.id,
+                              className: "text-[#c24141] hover:bg-red-50 hover:text-[#991b1b]"
+                            }).replace('data-action="noop"', `data-access-remove="${user.id}"`)
+                          ]
+                        : [],
+                      "Mais ações do membro"
+                    )}
+                  </div>
+                </td>
+              </tr>
+            `;
+          })
+          .join("")
+      : `
+          <tr>
+            <td colspan="5" class="px-6 py-10 text-center">
+              <div class="text-[15px] font-semibold text-[#222222]">${escapeHtml(hasLoadFailure("controle de acesso") ? "Não foi possível carregar os membros." : "Nenhum membro cadastrado")}</div>
+              <div class="text-[13px] text-[#6a6a6a] font-medium mt-1">${escapeHtml(hasLoadFailure("controle de acesso") ? "Atualize a tela para tentar novamente." : "Crie o primeiro usuário interno para liberar o acesso da equipe.")}</div>
+              <div class="mt-4 flex items-center justify-center">
+                ${
+                  hasLoadFailure("controle de acesso")
+                    ? renderRetryAction()
+                    : '<button type="button" class="h-[36px] px-5 text-[13px] font-medium text-white bg-[#ff385c] rounded-[8px] hover:scale-[0.98] transition-transform" data-action="open-modal" data-modal="novo-membro">+ Novo membro</button>'
+                }
+              </div>
+            </td>
+          </tr>
+        `;
+  }
+
+  const roleCards = [
+    { title: "Admin", badge: "Admin", badgeClass: "bg-red-50 text-red-700", permissions: ["Clientes", "Campanhas", "Kanban", "Produção", "Tráfego", "Analytics", "Financeiro", "Controle de acesso"] },
+    { title: "Gestor", badge: "Gestor", badgeClass: "bg-green-50 text-green-700", permissions: ["Dashboard interno", "Kanban", "CRM", "Campanhas", "Produção", "Tráfego", "Analytics", "Cobranças"] },
+    { title: "Designer", badge: "Designer", badgeClass: "bg-[#f0f4f8] text-[#3366cc]", permissions: ["Dashboard interno", "Kanban", "Produção"] },
+    { title: "Comercial", badge: "Comercial", badgeClass: "bg-orange-50 text-orange-700", permissions: ["Dashboard interno", "Kanban", "CRM", "Campanhas", "Produção", "Financeiro"] },
+    { title: "Dev", badge: "Dev", badgeClass: "bg-blue-50 text-blue-700", permissions: ["Dashboard interno", "Kanban", "Produção", "Analytics"] },
+    { title: "Cliente", badge: "Cliente", badgeClass: "bg-gray-100 text-gray-600 hairline-border", permissions: ["Dashboard", "Campanhas", "Relatórios", "Faturas", "Mensagens"] }
+  ];
+
+  if (profilesGrid) {
+    profilesGrid.innerHTML = roleCards
+      .map(
+        (role) => `
+          <div class="bg-white hairline-border rounded-[14px] shadow-[rgba(0,0,0,0.02)_0_2px_6px] p-6 flex flex-col h-full">
+            <div class="flex justify-between items-center pb-4 border-b border-[#dddddd] mb-4">
+              <h3 class="text-[16px] font-bold ink-black">${escapeHtml(role.title)}</h3>
+              <span class="inline-block px-2.5 py-1 text-[11px] font-bold rounded-full ${role.badgeClass}">${escapeHtml(role.badge)}</span>
+            </div>
+            <ul class="space-y-3 text-[14px] font-medium ink-black">
+              ${role.permissions.map((permission) => `<li>${escapeHtml(permission)}</li>`).join("")}
+            </ul>
+          </div>
+        `
+      )
+      .join("");
+  }
 }
 
 async function refreshData() {
@@ -6971,7 +7141,7 @@ async function refreshData() {
 
   const membersBody = document.getElementById("membros-tbody");
   if (membersBody) {
-    membersBody.innerHTML = renderAccessMembersTable(UI.skeletonRows(5, 5));
+    membersBody.innerHTML = UI.skeletonRows(5, 5);
   }
 
   const analyticsBody = document.getElementById("analytics-tbody");
@@ -7255,14 +7425,33 @@ function setTab(group, tab) {
   }
 
   if (group === "acesso") {
-    document.getElementById("acesso-membros").style.display = tab === "membros" ? "block" : "none";
-    document.getElementById("acesso-perfis").style.display = tab === "perfis" ? "block" : "none";
+    const accessPanels = {
+      membros: document.getElementById("acesso-membros"),
+      perfis: document.getElementById("acesso-perfis")
+    };
+    Object.entries(accessPanels).forEach(([panelTab, panel]) => {
+      if (!panel) {
+        return;
+      }
+      const isActive = panelTab === tab;
+      panel.style.display = isActive ? "block" : "none";
+      panel.classList.toggle("block", isActive);
+      panel.classList.toggle("hidden", !isActive);
+    });
   }
 
   document.querySelectorAll(`[id^="${group}-tab-"]`).forEach((node) => {
     const isActive = node.id === `${group}-tab-${tab}`;
     node.classList.toggle("active", isActive);
     if (group === "prod" && node.classList.contains("prod-tab-btn")) {
+      node.classList.toggle("border-[#222222]", isActive);
+      node.classList.toggle("text-[#222222]", isActive);
+      node.classList.toggle("font-semibold", isActive);
+      node.classList.toggle("border-transparent", !isActive);
+      node.classList.toggle("text-[#6a6a6a]", !isActive);
+      node.classList.toggle("font-medium", !isActive);
+    }
+    if (group === "acesso" && node.classList.contains("access-tab-btn")) {
       node.classList.toggle("border-[#222222]", isActive);
       node.classList.toggle("text-[#222222]", isActive);
       node.classList.toggle("font-semibold", isActive);
