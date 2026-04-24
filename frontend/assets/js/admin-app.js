@@ -3241,6 +3241,7 @@ const PROFILE_ACCESS_STATUS_LABELS = {
   dev: "Desenvolvimento",
   client: "Cliente",
 };
+const KANBAN_THEME_STORAGE_KEY = "one-theme";
 
 const PROFILE_ACTIVITY_PLACEHOLDERS = [];
 
@@ -3608,6 +3609,7 @@ function renderProfilePermissionsCard(profile) {
 
 function renderProfileNotificationCard(profile) {
   const preferences = normalizeProfileNotificationPreferences(profile.notification_preferences);
+  const isDarkTheme = localStorage.getItem(KANBAN_THEME_STORAGE_KEY) === "dark";
 
   return `
     <div class="mb-6">
@@ -3629,6 +3631,19 @@ function renderProfileNotificationCard(profile) {
         </div>
       `).join("")}
     </div>
+
+    <div class="mt-8 pt-6 border-t border-[#dddddd]">
+      <div class="flex items-center justify-between py-1">
+        <div class="pr-4">
+          <h4 class="text-[15px] font-semibold ink-black mb-1">Modo escuro do Kanban</h4>
+          <p class="text-[13px] font-medium ash-gray">Ative o visual escuro na tela de Gestão de Projetos.</p>
+        </div>
+        <div class="relative inline-block w-11 h-6 align-middle select-none transition duration-200 ease-in flex-shrink-0">
+          <input type="checkbox" id="toggle-theme-profile" class="profile-theme-toggle toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-[#dddddd] appearance-none cursor-pointer" ${isDarkTheme ? "checked" : ""}/>
+          <label for="toggle-theme-profile" class="toggle-label block overflow-hidden h-6 rounded-full bg-[#dddddd] cursor-pointer"></label>
+        </div>
+      </div>
+    </div>
   `;
 }
 
@@ -3649,6 +3664,25 @@ function bindProfileNotificationToggleHandlers() {
         PROFILE_NOTIFICATION_PREFERENCE_OPTIONS.map((option) => [option.key, root.querySelector(`[name="${option.key}"]`)?.checked === true])
       );
       await persistProfileNotificationPreferences(payload, { silentSuccess: true });
+    });
+  });
+}
+
+function bindProfileThemeToggleHandlers() {
+  const root = document.getElementById("page-perfil");
+  if (!root) {
+    return;
+  }
+
+  root.querySelectorAll(".profile-theme-toggle").forEach((toggle) => {
+    if (toggle.dataset.bound === "true") {
+      return;
+    }
+
+    toggle.dataset.bound = "true";
+    toggle.addEventListener("change", () => {
+      localStorage.setItem(KANBAN_THEME_STORAGE_KEY, toggle.checked ? "dark" : "light");
+      syncKanbanTheme();
     });
   });
 }
@@ -3776,6 +3810,7 @@ function renderProfile() {
   permissionsCard.innerHTML = renderProfilePermissionsCard(profile);
   notificationCard.innerHTML = renderProfileNotificationCard(profile);
   bindProfileNotificationToggleHandlers();
+  bindProfileThemeToggleHandlers();
   bindLegacyInlineHandlers(document.getElementById("page-perfil"));
 }
 
@@ -3861,21 +3896,31 @@ function setRoleUI(user) {
 
 function syncKanbanTheme() {
   const kanbanPage = document.getElementById("page-kanban");
-  if (!kanbanPage) {
-    return;
+  const kanbanRoot = document.getElementById("kanban-exact-root");
+  const toggleButton = document.getElementById("kanban-theme-toggle");
+  const isDark = localStorage.getItem(KANBAN_THEME_STORAGE_KEY) === "dark";
+
+  if (kanbanPage) {
+    kanbanPage.classList.toggle("dark", isDark);
+  }
+  if (kanbanRoot) {
+    kanbanRoot.classList.toggle("dark", isDark);
+  }
+  if (toggleButton) {
+    toggleButton.setAttribute("aria-pressed", isDark ? "true" : "false");
+    toggleButton.setAttribute("title", isDark ? "Desativar modo escuro" : "Ativar modo escuro");
+    toggleButton.setAttribute("aria-label", isDark ? "Desativar modo escuro do kanban" : "Ativar modo escuro do kanban");
   }
 
-  kanbanPage.classList.toggle("dark", localStorage.getItem("one-theme") === "dark");
+  document.querySelectorAll(".profile-theme-toggle").forEach((toggle) => {
+    toggle.checked = isDark;
+  });
 }
 
 function toggleTheme() {
-  const kanbanPage = document.getElementById("page-kanban");
-  if (!kanbanPage) {
-    return;
-  }
-
-  kanbanPage.classList.toggle("dark");
-  localStorage.setItem("one-theme", kanbanPage.classList.contains("dark") ? "dark" : "light");
+  const nextTheme = localStorage.getItem(KANBAN_THEME_STORAGE_KEY) === "dark" ? "light" : "dark";
+  localStorage.setItem(KANBAN_THEME_STORAGE_KEY, nextTheme);
+  syncKanbanTheme();
 }
 
 function isMobileViewport() {
@@ -4884,17 +4929,18 @@ function renderKanbanCard(task, columnKey, canEditTasks) {
     ? "text-[14px] font-bold leading-tight mb-2 line-through text-[#6a6a6a] dark:text-gray-400"
     : "text-[14px] font-bold leading-tight mb-2";
   const descriptionHtml = task.description && columnKey !== "done"
-    ? `<p class="text-[13px] font-medium text-[#6a6a6a] dark:text-gray-400 leading-relaxed line-clamp-3">${escapeHtml(task.description)}</p>`
+    ? `<p class="text-[13px] font-medium text-[#6a6a6a] dark:text-gray-400 leading-relaxed">${escapeHtml(task.description)}</p>`
     : "";
-  const deadlineChip = getKanbanDeadlineChip(task);
-  const footerHtml = columnKey === "doing"
-    ? `
-      <div class="flex items-center justify-between mt-4 pt-4 border-t border-[#f2f2f2] dark:border-[#333333]">
-        ${deadlineChip || '<span class="text-[11px] font-bold px-2 py-0.5 rounded opacity-0">Atrasada</span>'}
-        <div class="w-6 h-6 rounded-full bg-[#f2f2f2] dark:bg-[#444] flex items-center justify-center text-[9px] font-bold">${escapeHtml(getKanbanPrimaryAssigneeInitials(task))}</div>
-      </div>
-    `
-    : "";
+  const cardBadge = getKanbanCardBadge(task);
+  const badgeHtml = cardBadge
+    ? `<span class="${cardBadge.className}" title="${escapeHtml(cardBadge.title || cardBadge.label)}">${escapeHtml(cardBadge.label)}</span>`
+    : '<span class="text-[11px] font-bold px-2 py-0.5 rounded opacity-0">Info</span>';
+  const footerHtml = `
+    <div class="flex items-center justify-between mt-4 pt-4 border-t border-[#f2f2f2] dark:border-[#333333]">
+      ${badgeHtml}
+      ${renderKanbanAssigneeStack(task)}
+    </div>
+  `;
 
   return `
     <div class="k-card ${cardBaseClass}${canEditTasks ? " is-draggable" : ""}" data-task-card="1" data-task-id="${task.id}">
