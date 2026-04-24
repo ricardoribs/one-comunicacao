@@ -826,54 +826,21 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-acesso #acesso-membros .empty-state{background:var(--white);border:1px solid var(--border)}
 
 /* PERFIL */
-#page-perfil .profile-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr);gap:var(--space-4);align-items:stretch}
-#page-perfil .profile-side-stack{display:grid;grid-template-columns:1fr;gap:var(--space-4);align-items:start}
-#page-perfil .profile-card{height:100%}
-#page-perfil .profile-hero{display:flex;align-items:flex-start;gap:var(--space-4)}
-#page-perfil .profile-avatar{width:88px;height:88px;border-radius:18px;background:var(--gray);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+#page-perfil{background-color:#f7f7f7}
+#page-perfil .ink-black{color:#222222}
+#page-perfil .ash-gray{color:#6a6a6a}
+#page-perfil .hairline-border{border:1px solid #dddddd}
+#page-perfil .rausch-bg{background-color:#ff385c}
+#page-perfil .custom-scroll::-webkit-scrollbar{height:6px;width:6px}
+#page-perfil .custom-scroll::-webkit-scrollbar-track{background:transparent}
+#page-perfil .custom-scroll::-webkit-scrollbar-thumb{background:#dddddd;border-radius:3px}
+#page-perfil .custom-scroll::-webkit-scrollbar-thumb:hover{background:#c1c1c1}
+#page-perfil .toggle-checkbox:checked{right:0;border-color:#222222}
+#page-perfil .toggle-checkbox:checked + .toggle-label{background-color:#222222}
+#page-perfil .profile-avatar{width:56px;height:56px;border-radius:9999px;background:#f2f2f2;border:1px solid #dddddd;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
 #page-perfil .profile-avatar-image{width:100%;height:100%;object-fit:cover}
-#page-perfil .profile-avatar-fallback{font-family:var(--font-d);font-size:var(--text-2xl);font-weight:700;letter-spacing:-.04em;color:var(--pink)}
-#page-perfil .profile-summary{display:flex;flex-direction:column;gap:var(--space-1);min-width:0}
-#page-perfil .profile-summary-name{font-family:var(--font-d);font-size:var(--text-2xl);font-weight:800;line-height:1.1;letter-spacing:-.04em;color:var(--text)}
-#page-perfil .profile-summary-copy{font-size:var(--text-sm);line-height:1.55;color:var(--muted)}
-#page-perfil .profile-badge-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2)}
-#page-perfil .profile-actions{display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-5)}
-#page-perfil .profile-meta-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3);margin-top:var(--space-5)}
-#page-perfil .profile-meta-item{display:flex;flex-direction:column;gap:4px;padding:var(--space-3);background:var(--gray);border:1px solid var(--border);min-width:0}
-#page-perfil .profile-meta-item.is-wide{grid-column:1/-1}
-#page-perfil .profile-meta-label{font-size:var(--text-2xs);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-#page-perfil .profile-meta-value{font-size:var(--text-sm);line-height:1.5;color:var(--text);word-break:break-word}
-#page-perfil .profile-meta-value.is-empty{color:var(--muted)}
-#page-perfil .profile-permission-list,#page-perfil .profile-activity-list,#page-perfil .profile-security-list{display:flex;flex-direction:column;gap:var(--space-3)}
-#page-perfil .profile-permission-group{display:flex;flex-direction:column;gap:var(--space-2)}
-#page-perfil .profile-permission-group-title{font-size:var(--text-xs);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-#page-perfil .profile-chip-grid{display:flex;flex-wrap:wrap;gap:var(--space-2)}
-#page-perfil .profile-permission-panel{padding:var(--space-4);background:var(--gray);border:1px solid var(--border)}
-#page-perfil .profile-permission-panel.is-actions{background:#fcf7f9;border-color:rgba(232,52,105,.16)}
-#page-perfil .profile-permission-panel .profile-chip-grid .badge{min-height:24px}
-#page-perfil .profile-permission-panel.is-actions .badge{background:#eef4ff;color:#1a56b0}
-#page-perfil .profile-permission-panel.is-modules .badge{background:#f4f1ec;color:#5b554d}
-#page-perfil .profile-preferences-form{display:flex;flex-direction:column;gap:var(--space-3)}
-#page-perfil .profile-preference-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--space-3);align-items:center;padding:var(--space-3);background:var(--gray);border:1px solid var(--border)}
-#page-perfil .profile-preference-title{font-size:var(--text-sm);font-weight:600;line-height:1.4;color:var(--text)}
-#page-perfil .profile-preference-copy{margin-top:4px;font-size:var(--text-xs);line-height:1.5;color:var(--muted)}
-#page-perfil .profile-preference-row input[type="checkbox"]{width:18px;height:18px;accent-color:var(--pink);cursor:pointer}
-#page-perfil .profile-preferences-actions{display:flex;justify-content:flex-end;margin-top:var(--space-1)}
-#page-perfil .profile-avatar-upload{display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--space-4);align-items:start;padding:var(--space-3);background:var(--gray);border:1px solid var(--border)}
-#page-perfil .profile-avatar-upload .profile-avatar{width:72px;height:72px;border-radius:14px}
-#page-perfil .profile-avatar-upload-copy{display:flex;flex-direction:column;gap:var(--space-2);min-width:0}
-#page-perfil .profile-avatar-upload-note{font-size:var(--text-xs);line-height:1.5;color:var(--muted)}
-#page-perfil .profile-avatar-upload-remove{display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-xs);color:var(--muted)}
-#page-perfil .profile-avatar-upload-remove input{width:16px;height:16px;accent-color:var(--pink)}
-#page-perfil .profile-activity-item,#page-perfil .profile-security-item{padding:var(--space-4);background:var(--gray);border:1px solid var(--border)}
-#page-perfil .profile-activity-head,#page-perfil .profile-security-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3)}
-#page-perfil .profile-activity-title,#page-perfil .profile-security-title{font-size:var(--text-sm);font-weight:600;line-height:1.45;color:var(--text)}
-#page-perfil .profile-activity-body{font-size:var(--text-sm);line-height:1.55;color:var(--muted);margin-top:var(--space-2)}
-#page-perfil .profile-activity-meta,#page-perfil .profile-security-meta{font-size:var(--text-xs);line-height:1.45;color:var(--muted)}
-#page-perfil .profile-plain-empty{padding:var(--space-5) 0}
-#page-perfil .profile-secondary-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr);gap:var(--space-5);align-items:start;margin-top:var(--space-5)}
-#page-perfil .profile-secondary-grid.is-single-column{grid-template-columns:1fr}
-#page-perfil .profile-secondary-grid > .card{height:auto}
+#page-perfil .profile-avatar-fallback{font-size:18px;font-weight:700;line-height:1;color:#222222}
+#page-perfil .profile-plain-empty{padding:24px 0}
 
 /* OVERRIDES SISTEMICOS */
 .table-wrap table{width:100%}
@@ -1955,24 +1922,23 @@ body[data-active-page="kanban"] #page-kanban.active{display:block;min-height:100
 
 <!-- PERFIL -->
 <section id="page-perfil" class="app-screen">
-  <div class="topbar">
+  <header class="min-h-[80px] py-5 border-b border-[#dddddd] px-8 flex items-center justify-between flex-shrink-0 bg-white z-10">
     <div>
-      <div class="topbar-title">Meu Perfil</div>
-      <div class="topbar-sub">Informações da sua conta interna.</div>
+      <h1 class="text-[28px] font-bold ink-black tracking-tight leading-tight">Meu Perfil</h1>
+      <p class="text-[13px] ash-gray font-medium mt-0.5">Informações da sua conta interna e permissões.</p>
     </div>
-    <div class="topbar-actions"></div>
-  </div>
-  <div class="page-body">
-    <div class="profile-grid">
-      <div class="card profile-card" id="profile-summary-card"></div>
-      <div class="profile-side-stack">
-        <div class="card profile-card" id="profile-permissions-card"></div>
-        <div class="card profile-card" id="profile-notification-card"></div>
+  </header>
+
+  <div class="flex-1 p-8 overflow-y-auto custom-scroll">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div class="lg:col-span-1 space-y-8">
+        <div id="profile-summary-card" class="bg-white hairline-border rounded-[14px] shadow-[rgba(0,0,0,0.02)_0_2px_6px] p-8"></div>
       </div>
-    </div>
-    <div class="profile-secondary-grid">
-      <div class="card profile-card" id="profile-security-card"></div>
-      <div class="card profile-card" id="profile-activity-card"></div>
+
+      <div class="lg:col-span-2 space-y-8">
+        <div id="profile-permissions-card" class="bg-white hairline-border rounded-[14px] shadow-[rgba(0,0,0,0.02)_0_2px_6px] p-8"></div>
+        <div id="profile-notification-card" class="bg-white hairline-border rounded-[14px] shadow-[rgba(0,0,0,0.02)_0_2px_6px] p-8"></div>
+      </div>
     </div>
   </div>
 </section>
