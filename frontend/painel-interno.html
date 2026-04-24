@@ -987,6 +987,18 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-analytics .analytics-menu summary{list-style:none}
 #page-analytics .analytics-menu summary::-webkit-details-marker{display:none}
 #page-analytics .analytics-menu[open] summary{background:#f9fafb}
+#page-acesso .ink-black{color:#222222}
+#page-acesso .ash-gray{color:#6a6a6a}
+#page-acesso .hairline-border{border:1px solid #dddddd}
+#page-acesso .rausch-bg{background-color:#ff385c}
+#page-acesso .custom-scroll::-webkit-scrollbar{height:6px;width:6px}
+#page-acesso .custom-scroll::-webkit-scrollbar-track{background:transparent}
+#page-acesso .custom-scroll::-webkit-scrollbar-thumb{background:#dddddd;border-radius:3px}
+#page-acesso .custom-scroll::-webkit-scrollbar-thumb:hover{background:#c1c1c1}
+#page-acesso .access-menu summary{list-style:none}
+#page-acesso .access-menu summary::-webkit-details-marker{display:none}
+#page-acesso .access-menu[open] summary{background:#f9fafb}
+#page-acesso .notification-trigger{width:36px;height:36px;border-radius:9999px;box-shadow:none}
 #page-producao .prod-menu-item{display:flex;align-items:center;justify-content:flex-start;width:100%;min-height:36px;padding:0 12px;background:none;border:0;border-radius:8px;color:#222222;font-size:13px;font-weight:600;text-align:left;cursor:pointer}
 #page-producao .prod-menu-item:hover{background:#f5f5f5}
 #page-producao .prod-menu-item:disabled{opacity:.45;cursor:not-allowed}
@@ -2648,23 +2660,54 @@ body[data-active-page="kanban"] #page-kanban.active{display:block;min-height:100
 </section>
 
 <!-- ACESSO -->
-<section id="page-acesso" class="app-screen">
-  <div class="topbar">
-    <div><div class="topbar-title">Controle de Acesso</div><div class="topbar-sub">Perfis, permissões e gestão de usuários internos</div></div>
-    <div class="topbar-actions">
-      <button class="btn btn-pink btn-sm" data-action="open-modal" data-modal="novo-membro">+ Novo membro</button>
+<section id="page-acesso" class="app-screen bg-[#f7f7f7]">
+  <header class="min-h-[80px] py-5 border-b border-[#dddddd] px-8 flex items-center justify-between flex-shrink-0 bg-white z-10">
+    <div>
+      <h1 class="text-[28px] font-bold ink-black tracking-tight leading-tight">Controle de Acesso</h1>
+      <p class="text-[13px] ash-gray font-medium mt-0.5">Perfis, permissões e gestão de usuários internos.</p>
+    </div>
+
+    <div class="flex items-center gap-3 topbar-actions">
+      <button class="h-[36px] px-5 text-[13px] font-medium text-white rausch-bg rounded-[8px] hover:scale-[0.98] transition-transform" data-action="open-modal" data-modal="novo-membro">
+        + Novo membro
+      </button>
+      <div class="notification-shell" data-notification-shell="1"></div>
+    </div>
+  </header>
+
+  <div class="px-8 pt-6 bg-white border-b border-[#dddddd] flex-shrink-0">
+    <div class="flex items-center gap-8">
+      <button id="acesso-tab-membros" data-action="set-tab" data-group="acesso" data-tab="membros" class="access-tab-btn bg-transparent pb-4 text-[15px] font-semibold ink-black border-b-[2px] border-[#222222] transition-colors">
+        Membros
+      </button>
+      <button id="acesso-tab-perfis" data-action="set-tab" data-group="acesso" data-tab="perfis" class="access-tab-btn bg-transparent pb-4 text-[15px] font-medium ash-gray hover:text-[#222222] transition-colors border-b-[2px] border-transparent">
+        Perfis e Permissões
+      </button>
     </div>
   </div>
-  <div class="page-body">
-    <div class="tabs">
-      <div class="tab active" id="acesso-tab-membros" data-action="set-tab" data-group="acesso" data-tab="membros">Membros</div>
-      <div class="tab" id="acesso-tab-perfis" data-action="set-tab" data-group="acesso" data-tab="perfis">Perfis e Permissões</div>
+
+  <div class="flex-1 p-8 overflow-y-auto custom-scroll">
+    <div id="acesso-membros" class="block">
+      <div class="bg-white hairline-border rounded-[14px] shadow-[rgba(0,0,0,0.02)_0_2px_6px] overflow-hidden">
+        <div class="overflow-x-auto custom-scroll">
+          <table class="w-full text-left border-collapse min-w-[1000px]">
+            <thead class="bg-[#fcfcfc] border-b border-[#dddddd]">
+              <tr>
+                <th class="pl-6 pr-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-[35%]">Membro</th>
+                <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap w-px">Perfil</th>
+                <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap w-px">Presença</th>
+                <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-[35%]">Último Acesso</th>
+                <th class="pl-4 pr-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-right w-px">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="membros-tbody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
-    <div id="acesso-membros">
-      <div class="access-members-shell" id="membros-tbody"></div>
-    </div>
-    <div id="acesso-perfis" class="hidden-panel">
-      <div class="access-grid" id="perfis-grid"></div>
+
+    <div id="acesso-perfis" class="hidden">
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" id="perfis-grid"></div>
     </div>
   </div>
 </section>
