@@ -123,7 +123,7 @@
             <p class="text-[12px] font-bold text-gray-400 uppercase tracking-widest">Marcas que confiam na ONE</p>
         </div>
         <div class="marquee-wrapper">
-            <div class="marquee-track items-center opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+            <div class="marquee-track items-center opacity-60 grayscale">
                 <img src="/assets/svg/shopcar.png" alt="Shop Car" class="h-10 object-contain" />
                 <img src="/assets/svg/uniao-do-brasil.svg" alt="União" class="h-10 object-contain" />
                 <img src="/assets/svg/cdl-mulher.svg" alt="CDL" class="h-10 object-contain" />
@@ -438,6 +438,7 @@
                 let loopWidth = 0;
                 let offset = 0;
                 let isDragging = false;
+                let isHovering = false;
                 let activePointerId = null;
                 let lastPointerX = 0;
                 let lastFrameTime = performance.now();
@@ -466,7 +467,7 @@
                     isDragging = true;
                     activePointerId = event.pointerId;
                     lastPointerX = event.clientX;
-                    resumeAutoAt = 0;
+                    resumeAutoAt = Number.POSITIVE_INFINITY;
                     wrapper.classList.add('is-dragging');
                     wrapper.setPointerCapture?.(event.pointerId);
                     event.preventDefault();
@@ -493,7 +494,7 @@
                     const delta = now - lastFrameTime;
                     lastFrameTime = now;
 
-                    if (!isDragging && now >= resumeAutoAt && loopWidth > 0) {
+                    if (!isDragging && !isHovering && now >= resumeAutoAt && loopWidth > 0) {
                         offset -= (delta / 1000) * autoSpeed;
                         renderOffset();
                     }
@@ -505,6 +506,15 @@
                 wrapper.addEventListener('pointermove', moveDrag);
                 wrapper.addEventListener('pointerup', endDrag);
                 wrapper.addEventListener('pointercancel', endDrag);
+                wrapper.addEventListener('mouseenter', () => {
+                    isHovering = true;
+                });
+                wrapper.addEventListener('mouseleave', () => {
+                    isHovering = false;
+                    if (!isDragging) {
+                        resumeAutoAt = performance.now() + resumeDelay;
+                    }
+                });
                 wrapper.addEventListener('lostpointercapture', () => {
                     if (!isDragging) return;
                     isDragging = false;
