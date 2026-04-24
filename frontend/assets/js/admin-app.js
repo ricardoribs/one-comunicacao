@@ -355,23 +355,27 @@ const CHECKLIST_PLACEHOLDER_LABELS = new Set([
 const PROFILE_NOTIFICATION_PREFERENCE_OPTIONS = [
   {
     key: "task_assigned",
+    inputId: "toggle1",
     label: "Novas tarefas atribuídas",
     description: "Receba avisos quando uma nova tarefa for direcionada a você."
   },
   {
     key: "task_completed",
+    inputId: "toggle2",
     label: "Conclusão de tarefas delegadas",
     description: "Receba avisos quando alguém concluir uma tarefa criada ou delegada por você."
   },
   {
     key: "calendar_24h",
+    inputId: "toggle3",
     label: "Lembretes de agenda com 24h",
     description: "Receba avisos um dia antes dos eventos da equipe."
   },
   {
-    key: "calendar_1h",
-    label: "Lembretes de agenda com 1h",
-    description: "Receba avisos uma hora antes dos eventos da equipe."
+    key: "finance_overdue",
+    inputId: "toggle4",
+    label: "Inadimplência financeira",
+    description: "Receba alerta imediato quando uma fatura vencer sem pagamento."
   }
 ];
 const CALENDAR_VIEW_START_HOUR = 7;
@@ -3229,6 +3233,15 @@ const ROLE_PROFILE_DESCRIPTIONS = {
   dev: "Suporte técnico, integrações e analytics.",
 };
 
+const PROFILE_ACCESS_STATUS_LABELS = {
+  admin: "Administrador Master",
+  gestor: "Gestor Operacional",
+  designer: "Designer",
+  comercial: "Comercial",
+  dev: "Desenvolvimento",
+  client: "Cliente",
+};
+
 const PROFILE_ACTIVITY_PLACEHOLDERS = [];
 
 function hasMeaningfulAccessLocation(value) {
@@ -3407,7 +3420,7 @@ function normalizeProfileNotificationPreferences(preferences = {}) {
     task_assigned: preferences.task_assigned !== false,
     task_completed: preferences.task_completed !== false,
     calendar_24h: preferences.calendar_24h !== false,
-    calendar_1h: preferences.calendar_1h !== false,
+    finance_overdue: preferences.finance_overdue !== false,
   };
 }
 
@@ -3476,119 +3489,118 @@ function getProfileCapabilityLabels(role) {
     .filter(Boolean);
 }
 
+function getProfileScreenCapabilityLabels(role) {
+  const access = ROLE_DATA_ACCESS[role] || {};
+  const labels = [];
+
+  if (access.manageTasks) {
+    labels.push("Criar e editar tarefas");
+  }
+  if (access.manageClients) {
+    labels.push("Gerenciar clientes");
+  }
+  if (access.homeFinancial) {
+    labels.push("Ver financeiro na visão geral");
+  }
+  if (access.costs || access.invoices || access.charges) {
+    labels.push("Visualizar custos e faturas");
+  }
+  if (access.users) {
+    labels.push("Gerenciar membros do time");
+  }
+  if (access.metrics || access.reports || access.integrations) {
+    labels.push("Acesso total às métricas");
+  }
+
+  return labels;
+}
+
 function renderProfileSummaryCard(profile) {
-  const roleLabel = ROLE_LABELS[profile.role] || profile.role || "Membro";
-  const roleDescription = ROLE_PROFILE_DESCRIPTIONS[profile.role] || "Acesso interno da equipe.";
-  const jobTitle = String(profile.job_title || "").trim();
-  const clientLabel = profile.client_name || profile.client_company || "Equipe interna";
-  const emailVerifiedLabel = profile.email_verified_at ? "Verificado" : "Pendente";
+  const jobTitle = String(profile.job_title || ROLE_LABELS[profile.role] || "Membro").trim();
+  const clientLabel = profile.client_name || profile.client_company || "Equipe Interna";
+  const emailLabel = String(profile.email || "").trim() || "—";
+  const emailStatusLabel = profile.email_verified_at ? "Verificado" : "Pendente";
   const lastAccessLabel = profile.last_seen_at || profile.last_login_at ? formatDateTime(profile.last_seen_at || profile.last_login_at) : "—";
-  const locationLabel = formatAccessLocationLabel(profile.last_seen_location);
-  const createdLabel = profile.created_at ? formatDate(profile.created_at) : "—";
-  const phoneLabel = formatPhoneDisplay(profile.phone);
-  const metaItems = [
-    {
-      label: "Vínculo",
-      value: clientLabel,
-    },
-    {
-      label: "Função",
-      value: jobTitle || roleDescription,
-      wide: true,
-    },
-    {
-      label: "E-mail verificado",
-      value: emailVerifiedLabel,
-    },
-    {
-      label: "Último acesso",
-      value: lastAccessLabel,
-    },
-    {
-      label: "Membro desde",
-      value: createdLabel,
-    },
-  ];
-
-  if (phoneLabel) {
-    metaItems.splice(3, 0, {
-      label: "Telefone",
-      value: phoneLabel,
-    });
-  }
-
-  if (locationLabel) {
-    metaItems.splice(4, 0, {
-      label: "Localização",
-      value: locationLabel,
-      wide: true,
-    });
-  }
+  const locationLabel = formatAccessLocationLabel(profile.last_seen_location) || "—";
+  const phoneLabel = formatPhoneDisplay(profile.phone) || "—";
 
   return `
-    <div class="section-header">
-      <div>
-        <div class="section-title">Dados pessoais</div>
-        <div class="section-sub">Resumo do seu acesso interno e dos seus dados principais.</div>
+    <div class="flex items-center gap-4 mb-10">
+      <div class="profile-avatar">${renderProfileAvatar(profile)}</div>
+      <div class="flex flex-col justify-center min-w-0">
+        <h2 class="text-[16px] font-bold ink-black leading-none mb-1">${escapeHtml(profile.name || "Usuário interno")}</h2>
+        <p class="text-[14px] ash-gray font-medium leading-none">${escapeHtml(jobTitle)}</p>
       </div>
     </div>
-    <div class="profile-hero">
-      <div class="profile-avatar" data-profile-avatar="1">${renderProfileAvatar(profile)}</div>
-      <div class="profile-summary">
-        <div class="profile-summary-name">${escapeHtml(profile.name || "Usuário interno")}</div>
-        <div class="profile-badge-row">
-          <span class="sb-role-badge ${getRoleBadgeClass(profile.role)}">${escapeHtml(roleLabel)}</span>
+
+    <div class="space-y-5">
+      <div class="border-b border-[#dddddd] pb-4">
+        <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1">Localização</p>
+        <p class="text-[15px] font-medium ink-black">${escapeHtml(locationLabel)}</p>
+      </div>
+
+      <div class="border-b border-[#dddddd] pb-4">
+        <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1">E-mail de acesso</p>
+        <div class="flex items-center gap-2 flex-wrap">
+          <p class="text-[15px] font-medium ink-black">${escapeHtml(emailLabel)}</p>
+          <span class="px-2 py-0.5 rounded bg-green-50 text-green-700 text-[10px] font-bold uppercase tracking-widest">${escapeHtml(emailStatusLabel)}</span>
         </div>
-        ${jobTitle ? `<div class="profile-summary-copy">${escapeHtml(jobTitle)}</div>` : ""}
-        <div class="profile-summary-copy">${escapeHtml(profile.email || "—")}</div>
+      </div>
+
+      <div class="border-b border-[#dddddd] pb-4">
+        <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1">Telefone</p>
+        <p class="text-[15px] font-medium ink-black">${escapeHtml(phoneLabel)}</p>
+      </div>
+
+      <div class="border-b border-[#dddddd] pb-4">
+        <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1">Vínculo</p>
+        <p class="text-[15px] font-medium ink-black">${escapeHtml(clientLabel)}</p>
+      </div>
+
+      <div class="pb-2">
+        <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1">Último Acesso</p>
+        <p class="text-[15px] font-medium ink-black">${escapeHtml(lastAccessLabel)}</p>
       </div>
     </div>
-    <div class="profile-meta-grid">
-      ${metaItems
-        .map(
-          (item) => `
-            <div class="profile-meta-item${item.wide ? " is-wide" : ""}">
-              <span class="profile-meta-label">${escapeHtml(item.label)}</span>
-              <span class="profile-meta-value${item.value ? "" : " is-empty"}">${escapeHtml(item.value || "—")}</span>
-            </div>
-          `
-        )
-        .join("")}
-    </div>
-    <div class="profile-actions">
-      <button type="button" class="btn btn-pink btn-sm" data-action="open-modal" data-modal="editar-perfil">Editar perfil</button>
-      <button type="button" class="btn btn-outline btn-sm" data-action="open-modal" data-modal="alterar-senha">Alterar senha</button>
+
+    <div class="pt-8 mt-6 border-t border-[#dddddd] flex gap-3">
+      <button type="button" class="flex-1 py-3 text-[14px] font-semibold ink-black bg-white hairline-border rounded-[8px] hover:bg-gray-50 transition-colors" data-action="open-modal" data-modal="editar-perfil">
+        Editar perfil
+      </button>
+      <button type="button" class="flex-1 py-3 text-[14px] font-semibold ink-black bg-white hairline-border rounded-[8px] hover:bg-gray-50 transition-colors" data-action="open-modal" data-modal="alterar-senha">
+        Alterar senha
+      </button>
     </div>
   `;
 }
 
 function renderProfilePermissionsCard(profile) {
   const modules = getProfileModuleLabels(profile.role);
-  const capabilities = getProfileCapabilityLabels(profile.role);
+  const capabilities = getProfileScreenCapabilityLabels(profile.role);
+  const statusLabel = PROFILE_ACCESS_STATUS_LABELS[profile.role] || ROLE_LABELS[profile.role] || "Membro";
 
   return `
-    <div class="section-header">
-      <div>
-        <div class="section-title">Permissões atuais</div>
-        <div class="section-sub">Separação entre áreas disponíveis e ações permitidas no seu perfil.</div>
+    <div class="mb-8">
+      <h3 class="text-[21px] font-bold ink-black">Permissões de Acesso</h3>
+      <p class="text-[14px] font-medium ash-gray mt-1">Status: <span class="text-green-600 font-semibold">${escapeHtml(statusLabel)}</span></p>
+    </div>
+
+    <div class="mb-8">
+      <p class="text-[12px] font-bold text-gray-500 uppercase tracking-widest mb-4">Módulos Disponíveis</p>
+      <div class="flex flex-wrap gap-2">
+        ${modules.map((label) => `<span class="px-3 py-1.5 bg-[#f2f2f2] text-[#222222] text-[13px] font-medium rounded-full">${escapeHtml(label)}</span>`).join("")}
       </div>
     </div>
-    <div class="profile-permission-list">
-      <div class="profile-permission-group profile-permission-panel is-modules">
-        <div class="profile-permission-group-title">Módulos disponíveis</div>
-        <div class="profile-chip-grid">
-          ${modules.length ? modules.map((label) => `<span class="badge badge-gray">${escapeHtml(label)}</span>`).join("") : '<span class="text-meta">Sem módulos disponíveis.</span>'}
-        </div>
-      </div>
-      <div class="profile-permission-group profile-permission-panel is-actions">
-        <div class="profile-permission-group-title">Ações liberadas</div>
-        <div class="profile-chip-grid">
-          ${
-            capabilities.length
-              ? capabilities.map((label) => `<span class="badge badge-blue">${escapeHtml(label)}</span>`).join("")
-              : '<span class="text-meta">Sem permissões operacionais adicionais.</span>'
-          }
-        </div>
+
+    <div>
+      <p class="text-[12px] font-bold text-gray-500 uppercase tracking-widest mb-4">Ações Liberadas${capabilities.length >= 6 ? " (Acesso Completo)" : ""}</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
+        ${capabilities.map((label) => `
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            <span class="text-[14px] font-medium ink-black">${escapeHtml(label)}</span>
+          </div>
+        `).join("")}
       </div>
     </div>
   `;
@@ -3598,27 +3610,47 @@ function renderProfileNotificationCard(profile) {
   const preferences = normalizeProfileNotificationPreferences(profile.notification_preferences);
 
   return `
-    <div class="section-header">
-      <div>
-        <div class="section-title">Preferências de notificação</div>
-        <div class="section-sub">Escolha quais alertas devem chegar ao seu sino interno.</div>
-      </div>
+    <div class="mb-6">
+      <h3 class="text-[21px] font-bold ink-black">Preferências de Notificação</h3>
+      <p class="text-[14px] font-medium ash-gray mt-1">Gerencie os alertas que chegam no seu sino interno e e-mail.</p>
     </div>
-    <form class="profile-preferences-form" onsubmit="saveProfileNotificationPreferences(event)">
-      ${PROFILE_NOTIFICATION_PREFERENCE_OPTIONS.map((option) => `
-        <label class="profile-preference-row">
-          <div>
-            <div class="profile-preference-title">${escapeHtml(option.label)}</div>
-            <div class="profile-preference-copy">${escapeHtml(option.description)}</div>
+
+    <div class="space-y-0">
+      ${PROFILE_NOTIFICATION_PREFERENCE_OPTIONS.map((option, index) => `
+        <div class="flex items-center justify-between py-5${index < PROFILE_NOTIFICATION_PREFERENCE_OPTIONS.length - 1 ? " border-b border-[#dddddd]" : ""}">
+          <div class="pr-4">
+            <h4 class="text-[15px] font-semibold ink-black mb-1">${escapeHtml(option.label)}</h4>
+            <p class="text-[13px] font-medium ash-gray">${escapeHtml(option.description)}</p>
           </div>
-          <input type="checkbox" name="${escapeHtml(option.key)}" ${preferences[option.key] ? "checked" : ""}>
-        </label>
+          <div class="relative inline-block w-11 h-6 align-middle select-none transition duration-200 ease-in flex-shrink-0">
+            <input type="checkbox" name="${escapeHtml(option.key)}" id="${escapeHtml(option.inputId)}" class="profile-notification-toggle toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-[#dddddd] appearance-none cursor-pointer" ${preferences[option.key] ? "checked" : ""}/>
+            <label for="${escapeHtml(option.inputId)}" class="toggle-label block overflow-hidden h-6 rounded-full bg-[#dddddd] cursor-pointer"></label>
+          </div>
+        </div>
       `).join("")}
-      <div class="profile-preferences-actions">
-        <button type="submit" class="btn btn-outline btn-sm">Salvar preferências</button>
-      </div>
-    </form>
+    </div>
   `;
+}
+
+function bindProfileNotificationToggleHandlers() {
+  const root = document.getElementById("page-perfil");
+  if (!root) {
+    return;
+  }
+
+  root.querySelectorAll(".profile-notification-toggle").forEach((toggle) => {
+    if (toggle.dataset.bound === "true") {
+      return;
+    }
+
+    toggle.dataset.bound = "true";
+    toggle.addEventListener("change", async () => {
+      const payload = Object.fromEntries(
+        PROFILE_NOTIFICATION_PREFERENCE_OPTIONS.map((option) => [option.key, root.querySelector(`[name="${option.key}"]`)?.checked === true])
+      );
+      await persistProfileNotificationPreferences(payload, { silentSuccess: true });
+    });
+  });
 }
 
 function renderProfileSecurityCard(profile) {
@@ -3720,28 +3752,22 @@ function renderProfile() {
   const summaryCard = document.getElementById("profile-summary-card");
   const permissionsCard = document.getElementById("profile-permissions-card");
   const notificationCard = document.getElementById("profile-notification-card");
-  const securityCard = document.getElementById("profile-security-card");
-  const activityCard = document.getElementById("profile-activity-card");
-  if (!summaryCard || !permissionsCard || !notificationCard || !securityCard || !activityCard || !state.session?.user) {
+  if (!summaryCard || !permissionsCard || !notificationCard || !state.session?.user) {
     return;
   }
 
   if (state.profileLoading) {
     summaryCard.innerHTML = `
-      <div class="section-header"><div><div class="section-title">Dados pessoais</div><div class="section-sub">Carregando seu perfil.</div></div></div>
-      <div class="profile-hero">
+      <div class="flex items-center gap-4 mb-10">
         <div class="profile-avatar"><div class="profile-avatar-fallback">○</div></div>
-        <div class="profile-summary" style="flex:1">
+        <div class="flex-1">
           <div class="skeleton skeleton-title"></div>
-          <div class="skeleton skeleton-text" style="width:52%"></div>
-          <div class="skeleton skeleton-text" style="width:46%"></div>
+          <div class="skeleton skeleton-text" style="width:52%;margin-top:8px"></div>
         </div>
       </div>
     `;
     permissionsCard.innerHTML = UI.empty("Carregando permissões...", "", { icon: false, className: "profile-plain-empty is-plain" });
     notificationCard.innerHTML = UI.empty("Carregando preferências...", "", { icon: false, className: "profile-plain-empty is-plain" });
-    securityCard.innerHTML = UI.empty("Carregando dados de acesso...", "", { icon: false, className: "profile-plain-empty is-plain" });
-    activityCard.innerHTML = UI.empty("Carregando atividade...", "", { icon: false, className: "profile-plain-empty is-plain" });
     return;
   }
 
@@ -3749,8 +3775,7 @@ function renderProfile() {
   summaryCard.innerHTML = renderProfileSummaryCard(profile);
   permissionsCard.innerHTML = renderProfilePermissionsCard(profile);
   notificationCard.innerHTML = renderProfileNotificationCard(profile);
-  securityCard.innerHTML = renderProfileSecurityCard(profile);
-  renderProfileActivityCard();
+  bindProfileNotificationToggleHandlers();
   bindLegacyInlineHandlers(document.getElementById("page-perfil"));
 }
 
@@ -3784,13 +3809,7 @@ async function loadMyProfile({ force = false, silent = false } = {}) {
   }
 }
 
-async function saveProfileNotificationPreferences(event) {
-  event.preventDefault();
-  const form = event.target;
-  const payload = Object.fromEntries(
-    PROFILE_NOTIFICATION_PREFERENCE_OPTIONS.map((option) => [option.key, form.elements[option.key]?.checked === true])
-  );
-
+async function persistProfileNotificationPreferences(payload, { silentSuccess = false } = {}) {
   try {
     const response = await apiFetch("/users/me/notification-preferences", {
       method: "PATCH",
@@ -3801,10 +3820,25 @@ async function saveProfileNotificationPreferences(event) {
       notification_preferences: response.preferences || payload
     });
     renderProfile();
-    showToast(response.message || "Preferências atualizadas com sucesso.");
+    if (!silentSuccess) {
+      showToast(response.message || "Preferências atualizadas com sucesso.");
+    }
+    return response.preferences || payload;
   } catch (error) {
+    renderProfile();
     showToast(error.message || "Não foi possível salvar suas preferências.");
+    throw error;
   }
+}
+
+async function saveProfileNotificationPreferences(event) {
+  event.preventDefault();
+  const form = event.target;
+  const payload = Object.fromEntries(
+    PROFILE_NOTIFICATION_PREFERENCE_OPTIONS.map((option) => [option.key, form.elements[option.key]?.checked === true])
+  );
+
+  await persistProfileNotificationPreferences(payload);
 }
 
 function setRoleUI(user) {
