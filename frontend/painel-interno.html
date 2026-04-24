@@ -622,6 +622,20 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-financeiro .kpi-val{font-size:clamp(1.2rem,1.9vw,var(--text-3xl));line-height:1.22;overflow:visible;text-overflow:clip}
 #page-financeiro .finance-bottom-grid{display:grid;grid-template-columns:1fr;gap:var(--space-5);margin-top:var(--space-5)}
 #page-financeiro .finance-bottom-grid > .card{padding-top:var(--space-6)}
+#page-financeiro .ink-black{color:#222222}
+#page-financeiro .ash-gray{color:#6a6a6a}
+#page-financeiro .hairline-border{border:1px solid #dddddd}
+#page-financeiro .rausch-bg{background-color:#ff385c}
+#page-financeiro .custom-scroll::-webkit-scrollbar{height:6px;width:6px}
+#page-financeiro .custom-scroll::-webkit-scrollbar-track{background:transparent}
+#page-financeiro .custom-scroll::-webkit-scrollbar-thumb{background:#dddddd;border-radius:3px}
+#page-financeiro .custom-scroll::-webkit-scrollbar-thumb:hover{background:#c1c1c1}
+#page-financeiro .finance-menu summary{list-style:none}
+#page-financeiro .finance-menu summary::-webkit-details-marker{display:none}
+#page-financeiro .finance-menu-panel{position:absolute;top:calc(100% + 8px);right:0;z-index:30;display:flex;flex-direction:column;gap:4px;min-width:188px;padding:8px;background:#ffffff;border:1px solid #dddddd;border-radius:10px;box-shadow:0 16px 32px rgba(0,0,0,.12)}
+#page-financeiro .finance-menu-item{display:flex;align-items:center;justify-content:flex-start;width:100%;min-height:36px;padding:0 12px;background:none;border:0;border-radius:8px;color:#222222;font-size:13px;font-weight:600;text-align:left;cursor:pointer}
+#page-financeiro .finance-menu-item:hover{background:#f5f5f5}
+#page-financeiro .finance-menu-item:disabled{opacity:.45;cursor:not-allowed}
 #page-producao .prod-table{min-width:860px}
 #page-producao .prod-table th:nth-child(1){width:38%}
 #page-producao .prod-table th:nth-child(2){width:14%}
@@ -2324,60 +2338,101 @@ body[data-active-page="kanban"] #page-kanban.active{display:block;min-height:100
 
 <!-- FINANCEIRO -->
 <section id="page-financeiro" class="app-screen">
-  <div class="topbar">
-    <div><div class="topbar-title">Financeiro Interno</div><div class="topbar-sub">Receitas, custos, margens e acompanhamento de cobranças</div></div>
-    <div class="topbar-actions">
-      <select id="finance-period-filter" class="btn btn-outline btn-sm btn-select" onchange="setFinancePeriodFilter(this.value)"></select>
-      <button class="btn btn-outline btn-sm" data-action="export-finance">Exportar CSV</button>
-      <button class="btn btn-outline btn-sm" data-action="open-modal" data-modal="novo-custo">+ Novo custo</button>
-      <button class="btn btn-outline btn-sm" data-action="open-modal" data-modal="nova-cobranca">+ Nova cobrança</button>
-      <button class="btn btn-pink btn-sm" data-action="open-modal" data-modal="nova-fatura">+ Nova fatura</button>
-    </div>
-  </div>
-  <div class="page-body">
-    <div class="kpi-grid">
-      <div class="kpi-card"><div class="kpi-label">Faturado</div><div class="kpi-val">R$0,00</div><div class="kpi-sub">Sem movimento no período</div></div>
-      <div class="kpi-card"><div class="kpi-label">Recebido</div><div class="kpi-val">R$0,00</div><div class="kpi-sub">Nenhum recebimento no período</div></div>
-      <div class="kpi-card"><div class="kpi-label">Inadimplência</div><div class="kpi-val">R$0,00</div><div class="kpi-sub">Nenhum título atrasado</div></div>
-      <div class="kpi-card"><div class="kpi-label">Lucro Líquido</div><div class="kpi-val">R$0,00</div><div class="kpi-sub">R$0,00 a receber no prazo</div></div>
-    </div>
-    <div class="card mt-5">
-      <div class="section-header"><div class="section-title">Margem por Cliente</div></div>
-      <div class="table-wrap">
-        <table class="finance-client-table">
-          <thead>
-            <tr>
-              <th>Cliente</th>
-              <th class="hide-mobile">Faturado</th>
-              <th class="hide-tablet">Custos</th>
-              <th class="hide-tablet">Recebido</th>
-              <th class="hide-mobile">Status</th>
-              <th>Margem</th>
-              <th class="cell-actions">Ações</th>
-            </tr>
-          </thead>
-          <tbody id="fin-clientes"></tbody>
-        </table>
+  <div class="flex flex-col min-w-0 bg-[#f7f7f7] min-h-full">
+    <header class="min-h-[80px] py-5 border-b border-[#dddddd] px-8 flex flex-col xl:flex-row xl:items-center justify-between gap-4 flex-shrink-0 bg-white z-10">
+      <div class="flex-1">
+        <h1 class="text-[28px] font-bold ink-black tracking-tight leading-tight">Financeiro Interno</h1>
+        <p class="text-[13px] ash-gray font-medium mt-0.5">Receitas, custos, margens e acompanhamento de cobranças</p>
       </div>
-    </div>
-    <div class="finance-bottom-grid">
-      <div class="card">
-        <div class="section-title card-title-spacing">Custos por Categoria</div>
-        <div class="card-list-sm" id="fin-custos"></div>
+
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <select id="finance-period-filter" class="h-[36px] px-3 text-[13px] font-medium ink-black bg-white hairline-border rounded-[8px] outline-none hover:bg-gray-50 cursor-pointer" onchange="setFinancePeriodFilter(this.value)"></select>
+        <button class="h-[36px] inline-flex items-center justify-center px-4 text-[13px] font-medium ink-black bg-white hairline-border rounded-[8px] hover:bg-gray-50 transition-colors" data-action="export-finance">
+          Exportar CSV
+        </button>
+        <button class="h-[36px] inline-flex items-center justify-center px-4 text-[13px] font-medium ink-black bg-white hairline-border rounded-[8px] hover:bg-gray-50 transition-colors" data-action="open-modal" data-modal="novo-custo">
+          + Novo custo
+        </button>
+        <button class="h-[36px] inline-flex items-center justify-center px-4 text-[13px] font-medium ink-black bg-white hairline-border rounded-[8px] hover:bg-gray-50 transition-colors" data-action="open-modal" data-modal="nova-cobranca">
+          + Nova cobrança
+        </button>
+        <div class="h-5 w-px bg-[#dddddd] mx-1 hidden sm:block"></div>
+        <button class="h-[36px] inline-flex items-center justify-center px-5 text-[13px] font-medium text-white rausch-bg rounded-[8px] hover:scale-[0.98] transition-transform" data-action="open-modal" data-modal="nova-fatura">
+          + Nova fatura
+        </button>
+        <button class="h-[36px] w-[36px] hairline-border rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors" type="button" aria-label="Notificações">
+          <svg class="w-4 h-4 text-[#222222]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+        </button>
       </div>
-      <div class="card">
-        <div class="section-title card-title-spacing">Lançamentos financeiros</div>
-        <div class="table-wrap">
-          <table class="finance-launches-table">
-            <thead>
+    </header>
+
+    <div class="flex-1 p-8 overflow-y-auto custom-scroll">
+      <section id="finance-kpis" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white hairline-border rounded-[14px] p-6 shadow-[rgba(0,0,0,0.02)_0_2px_6px]">
+          <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">Faturado</p>
+          <span class="text-3xl font-bold ink-black block mb-1 tracking-tight">R$ 0,00</span>
+          <p class="text-[13px] ash-gray font-medium">Sem movimento no período</p>
+        </div>
+        <div class="bg-white hairline-border rounded-[14px] p-6 shadow-[rgba(0,0,0,0.02)_0_2px_6px]">
+          <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">Recebido</p>
+          <span class="text-3xl font-bold ink-black block mb-1 tracking-tight">R$ 0,00</span>
+          <p class="text-[13px] ash-gray font-medium">Nenhum recebimento no período</p>
+        </div>
+        <div class="bg-white hairline-border rounded-[14px] p-6 shadow-[rgba(0,0,0,0.02)_0_2px_6px] relative overflow-hidden">
+          <div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500 opacity-50"></div>
+          <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">Inadimplência</p>
+          <span class="text-3xl font-bold ink-black block mb-1 tracking-tight">R$ 0,00</span>
+          <p class="text-[13px] ash-gray font-medium">Nenhum título atrasado</p>
+        </div>
+        <div class="bg-white hairline-border rounded-[14px] p-6 shadow-[rgba(0,0,0,0.02)_0_2px_6px]">
+          <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">Lucro Líquido</p>
+          <span class="text-3xl font-bold ink-black block mb-1 tracking-tight">R$ 0,00</span>
+          <p class="text-[13px] ash-gray font-medium">R$ 0,00 a receber no prazo</p>
+        </div>
+      </section>
+
+      <div class="bg-white hairline-border rounded-[14px] shadow-[rgba(0,0,0,0.02)_0_2px_6px] overflow-hidden mb-8">
+        <div class="px-6 py-5 border-b border-[#dddddd]">
+          <h3 class="text-[16px] font-bold ink-black">Margem por Cliente</h3>
+        </div>
+        <div class="overflow-x-auto custom-scroll">
+          <table class="finance-client-table w-full text-left border-collapse min-w-[900px]">
+            <thead class="bg-[#fcfcfc] border-b border-[#dddddd]">
               <tr>
-                <th class="finance-launch-type-col hide-mobile">Tipo</th>
-                <th>Registro</th>
-                <th class="finance-launch-client-col hide-phone">Cliente</th>
-                <th class="finance-launch-detail-col hide-tablet">Detalhe</th>
-                <th class="hide-mobile">Valor</th>
-                <th>Status</th>
-                <th class="cell-actions">Ações</th>
+                <th class="pl-6 pr-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-[30%]">Cliente</th>
+                <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-right w-px">Faturado</th>
+                <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-right w-px">Custos</th>
+                <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-right w-px">Recebido</th>
+                <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-center w-px">Status</th>
+                <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-[20%]">Margem</th>
+                <th class="pl-4 pr-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-center w-px">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="fin-clientes"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="bg-white hairline-border rounded-[14px] shadow-[rgba(0,0,0,0.02)_0_2px_6px] p-6 mb-8">
+        <h3 class="text-[16px] font-bold ink-black mb-6">Custos por Categoria</h3>
+        <div class="space-y-0" id="fin-custos"></div>
+      </div>
+
+      <div class="bg-white hairline-border rounded-[14px] shadow-[rgba(0,0,0,0.02)_0_2px_6px] overflow-hidden mb-8">
+        <div class="px-6 py-5 border-b border-[#dddddd]">
+          <h3 class="text-[16px] font-bold ink-black">Lançamentos financeiros</h3>
+        </div>
+        <div class="overflow-x-auto custom-scroll">
+          <table class="finance-launches-table w-full text-left border-collapse min-w-[1000px]">
+            <thead class="bg-[#fcfcfc] border-b border-[#dddddd]">
+              <tr>
+                <th class="pl-6 pr-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap w-px">Tipo</th>
+                <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-[30%]">Registro</th>
+                <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-[25%]">Cliente</th>
+                <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-[20%]">Detalhe</th>
+                <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-right w-px">Valor</th>
+                <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-center w-px">Status</th>
+                <th class="pl-4 pr-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-right w-px">Ações</th>
               </tr>
             </thead>
             <tbody id="fin-comissoes"></tbody>
