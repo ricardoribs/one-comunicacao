@@ -976,6 +976,17 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-trafego .custom-scroll::-webkit-scrollbar-track{background:transparent}
 #page-trafego .custom-scroll::-webkit-scrollbar-thumb{background:#dddddd;border-radius:3px}
 #page-trafego .custom-scroll::-webkit-scrollbar-thumb:hover{background:#c1c1c1}
+#page-analytics .ink-black{color:#222222}
+#page-analytics .ash-gray{color:#6a6a6a}
+#page-analytics .hairline-border{border:1px solid #dddddd}
+#page-analytics .rausch-bg{background-color:#ff385c}
+#page-analytics .custom-scroll::-webkit-scrollbar{height:6px;width:6px}
+#page-analytics .custom-scroll::-webkit-scrollbar-track{background:transparent}
+#page-analytics .custom-scroll::-webkit-scrollbar-thumb{background:#dddddd;border-radius:3px}
+#page-analytics .custom-scroll::-webkit-scrollbar-thumb:hover{background:#c1c1c1}
+#page-analytics .analytics-menu summary{list-style:none}
+#page-analytics .analytics-menu summary::-webkit-details-marker{display:none}
+#page-analytics .analytics-menu[open] summary{background:#f9fafb}
 #page-producao .prod-menu-item{display:flex;align-items:center;justify-content:flex-start;width:100%;min-height:36px;padding:0 12px;background:none;border:0;border-radius:8px;color:#222222;font-size:13px;font-weight:600;text-align:left;cursor:pointer}
 #page-producao .prod-menu-item:hover{background:#f5f5f5}
 #page-producao .prod-menu-item:disabled{opacity:.45;cursor:not-allowed}
@@ -2422,49 +2433,106 @@ body[data-active-page="kanban"] #page-kanban.active{display:block;min-height:100
 </section>
 
 <!-- ANALYTICS -->
-<section id="page-analytics" class="app-screen">
-  <div class="topbar">
-    <div><div class="topbar-title">Dados & Analytics</div><div class="topbar-sub">Leitura de performance, integrações e inteligência analítica</div></div>
-    <div class="topbar-actions">
-      <select id="analytics-client-filter" class="btn btn-outline btn-sm btn-select" onchange="setAnalyticsClientFilter(this.value)">
+<section id="page-analytics" class="app-screen bg-[#f7f7f7]">
+  <header class="h-20 border-b border-[#dddddd] px-8 flex items-center justify-between flex-shrink-0 bg-white z-10">
+    <div>
+      <h1 class="text-[28px] font-bold ink-black tracking-tight leading-tight">Dados & Analytics</h1>
+      <p class="text-[13px] ash-gray font-medium mt-0.5">Leitura de performance, integrações e inteligência analítica</p>
+    </div>
+
+    <div class="flex items-center gap-3 topbar-actions">
+      <select id="analytics-client-filter" class="px-3 py-2 text-[13px] font-medium ink-black bg-white hairline-border rounded-[8px] outline-none hover:bg-gray-50 cursor-pointer" onchange="setAnalyticsClientFilter(this.value)">
         <option value="">Todos os clientes</option>
       </select>
-      <select id="analytics-period-filter" class="btn btn-outline btn-sm btn-select" onchange="setAnalyticsPeriodFilter(this.value)">
+      <select id="analytics-period-filter" class="px-3 py-2 text-[13px] font-medium ink-black bg-white hairline-border rounded-[8px] outline-none hover:bg-gray-50 cursor-pointer" onchange="setAnalyticsPeriodFilter(this.value)">
         <option value="">Todos os períodos</option>
       </select>
+      <div class="h-6 w-px bg-[#dddddd] mx-1"></div>
+      <button class="px-5 py-2 text-sm font-medium text-white rausch-bg rounded-[8px] hover:scale-[0.98] transition-transform" data-action="open-modal" data-modal="nova-integracao">
+        + Nova integração
+      </button>
+      <div class="notification-shell" data-notification-shell="1"></div>
     </div>
-  </div>
-  <div class="page-body">
-    <div class="kpi-grid">
-      <div class="kpi-card"><div class="kpi-label">Sessões (GA4)</div><div class="kpi-val">48.2k</div><div class="kpi-sub kpi-trend-up">↑ +31% vs. mês ant.</div></div>
-      <div class="kpi-card"><div class="kpi-label">Alcance (Meta)</div><div class="kpi-val">1.8M</div><div class="kpi-sub kpi-trend-up">↑ +15%</div></div>
-      <div class="kpi-card"><div class="kpi-label">Engajamento Médio</div><div class="kpi-val">6.4%</div><div class="kpi-sub">acima da média do setor</div></div>
-      <div class="kpi-card"><div class="kpi-label">Conversões</div><div class="kpi-val">842</div><div class="kpi-sub kpi-trend-up">↑ +22%</div></div>
-    </div>
-    <div class="two-col mt-5">
-      <div class="card">
-        <div class="section-title card-title-spacing">Sessões Mensais (GA4)</div>
-        <div class="chart-bar-wrap" id="ga-chart"></div>
+  </header>
+
+  <div class="flex-1 p-8 overflow-y-auto custom-scroll">
+    <section id="analytics-kpi-grid" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 kpi-grid">
+      <div class="bg-white hairline-border rounded-[14px] p-6 shadow-sm">
+        <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">Receita</p>
+        <span class="text-3xl font-bold ink-black block mb-1 tracking-tight">R$ 0,00</span>
+        <p class="text-[13px] ash-gray font-medium">0 registros</p>
       </div>
-      <div class="card">
-        <div class="section-title card-title-spacing">Integrações Ativas</div>
-        <div class="analytics-side-list" id="analytics-integrations"></div>
+      <div class="bg-white hairline-border rounded-[14px] p-6 shadow-sm">
+        <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">Impressões</p>
+        <span class="text-3xl font-bold ink-black block mb-1">0</span>
+        <p class="text-[13px] ash-gray font-medium">volume consolidado</p>
       </div>
-    </div>
-    <div class="card">
-      <div class="section-header"><div class="section-title">Performance por Cliente</div></div>
-      <div class="table-wrap">
-        <table class="analytics-performance-table">
-          <thead><tr><th>Cliente</th><th>Leads</th><th class="hide-mobile">Receita</th><th class="hide-tablet">Impressões</th><th class="hide-mobile">Cliques</th><th class="hide-tablet">Período</th><th>Score</th></tr></thead>
+      <div class="bg-white hairline-border rounded-[14px] p-6 shadow-sm">
+        <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">CTR Médio</p>
+        <span class="text-3xl font-bold ink-black block mb-1">0.00%</span>
+        <p class="text-[13px] ash-gray font-medium">0 cliques</p>
+      </div>
+      <div class="bg-white hairline-border rounded-[14px] p-6 shadow-sm">
+        <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">Conversão</p>
+        <span class="text-3xl font-bold ink-black block mb-1 tracking-tight">0.00%</span>
+        <p class="text-[13px] ash-gray font-medium">0 leads</p>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div class="lg:col-span-2 bg-white hairline-border rounded-[14px] p-6 shadow-sm">
+        <h3 class="text-[16px] font-bold ink-black mb-6">Sessões Mensais (GA4)</h3>
+        <div class="space-y-5" id="ga-chart">
+          <div class="text-[14px] font-medium ash-gray">Sem sessões consolidadas para exibir.</div>
+        </div>
+      </div>
+
+      <div class="bg-white hairline-border rounded-[14px] p-6 shadow-sm">
+        <h3 class="text-[16px] font-bold ink-black mb-6">Integrações Ativas</h3>
+        <div class="space-y-0" id="analytics-integrations">
+          <div class="text-[14px] font-medium ash-gray">Nenhuma integração registrada.</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="bg-white hairline-border rounded-[14px] shadow-[rgba(0,0,0,0.02)_0_2px_6px] overflow-hidden mb-8">
+      <div class="px-6 py-5 border-b border-[#dddddd]">
+        <h3 class="text-[16px] font-bold ink-black">Performance por Cliente</h3>
+      </div>
+      <div class="overflow-x-auto custom-scroll">
+        <table class="w-full text-left border-collapse min-w-[900px] analytics-performance-table">
+          <thead class="bg-[#fcfcfc] border-b border-[#dddddd]">
+            <tr>
+              <th class="pl-6 pr-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-full">Cliente</th>
+              <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-right w-px">Leads</th>
+              <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-right w-px">Receita</th>
+              <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-right w-px">Impressões</th>
+              <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-right w-px">Cliques</th>
+              <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-center w-px">Período</th>
+              <th class="pl-4 pr-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-center w-px">Score</th>
+            </tr>
+          </thead>
           <tbody id="analytics-tbody"></tbody>
         </table>
       </div>
     </div>
-    <div class="card mt-5">
-      <div class="section-header"><div class="section-title">Conexões registradas</div></div>
-      <div class="table-wrap">
-        <table class="integrations-table">
-          <thead><tr><th>Cliente</th><th>Integração</th><th>Status</th><th class="hide-tablet">Conta / Propriedade</th><th class="hide-mobile">Última sinc.</th><th class="hide-phone">Atualizado por</th><th class="cell-actions">Ações</th></tr></thead>
+
+    <div class="bg-white hairline-border rounded-[14px] shadow-[rgba(0,0,0,0.02)_0_2px_6px] overflow-hidden mb-8">
+      <div class="px-6 py-5 border-b border-[#dddddd]">
+        <h3 class="text-[16px] font-bold ink-black">Conexões registradas</h3>
+      </div>
+      <div class="overflow-x-auto custom-scroll">
+        <table class="w-full text-left border-collapse min-w-[900px] integrations-table">
+          <thead class="bg-[#fcfcfc] border-b border-[#dddddd]">
+            <tr>
+              <th class="pl-6 pr-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-1/3">Cliente</th>
+              <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-1/4">Integração</th>
+              <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-center w-px">Status</th>
+              <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-1/3">Conta / Propriedade</th>
+              <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-right w-px">Última Sinc.</th>
+              <th class="pl-4 pr-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-right w-px">Ações</th>
+            </tr>
+          </thead>
           <tbody id="integrations-tbody"></tbody>
         </table>
       </div>
