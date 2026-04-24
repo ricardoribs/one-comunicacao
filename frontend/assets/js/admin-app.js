@@ -3848,7 +3848,6 @@ function setRoleUI(user) {
   const badge = document.getElementById("sb-badge");
   badge.textContent = ROLE_LABELS[user.role] || user.role;
   badge.className = `sb-role-badge ${getRoleBadgeClass(user.role)}`;
-  document.getElementById("home-welcome").textContent = `Olá, ${user.name}.`;
 
   const kanbanUserName = document.getElementById("kanban-shell-user-name");
   const kanbanUserRole = document.getElementById("kanban-shell-user-role");
