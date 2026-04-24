@@ -132,6 +132,7 @@ button,.btn,.sb-link,.tab,a{touch-action:manipulation}
 #sidebar{width:var(--sidebar);background:#222222;color:#fff;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto;transition:transform var(--tr);border-right:1px solid #333333}
 .sb-header{height:80px;padding:24px;display:flex;align-items:center;border-bottom:1px solid rgba(255,255,255,.08)}
 .sb-logo{display:flex;align-items:center;gap:12px}
+.sb-brand-image{display:block;width:96px;height:auto}
 .sb-brand-mark{width:32px;height:32px;border-radius:8px;background:var(--pink);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;line-height:1;flex-shrink:0}
 .sb-brand-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
 .sb-brand-title{font-size:18px;font-weight:700;line-height:1;color:#fff;letter-spacing:-.02em}
@@ -1798,11 +1799,7 @@ body[data-active-page="kanban"] #page-kanban.active{display:block;min-height:100
 <div id="sidebar">
   <div class="sb-header">
     <div class="sb-logo">
-      <div class="sb-brand-mark" aria-hidden="true">O</div>
-      <div class="sb-brand-copy">
-        <span class="sb-brand-title">ONE</span>
-        <span class="sb-brand-sub">Painel Interno</span>
-      </div>
+      <img class="sb-brand-image" src="assets/svg/one-logo-soft.svg" alt="ONE"/>
     </div>
   </div>
   <div class="sb-user">
@@ -1868,11 +1865,10 @@ body[data-active-page="kanban"] #page-kanban.active{display:block;min-height:100
   <div class="topbar">
     <div>
       <div class="topbar-title">Visão Geral</div>
-      <div class="topbar-sub" id="home-welcome">Visão consolidada da operação interna.</div>
+      <div class="topbar-sub" id="home-date">Visão consolidada da operação interna.</div>
     </div>
     <div class="topbar-actions">
       <div id="home-quick-actions" class="topbar-actions-group"></div>
-      <span id="home-date" class="text-meta"></span>
     </div>
   </div>
   <div class="page-body">
@@ -1950,11 +1946,7 @@ body[data-active-page="kanban"] #page-kanban.active{display:block;min-height:100
   <div id="kanban-exact-root" class="one-kanban-exact flex h-screen overflow-hidden bg-white text-[#222222] dark:bg-[#1A1A1A] dark:text-white">
     <aside class="w-64 flex-shrink-0 flex flex-col bg-[#222222] border-r border-[#333333] z-20">
       <div class="p-6 h-20 flex items-center gap-3 border-b border-[#333333]">
-        <div class="rausch-bg w-8 h-8 rounded-[8px] flex items-center justify-center text-white font-bold text-sm">O</div>
-        <div>
-          <span class="text-lg font-bold tracking-tight text-white block leading-none">ONE</span>
-          <span class="text-[10px] uppercase font-semibold text-gray-400 tracking-widest mt-1 block">Painel Interno</span>
-        </div>
+        <img src="assets/svg/one-logo-soft.svg" alt="ONE" class="h-8 w-auto"/>
       </div>
 
       <div class="p-6 border-b border-[#333333] mb-2">
