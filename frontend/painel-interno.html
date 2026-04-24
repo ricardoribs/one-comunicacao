@@ -827,7 +827,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-acesso #acesso-membros .empty-state{background:var(--white);border:1px solid var(--border)}
 
 /* PERFIL */
-#page-perfil{background-color:#f7f7f7}
+#page-perfil{background-color:#fff}
 #page-perfil .ink-black{color:#222222}
 #page-perfil .ash-gray{color:#6a6a6a}
 #page-perfil .hairline-border{border:1px solid #dddddd}
@@ -1484,8 +1484,8 @@ td{padding:16px;font-size:14px;color:var(--text)}
 #page-home .bar-track{height:8px;border-radius:999px;background:#f2f2f2}
 #page-home .bar-fill{border-radius:999px;background:#dddddd}
 #page-home .bar-item.is-peak .bar-fill{background:var(--pink)}
-#page-crm{background:var(--gray)}
-#page-crm .page-body{background:var(--gray);padding-top:32px}
+#page-crm{background:var(--white)}
+#page-crm .page-body{background:var(--white);padding-top:32px}
 #page-crm .topbar-actions{gap:12px}
 #page-crm .crm-topbar-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 #page-crm .crm-topbar-separator{width:1px;height:24px;background:var(--border)}
@@ -1541,8 +1541,8 @@ td{padding:16px;font-size:14px;color:var(--text)}
 #page-crm .crm-history-date{font-size:14px;font-weight:500;color:var(--text)}
 #page-crm .crm-empty-row{padding:32px 24px}
 #page-crm .crm-empty-row .empty-state{min-height:auto}
-#page-campanhas{background:var(--gray)}
-#page-campanhas .page-body{background:var(--gray)}
+#page-campanhas{background:var(--white)}
+#page-campanhas .page-body{background:var(--white)}
 #page-campanhas .campaigns-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;margin-bottom:32px}
 #page-campanhas .campaigns-kpi-card{display:flex;flex-direction:column;justify-content:space-between;min-height:120px;padding:24px;background:var(--white);border:1px solid var(--border);border-radius:14px}
 #page-campanhas .campaigns-kpi-label{margin-bottom:12px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#7b7b7b}
@@ -1619,6 +1619,12 @@ td{padding:16px;font-size:14px;color:var(--text)}
 #page-kanban .kanban-history-list{display:flex;flex-direction:column;gap:14px}
 #page-kanban .checklist-history-group{gap:12px}
 #page-kanban .kanban-scroll-top{margin-top:8px}
+#page-kanban .kanban-scroll-top{flex-shrink:0}
+#page-kanban .kanban-scroll-top::-webkit-scrollbar{height:8px}
+#page-kanban .kanban-scroll-top::-webkit-scrollbar-track{background:transparent}
+#page-kanban .kanban-scroll-top::-webkit-scrollbar-thumb{background:#dddddd;border-radius:4px}
+#page-kanban.dark .kanban-scroll-top::-webkit-scrollbar-thumb{background:#3f3f3f}
+#page-kanban .kanban-scroll-top::-webkit-scrollbar-thumb:hover{background:#c1c1c1}
 #page-kanban .kanban{padding-top:0}
 body[data-active-page="kanban"]{overflow-x:hidden}
 body[data-active-page="kanban"] #app-main{min-height:100vh;height:auto;background:var(--white)}
@@ -1628,6 +1634,8 @@ body[data-active-page="kanban"] #page-kanban.active{display:flex;flex-direction:
 #page-kanban .one-kanban-exact{font-family:'Inter',sans-serif;transition:background-color .3s,color .3s;min-height:100vh;height:auto}
 #page-kanban .kanban-shell-sidebar{display:none}
 #page-kanban .one-kanban-exact > main{width:100%}
+#page-producao,#page-trafego,#page-analytics,#page-financeiro,#page-acesso{background:var(--white)}
+#page-producao > div,#page-financeiro > div{background:var(--white) !important}
 #page-kanban .custom-scroll::-webkit-scrollbar{height:8px;width:6px}
 #page-kanban .custom-scroll::-webkit-scrollbar-track{background:transparent}
 #page-kanban .custom-scroll::-webkit-scrollbar-thumb{background:#dddddd;border-radius:4px}
@@ -2074,6 +2082,10 @@ body[data-active-page="kanban"] #page-kanban.active{display:flex;flex-direction:
           </div>
         </div>
 
+        <div id="kanban-top-scroll" class="kanban-scroll-top custom-scroll" aria-hidden="true">
+          <div id="kanban-top-scroll-track" class="kanban-scroll-top-track"></div>
+        </div>
+
         <div id="kanban-board" class="flex-1 overflow-x-auto custom-scroll flex gap-6 pb-4"></div>
       </div>
     </main>
@@ -2221,7 +2233,7 @@ body[data-active-page="kanban"] #page-kanban.active{display:flex;flex-direction:
 
 <!-- PRODUCAO -->
 <section id="page-producao" class="app-screen">
-  <div class="flex-1 flex flex-col min-w-0 bg-[#f7f7f7] min-h-full">
+  <div class="flex-1 flex flex-col min-w-0 bg-white min-h-full">
     <header class="h-20 border-b border-[#dddddd] px-8 flex items-center justify-between flex-shrink-0 bg-white">
       <div>
         <h1 class="text-[28px] font-bold ink-black tracking-tight leading-tight">Produção</h1>
@@ -2313,7 +2325,7 @@ body[data-active-page="kanban"] #page-kanban.active{display:flex;flex-direction:
 </section>
 
 <!-- TRAFEGO -->
-<section id="page-trafego" class="app-screen bg-[#f7f7f7]">
+<section id="page-trafego" class="app-screen bg-white">
   <header class="h-20 border-b border-[#dddddd] px-8 flex items-center justify-between flex-shrink-0 bg-white">
     <div>
       <h1 class="text-[28px] font-bold ink-black tracking-tight leading-tight">Gestão de Tráfego</h1>
@@ -2406,7 +2418,7 @@ body[data-active-page="kanban"] #page-kanban.active{display:flex;flex-direction:
 </section>
 
 <!-- ANALYTICS -->
-<section id="page-analytics" class="app-screen bg-[#f7f7f7]">
+<section id="page-analytics" class="app-screen bg-white">
   <header class="h-20 border-b border-[#dddddd] px-8 flex items-center justify-between flex-shrink-0 bg-white z-10">
     <div>
       <h1 class="text-[28px] font-bold ink-black tracking-tight leading-tight">Dados & Analytics</h1>
@@ -2515,7 +2527,7 @@ body[data-active-page="kanban"] #page-kanban.active{display:flex;flex-direction:
 
 <!-- FINANCEIRO -->
 <section id="page-financeiro" class="app-screen">
-  <div class="flex flex-col min-w-0 bg-[#f7f7f7] min-h-full">
+  <div class="flex flex-col min-w-0 bg-white min-h-full">
     <header class="min-h-[80px] py-5 border-b border-[#dddddd] px-8 flex flex-col xl:flex-row xl:items-center justify-between gap-4 flex-shrink-0 bg-white z-10">
       <div class="flex-1">
         <h1 class="text-[28px] font-bold ink-black tracking-tight leading-tight">Financeiro Interno</h1>
@@ -2621,7 +2633,7 @@ body[data-active-page="kanban"] #page-kanban.active{display:flex;flex-direction:
 </section>
 
 <!-- ACESSO -->
-<section id="page-acesso" class="app-screen bg-[#f7f7f7]">
+<section id="page-acesso" class="app-screen bg-white">
   <header class="min-h-[80px] py-5 border-b border-[#dddddd] px-8 flex items-center justify-between flex-shrink-0 bg-white z-10">
     <div>
       <h1 class="text-[28px] font-bold ink-black tracking-tight leading-tight">Controle de Acesso</h1>
