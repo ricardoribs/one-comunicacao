@@ -3241,7 +3241,8 @@ const PROFILE_ACCESS_STATUS_LABELS = {
   dev: "Desenvolvimento",
   client: "Cliente",
 };
-const KANBAN_THEME_STORAGE_KEY = "one-theme";
+const PANEL_THEME_STORAGE_KEY = "one-panel-theme";
+const LEGACY_PANEL_THEME_STORAGE_KEY = "one-theme";
 
 const PROFILE_ACTIVITY_PLACEHOLDERS = [];
 
@@ -3609,7 +3610,7 @@ function renderProfilePermissionsCard(profile) {
 
 function renderProfileNotificationCard(profile) {
   const preferences = normalizeProfileNotificationPreferences(profile.notification_preferences);
-  const isDarkTheme = localStorage.getItem(KANBAN_THEME_STORAGE_KEY) === "dark";
+  const isDarkTheme = getStoredPanelTheme() === "dark";
 
   return `
     <div class="mb-6">
@@ -3635,8 +3636,8 @@ function renderProfileNotificationCard(profile) {
     <div class="mt-8 pt-6 border-t border-[#dddddd]">
       <div class="flex items-center justify-between py-1">
         <div class="pr-4">
-          <h4 class="text-[15px] font-semibold ink-black mb-1">Modo escuro do Kanban</h4>
-          <p class="text-[13px] font-medium ash-gray">Ative o visual escuro na tela de Gestão de Projetos.</p>
+          <h4 class="text-[15px] font-semibold ink-black mb-1">Modo escuro do painel</h4>
+          <p class="text-[13px] font-medium ash-gray">Ative o visual escuro em todas as telas internas.</p>
         </div>
         <div class="relative inline-block w-11 h-6 align-middle select-none transition duration-200 ease-in flex-shrink-0">
           <input type="checkbox" id="toggle-theme-profile" class="profile-theme-toggle toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-[#dddddd] appearance-none cursor-pointer" ${isDarkTheme ? "checked" : ""}/>
@@ -3681,8 +3682,7 @@ function bindProfileThemeToggleHandlers() {
 
     toggle.dataset.bound = "true";
     toggle.addEventListener("change", () => {
-      localStorage.setItem(KANBAN_THEME_STORAGE_KEY, toggle.checked ? "dark" : "light");
-      syncKanbanTheme();
+      setPanelTheme(toggle.checked);
     });
   });
 }
@@ -3811,6 +3811,7 @@ function renderProfile() {
   notificationCard.innerHTML = renderProfileNotificationCard(profile);
   bindProfileNotificationToggleHandlers();
   bindProfileThemeToggleHandlers();
+  syncPanelTheme();
   bindLegacyInlineHandlers(document.getElementById("page-perfil"));
 }
 
@@ -3894,11 +3895,24 @@ function setRoleUI(user) {
   }
 }
 
-function syncKanbanTheme() {
+function getStoredPanelTheme() {
+  const storedTheme = localStorage.getItem(PANEL_THEME_STORAGE_KEY) || localStorage.getItem(LEGACY_PANEL_THEME_STORAGE_KEY);
+  return storedTheme === "dark" ? "dark" : "light";
+}
+
+function persistPanelTheme(theme) {
+  localStorage.setItem(PANEL_THEME_STORAGE_KEY, theme);
+  localStorage.removeItem(LEGACY_PANEL_THEME_STORAGE_KEY);
+}
+
+function syncPanelTheme() {
   const kanbanPage = document.getElementById("page-kanban");
   const kanbanRoot = document.getElementById("kanban-exact-root");
-  const toggleButton = document.getElementById("kanban-theme-toggle");
-  const isDark = localStorage.getItem(KANBAN_THEME_STORAGE_KEY) === "dark";
+  const isDark = getStoredPanelTheme() === "dark";
+
+  document.body.classList.toggle("panel-dark-theme", isDark);
+  document.body.classList.toggle("dark", isDark);
+  document.documentElement.classList.toggle("dark", isDark);
 
   if (kanbanPage) {
     kanbanPage.classList.toggle("dark", isDark);
@@ -3906,21 +3920,15 @@ function syncKanbanTheme() {
   if (kanbanRoot) {
     kanbanRoot.classList.toggle("dark", isDark);
   }
-  if (toggleButton) {
-    toggleButton.setAttribute("aria-pressed", isDark ? "true" : "false");
-    toggleButton.setAttribute("title", isDark ? "Desativar modo escuro" : "Ativar modo escuro");
-    toggleButton.setAttribute("aria-label", isDark ? "Desativar modo escuro do kanban" : "Ativar modo escuro do kanban");
-  }
 
   document.querySelectorAll(".profile-theme-toggle").forEach((toggle) => {
     toggle.checked = isDark;
   });
 }
 
-function toggleTheme() {
-  const nextTheme = localStorage.getItem(KANBAN_THEME_STORAGE_KEY) === "dark" ? "light" : "dark";
-  localStorage.setItem(KANBAN_THEME_STORAGE_KEY, nextTheme);
-  syncKanbanTheme();
+function setPanelTheme(enabled) {
+  persistPanelTheme(enabled ? "dark" : "light");
+  syncPanelTheme();
 }
 
 function isMobileViewport() {
@@ -4967,7 +4975,7 @@ function renderKanban() {
     : state.tasks;
   const canEditTasks = canManageTasks();
 
-  syncKanbanTheme();
+  syncPanelTheme();
   renderKanbanChecklist(filtered);
 
   document.getElementById("kanban-board").innerHTML = columns
@@ -7457,6 +7465,7 @@ async function initializeApp() {
   const me = await apiFetch("/auth/me");
   state.session.user = me.user;
   saveSession(state.session);
+  syncPanelTheme();
   setRoleUI(me.user);
   document.getElementById("home-date").textContent = new Intl.DateTimeFormat("pt-BR", {
     dateStyle: "full"
@@ -9143,6 +9152,7 @@ async function boot() {
   bindSidebarInteractions();
   bindLegacyInlineHandlers();
   bindDataActions();
+  syncPanelTheme();
   syncSidebarShell();
   APP.registerActivityTracking();
   APP.onLogout((reason) => {
@@ -9225,7 +9235,6 @@ window.clearChecklistHistory = clearChecklistHistory;
 window.showToast = showToast;
 window.toggleSidebar = toggleSidebar;
 window.closeSidebar = closeSidebar;
-window.toggleTheme = toggleTheme;
 
 boot();
 
