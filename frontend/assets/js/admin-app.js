@@ -6083,197 +6083,344 @@ function getFilteredMetrics() {
 function renderAnalytics() {
   const filteredMetrics = getFilteredMetrics();
   const filteredIntegrations = getFilteredIntegrations();
-  const topMetrics = filteredMetrics.slice(0, 6);
   const revenue = filteredMetrics.reduce((acc, metric) => acc + Number(metric.revenue || 0), 0);
   const impressions = filteredMetrics.reduce((acc, metric) => acc + Number(metric.impressions || 0), 0);
   const clicks = filteredMetrics.reduce((acc, metric) => acc + Number(metric.clicks || 0), 0);
   const leads = filteredMetrics.reduce((acc, metric) => acc + Number(metric.leads || 0), 0);
   const ctr = impressions ? ((clicks / impressions) * 100).toFixed(2) : "0.00";
   const conversion = clicks ? ((leads / clicks) * 100).toFixed(2) : "0.00";
-  const analyticsGrid = document.querySelector("#page-analytics .kpi-grid");
+  const analyticsGrid = document.getElementById("analytics-kpi-grid");
+  const sessionsContainer = document.getElementById("ga-chart");
+  const integrationsContainer = document.getElementById("analytics-integrations");
+  const analyticsBody = document.getElementById("analytics-tbody");
+  const integrationsBody = document.getElementById("integrations-tbody");
+  const analyticsProviders = INTEGRATION_PROVIDERS.filter((provider) => provider.key !== "looker_studio");
+
+  const performanceMap = filteredMetrics.reduce((accumulator, metric) => {
+    const clientName = getDisplayText(metric.client_name, "Cliente não vinculado");
+    const campaignName = getDisplayText(metric.campaign_name, "Sem campanha");
+    const key = `${metric.client_id || clientName}::${campaignName}`;
+
+    if (!accumulator.has(key)) {
+      accumulator.set(key, {
+        clientName,
+        campaignName,
+        leads: 0,
+        revenue: 0,
+        impressions: 0,
+        clicks: 0,
+        period: metric.period || null
+      });
+    }
+
+    const bucket = accumulator.get(key);
+    bucket.leads += Number(metric.leads || 0);
+    bucket.revenue += Number(metric.revenue || 0);
+    bucket.impressions += Number(metric.impressions || 0);
+    bucket.clicks += Number(metric.clicks || 0);
+
+    if (metric.period && (!bucket.period || new Date(metric.period) > new Date(bucket.period))) {
+      bucket.period = metric.period;
+    }
+
+    return accumulator;
+  }, new Map());
+
+  const performanceRows = Array.from(performanceMap.values()).sort((left, right) => {
+    if (right.revenue !== left.revenue) {
+      return right.revenue - left.revenue;
+    }
+    if (right.leads !== left.leads) {
+      return right.leads - left.leads;
+    }
+    return String(left.clientName || "").localeCompare(String(right.clientName || ""), "pt-BR");
+  });
+
+  const getAnalyticsScoreClasses = (score) => {
+    if (score >= 80) {
+      return "text-green-700 bg-green-50";
+    }
+    if (score >= 50) {
+      return "text-yellow-700 bg-yellow-50";
+    }
+    return "text-red-700 bg-red-50";
+  };
+
+  const getAnalyticsIntegrationStatusClasses = (status) => {
+    const value = String(status || "").trim().toLowerCase();
+    if (value === "connected") {
+      return "bg-green-50 text-green-700";
+    }
+    if (value === "configuring") {
+      return "bg-yellow-50 text-yellow-700";
+    }
+    if (value === "error") {
+      return "bg-red-50 text-red-700";
+    }
+    return "bg-gray-100 text-gray-600";
+  };
+
+  const renderAnalyticsMenuButton = ({ label, action, id, className = "" }) => `
+    <button
+      type="button"
+      class="w-full text-left px-3 py-2 text-[13px] font-medium rounded-[8px] hover:bg-gray-50 transition-colors ${className}"
+      ${action ? `data-action="${action}"` : ""}
+      ${id != null ? `data-id="${id}"` : ""}
+    >
+      ${escapeHtml(label)}
+    </button>
+  `;
+
+  const renderAnalyticsMenu = (actions = [], label = "Mais ações") => {
+    const items = actions.filter(Boolean).join("");
+    if (!items) {
+      return "";
+    }
+
+    return `
+      <details class="analytics-menu relative">
+        <summary class="w-8 h-8 rounded-full hairline-border inline-flex items-center justify-center hover:bg-gray-100 transition-colors cursor-pointer" aria-label="${escapeHtml(label)}">
+          <span class="text-gray-500 font-bold mb-1">...</span>
+        </summary>
+        <div class="absolute right-0 top-[calc(100%+8px)] z-30 flex flex-col gap-1 min-w-[188px] p-2 bg-white border border-[#dddddd] rounded-[10px] shadow-[0_16px_32px_rgba(0,0,0,0.12)]">
+          ${items}
+        </div>
+      </details>
+    `;
+  };
 
   if (analyticsGrid) {
     analyticsGrid.innerHTML = [
-      { label: "Receita", value: formatCurrency(revenue), sub: `${filteredMetrics.length} registros` },
+      { label: "Receita", value: formatCurrency(revenue), sub: `${filteredMetrics.length} registros`, tracking: true },
       { label: "Impressões", value: formatNumber(impressions), sub: "volume consolidado" },
       { label: "CTR Médio", value: `${ctr}%`, sub: `${formatNumber(clicks)} cliques` },
-      { label: "Conversão", value: `${conversion}%`, sub: `${formatNumber(leads)} leads` }
+      { label: "Conversão", value: `${conversion}%`, sub: `${formatNumber(leads)} leads`, tracking: true }
     ]
       .map(
         (item) => `
-          <div class="kpi-card">
-            <div class="kpi-label">${escapeHtml(item.label)}</div>
-            <div class="kpi-val">${escapeHtml(item.value)}</div>
-            <div class="kpi-sub">${escapeHtml(item.sub)}</div>
+          <div class="bg-white hairline-border rounded-[14px] p-6 shadow-sm">
+            <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">${escapeHtml(item.label)}</p>
+            <span class="text-3xl font-bold ink-black block mb-1 ${item.tracking ? "tracking-tight" : ""}">${escapeHtml(item.value)}</span>
+            <p class="text-[13px] ash-gray font-medium">${escapeHtml(item.sub)}</p>
           </div>
         `
       )
       .join("");
   }
 
-  const integrationsContainer = document.getElementById("analytics-integrations");
-  if (integrationsContainer) {
-    if (!hasScopedClients()) {
-      integrationsContainer.innerHTML = UI.empty(
-        "Cadastre um cliente primeiro",
-        "As integrações do analytics são vinculadas por cliente. Quando houver clientes, você poderá registrar conexões reais aqui.",
-        {
-          icon: false,
-          actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-cliente">Criar cliente</button>`
-        }
-      );
-    } else {
-      integrationsContainer.innerHTML = INTEGRATION_PROVIDERS.map((provider) => {
-      if (state.filters.analyticsClient) {
-        const integration = filteredIntegrations.find((item) => item.provider_key === provider.key);
-        const subtitle = integration
-          ? [integration.external_account_id, integration.external_property_id].filter(Boolean).join(" · ") || "Conexão registrada para este cliente"
-          : "—";
+  if (sessionsContainer) {
+    const topMetrics = performanceRows.slice(0, 5);
+    const maxRevenue = Math.max(...topMetrics.map((metric) => metric.revenue), 1);
 
-        return `
-          <div class="analytics-side-item">
-            <div class="cell-stack">
-              <span class="cell-title">${provider.name}</span>
-              <span class="cell-sub">${escapeHtml(subtitle)}</span>
-            </div>
-            <span class="badge ${getIntegrationStatusBadgeClass(integration?.status || "disconnected")}">${escapeHtml(
-              integration ? INTEGRATION_STATUS_LABELS[integration.status] || integration.status : "Não configurado"
-            )}</span>
-          </div>
-        `;
-      }
+    sessionsContainer.innerHTML = topMetrics.length
+      ? topMetrics
+          .map((metric) => {
+            const width = maxRevenue ? (metric.revenue / maxRevenue) * 100 : 0;
+            const metricLabel = metric.revenue >= 1000 ? `${Math.round(metric.revenue / 1000)}k` : formatNumber(metric.revenue);
 
-      const providerIntegrations = filteredIntegrations.filter((item) => item.provider_key === provider.key);
-      const connectedCount = providerIntegrations.filter((item) => item.status === "connected").length;
-      const configuringCount = providerIntegrations.filter((item) => item.status === "configuring").length;
-      const errorCount = providerIntegrations.filter((item) => item.status === "error").length;
-      const totalCount = providerIntegrations.length;
-
-      let status = "disconnected";
-      let subtitle = "Nenhum cliente configurado";
-      let badgeLabel = "Não configurado";
-
-      if (connectedCount > 0) {
-        status = "connected";
-        subtitle = `${connectedCount} ${connectedCount === 1 ? "cliente conectado" : "clientes conectados"}`;
-        badgeLabel = INTEGRATION_STATUS_LABELS.connected;
-      } else if (configuringCount > 0) {
-        status = "configuring";
-        subtitle = `${configuringCount} ${configuringCount === 1 ? "cliente em configuração" : "clientes em configuração"}`;
-        badgeLabel = INTEGRATION_STATUS_LABELS.configuring;
-      } else if (errorCount > 0) {
-        status = "error";
-        subtitle = `${errorCount} ${errorCount === 1 ? "cliente com falha" : "clientes com falha"}`;
-        badgeLabel = INTEGRATION_STATUS_LABELS.error;
-      } else if (totalCount > 0) {
-        subtitle = `${totalCount} ${totalCount === 1 ? "cliente desconectado" : "clientes desconectados"}`;
-        badgeLabel = INTEGRATION_STATUS_LABELS.disconnected;
-      }
-
-      return `
-        <div class="analytics-side-item">
-            <div class="cell-stack">
-              <span class="cell-title">${provider.name}</span>
-              <span class="cell-sub">${escapeHtml(subtitle)}</span>
-            </div>
-          <span class="badge ${getIntegrationStatusBadgeClass(status)}">${escapeHtml(badgeLabel)}</span>
-        </div>
-      `;
-    }).join("");
-    }
+            return `
+              <div>
+                <div class="flex justify-between items-end mb-2">
+                  <span class="text-[13px] font-semibold ink-black">${escapeHtml(metric.campaignName)}</span>
+                  <span class="text-[13px] font-bold ink-black">${escapeHtml(metricLabel)}</span>
+                </div>
+                <div class="w-full bg-gray-100 h-[6px] rounded-full overflow-hidden">
+                  <div class="bg-[#222222] h-full rounded-full" style="width:${width.toFixed(1)}%"></div>
+                </div>
+              </div>
+            `;
+          })
+          .join("")
+      : '<div class="text-[14px] font-medium ash-gray">Sem sessões consolidadas para exibir.</div>';
   }
 
-  renderBarChart("ga-chart", topMetrics.map((metric) => Number(metric.revenue || 0)), topMetrics.map((metric) => metric.campaign_name), (value) => `${Math.round(value / 1000)}k`);
+  if (integrationsContainer) {
+    integrationsContainer.innerHTML = analyticsProviders
+      .map((provider, index, list) => {
+        const providerIntegrations = filteredIntegrations.filter((item) => item.provider_key === provider.key);
+        const connectedCount = providerIntegrations.filter((item) => item.status === "connected").length;
+        const configuringCount = providerIntegrations.filter((item) => item.status === "configuring").length;
+        const errorCount = providerIntegrations.filter((item) => item.status === "error").length;
 
-  document.getElementById("analytics-tbody").innerHTML = filteredMetrics
-    .map(
-      (metric) => `
-        <tr>
-          <td class="cell-stack">
-            <span class="cell-title" title="${escapeHtml(metric.client_name)}">${escapeHtml(metric.client_name)}</span>
-            ${metric.campaign_name ? `<span class="cell-sub hide-mobile" title="${escapeHtml(metric.campaign_name)}">${escapeHtml(metric.campaign_name)}</span>` : ""}
-          </td>
-          <td data-align="right"><span class="${getValueToneClass(metric.leads)}">${formatNumber(metric.leads)}</span></td>
-          <td class="hide-mobile" data-align="right"><span class="${getValueToneClass(metric.revenue)}">${formatCurrencyValue(metric.revenue)}</span></td>
-          <td class="hide-tablet" data-align="right"><span class="${getValueToneClass(metric.impressions)}">${formatNumber(metric.impressions)}</span></td>
-          <td class="hide-mobile" data-align="right"><span class="${getValueToneClass(metric.clicks)}">${formatNumber(metric.clicks)}</span></td>
-          <td class="hide-tablet">${formatDate(metric.period)}</td>
-          <td><span class="badge ${getScoreBadgeClass(Math.min(Math.round(Number(metric.leads || 0)), 100))}">${Math.min(Math.round(Number(metric.leads || 0)), 100)}/100</span></td>
-        </tr>
-      `
-    )
-    .join("") || (hasLoadFailure("métricas")
-      ? UI.tableEmpty(7, "Não foi possível carregar as métricas.", "Atualize a tela para tentar novamente.", {
-          icon: false,
-          className: "is-analytics-empty",
-          actionHtml: renderRetryAction()
-        })
-      : UI.tableEmpty(7, "Nenhuma métrica consolidada.", "Conecte clientes e publique campanhas para ver a leitura por conta.", {
-          icon: false,
-          className: "is-analytics-empty",
-          actionHtml: hasScopedClients()
-            ? `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="nova-integracao">Registrar integração</button>`
-            : `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-cliente">Criar cliente</button>`
-        }));
+        let status = "disconnected";
+        let subtitle = "Nenhum cliente configurado";
+        let badgeLabel = "Não configurado";
 
-  const integrationsBody = document.getElementById("integrations-tbody");
-  if (integrationsBody) {
-    integrationsBody.innerHTML = filteredIntegrations
-      .map(
-        (integration) => `
+        if (connectedCount > 0) {
+          status = "connected";
+          subtitle = `${connectedCount} ${connectedCount === 1 ? "cliente conectado" : "clientes conectados"}`;
+          badgeLabel = "Conectado";
+        } else if (configuringCount > 0) {
+          status = "configuring";
+          subtitle = `${configuringCount} ${configuringCount === 1 ? "cliente em configuração" : "clientes em configuração"}`;
+          badgeLabel = "Configurando";
+        } else if (errorCount > 0) {
+          status = "error";
+          subtitle = `${errorCount} ${errorCount === 1 ? "cliente com falha" : "clientes com falha"}`;
+          badgeLabel = "Erro";
+        }
+
+        const rowClass = [
+          "flex items-center justify-between py-4",
+          index === 0 ? "first:pt-0" : "",
+          index < list.length - 1 ? "border-b border-[#dddddd]" : ""
+        ].filter(Boolean).join(" ");
+
+        return `
+          <div class="${rowClass}">
+            <div>
+              <p class="text-[14px] font-semibold ink-black mb-0.5">${escapeHtml(provider.name)}</p>
+              <p class="text-[12px] ash-gray font-medium">${escapeHtml(subtitle)}</p>
+            </div>
+            <span class="inline-block px-2.5 py-1 text-[11px] font-bold rounded ${getAnalyticsIntegrationStatusClasses(status)}">${escapeHtml(badgeLabel)}</span>
+          </div>
+        `;
+      })
+      .join("");
+  }
+
+  if (analyticsBody) {
+    analyticsBody.innerHTML = performanceRows.length
+      ? performanceRows
+          .map((metric, index, list) => {
+            const score = Math.min(Math.round(Number(metric.leads || 0)), 100);
+            const rowClass = index < list.length - 1
+              ? "border-b border-[#dddddd] hover:bg-gray-50 transition-colors"
+              : "hover:bg-gray-50 transition-colors";
+
+            return `
+              <tr class="${rowClass}">
+                <td class="pl-6 pr-4 py-4 align-middle w-full max-w-0">
+                  <div class="group relative">
+                    <p class="text-[14px] font-semibold ink-black truncate cursor-default">${escapeHtml(metric.clientName)}</p>
+                    <p class="text-[12px] ash-gray font-medium truncate mt-0.5">${escapeHtml(metric.campaignName)}</p>
+                    <div class="absolute left-0 bottom-full mb-2 hidden group-hover:block w-auto min-w-[max-content] bg-gray-800 text-white text-[12px] p-2 rounded-[8px] z-10 shadow-lg">
+                      ${escapeHtml(`${metric.clientName} - ${metric.campaignName}`)}
+                    </div>
+                  </div>
+                </td>
+                <td class="px-4 py-4 align-middle text-right whitespace-nowrap w-px">
+                  <p class="text-[14px] font-bold ink-black">${escapeHtml(formatNumber(metric.leads))}</p>
+                </td>
+                <td class="px-4 py-4 align-middle text-right whitespace-nowrap w-px">
+                  <p class="text-[14px] font-bold ink-black">${escapeHtml(formatCurrencyValue(metric.revenue))}</p>
+                </td>
+                <td class="px-4 py-4 align-middle text-right whitespace-nowrap w-px">
+                  <p class="text-[14px] font-medium ink-black">${escapeHtml(formatNumber(metric.impressions))}</p>
+                </td>
+                <td class="px-4 py-4 align-middle text-right whitespace-nowrap w-px">
+                  <p class="text-[14px] font-medium ink-black">${escapeHtml(formatNumber(metric.clicks))}</p>
+                </td>
+                <td class="px-4 py-4 align-middle text-center whitespace-nowrap w-px">
+                  <p class="text-[13px] font-medium ash-gray">${escapeHtml(formatDate(metric.period))}</p>
+                </td>
+                <td class="pl-4 pr-6 py-4 align-middle text-center whitespace-nowrap w-px">
+                  <span class="inline-block text-[12px] font-bold px-2 py-0.5 rounded ${getAnalyticsScoreClasses(score)}">${score}/100</span>
+                </td>
+              </tr>
+            `;
+          })
+          .join("")
+      : `
           <tr>
-            <td class="cell-stack integration-client-cell"><span class="cell-title" title="${escapeHtml(integration.client_name)}">${escapeHtml(integration.client_name)}</span></td>
-            <td class="cell-stack integration-provider-cell"><span class="cell-title">${getIntegrationProviderLabel(integration.provider_key)}</span></td>
-            <td class="integration-status-cell"><span class="badge ${getIntegrationStatusBadgeClass(integration.status)}">${escapeHtml(
-              INTEGRATION_STATUS_LABELS[integration.status] || integration.status
-            )}</span></td>
-            <td class="cell-stack integration-account-cell hide-tablet">
-              <span class="cell-title" title="${escapeHtml(integration.external_account_id || "—")}">${escapeHtml(integration.external_account_id || "—")}</span>
-              ${integration.external_property_id ? `<span class="cell-sub" title="${escapeHtml(integration.external_property_id)}">${escapeHtml(integration.external_property_id)}</span>` : ""}
-            </td>
-            <td class="integration-sync-cell hide-mobile">${formatDateTime(integration.last_sync_at)}</td>
-            <td class="cell-stack integration-owner-cell hide-phone"><span class="cell-title" title="${escapeHtml(integration.updated_by_name || integration.created_by_name || "—")}">${escapeHtml(integration.updated_by_name || integration.created_by_name || "—")}</span></td>
-            <td class="cell-actions integration-actions-cell">
-              ${
-                canManageIntegrations()
-                  ? `<div class="table-actions">
-                      <button class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-integracao" data-id="${integration.id}">Editar</button>
-                      ${renderActionMenu(
-                        [
-                          renderActionMenuButton({
-                            label: "Excluir integração",
-                            action: "delete-integration",
-                            id: integration.id,
-                            className: "btn btn-danger-soft btn-sm"
-                          })
-                        ],
-                        { label: "Mais ações da integração" }
-                      )}
-                    </div>`
-                  : '<span class="cell-sub">Somente leitura</span>'
-              }
+            <td colspan="7" class="px-6 py-10 text-center">
+              <div class="text-[15px] font-semibold text-[#222222]">${escapeHtml(hasLoadFailure("métricas") ? "Não foi possível carregar as métricas." : "Nenhuma métrica consolidada.")}</div>
+              <div class="text-[13px] text-[#6a6a6a] font-medium mt-1">${escapeHtml(hasLoadFailure("métricas") ? "Atualize a tela para tentar novamente." : "Conecte clientes e publique campanhas para ver a leitura por conta.")}</div>
+              <div class="mt-4 flex items-center justify-center">
+                ${
+                  hasLoadFailure("métricas")
+                    ? renderRetryAction()
+                    : hasScopedClients()
+                      ? '<button type="button" class="px-5 py-2 text-sm font-medium text-white bg-[#ff385c] rounded-[8px] hover:scale-[0.98] transition-transform" data-action="open-modal" data-modal="nova-integracao">+ Nova integração</button>'
+                      : '<button type="button" class="px-5 py-2 text-sm font-medium text-white bg-[#ff385c] rounded-[8px] hover:scale-[0.98] transition-transform" data-action="open-modal" data-modal="novo-cliente">Criar cliente</button>'
+                }
+              </div>
             </td>
           </tr>
-        `
-      )
-      .join("")
-      || UI.tableEmpty(
-        7,
-        hasLoadFailure("integrações") ? "Não foi possível carregar as integrações" : hasScopedClients() ? "Nenhuma integração registrada" : "Nenhum cliente cadastrado",
-        hasLoadFailure("integrações")
-          ? "Atualize a tela para tentar novamente."
-          : hasScopedClients()
-            ? "Registre a primeira integração para habilitar leitura e sincronização."
-            : "Cadastre pelo menos um cliente para vincular integrações.",
-        {
-          icon: false,
-          actionHtml: hasLoadFailure("integrações")
-            ? renderRetryAction()
-            : hasScopedClients()
-              ? `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="nova-integracao">Registrar integração</button>`
-              : `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-cliente">Criar cliente</button>`
-        }
-      );
+        `;
+  }
+
+  if (integrationsBody) {
+    integrationsBody.innerHTML = filteredIntegrations.length
+      ? filteredIntegrations
+          .slice()
+          .sort((left, right) => {
+            const clientComparison = String(left.client_name || "").localeCompare(String(right.client_name || ""), "pt-BR");
+            if (clientComparison !== 0) {
+              return clientComparison;
+            }
+            return getIntegrationProviderLabel(left.provider_key).localeCompare(getIntegrationProviderLabel(right.provider_key), "pt-BR");
+          })
+          .map((integration, index, list) => {
+            const rowClass = index < list.length - 1
+              ? "border-b border-[#dddddd] hover:bg-gray-50 transition-colors"
+              : "hover:bg-gray-50 transition-colors";
+            const actionHtml = canManageIntegrations()
+              ? `
+                  <div class="flex items-center gap-2 justify-end">
+                    <button class="text-[13px] font-semibold ink-black hover:underline" data-action="open-modal" data-modal="nova-integracao" data-id="${integration.id}">Editar</button>
+                    ${renderAnalyticsMenu([
+                      renderAnalyticsMenuButton({
+                        label: "Excluir integração",
+                        action: "delete-integration",
+                        id: integration.id,
+                        className: "text-[#c24141] hover:bg-red-50 hover:text-[#991b1b]"
+                      })
+                    ])}
+                  </div>
+                `
+              : '<div class="flex items-center justify-end"><span class="text-[13px] font-medium ash-gray">Somente leitura</span></div>';
+
+            return `
+              <tr class="${rowClass}">
+                <td class="pl-6 pr-4 py-4 align-middle w-1/3 max-w-0">
+                  <div class="group relative">
+                    <p class="text-[14px] font-semibold ink-black truncate cursor-default">${escapeHtml(integration.client_name || "—")}</p>
+                  </div>
+                </td>
+                <td class="px-4 py-4 align-middle w-1/4 max-w-0">
+                  <p class="text-[14px] font-semibold ink-black truncate">${escapeHtml(getIntegrationProviderLabel(integration.provider_key))}</p>
+                </td>
+                <td class="px-4 py-4 align-middle text-center whitespace-nowrap w-px">
+                  <span class="inline-block px-2.5 py-1 text-[11px] font-bold rounded-full ${getAnalyticsIntegrationStatusClasses(integration.status)}">${escapeHtml(INTEGRATION_STATUS_LABELS[integration.status] || integration.status || "Desconectado")}</span>
+                </td>
+                <td class="px-4 py-4 align-middle w-1/3 max-w-0">
+                  <p class="text-[14px] font-semibold ink-black truncate">${escapeHtml(integration.external_account_id || "—")}</p>
+                  ${integration.external_property_id ? `<p class="text-[12px] ash-gray truncate mt-0.5">${escapeHtml(integration.external_property_id)}</p>` : ""}
+                </td>
+                <td class="px-4 py-4 align-middle text-right whitespace-nowrap w-px">
+                  <p class="text-[13px] font-medium ash-gray">${escapeHtml(formatDateTime(integration.last_sync_at))}</p>
+                </td>
+                <td class="pl-4 pr-6 py-4 align-middle text-right whitespace-nowrap w-px">
+                  ${actionHtml}
+                </td>
+              </tr>
+            `;
+          })
+          .join("")
+      : `
+          <tr>
+            <td colspan="6" class="px-6 py-10 text-center">
+              <div class="text-[15px] font-semibold text-[#222222]">${escapeHtml(hasLoadFailure("integrações") ? "Não foi possível carregar as integrações" : hasScopedClients() ? "Nenhuma integração registrada" : "Nenhum cliente cadastrado")}</div>
+              <div class="text-[13px] text-[#6a6a6a] font-medium mt-1">${escapeHtml(
+                hasLoadFailure("integrações")
+                  ? "Atualize a tela para tentar novamente."
+                  : hasScopedClients()
+                    ? "Registre a primeira integração para habilitar leitura e sincronização."
+                    : "Cadastre pelo menos um cliente para vincular integrações."
+              )}</div>
+              <div class="mt-4 flex items-center justify-center">
+                ${
+                  hasLoadFailure("integrações")
+                    ? renderRetryAction()
+                    : hasScopedClients()
+                      ? '<button type="button" class="px-5 py-2 text-sm font-medium text-white bg-[#ff385c] rounded-[8px] hover:scale-[0.98] transition-transform" data-action="open-modal" data-modal="nova-integracao">+ Nova integração</button>'
+                      : '<button type="button" class="px-5 py-2 text-sm font-medium text-white bg-[#ff385c] rounded-[8px] hover:scale-[0.98] transition-transform" data-action="open-modal" data-modal="novo-cliente">Criar cliente</button>'
+                }
+              </div>
+            </td>
+          </tr>
+        `;
   }
 }
 
