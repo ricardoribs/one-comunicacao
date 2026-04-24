@@ -6158,74 +6158,173 @@ function renderAnalytics() {
 
 function renderFinance() {
   const finance = buildFinanceViewModel();
-  const financeGrid = document.querySelector("#page-financeiro .kpi-grid");
+  const financeGrid = document.getElementById("finance-kpis");
+  const financeTableEmpty = (cols, title, sub, actionHtml = "") => `
+    <tr>
+      <td colspan="${cols}" class="px-6 py-10 text-center">
+        <div class="text-[15px] font-semibold text-[#222222]">${escapeHtml(title)}</div>
+        ${sub ? `<div class="text-[13px] text-[#6a6a6a] font-medium mt-1">${escapeHtml(sub)}</div>` : ""}
+        ${actionHtml ? `<div class="mt-4 flex items-center justify-center">${actionHtml}</div>` : ""}
+      </td>
+    </tr>
+  `;
+  const getFinancePillClasses = (status) => {
+    const normalized = String(status || "").trim().toLowerCase();
+    if (normalized === "recebida" || normalized === "pago" || normalized === "em dia") {
+      return "bg-green-50 text-green-700";
+    }
+    if (normalized === "pendente" || normalized === "revisão" || normalized === "revisao") {
+      return "bg-yellow-50 text-yellow-700";
+    }
+    if (normalized === "atrasada" || normalized === "atrasado") {
+      return "bg-red-50 text-red-700";
+    }
+    return "bg-gray-100 text-gray-600";
+  };
+  const getFinanceLaunchTypeClasses = (type) => {
+    const normalized = String(type || "").trim().toLowerCase();
+    if (normalized === "fatura") {
+      return "bg-[#f7f7f7] text-[#222222] border border-[#dddddd]";
+    }
+    if (normalized === "cobrança" || normalized === "cobranca") {
+      return "bg-gray-100 text-gray-700";
+    }
+    return "bg-gray-100 text-gray-700";
+  };
+  const renderFinanceMenuButton = ({ label, action, id, extra = "", type = "button" }) => `
+    <button
+      type="${type}"
+      class="finance-menu-item"
+      ${action ? `data-action="${action}"` : ""}
+      ${id != null ? `data-id="${id}"` : ""}
+      ${extra || ""}
+    >
+      ${escapeHtml(label)}
+    </button>
+  `;
+  const renderFinanceMenu = (actions = [], label = "Mais ações") => {
+    const items = actions.filter(Boolean).join("");
+    if (!items) {
+      return "";
+    }
+
+    return `
+      <details class="finance-menu relative">
+        <summary
+          class="w-8 h-8 rounded-full hairline-border flex items-center justify-center hover:bg-gray-100 transition-colors cursor-pointer"
+          aria-label="${escapeHtml(label)}"
+          title="${escapeHtml(label)}"
+        >
+          <span class="text-gray-500 font-bold mb-1">...</span>
+        </summary>
+        <div class="finance-menu-panel">
+          ${items}
+        </div>
+      </details>
+    `;
+  };
+  const financeRows = [...finance.clientFinancials];
 
   if (financeGrid) {
-    renderKpiCards(financeGrid, [
+    financeGrid.innerHTML = [
       {
         label: "Faturado",
         value: formatCurrency(finance.totalBilled),
-        sub: finance.totalMrr ? `MRR ativo ${formatCurrency(finance.totalMrr)}` : "Sem MRR ativo"
+        sub: finance.totalMrr ? `MRR ativo ${formatCurrency(finance.totalMrr)}` : "Sem MRR ativo",
+        cardClass: "bg-white hairline-border rounded-[14px] p-6 shadow-[rgba(0,0,0,0.02)_0_2px_6px]",
+        subClass: "ash-gray"
       },
       {
         label: "Recebido",
         value: formatCurrency(finance.receivedTotal),
         sub: finance.receivedEntries
           ? `${finance.receivedEntries} ${finance.receivedEntries === 1 ? "registro recebido" : "registros recebidos"}`
-          : "Nenhum recebimento no período"
+          : "Nenhum recebimento no período",
+        cardClass: "bg-white hairline-border rounded-[14px] p-6 shadow-[rgba(0,0,0,0.02)_0_2px_6px]",
+        subClass: "ash-gray"
       },
       {
         label: "Inadimplência",
         value: formatCurrency(finance.overdueTotal),
         sub: finance.overdueEntries
           ? `${finance.overdueEntries} ${finance.overdueEntries === 1 ? "título em atraso" : "títulos em atraso"}`
-          : "Nenhum título atrasado"
+          : "Nenhum título atrasado",
+        cardClass: "bg-white hairline-border rounded-[14px] p-6 shadow-[rgba(0,0,0,0.02)_0_2px_6px] relative overflow-hidden",
+        subClass: finance.overdueEntries ? "text-red-600" : "ash-gray",
+        accent: true
       },
       {
         label: "Lucro Líquido",
         value: formatCurrency(finance.netProfit),
-        sub: `${formatCurrency(finance.pendingTotal)} a receber no prazo`
+        sub: `${formatCurrency(finance.pendingTotal)} a receber no prazo`,
+        cardClass: "bg-white hairline-border rounded-[14px] p-6 shadow-[rgba(0,0,0,0.02)_0_2px_6px]",
+        subClass: "ash-gray"
       }
-    ]);
+    ]
+      .map(
+        (card) => `
+          <div class="${card.cardClass}">
+            ${card.accent ? '<div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500 opacity-50"></div>' : ""}
+            <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">${escapeHtml(card.label)}</p>
+            <span class="text-3xl font-bold ink-black block mb-1 tracking-tight">${escapeHtml(card.value)}</span>
+            <p class="text-[13px] font-medium ${card.subClass}">${escapeHtml(card.sub)}</p>
+          </div>
+        `
+      )
+      .join("");
   }
 
   document.getElementById("fin-clientes").innerHTML = finance.clientFinancials
     .map(
-      ({ client, billedTotal, receivedTotal, costTotal, pendingTotal, overdueTotal, margin, operationalStatus }) => `
-        <tr>
-          <td class="cell-stack">
-            <span class="cell-title">${escapeHtml(client.name)}</span>
-            <span class="cell-sub hide-mobile">${escapeHtml(client.company || "Conta interna")}</span>
-            <span class="badge ${getFinanceStatusBadgeClass(operationalStatus)} finance-inline-status">${escapeHtml(operationalStatus)}</span>
+      ({ client, billedTotal, receivedTotal, costTotal, pendingTotal, overdueTotal, margin, operationalStatus }, index) => `
+        <tr class="${index < financeRows.length - 1 ? "border-b border-[#dddddd]" : ""} hover:bg-gray-50 transition-colors">
+          <td class="pl-6 pr-4 py-5 align-middle w-[30%] max-w-0">
+            <div class="group relative">
+              <p class="text-[14px] font-semibold ink-black truncate cursor-default">${escapeHtml(client.name)}</p>
+              <p class="text-[12px] ash-gray font-medium truncate mt-0.5">${escapeHtml(client.company || client.name || "Conta interna")}</p>
+              <div class="absolute left-0 bottom-full mb-2 hidden group-hover:block w-auto min-w-[max-content] bg-gray-800 text-white text-[12px] p-2 rounded-[8px] z-10 shadow-lg">
+                ${escapeHtml(client.company || client.name || "Conta interna")}
+              </div>
+            </div>
           </td>
-          <td class="hide-mobile" data-align="right"><span class="${getValueToneClass(billedTotal)}">${formatCurrencyValue(billedTotal)}</span></td>
-          <td class="hide-tablet" data-align="right"><span class="${getValueToneClass(costTotal)}">${formatCurrencyValue(costTotal)}</span></td>
-          <td class="hide-tablet" data-align="right"><span class="${getValueToneClass(receivedTotal)}">${formatCurrencyValue(receivedTotal)}</span></td>
-          <td class="hide-mobile"><span class="badge ${getFinanceStatusBadgeClass(operationalStatus)}">${escapeHtml(operationalStatus)}</span></td>
-          <td class="finance-margin-cell">
-            <span class="finance-margin-value ${margin >= 50 ? "margin-good" : margin >= 20 ? "margin-warn" : "margin-bad"}">${margin}%</span>
-            <div class="finance-margin-track"><div class="finance-margin-fill" style="width:${Math.max(Math.min(margin, 100), 0)}%"></div></div>
+          <td class="px-4 py-5 align-middle text-right whitespace-nowrap w-px">
+            <p class="${Number(billedTotal || 0) > 0 ? "text-[14px] font-semibold ink-black" : "text-[14px] font-medium text-gray-400"}">${formatCurrencyValue(billedTotal)}</p>
           </td>
-          <td class="cell-actions">
-            <button
-              class="btn ${overdueTotal > 0 ? "btn-pink" : pendingTotal > 0 ? "btn-outline" : "btn-ghost"} btn-sm"
-              data-action="open-charge-modal" data-id="${client.id}"
-            >
-              Cobrar
-            </button>
+          <td class="px-4 py-5 align-middle text-right whitespace-nowrap w-px">
+            <p class="${Number(costTotal || 0) > 0 ? "text-[14px] font-semibold ink-black" : "text-[14px] font-medium text-gray-400"}">${formatCurrencyValue(costTotal)}</p>
+          </td>
+          <td class="px-4 py-5 align-middle text-right whitespace-nowrap w-px">
+            <p class="${Number(receivedTotal || 0) > 0 ? "text-[14px] font-semibold ink-black" : "text-[14px] font-medium text-gray-400"}">${formatCurrencyValue(receivedTotal)}</p>
+          </td>
+          <td class="px-4 py-5 align-middle text-center whitespace-nowrap w-px">
+            <span class="inline-block px-2.5 py-1 text-[11px] font-bold rounded ${getFinancePillClasses(operationalStatus)}">${escapeHtml(operationalStatus)}</span>
+          </td>
+          <td class="px-4 py-5 align-middle w-[20%]">
+            <p class="text-[13px] font-bold ${margin > 0 ? "text-green-700" : "text-red-600"} mb-1">${escapeHtml(`${margin}%`)}</p>
+            ${
+              margin > 0
+                ? '<div class="w-full h-[6px] rounded-full bg-gradient-to-r from-red-500 via-yellow-400 to-green-500"></div>'
+                : '<div class="w-full h-[6px] rounded-full bg-[#f2f2f2]"></div>'
+            }
+          </td>
+          <td class="pl-4 pr-6 py-5 align-middle whitespace-nowrap w-px">
+            <div class="flex items-center justify-center">
+              <button
+                class="px-4 py-1.5 text-[13px] font-semibold ink-black hairline-border bg-white rounded-[8px] hover:bg-gray-50 transition-colors"
+                data-action="open-charge-modal"
+                data-id="${client.id}"
+                type="button"
+              >
+                Cobrar
+              </button>
+            </div>
           </td>
         </tr>
       `
     )
     .join("") || ((hasLoadFailure("clientes") || hasLoadFailure("cobranças") || hasLoadFailure("custos") || hasLoadFailure("faturas"))
-      ? UI.tableEmpty(7, "Não foi possível carregar a margem por cliente.", "Atualize a tela para tentar novamente.", {
-          icon: false,
-          actionHtml: renderRetryAction()
-        })
-      : UI.tableEmpty(7, "Nenhum cliente disponível", "Cadastre clientes para acompanhar receitas, custos e margem.", {
-          icon: false,
-          actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-cliente">Criar cliente</button>`
-        }));
+      ? financeTableEmpty(7, "Não foi possível carregar a margem por cliente.", "Atualize a tela para tentar novamente.", renderRetryAction())
+      : financeTableEmpty(7, "Nenhum cliente disponível", "Cadastre clientes para acompanhar receitas, custos e margem.", '<button type="button" class="h-[36px] inline-flex items-center justify-center px-4 text-[13px] font-medium text-white bg-[#ff385c] rounded-[8px] hover:scale-[0.98] transition-transform" data-action="open-modal" data-modal="novo-cliente">Criar cliente</button>'));
 
   const costBuckets = [
     { label: "Mídia", value: finance.mediaCost },
@@ -6237,29 +6336,17 @@ function renderFinance() {
 
   document.getElementById("fin-custos").innerHTML = costBuckets
     .map(
-      (bucket) => `
-        <div>
-          <div class="progress-item-head">
-            <span>${escapeHtml(bucket.label)}</span><span class="text-strong">${formatCurrency(bucket.value)}</span>
-          </div>
-          <div class="progress-bar progress-sm"><div class="progress-fill" style="width:${Math.min((bucket.value / Math.max(finance.totalBilled || finance.totalCosts || 1, 1)) * 100, 100)}%;background:var(--ink)"></div></div>
+      (bucket, index) => `
+        <div class="flex justify-between ${index < costBuckets.length - 1 ? "py-3 border-b border-[#dddddd]" : "py-4 mt-2"}">
+          <span class="${index < costBuckets.length - 1 ? "text-[14px] font-medium ink-black" : "text-[15px] font-bold ink-black"}">${escapeHtml(bucket.label)}</span>
+          <span class="${index < costBuckets.length - 1 ? "text-[14px] font-bold ink-black" : "text-[15px] font-bold ink-black"}">${formatCurrency(bucket.value)}</span>
         </div>
       `
     )
-    .join("") || UI.empty("Nenhum custo registrado", "Os lançamentos de custo por categoria aparecerão aqui.");
+    .join("");
 
   const canManageInvoices = ["admin", "comercial"].includes(state.session.user.role);
   const launchRows = [
-    ...finance.filteredCosts.map((entry) => ({
-      type: "Custo",
-      title: entry.description || getCostCategoryLabel(entry.category),
-      clientName: entry.client_name || "Equipe interna",
-      detail: `${getCostCategoryLabel(entry.category)} · ${formatDate(entry.incurred_on || entry.created_at)}`,
-      value: Number(entry.amount || 0),
-      statusLabel: "Lançado",
-      statusClass: "badge-blue",
-      actionHtml: '<span class="cell-sub">—</span>'
-    })),
     ...finance.filteredCharges.map((charge) => {
       const chargeStatus = getChargeOperationalStatus(charge);
       const isChargeReceived = isChargeReceivedStatus(charge.status);
@@ -6271,12 +6358,10 @@ function renderFinance() {
         && String(chargeStatus).toLowerCase() !== "pendente";
 
       const primaryAction = charge.payment_link
-        ? `<button type="button" class="btn btn-ghost btn-sm" data-action="open-charge-resource" data-id="${charge.id}" data-resource="payment_link">Abrir</button>`
+        ? `<button type="button" class="h-8 px-3 flex items-center justify-center text-[13px] font-semibold ink-black rounded-[8px] hover:bg-gray-100 transition-colors" data-action="open-charge-resource" data-id="${charge.id}" data-resource="payment_link">Abrir</button>`
         : charge.boleto_url
-          ? `<button type="button" class="btn btn-ghost btn-sm" data-action="open-charge-resource" data-id="${charge.id}" data-resource="boleto_url">Abrir</button>`
-          : charge.pix_copy_paste
-            ? `<button type="button" class="btn btn-ghost btn-sm" data-action="copy-charge-pix" data-id="${charge.id}">Pix</button>`
-            : `<button type="button" class="btn btn-ghost btn-sm" data-action="open-charge-modal" data-id="${charge.client_id}">Cobrar</button>`;
+          ? `<button type="button" class="h-8 px-3 flex items-center justify-center text-[13px] font-semibold ink-black rounded-[8px] hover:bg-gray-100 transition-colors" data-action="open-charge-resource" data-id="${charge.id}" data-resource="boleto_url">Abrir</button>`
+          : "";
 
       return {
         type: "Cobrança",
@@ -6285,32 +6370,30 @@ function renderFinance() {
         detail: `${charge.payment_method} · vencimento ${formatDate(charge.due_date)}`,
         value: Number(charge.amount || 0),
         statusLabel: chargeStatus,
-        statusClass: getFinanceStatusBadgeClass(chargeStatus),
+        statusClass: getFinancePillClasses(chargeStatus),
         actionHtml: `
-          <div class="table-actions">
+          <div class="flex items-center gap-2 justify-end">
             ${primaryAction}
-            ${renderActionMenu(
+            ${renderFinanceMenu(
               [
                 canManageInvoices
-                  ? renderActionMenuButton({
+                  ? renderFinanceMenuButton({
                       label: "Marcar recebida",
                       action: "update-charge-status",
                       id: charge.id,
-                      className: "btn btn-ghost btn-sm",
                       extra: canMarkReceived ? 'data-status="RECEIVED"' : "disabled"
                     })
                   : "",
                 canManageInvoices
-                  ? renderActionMenuButton({
+                  ? renderFinanceMenuButton({
                       label: "Voltar para pendente",
                       action: "update-charge-status",
                       id: charge.id,
-                      className: "btn btn-ghost btn-sm",
                       extra: canMarkPending ? 'data-status="PENDING"' : "disabled"
                     })
                   : ""
               ],
-              { label: "Mais ações da cobrança" }
+              "Mais ações da cobrança"
             )}
           </div>
         `
@@ -6329,28 +6412,30 @@ function renderFinance() {
         detail: `Vencimento ${formatDate(invoice.due_date)}`,
         value: Number(invoice.amount || 0),
         statusLabel,
-        statusClass: getFinanceStatusBadgeClass(statusLabel),
+        statusClass: getFinancePillClasses(statusLabel),
         actionHtml: canManageInvoices
-          ? renderActionMenu(
+          ? `
+            <div class="flex items-center gap-2 justify-end">
+              ${renderFinanceMenu(
               [
-                renderActionMenuButton({
+                renderFinanceMenuButton({
                   label: "Marcar como paga",
                   action: "update-invoice-status",
                   id: invoice.id,
-                  className: "btn btn-ghost btn-sm",
                   extra: canMarkInvoicePaid ? 'data-status="Pago"' : "disabled"
                 }),
-                renderActionMenuButton({
+                renderFinanceMenuButton({
                   label: "Voltar para em aberto",
                   action: "update-invoice-status",
                   id: invoice.id,
-                  className: "btn btn-ghost btn-sm",
                   extra: canMarkInvoiceOpen ? 'data-status="Em aberto"' : "disabled"
                 })
               ],
-              { label: "Mais ações da fatura" }
-            )
-          : '<span class="cell-sub">Somente leitura</span>'
+              "Mais ações da fatura"
+            )}
+            </div>
+          `
+          : '<div class="flex items-center justify-end"><span class="text-[13px] font-medium text-gray-400">—</span></div>'
       };
     })
   ];
@@ -6358,33 +6443,38 @@ function renderFinance() {
   document.getElementById("fin-comissoes").innerHTML =
     launchRows
       .map(
-        (row) => `
-          <tr>
-            <td class="finance-launch-type-col hide-mobile"><span class="badge badge-gray">${escapeHtml(row.type)}</span></td>
-            <td class="cell-stack">
-              <span class="cell-title">${escapeHtml(row.title || "—")}</span>
-              <span class="badge badge-gray finance-launch-type-inline">${escapeHtml(row.type)}</span>
-              <span class="cell-sub finance-launch-client-inline">${escapeHtml(row.clientName)}</span>
-              <span class="cell-sub finance-launch-detail-inline">${escapeHtml(row.detail)}</span>
+        (row, index) => `
+          <tr class="${index < launchRows.length - 1 ? "border-b border-[#dddddd]" : ""} hover:bg-gray-50 transition-colors">
+            <td class="pl-6 pr-4 py-5 align-middle whitespace-nowrap w-px">
+              <span class="inline-block px-2.5 py-1 text-[11px] font-bold rounded ${getFinanceLaunchTypeClasses(row.type)}">${escapeHtml(row.type)}</span>
             </td>
-            <td class="finance-launch-client-col hide-phone"><span class="cell-sub">${escapeHtml(row.clientName)}</span></td>
-            <td class="finance-launch-detail-col hide-tablet"><span class="cell-sub">${escapeHtml(row.detail)}</span></td>
-            <td class="hide-mobile" data-align="right"><span class="${getValueToneClass(row.value)}">${formatCurrencyValue(row.value)}</span></td>
-            <td><span class="badge ${row.statusClass}">${escapeHtml(row.statusLabel)}</span></td>
-            <td class="cell-actions">${row.actionHtml}</td>
+            <td class="px-4 py-5 align-middle w-[30%] max-w-0">
+              <div class="group relative">
+                <p class="text-[14px] font-semibold ink-black truncate cursor-default">${escapeHtml(row.title || "—")}</p>
+              </div>
+            </td>
+            <td class="px-4 py-5 align-middle w-[25%] max-w-0">
+              <p class="text-[13px] ash-gray font-medium truncate">${escapeHtml(row.clientName)}</p>
+            </td>
+            <td class="px-4 py-5 align-middle w-[20%] max-w-0">
+              <p class="text-[13px] ash-gray font-medium truncate">${escapeHtml(row.detail)}</p>
+            </td>
+            <td class="px-4 py-5 align-middle text-right whitespace-nowrap w-px">
+              <p class="${Number(row.value || 0) > 0 ? "text-[14px] font-bold ink-black" : "text-[14px] font-medium text-gray-400"}">${formatCurrencyValue(row.value)}</p>
+            </td>
+            <td class="px-4 py-5 align-middle text-center whitespace-nowrap w-px">
+              <span class="inline-block px-2.5 py-1 text-[11px] font-bold rounded ${row.statusClass}">${escapeHtml(row.statusLabel)}</span>
+            </td>
+            <td class="pl-4 pr-6 py-5 align-middle text-right whitespace-nowrap w-px">
+              ${row.actionHtml}
+            </td>
           </tr>
         `
       )
       .join("")
-    || ((hasLoadFailure("cobranças") || hasLoadFailure("custos") || hasLoadFailure("faturas"))
-      ? UI.tableEmpty(7, "Não foi possível carregar os lançamentos financeiros.", "Atualize a tela para tentar novamente.", {
-          icon: false,
-          actionHtml: renderRetryAction()
-        })
-      : UI.tableEmpty(7, "Nenhum lançamento financeiro cadastrado", "Registre custos, cobranças ou faturas para alimentar o histórico financeiro.", {
-          icon: false,
-          actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-custo">Registrar custo</button>`
-        }));
+    || ((hasLoadFailure("cobranças") || hasLoadFailure("faturas"))
+      ? financeTableEmpty(7, "Não foi possível carregar os lançamentos financeiros.", "Atualize a tela para tentar novamente.", renderRetryAction())
+      : financeTableEmpty(7, "Nenhum lançamento financeiro cadastrado", "Registre cobranças ou faturas para alimentar o histórico financeiro.", '<button type="button" class="h-[36px] inline-flex items-center justify-center px-4 text-[13px] font-medium text-white bg-[#ff385c] rounded-[8px] hover:scale-[0.98] transition-transform" data-action="open-modal" data-modal="nova-fatura">Nova fatura</button>'));
 
   bindLegacyInlineHandlers(document.getElementById("page-financeiro"));
 }
@@ -6596,7 +6686,7 @@ async function refreshData() {
     trafficKpis.innerHTML = UI.skeletonKpis(4);
   }
 
-  const financeKpis = document.querySelector("#page-financeiro .kpi-grid");
+  const financeKpis = document.getElementById("finance-kpis");
   if (financeKpis) {
     financeKpis.innerHTML = UI.skeletonKpis(4);
   }
