@@ -968,6 +968,14 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-producao .prod-menu summary{list-style:none}
 #page-producao .prod-menu summary::-webkit-details-marker{display:none}
 #page-producao .prod-menu-panel{position:absolute;top:calc(100% + 8px);right:0;z-index:30;display:flex;flex-direction:column;gap:4px;min-width:188px;padding:8px;background:#ffffff;border:1px solid #dddddd;border-radius:10px;box-shadow:0 16px 32px rgba(0,0,0,.12)}
+#page-trafego .ink-black{color:#222222}
+#page-trafego .ash-gray{color:#6a6a6a}
+#page-trafego .hairline-border{border:1px solid #dddddd}
+#page-trafego .rausch-bg{background-color:#ff385c}
+#page-trafego .custom-scroll::-webkit-scrollbar{height:6px;width:6px}
+#page-trafego .custom-scroll::-webkit-scrollbar-track{background:transparent}
+#page-trafego .custom-scroll::-webkit-scrollbar-thumb{background:#dddddd;border-radius:3px}
+#page-trafego .custom-scroll::-webkit-scrollbar-thumb:hover{background:#c1c1c1}
 #page-producao .prod-menu-item{display:flex;align-items:center;justify-content:flex-start;width:100%;min-height:36px;padding:0 12px;background:none;border:0;border-radius:8px;color:#222222;font-size:13px;font-weight:600;text-align:left;cursor:pointer}
 #page-producao .prod-menu-item:hover{background:#f5f5f5}
 #page-producao .prod-menu-item:disabled{opacity:.45;cursor:not-allowed}
@@ -2321,41 +2329,92 @@ body[data-active-page="kanban"] #page-kanban.active{display:block;min-height:100
 </section>
 
 <!-- TRAFEGO -->
-<section id="page-trafego" class="app-screen">
-  <div class="topbar">
-    <div><div class="topbar-title">Gestão de Tráfego</div><div class="topbar-sub">Controle de mídia paga, testes e otimizações contínuas</div></div>
-    <div class="topbar-actions">
-      <button class="btn btn-outline btn-sm" data-action="sync-traffic">Sincronizar dados</button>
-      <button class="btn btn-pink btn-sm" data-action="open-modal" data-modal="novo-ab">+ Teste A/B</button>
+<section id="page-trafego" class="app-screen bg-[#f7f7f7]">
+  <header class="h-20 border-b border-[#dddddd] px-8 flex items-center justify-between flex-shrink-0 bg-white">
+    <div>
+      <h1 class="text-[28px] font-bold ink-black tracking-tight leading-tight">Gestão de Tráfego</h1>
+      <p class="text-[13px] ash-gray font-medium mt-0.5">Controle de mídia paga, testes e otimizações contínuas</p>
     </div>
-  </div>
-  <div class="page-body">
-    <div class="kpi-grid" id="traffic-kpi-grid">
-      <div class="kpi-card"><div class="kpi-label">Investimento Total</div><div class="kpi-val">R$0,00</div><div class="kpi-sub">mês atual</div></div>
-      <div class="kpi-card"><div class="kpi-label">ROAS Médio</div><div class="kpi-val">0.0x</div><div class="kpi-sub">sem campanhas ativas</div></div>
-      <div class="kpi-card"><div class="kpi-label">CTR Médio</div><div class="kpi-val">0.0%</div><div class="kpi-sub">todas as plataformas</div></div>
-      <div class="kpi-card"><div class="kpi-label">Impressões</div><div class="kpi-val">0</div><div class="kpi-sub">este mês</div></div>
+
+    <div class="flex items-center gap-3 topbar-actions">
+      <button class="px-4 py-2 text-sm font-medium ink-black bg-white hairline-border rounded-[8px] hover:bg-gray-50 transition-colors" data-action="sync-traffic">
+        Sincronizar dados
+      </button>
+      <div class="h-6 w-px bg-[#dddddd] mx-1"></div>
+      <button class="px-5 py-2 text-sm font-medium text-white rausch-bg rounded-[8px] hover:scale-[0.98] transition-transform" data-action="open-modal" data-modal="novo-ab">
+        + Teste A/B
+      </button>
+      <div class="notification-shell" data-notification-shell="1"></div>
     </div>
-    <div class="two-col traffic-overview-grid">
-      <div class="card traffic-overview-card">
-        <div class="section-title card-title-spacing">Campanhas por Plataforma</div>
-        <div class="progress-stack" id="traffic-platform-breakdown">
-          <div class="empty-state is-no-icon is-plain">
-            <div class="empty-state-title">Sem campanhas ativas no período</div>
-          </div>
+  </header>
+
+  <div class="flex-1 p-8 overflow-y-auto custom-scroll">
+    <section class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6" id="traffic-kpi-grid">
+      <div class="bg-white hairline-border rounded-[14px] p-6">
+        <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">Investimento Total</p>
+        <span class="text-3xl font-bold ink-black block mb-1 tracking-tight">R$ 0,00</span>
+        <p class="text-[13px] ash-gray font-medium">0 campanhas ativas</p>
+      </div>
+      <div class="bg-white hairline-border rounded-[14px] p-6">
+        <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">ROAS Médio</p>
+        <span class="text-3xl font-bold ink-black block mb-1">0.00x</span>
+        <p class="text-[13px] ash-gray font-medium">0 contas acompanhadas</p>
+      </div>
+      <div class="bg-white hairline-border rounded-[14px] p-6">
+        <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">CTR Médio</p>
+        <span class="text-3xl font-bold ink-black block mb-1">0.00%</span>
+        <p class="text-[13px] ash-gray font-medium">0 cliques</p>
+      </div>
+      <div class="bg-white hairline-border rounded-[14px] p-6">
+        <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">Impressões</p>
+        <span class="text-3xl font-bold ink-black block mb-1 tracking-tight">0</span>
+        <p class="text-[13px] ash-gray font-medium">este mês</p>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="bg-white hairline-border rounded-[14px] p-6">
+        <h3 class="text-[16px] font-bold ink-black mb-6">Campanhas por Plataforma</h3>
+        <div class="space-y-5" id="traffic-platform-breakdown">
+          <div class="text-[14px] font-medium ash-gray">Sem campanhas ativas no período.</div>
         </div>
       </div>
-      <div class="card traffic-overview-card">
-        <div class="section-title card-title-spacing">Testes A/B Ativos</div>
-        <div class="team-list" id="ab-list"></div>
+
+      <div class="bg-white hairline-border rounded-[14px] p-6">
+        <h3 class="text-[16px] font-bold ink-black mb-6">Testes A/B Ativos</h3>
+        <div class="space-y-0" id="ab-list">
+          <div class="text-[14px] font-medium ash-gray">Nenhum teste ativo no momento.</div>
+        </div>
       </div>
-    </div>
-    <div class="card traffic-table-card">
-      <div class="section-header"><div class="section-title">Campanhas Detalhadas</div></div>
-      <div class="table-wrap">
-        <table class="traffic-table">
-          <thead><tr><th>Campanha</th><th class="hide-phone">Cliente</th><th>Plataforma</th><th class="hide-tablet">Orçamento</th><th class="hide-mobile">CPC</th><th class="hide-mobile">CTR</th><th class="hide-phone">Conv.</th><th>ROAS</th><th>Status</th></tr></thead>
-          <tbody id="trafego-tbody"></tbody>
+    </section>
+
+    <div class="bg-white hairline-border rounded-[14px] shadow-[rgba(0,0,0,0.02)_0_2px_6px] overflow-hidden mb-8">
+      <div class="px-6 py-5 border-b border-[#dddddd]">
+        <h3 class="text-[16px] font-bold ink-black">Campanhas Detalhadas</h3>
+      </div>
+      <div class="overflow-x-auto custom-scroll">
+        <table class="w-full text-left border-collapse min-w-[800px]">
+          <thead class="bg-[#fcfcfc] border-b border-[#dddddd]">
+            <tr>
+              <th class="pl-6 pr-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-[30%]">Campanha</th>
+              <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-[25%]">Cliente</th>
+              <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap w-px">Plataforma</th>
+              <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-right w-px">Orçamento</th>
+              <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-right w-px">CPC</th>
+              <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-right w-px">CTR</th>
+              <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-right w-px">Conv.</th>
+              <th class="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-right w-px">ROAS</th>
+              <th class="pl-4 pr-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest whitespace-nowrap text-center w-px">Status</th>
+            </tr>
+          </thead>
+          <tbody id="trafego-tbody">
+            <tr>
+              <td colspan="9" class="px-6 py-10 text-center">
+                <div class="text-[15px] font-semibold text-[#222222]">Nenhum dado de tráfego disponível</div>
+                <div class="text-[13px] text-[#6a6a6a] font-medium mt-1">Publique campanhas para visualizar métricas e evolução de mídia.</div>
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </div>

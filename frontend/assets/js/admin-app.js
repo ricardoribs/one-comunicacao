@@ -5847,7 +5847,9 @@ function renderProduction() {
 function renderTraffic() {
   const trafficKpiGrid = document.getElementById("traffic-kpi-grid");
   const platformBreakdown = document.getElementById("traffic-platform-breakdown");
-  const activeCampaigns = getActiveCampaigns();
+  const abList = document.getElementById("ab-list");
+  const trafficBody = document.getElementById("trafego-tbody");
+  const activeCampaigns = getActiveCampaigns().map((campaign) => getCampaignViewModel(campaign));
   const trafficMetrics = getTrafficMetricsForCampaigns(activeCampaigns);
   const totalBudget = sumBy(activeCampaigns, (campaign) => campaign.budget);
   const totalRevenue = trafficMetrics.length
@@ -5859,28 +5861,67 @@ function renderTraffic() {
   const ctr = totalImpressions ? (totalClicks / totalImpressions) * 100 : 0;
   const activeClients = new Set(activeCampaigns.map((campaign) => campaign.client_id).filter(Boolean)).size;
 
-  renderKpiCards(trafficKpiGrid, [
-    {
-      label: "Investimento Total",
-      value: formatCurrency(totalBudget),
-      sub: activeCampaigns.length ? `${formatNumber(activeCampaigns.length)} campanhas ativas` : "mês atual"
-    },
-    {
-      label: "ROAS Médio",
-      value: `${roas.toFixed(2)}x`,
-      sub: activeCampaigns.length ? `${formatNumber(activeClients)} contas acompanhadas` : "sem campanhas ativas"
-    },
-    {
-      label: "CTR Médio",
-      value: `${ctr.toFixed(2)}%`,
-      sub: totalClicks ? `${formatNumber(totalClicks)} cliques` : "todas as plataformas"
-    },
-    {
-      label: "Impressões",
-      value: formatCompactNumber(totalImpressions),
-      sub: trafficMetrics.length ? "este mês" : "sem mídia publicada"
+  const getTrafficChannelClasses = (channel) => {
+    const value = normalizeLooseText(channel);
+    if (value.includes("instagram") && value.includes("meta")) {
+      return "bg-[#f0f4f8] text-[#3366cc]";
     }
-  ]);
+    if (value.includes("meta") || value.includes("facebook")) {
+      return "bg-blue-50 text-blue-600";
+    }
+    if (value.includes("instagram")) {
+      return "bg-pink-50 text-pink-600";
+    }
+    return "bg-gray-100 text-gray-600";
+  };
+
+  const getTrafficStatusClasses = (status) => {
+    const value = normalizeLooseText(status);
+    if (value.includes("ativa")) {
+      return "bg-green-50 text-green-700";
+    }
+    if (value.includes("paus")) {
+      return "bg-yellow-50 text-yellow-700";
+    }
+    return "bg-gray-100 text-gray-600";
+  };
+
+  if (trafficKpiGrid) {
+    trafficKpiGrid.innerHTML = [
+      {
+        label: "Investimento Total",
+        value: formatCurrency(totalBudget),
+        sub: `${formatNumber(activeCampaigns.length)} campanhas ativas`,
+        extraClass: "tracking-tight"
+      },
+      {
+        label: "ROAS Médio",
+        value: `${roas.toFixed(2)}x`,
+        sub: `${formatNumber(activeClients)} contas acompanhadas`
+      },
+      {
+        label: "CTR Médio",
+        value: `${ctr.toFixed(2)}%`,
+        sub: `${formatNumber(totalClicks)} cliques`
+      },
+      {
+        label: "Impressões",
+        value: formatCompactNumber(totalImpressions),
+        sub: "este mês",
+        extraClass: "tracking-tight"
+      }
+    ]
+      .map(
+        (item) => `
+          <div class="bg-white hairline-border rounded-[14px] p-6">
+            <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">${escapeHtml(item.label)}</p>
+            <span class="text-3xl font-bold ink-black block mb-1 ${item.extraClass || ""}">${escapeHtml(item.value)}</span>
+            <p class="text-[13px] ash-gray font-medium">${escapeHtml(item.sub)}</p>
+          </div>
+        `
+      )
+      .join("");
+  }
 
   if (platformBreakdown) {
     const channelGroups = activeCampaigns.reduce((accumulator, campaign) => {
@@ -5906,110 +5947,129 @@ function renderTraffic() {
       ? platformRows
           .map((platform) => {
             const platformRoas = platform.budget ? platform.revenue / platform.budget : 0;
+            const width = maxBudget ? (platform.budget / maxBudget) * 100 : 0;
             return `
               <div>
-                <div class="progress-item-head">
-                  <span>${escapeHtml(platform.label)}</span>
-                  <span class="text-strong">${formatCurrency(platform.budget)} · ROAS ${platformRoas.toFixed(2)}x</span>
+                <div class="flex justify-between items-end mb-2">
+                  <span class="text-[14px] font-semibold ink-black">${escapeHtml(platform.label)}</span>
+                  <span class="text-[13px] font-bold ink-black">${escapeHtml(formatCurrencyValue(platform.budget))} <span class="text-[12px] font-medium text-gray-400 ml-1">· ROAS ${platformRoas.toFixed(2)}x</span></span>
                 </div>
-                <div class="progress-bar"><div class="progress-fill" style="width:${((platform.budget / maxBudget) * 100).toFixed(1)}%"></div></div>
+                <div class="w-full bg-gray-100 h-[6px] rounded-full overflow-hidden">
+                  <div class="bg-[#222222] h-full rounded-full" style="width:${width.toFixed(1)}%"></div>
+                </div>
               </div>
             `;
           })
           .join("")
-      : UI.empty("Nenhuma campanha ativa", "As plataformas aparecerão aqui quando houver investimento real em mídia.", {
-          icon: false,
-          className: "is-plain",
-          actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="nova-campanha">Criar campanha</button>`
-        });
+      : '<div class="text-[14px] font-medium ash-gray">Sem campanhas ativas no período.</div>';
   }
 
-  document.getElementById("ab-list").innerHTML = activeCampaigns
-    .slice(0, 3)
-    .map((campaign) => {
-      const view = getCampaignViewModel(campaign);
-      return `
-        <div class="item-row">
-          <div>
-            <div class="block-title-sm">${escapeHtml(view.name)}</div>
-            <div class="block-text-xs">${escapeHtml(view.client_name)}</div>
-          </div>
-          <span class="badge ${Number(view.roi || 0) === 0 ? "badge-gray" : "badge-blue"}">ROI ${Number(view.roi || 0).toFixed(2)}%</span>
-        </div>
-      `;
-    })
-    .join("") || UI.empty("Nenhuma campanha ativa", "Ative campanhas para acompanhar a performance de mídia.", {
-      icon: false,
-      className: "is-plain",
-      actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="nova-campanha">Criar campanha</button>`
-    });
+  if (abList) {
+    abList.innerHTML = activeCampaigns.length
+      ? activeCampaigns
+          .slice(0, 3)
+          .map((campaign, index, list) => {
+            const campaignMetrics = state.metrics.filter((metric) => Number(metric.campaign_id) === Number(campaign.id));
+            const revenue = campaignMetrics.length ? sumBy(campaignMetrics, (metric) => metric.revenue) : Number(campaign.revenue || 0);
+            const budget = Number(campaign.budget || 0);
+            const roi = budget ? ((revenue - budget) / budget) * 100 : 0;
+            const rowClasses = [
+              "flex items-center justify-between py-3",
+              index === 0 ? "border-b border-[#dddddd] first:pt-0" : "",
+              index < list.length - 1 && index !== 0 ? "border-b border-[#dddddd]" : ""
+            ].filter(Boolean).join(" ");
 
-  document.getElementById("trafego-tbody").innerHTML = state.campaigns
-    .map((campaign) => {
-      const view = getCampaignViewModel(campaign);
-      const campaignMetrics = state.metrics.filter((metric) => Number(metric.campaign_id) === Number(view.id));
+            return `
+              <div class="${rowClasses}">
+                <div>
+                  <p class="text-[14px] font-semibold ink-black mb-0.5">${escapeHtml(campaign.name)}</p>
+                  <p class="text-[12px] ash-gray font-medium">${escapeHtml(campaign.client_name)}</p>
+                </div>
+                <span class="inline-block px-2.5 py-1 text-[11px] font-bold rounded bg-blue-50 text-blue-700">ROI ${roi.toFixed(2)}%</span>
+              </div>
+            `;
+          })
+          .join("")
+      : '<div class="text-[14px] font-medium ash-gray">Nenhum teste ativo no momento.</div>';
+  }
+
+  if (!trafficBody) {
+    return;
+  }
+
+  if (!activeCampaigns.length) {
+    trafficBody.innerHTML = `
+      <tr>
+        <td colspan="9" class="px-6 py-10 text-center">
+          <div class="text-[15px] font-semibold text-[#222222]">Nenhum dado de tráfego disponível</div>
+          <div class="text-[13px] text-[#6a6a6a] font-medium mt-1">Publique campanhas para visualizar métricas e evolução de mídia.</div>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  trafficBody.innerHTML = activeCampaigns
+    .map((campaign, index, list) => {
+      const campaignMetrics = state.metrics.filter((metric) => Number(metric.campaign_id) === Number(campaign.id));
       const impressions = sumBy(campaignMetrics, (metric) => metric.impressions);
       const clicks = sumBy(campaignMetrics, (metric) => metric.clicks);
       const leads = sumBy(campaignMetrics, (metric) => metric.leads);
-      const revenue = sumBy(campaignMetrics, (metric) => metric.revenue);
-      const budget = Number(view.budget || 0);
+      const revenue = campaignMetrics.length ? sumBy(campaignMetrics, (metric) => metric.revenue) : Number(campaign.revenue || 0);
+      const budget = Number(campaign.budget || 0);
       const cpc = clicks ? budget / clicks : 0;
       const ctrValue = impressions ? (clicks / impressions) * 100 : 0;
       const conversionValue = clicks ? (leads / clicks) * 100 : 0;
       const roasValue = budget ? revenue / budget : 0;
+      const statusLabel = getDisplayText(campaign.status, "Planejamento");
+      const zeroTextClass = "text-[14px] font-medium text-gray-400";
+      const rowClass = index < list.length - 1
+        ? "border-b border-[#dddddd] hover:bg-gray-50 transition-colors"
+        : "hover:bg-gray-50 transition-colors";
+
       return `
-        <tr>
-          <td class="cell-stack traffic-campaign-main">
-            <span class="cell-title" title="${escapeHtml(view.name)}">${escapeHtml(view.name)}</span>
-            <span class="cell-sub show-mobile-block" title="${escapeHtml(view.client_name)}">${escapeHtml(view.client_name)}</span>
-          </td>
-          <td class="traffic-cell traffic-client-cell hide-phone">
-            <div class="traffic-cell-left">
-              <span class="cell-sub" title="${escapeHtml(view.client_name)}">${escapeHtml(view.client_name)}</span>
+        <tr class="${rowClass}">
+          <td class="pl-6 pr-4 py-4 align-middle w-[30%] max-w-0">
+            <div class="group relative">
+              <p class="text-[14px] font-semibold ink-black truncate cursor-default">${escapeHtml(campaign.name)}</p>
+              <div class="absolute left-0 bottom-full mb-2 hidden group-hover:block w-auto min-w-[max-content] bg-gray-800 text-white text-[12px] p-2 rounded-[8px] z-10 shadow-lg">
+                ${escapeHtml(campaign.name)}
+              </div>
             </div>
           </td>
-          <td class="traffic-cell traffic-platform-cell">
-            <div class="traffic-cell-center">
-              <span class="badge ${getChannelBadgeClass(view.channel)}">${escapeHtml(view.channel)}</span>
+          <td class="px-4 py-4 align-middle w-[25%] max-w-0">
+            <div class="group relative">
+              <p class="text-[13px] ash-gray font-medium truncate cursor-default">${escapeHtml(campaign.client_name)}</p>
+              <div class="absolute left-0 bottom-full mb-2 hidden group-hover:block w-auto min-w-[max-content] bg-gray-800 text-white text-[12px] p-2 rounded-[8px] z-10 shadow-lg">
+                ${escapeHtml(campaign.client_name)}
+              </div>
             </div>
           </td>
-          <td class="traffic-cell traffic-budget-cell hide-tablet">
-            <div class="traffic-cell-right">
-              <span class="${getValueToneClass(budget)}">${formatCurrencyValue(budget)}</span>
-            </div>
+          <td class="px-4 py-4 align-middle whitespace-nowrap w-px">
+            <span class="inline-block px-2.5 py-1 text-[11px] font-bold rounded ${getTrafficChannelClasses(campaign.channel)}">${escapeHtml(campaign.channel)}</span>
           </td>
-          <td class="traffic-cell traffic-cpc-cell hide-mobile">
-            <div class="traffic-cell-right">
-              <span class="${cpc > 0 ? "value-strong" : "value-zero"}">${formatCurrencyValue(cpc)}</span>
-            </div>
+          <td class="px-4 py-4 align-middle text-right whitespace-nowrap w-px">
+            <p class="text-[14px] font-bold ink-black">${escapeHtml(formatCurrencyValue(budget))}</p>
           </td>
-          <td class="traffic-cell traffic-ctr-cell hide-mobile">
-            <div class="traffic-cell-right">
-              <span class="${ctrValue > 0 ? "value-strong" : "value-zero"}">${ctrValue.toFixed(2)}%</span>
-            </div>
+          <td class="px-4 py-4 align-middle text-right whitespace-nowrap w-px">
+            <p class="${cpc > 0 ? "text-[14px] font-medium ink-black" : zeroTextClass}">${escapeHtml(formatCurrencyValue(cpc))}</p>
           </td>
-          <td class="traffic-cell traffic-conv-cell hide-phone">
-            <div class="traffic-cell-right">
-              <span class="${conversionValue > 0 ? "value-strong" : "value-zero"}">${conversionValue.toFixed(2)}%</span>
-            </div>
+          <td class="px-4 py-4 align-middle text-right whitespace-nowrap w-px">
+            <p class="${ctrValue > 0 ? "text-[14px] font-medium ink-black" : zeroTextClass}">${ctrValue.toFixed(2)}%</p>
           </td>
-          <td class="traffic-cell traffic-roas-cell">
-            <div class="traffic-cell-right">
-              <span class="${roasValue > 0 ? "value-strong" : "value-zero"}">${roasValue.toFixed(2)}x</span>
-            </div>
+          <td class="px-4 py-4 align-middle text-right whitespace-nowrap w-px">
+            <p class="${conversionValue > 0 ? "text-[14px] font-medium ink-black" : zeroTextClass}">${conversionValue.toFixed(2)}%</p>
           </td>
-          <td class="traffic-cell traffic-status-cell">
-            <div class="traffic-cell-center">
-              <span class="badge ${getCampaignStatusBadgeClass(view.status)}">${escapeHtml(getDisplayText(view.status, "Planejamento"))}</span>
-            </div>
+          <td class="px-4 py-4 align-middle text-right whitespace-nowrap w-px">
+            <p class="${roasValue > 0 ? "text-[14px] font-bold ink-black" : "text-[14px] font-bold text-gray-400"}">${roasValue.toFixed(2)}x</p>
+          </td>
+          <td class="pl-4 pr-6 py-4 align-middle text-center whitespace-nowrap w-px">
+            <span class="inline-block px-2.5 py-1 text-[11px] font-bold rounded-full ${getTrafficStatusClasses(statusLabel)}">${escapeHtml(statusLabel)}</span>
           </td>
         </tr>
       `;
     })
-    .join("") || UI.tableEmpty(9, "Nenhum dado de tráfego disponível", "Publique campanhas para visualizar métricas e evolução de mídia.", {
-      icon: false,
-      actionHtml: `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="nova-campanha">Criar campanha</button>`
-    });
+    .join("");
 }
 
 function getFilteredMetrics() {
@@ -6814,7 +6874,7 @@ async function refreshData() {
 
   const trafficBody = document.getElementById("trafego-tbody");
   if (trafficBody) {
-    trafficBody.innerHTML = UI.skeletonRows(8, 4);
+    trafficBody.innerHTML = UI.skeletonRows(9, 4);
   }
 
   const pipelineBoard = document.getElementById("pipeline-board");
