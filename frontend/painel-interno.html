@@ -1620,13 +1620,14 @@ td{padding:16px;font-size:14px;color:var(--text)}
 #page-kanban .checklist-history-group{gap:12px}
 #page-kanban .kanban-scroll-top{margin-top:8px}
 #page-kanban .kanban{padding-top:0}
-body[data-active-page="kanban"]{overflow:hidden}
-body[data-active-page="kanban"] #sidebar,body[data-active-page="kanban"] #mobile-nav-toggle,body[data-active-page="kanban"] #sidebar-backdrop,body[data-active-page="kanban"] .mobile-tabbar{display:none!important}
-body[data-active-page="kanban"] #app-main{margin-left:0!important;min-height:100vh;height:100vh;background:transparent}
-body[data-active-page="kanban"] #page-kanban.active{display:block;min-height:100vh;height:100vh}
+body[data-active-page="kanban"]{overflow-x:hidden}
+body[data-active-page="kanban"] #app-main{min-height:100vh;height:auto;background:var(--white)}
+body[data-active-page="kanban"] #page-kanban.active{display:flex;flex-direction:column;min-height:100vh;height:auto}
 #page-kanban{background:#fff;color:#222222}
 #page-kanban.dark{background:#1A1A1A;color:#fff}
-#page-kanban .one-kanban-exact{font-family:'Inter',sans-serif;transition:background-color .3s,color .3s}
+#page-kanban .one-kanban-exact{font-family:'Inter',sans-serif;transition:background-color .3s,color .3s;min-height:100vh;height:auto}
+#page-kanban .kanban-shell-sidebar{display:none}
+#page-kanban .one-kanban-exact > main{width:100%}
 #page-kanban .custom-scroll::-webkit-scrollbar{height:8px;width:6px}
 #page-kanban .custom-scroll::-webkit-scrollbar-track{background:transparent}
 #page-kanban .custom-scroll::-webkit-scrollbar-thumb{background:#dddddd;border-radius:4px}
@@ -1943,8 +1944,8 @@ body[data-active-page="kanban"] #page-kanban.active{display:block;min-height:100
 
 <!-- KANBAN -->
 <section id="page-kanban" class="app-screen">
-  <div id="kanban-exact-root" class="one-kanban-exact flex h-screen overflow-hidden bg-white text-[#222222] dark:bg-[#1A1A1A] dark:text-white">
-    <aside class="w-64 flex-shrink-0 flex flex-col bg-[#222222] border-r border-[#333333] z-20">
+  <div id="kanban-exact-root" class="one-kanban-exact flex min-h-screen overflow-hidden bg-white text-[#222222] dark:bg-[#1A1A1A] dark:text-white">
+    <aside class="kanban-shell-sidebar w-64 flex-shrink-0 flex flex-col bg-[#222222] border-r border-[#333333] z-20">
       <div class="p-6 h-20 flex items-center gap-3 border-b border-[#333333]">
         <img src="assets/svg/one-logo-soft.svg" alt="ONE" class="h-8 w-auto"/>
       </div>
@@ -2029,7 +2030,7 @@ body[data-active-page="kanban"] #page-kanban.active{display:block;min-height:100
       </div>
     </aside>
 
-    <main class="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#1A1A1A] h-screen">
+    <main class="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#1A1A1A] min-h-screen">
       <header class="min-h-[80px] py-5 border-b border-[#dddddd] dark:border-[#333333] px-8 flex flex-col md:flex-row md:items-center justify-between gap-4 flex-shrink-0 bg-white dark:bg-[#222222] z-10 transition-colors">
         <div>
           <h1 class="text-[28px] font-bold tracking-tight leading-tight">Gestão de Projetos</h1>
