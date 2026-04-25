@@ -323,9 +323,9 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 .responsaveis-resumo{font-size:12px;color:var(--muted);margin-top:8px;min-height:16px}
 
 /* KANBAN */
-.kanban-scroll-top{overflow-x:auto;overflow-y:hidden;padding-bottom:6px;margin-top:var(--space-5)}
+.kanban-scroll-top{overflow-x:auto;overflow-y:hidden;height:12px;padding-bottom:0;margin-top:var(--space-5);scrollbar-gutter:stable both-edges}
 .kanban-scroll-top.is-hidden{display:none}
-.kanban-scroll-top-track{height:1px}
+.kanban-scroll-top-track{height:12px}
 .kanban{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(280px,280px);gap:var(--space-4);overflow-x:auto;padding-bottom:var(--space-2);align-items:start}
 .kanban-col{background:var(--gray);padding:var(--space-4);min-height:420px;display:flex;flex-direction:column;gap:var(--space-3);transition:border-color .18s ease,background .18s ease,box-shadow .18s ease}
 .kanban-col-title{font-size:var(--text-xs);font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:var(--space-2);display:flex;align-items:center;justify-content:space-between;background:var(--white);border:1px solid var(--border);padding:var(--space-2) var(--space-3)}
@@ -1618,13 +1618,14 @@ td{padding:16px;font-size:14px;color:var(--text)}
 #page-kanban .kanban-history-title{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 #page-kanban .kanban-history-list{display:flex;flex-direction:column;gap:14px}
 #page-kanban .checklist-history-group{gap:12px}
-#page-kanban .kanban-scroll-top{margin-top:8px}
+#page-kanban .kanban-scroll-top{margin:8px 0 12px}
 #page-kanban .kanban-scroll-top{flex-shrink:0}
-#page-kanban .kanban-scroll-top::-webkit-scrollbar{height:8px}
-#page-kanban .kanban-scroll-top::-webkit-scrollbar-track{background:transparent}
-#page-kanban .kanban-scroll-top::-webkit-scrollbar-thumb{background:#dddddd;border-radius:4px}
-#page-kanban.dark .kanban-scroll-top::-webkit-scrollbar-thumb{background:#3f3f3f}
-#page-kanban .kanban-scroll-top::-webkit-scrollbar-thumb:hover{background:#c1c1c1}
+#page-kanban .kanban-scroll-top::-webkit-scrollbar{height:10px}
+#page-kanban .kanban-scroll-top::-webkit-scrollbar-track{background:#ececec;border-radius:999px}
+#page-kanban .kanban-scroll-top::-webkit-scrollbar-thumb{background:#c1c1c1;border-radius:999px}
+#page-kanban.dark .kanban-scroll-top::-webkit-scrollbar-track{background:#242b33}
+#page-kanban.dark .kanban-scroll-top::-webkit-scrollbar-thumb{background:#56606b}
+#page-kanban .kanban-scroll-top::-webkit-scrollbar-thumb:hover{background:#a8a8a8}
 #page-kanban .kanban{padding-top:0}
 body[data-active-page="kanban"]{overflow-x:hidden}
 body[data-active-page="kanban"] #app-main{min-height:100vh;height:auto;background:var(--white)}

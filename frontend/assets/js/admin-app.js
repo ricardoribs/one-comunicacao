@@ -246,6 +246,7 @@ const kanbanRuntime = {
   dragOffsetX: 0,
   dragOffsetY: 0,
   scrollSyncBound: false,
+  scrollResizeObserver: null,
 };
 const taskAssignState = {
   selected: new Set(),
@@ -5159,7 +5160,18 @@ function setupKanbanScrollSync() {
     kanbanRuntime.scrollSyncBound = true;
   }
 
+  if ("ResizeObserver" in window) {
+    if (!kanbanRuntime.scrollResizeObserver) {
+      kanbanRuntime.scrollResizeObserver = new ResizeObserver(() => {
+        window.requestAnimationFrame(syncWidths);
+      });
+    }
+    kanbanRuntime.scrollResizeObserver.disconnect();
+    kanbanRuntime.scrollResizeObserver.observe(board);
+  }
+
   window.requestAnimationFrame(syncWidths);
+  window.setTimeout(syncWidths, 80);
 }
 
 function bindKanbanBoardInteractions() {
