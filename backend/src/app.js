@@ -145,8 +145,8 @@ app.use(
       useDefaults: true,
       directives: {
         'default-src': ["'self'"],
-        'script-src': ["'self'", "'unsafe-eval'", (req, res) => `'nonce-${res.locals.cspNonce}'`, 'https://cdn.tailwindcss.com'],
-        'script-src-elem': ["'self'", "'unsafe-eval'", (req, res) => `'nonce-${res.locals.cspNonce}'`, 'https://cdn.tailwindcss.com'],
+        'script-src': ["'self'", "'unsafe-eval'", (req, res) => `'nonce-${res.locals.cspNonce}'`],
+        'script-src-elem': ["'self'", "'unsafe-eval'", (req, res) => `'nonce-${res.locals.cspNonce}'`],
         'script-src-attr': ["'none'"],
         'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
         'style-src-elem': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],

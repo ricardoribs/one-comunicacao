@@ -5,6 +5,7 @@
   "scripts": {
     "install:backend": "npm ci --prefix backend",
     "install:backend:prod": "npm ci --prefix backend --omit=dev",
+    "build:tailwind": "tailwindcss -c tailwind.config.js -i frontend/assets/css/tailwind.input.css -o frontend/assets/css/tailwind.generated.css --minify",
     "dev": "npm run dev --prefix backend",
     "start": "npm run start --prefix backend",
     "db:init": "npm run db:migrate --prefix backend",
@@ -24,5 +25,8 @@
   },
   "dependencies": {
     "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
   }
 }
