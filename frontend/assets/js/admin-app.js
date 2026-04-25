@@ -3183,7 +3183,7 @@ function renderActionMenu(actions = [], { label = "Mais ações" } = {}) {
   return `
     <details class="action-menu">
       <summary class="btn btn-outline btn-sm action-menu-trigger" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}"><span aria-hidden="true">⋯</span></summary>
-      <div class="action-menu-panel">
+      <div class="action-menu-panel" data-floating-menu-panel="1">
         ${items}
       </div>
     </details>
@@ -3211,6 +3211,149 @@ function renderActionMenuButton({
     .join(" ");
 
   return `<button ${attributes}>${escapeHtml(label)}</button>`;
+}
+
+const FLOATING_ACTION_MENU_SELECTOR = "details.action-menu, details.prod-menu, details.analytics-menu, details.finance-menu, details.access-menu";
+
+function getFloatingActionMenuPanel(menu) {
+  if (!menu) {
+    return null;
+  }
+
+  return (
+    menu.querySelector("[data-floating-menu-panel]") ||
+    Array.from(menu.children).find((child) => child.tagName !== "SUMMARY") ||
+    null
+  );
+}
+
+function clearFloatingActionMenuPosition(menu) {
+  const panel = getFloatingActionMenuPanel(menu);
+  if (!panel) {
+    return;
+  }
+
+  panel.style.position = "";
+  panel.style.left = "";
+  panel.style.top = "";
+  panel.style.right = "";
+  panel.style.bottom = "";
+  panel.style.zIndex = "";
+  panel.style.maxWidth = "";
+}
+
+function positionFloatingActionMenu(menu) {
+  if (!menu?.open) {
+    clearFloatingActionMenuPosition(menu);
+    return;
+  }
+
+  const summary = menu.querySelector("summary");
+  const panel = getFloatingActionMenuPanel(menu);
+  if (!summary || !panel) {
+    return;
+  }
+
+  panel.style.position = "fixed";
+  panel.style.left = "0";
+  panel.style.top = "0";
+  panel.style.right = "auto";
+  panel.style.bottom = "auto";
+  panel.style.zIndex = "260";
+  panel.style.maxWidth = "min(220px, calc(100vw - 24px))";
+
+  const triggerRect = summary.getBoundingClientRect();
+  const panelRect = panel.getBoundingClientRect();
+  const gap = 8;
+  const viewportPadding = 12;
+
+  let left = triggerRect.right - panelRect.width;
+  if (left < viewportPadding) {
+    left = viewportPadding;
+  }
+  if (left + panelRect.width > window.innerWidth - viewportPadding) {
+    left = Math.max(viewportPadding, window.innerWidth - viewportPadding - panelRect.width);
+  }
+
+  let top = triggerRect.bottom + gap;
+  if (top + panelRect.height > window.innerHeight - viewportPadding) {
+    top = Math.max(viewportPadding, triggerRect.top - gap - panelRect.height);
+  }
+
+  panel.style.left = `${Math.round(left)}px`;
+  panel.style.top = `${Math.round(top)}px`;
+}
+
+function syncFloatingActionMenus() {
+  document.querySelectorAll(`${FLOATING_ACTION_MENU_SELECTOR}[open]`).forEach((menu) => {
+    positionFloatingActionMenu(menu);
+  });
+}
+
+function closeFloatingActionMenus(exceptMenu = null) {
+  document.querySelectorAll(`${FLOATING_ACTION_MENU_SELECTOR}[open]`).forEach((menu) => {
+    if (menu !== exceptMenu) {
+      menu.open = false;
+      clearFloatingActionMenuPosition(menu);
+    }
+  });
+}
+
+function bindFloatingActionMenus() {
+  if (document.body.dataset.boundFloatingActionMenus !== "1") {
+    document.addEventListener(
+      "toggle",
+      (event) => {
+        const menu = event.target;
+        if (!menu?.matches?.(FLOATING_ACTION_MENU_SELECTOR)) {
+          return;
+        }
+
+        if (menu.open) {
+          closeFloatingActionMenus(menu);
+          requestAnimationFrame(() => positionFloatingActionMenu(menu));
+          return;
+        }
+
+        clearFloatingActionMenuPosition(menu);
+      },
+      true
+    );
+
+    document.addEventListener("click", (event) => {
+      const menu = event.target.closest(FLOATING_ACTION_MENU_SELECTOR);
+      if (!menu) {
+        closeFloatingActionMenus();
+        return;
+      }
+
+      if (event.target.closest("summary")) {
+        return;
+      }
+
+      if (event.target.closest("button, a")) {
+        requestAnimationFrame(() => {
+          if (menu.open) {
+            menu.open = false;
+            clearFloatingActionMenuPosition(menu);
+          }
+        });
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeFloatingActionMenus();
+      }
+    });
+
+    window.addEventListener("resize", syncFloatingActionMenus);
+    document.addEventListener("scroll", syncFloatingActionMenus, true);
+
+    document.body.dataset.boundFloatingActionMenus = "1";
+  }
+
+  syncFloatingActionMenus();
 }
 
 const ACCESS_COUNTRY_LABELS = {
@@ -5808,7 +5951,7 @@ function renderProduction() {
         >
           <span class="text-gray-500 font-bold mb-1">...</span>
         </summary>
-        <div class="prod-menu-panel">
+        <div class="prod-menu-panel" data-floating-menu-panel="1">
           ${items}
         </div>
       </details>
@@ -6281,7 +6424,7 @@ function renderAnalytics() {
         <summary class="w-8 h-8 rounded-full hairline-border inline-flex items-center justify-center hover:bg-gray-100 transition-colors cursor-pointer" aria-label="${escapeHtml(label)}">
           <span class="text-gray-500 font-bold mb-1">...</span>
         </summary>
-        <div class="absolute right-0 top-[calc(100%+8px)] z-30 flex flex-col gap-1 min-w-[188px] p-2 bg-white border border-[#dddddd] rounded-[10px] shadow-[0_16px_32px_rgba(0,0,0,0.12)]">
+        <div class="absolute right-0 top-[calc(100%+8px)] z-30 flex flex-col gap-1 min-w-[188px] p-2 bg-white border border-[#dddddd] rounded-[10px] shadow-[0_16px_32px_rgba(0,0,0,0.12)] analytics-menu-panel" data-floating-menu-panel="1">
           ${items}
         </div>
       </details>
@@ -6584,7 +6727,7 @@ function renderFinance() {
         >
           <span class="text-gray-500 font-bold mb-1">...</span>
         </summary>
-        <div class="finance-menu-panel">
+        <div class="finance-menu-panel" data-floating-menu-panel="1">
           ${items}
         </div>
       </details>
@@ -6872,6 +7015,7 @@ function renderAll() {
 
   bindLegacyInlineHandlers();
   bindDataActions();
+  bindFloatingActionMenus();
   hardenInputPrivacy(document);
   ensureNotificationUi();
 }
@@ -7074,7 +7218,7 @@ function renderAccessV2() {
         <summary class="w-8 h-8 rounded-full hairline-border flex items-center justify-center hover:bg-gray-100 transition-colors cursor-pointer" aria-label="${escapeHtml(label)}">
           <span class="text-gray-500 font-bold mb-1">...</span>
         </summary>
-        <div class="absolute right-0 top-[calc(100%+8px)] z-30 flex flex-col gap-1 min-w-[188px] p-2 bg-white border border-[#dddddd] rounded-[10px] shadow-[0_16px_32px_rgba(0,0,0,0.12)]">
+        <div class="absolute right-0 top-[calc(100%+8px)] z-30 flex flex-col gap-1 min-w-[188px] p-2 bg-white border border-[#dddddd] rounded-[10px] shadow-[0_16px_32px_rgba(0,0,0,0.12)] access-menu-panel" data-floating-menu-panel="1">
           ${items}
         </div>
       </details>
@@ -9169,6 +9313,7 @@ async function boot() {
   bindSidebarInteractions();
   bindLegacyInlineHandlers();
   bindDataActions();
+  bindFloatingActionMenus();
   syncPanelTheme();
   syncSidebarShell();
   APP.registerActivityTracking();
