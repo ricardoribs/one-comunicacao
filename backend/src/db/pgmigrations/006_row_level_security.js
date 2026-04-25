@@ -6,6 +6,7 @@ exports.up = (pgm) => {
     RETURNS TEXT
     LANGUAGE SQL
     STABLE
+    SET search_path = public
     AS $$
       SELECT NULLIF(current_setting('app.current_role', true), '');
     $$;
@@ -14,6 +15,7 @@ exports.up = (pgm) => {
     RETURNS INTEGER
     LANGUAGE SQL
     STABLE
+    SET search_path = public
     AS $$
       SELECT NULLIF(current_setting('app.current_user_id', true), '')::INTEGER;
     $$;
@@ -22,6 +24,7 @@ exports.up = (pgm) => {
     RETURNS INTEGER
     LANGUAGE SQL
     STABLE
+    SET search_path = public
     AS $$
       SELECT NULLIF(current_setting('app.current_client_id', true), '')::INTEGER;
     $$;
@@ -30,6 +33,7 @@ exports.up = (pgm) => {
     RETURNS BOOLEAN
     LANGUAGE SQL
     STABLE
+    SET search_path = public
     AS $$
       SELECT app.current_role() = 'admin';
     $$;
@@ -38,6 +42,7 @@ exports.up = (pgm) => {
     RETURNS BOOLEAN
     LANGUAGE SQL
     STABLE
+    SET search_path = public
     AS $$
       SELECT app.current_role() = 'client';
     $$;
@@ -46,6 +51,7 @@ exports.up = (pgm) => {
     RETURNS BOOLEAN
     LANGUAGE SQL
     STABLE
+    SET search_path = public
     AS $$
       SELECT app.current_role() IN ('designer', 'gestor', 'comercial', 'dev');
     $$;
@@ -54,6 +60,7 @@ exports.up = (pgm) => {
     RETURNS BOOLEAN
     LANGUAGE SQL
     STABLE
+    SET search_path = public
     AS $$
       SELECT
         app.is_admin()
@@ -73,6 +80,7 @@ exports.up = (pgm) => {
     RETURNS BOOLEAN
     LANGUAGE SQL
     STABLE
+    SET search_path = public
     AS $$
       SELECT
         app.is_admin()
@@ -89,6 +97,7 @@ exports.up = (pgm) => {
     RETURNS BOOLEAN
     LANGUAGE SQL
     STABLE
+    SET search_path = public
     AS $$
       SELECT
         app.is_admin()
@@ -106,6 +115,7 @@ exports.up = (pgm) => {
     RETURNS BOOLEAN
     LANGUAGE SQL
     STABLE
+    SET search_path = public
     AS $$
       SELECT
         app.is_admin()
@@ -123,6 +133,7 @@ exports.up = (pgm) => {
     RETURNS BOOLEAN
     LANGUAGE SQL
     STABLE
+    SET search_path = public
     AS $$
       SELECT
         app.is_admin()
@@ -140,6 +151,7 @@ exports.up = (pgm) => {
     RETURNS BOOLEAN
     LANGUAGE SQL
     STABLE
+    SET search_path = public
     AS $$
       SELECT
         app.is_admin()
@@ -157,6 +169,7 @@ exports.up = (pgm) => {
     RETURNS BOOLEAN
     LANGUAGE SQL
     STABLE
+    SET search_path = public
     AS $$
       SELECT
         app.is_admin()
