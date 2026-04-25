@@ -6894,6 +6894,11 @@ function bindDataActions() {
 
     const action = target.dataset.action;
     const id = target.dataset.id ? Number(target.dataset.id) : null;
+
+    if (action === "close-modal-bg" && event.target !== target) {
+      return;
+    }
+
     event.preventDefault();
 
     switch (action) {
