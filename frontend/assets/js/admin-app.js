@@ -5498,7 +5498,7 @@ function renderCRM() {
                 <p class="crm-mrr-value">${escapeHtml(mrrValue)}</p>
                 <p class="crm-mrr-sub">receita mensal</p>
               </td>
-              <td class="crm-cell-right">
+              <td class="crm-cell-right crm-actions-cell">
                 <div class="crm-row-actions">
                   ${
                     canEditClients
@@ -5733,7 +5733,7 @@ function renderCampaigns() {
               <span class="campaigns-status-dot" aria-hidden="true"></span>${escapeHtml(statusLabel)}
             </span>
           </td>
-          <td>
+          <td class="campaigns-actions-cell">
             <div class="campaigns-row-actions">
               ${renderActionMenu(
                 [
@@ -6832,7 +6832,7 @@ function renderFinance() {
             <td class="px-4 py-5 align-middle text-center whitespace-nowrap w-px">
               <span class="inline-block px-2.5 py-1 text-[11px] font-bold rounded ${row.statusClass}">${escapeHtml(row.statusLabel)}</span>
             </td>
-            <td class="pl-4 pr-6 py-5 align-middle text-right whitespace-nowrap w-px">
+            <td class="pl-4 pr-6 py-5 align-middle text-right whitespace-nowrap w-px finance-launch-actions-cell">
               ${row.actionHtml}
             </td>
           </tr>
