@@ -96,6 +96,7 @@ async function reconcileSchemaDrift(databaseConfig) {
       RETURNS TEXT
       LANGUAGE SQL
       STABLE
+      SET search_path = public
       AS $$
         SELECT NULLIF(current_setting('app.current_role', true), '');
       $$;
@@ -104,6 +105,7 @@ async function reconcileSchemaDrift(databaseConfig) {
       RETURNS INTEGER
       LANGUAGE SQL
       STABLE
+      SET search_path = public
       AS $$
         SELECT NULLIF(current_setting('app.current_user_id', true), '')::INTEGER;
       $$;
@@ -112,6 +114,7 @@ async function reconcileSchemaDrift(databaseConfig) {
       RETURNS INTEGER
       LANGUAGE SQL
       STABLE
+      SET search_path = public
       AS $$
         SELECT NULLIF(current_setting('app.current_client_id', true), '')::INTEGER;
       $$;
@@ -120,6 +123,7 @@ async function reconcileSchemaDrift(databaseConfig) {
       RETURNS BOOLEAN
       LANGUAGE SQL
       STABLE
+      SET search_path = public
       AS $$
         SELECT app.current_role() = 'admin';
       $$;
@@ -128,6 +132,7 @@ async function reconcileSchemaDrift(databaseConfig) {
       RETURNS BOOLEAN
       LANGUAGE SQL
       STABLE
+      SET search_path = public
       AS $$
         SELECT app.current_role() = 'client';
       $$;
@@ -136,6 +141,7 @@ async function reconcileSchemaDrift(databaseConfig) {
       RETURNS BOOLEAN
       LANGUAGE SQL
       STABLE
+      SET search_path = public
       AS $$
         SELECT app.current_role() IN ('designer', 'gestor', 'comercial', 'dev');
       $$;
@@ -144,6 +150,7 @@ async function reconcileSchemaDrift(databaseConfig) {
       RETURNS BOOLEAN
       LANGUAGE SQL
       STABLE
+      SET search_path = public
       AS $$
         SELECT
           app.is_admin()
@@ -163,6 +170,7 @@ async function reconcileSchemaDrift(databaseConfig) {
       RETURNS BOOLEAN
       LANGUAGE SQL
       STABLE
+      SET search_path = public
       AS $$
         SELECT
           app.is_admin()
@@ -179,6 +187,7 @@ async function reconcileSchemaDrift(databaseConfig) {
       RETURNS BOOLEAN
       LANGUAGE SQL
       STABLE
+      SET search_path = public
       AS $$
         SELECT
           app.is_admin()
@@ -196,6 +205,7 @@ async function reconcileSchemaDrift(databaseConfig) {
       RETURNS BOOLEAN
       LANGUAGE SQL
       STABLE
+      SET search_path = public
       AS $$
         SELECT
           app.is_admin()
@@ -213,6 +223,7 @@ async function reconcileSchemaDrift(databaseConfig) {
       RETURNS BOOLEAN
       LANGUAGE SQL
       STABLE
+      SET search_path = public
       AS $$
         SELECT
           app.is_admin()
@@ -763,6 +774,7 @@ async function reconcileSchemaDrift(databaseConfig) {
       RETURNS BOOLEAN
       LANGUAGE SQL
       STABLE
+      SET search_path = public
       AS $$
         SELECT
           app.is_admin()
@@ -785,6 +797,7 @@ async function reconcileSchemaDrift(databaseConfig) {
       RETURNS BOOLEAN
       LANGUAGE SQL
       STABLE
+      SET search_path = public
       AS $$
         SELECT
           app.is_admin()

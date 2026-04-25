@@ -48,6 +48,7 @@ exports.up = (pgm) => {
     RETURNS BOOLEAN
     LANGUAGE SQL
     STABLE
+    SET search_path = public
     AS $$
       SELECT
         app.is_admin()
