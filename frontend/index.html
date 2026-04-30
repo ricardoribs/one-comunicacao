@@ -13,7 +13,36 @@
     <link rel="stylesheet" href="/assets/css/tailwind.generated.css" />
 
     <style>
+        /* Restore the small subset of Tailwind preflight this page relies on. */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd {
+            margin: 0;
+        }
+        ul, ol {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+        img, svg, video {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+        button, input, select, textarea {
+            font: inherit;
+        }
+        button {
+            border: 0;
+            background: transparent;
+        }
         body {
+            margin: 0;
             font-family: 'Inter', sans-serif;
             background-color: #f7f7f7; /* Soft Cloud */
             color: #222222; /* Ink Black */
