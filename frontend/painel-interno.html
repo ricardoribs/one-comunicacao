@@ -67,6 +67,28 @@ body{background:var(--gray);color:var(--text);font-family:var(--font-b);font-siz
 a{color:inherit;text-decoration:none}
 img{display:block;max-width:100%;height:auto}
 button,input,textarea,select{font-family:var(--font-b)}
+button,
+summary{
+  -webkit-appearance:none;
+  appearance:none;
+  border:none;
+  background:none;
+  color:inherit;
+  font:inherit;
+}
+button::-moz-focus-inner{border:0;padding:0}
+select{
+  -webkit-appearance:none;
+  -moz-appearance:none;
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%236a6a6a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 12px center;
+  background-size:12px 12px;
+  padding-right:36px;
+}
+select[multiple],
+select[size]{background-image:none;padding-right:12px}
 button,.btn,.sb-link,.tab,a{touch-action:manipulation}
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-thumb{background:var(--gray3);border-radius:2px}
