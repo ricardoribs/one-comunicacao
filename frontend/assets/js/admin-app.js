@@ -386,6 +386,8 @@ const mfaLoginState = {
   challengeToken: "",
   mode: "",
   secret: "",
+  secretRaw: "",
+  secretVisible: false,
   pending: false,
 };
 
@@ -7058,6 +7060,10 @@ function bindDataActions() {
         return submitMfaLogin();
       case "cancel-mfa-login":
         return resetMfaLoginState();
+      case "toggle-mfa-secret":
+        return toggleMfaSecret();
+      case "copy-mfa-secret":
+        return copyMfaSecret();
       case "do-logout":
         return doLogout();
       case "go-to":
@@ -7601,6 +7607,32 @@ function setLoginError(message = "") {
   errorNode.style.display = message ? "block" : "none";
 }
 
+function formatMfaSecret(secret) {
+  return String(secret || "")
+    .replace(/\s+/g, "")
+    .match(/.{1,4}/g)
+    ?.join(" ")
+    || "";
+}
+
+async function copyTextToClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const helper = document.createElement("textarea");
+  helper.value = text;
+  helper.setAttribute("readonly", "readonly");
+  helper.style.position = "fixed";
+  helper.style.opacity = "0";
+  helper.style.pointerEvents = "none";
+  document.body.appendChild(helper);
+  helper.select();
+  document.execCommand("copy");
+  document.body.removeChild(helper);
+}
+
 function syncMfaLoginView() {
   const emailField = document.getElementById("l-email")?.closest(".login-field");
   const passwordField = document.getElementById("l-pass")?.closest(".login-field");
@@ -7609,6 +7641,7 @@ function syncMfaLoginView() {
   const mfaSetupHelp = document.getElementById("mfa-setup-help");
   const mfaStatusText = document.getElementById("mfa-status-text");
   const mfaSecret = document.getElementById("mfa-secret");
+  const mfaSecretToggle = document.getElementById("mfa-secret-toggle");
   const isMfaStepActive = Boolean(mfaLoginState.challengeToken);
 
   [emailField, passwordField].filter(Boolean).forEach((field) => {
@@ -7634,6 +7667,10 @@ function syncMfaLoginView() {
     }
     if (mfaSecret) {
       mfaSecret.textContent = "";
+      mfaSecret.hidden = true;
+    }
+    if (mfaSecretToggle) {
+      mfaSecretToggle.textContent = "Mostrar chave manual";
     }
     return;
   }
@@ -7644,11 +7681,17 @@ function syncMfaLoginView() {
   }
   if (mfaStatusText) {
     mfaStatusText.textContent = enrollmentMode
-      ? "Valide o primeiro codigo TOTP depois de cadastrar a chave abaixo no seu autenticador."
+      ? "Cadastre o autenticador e valide o primeiro codigo TOTP para concluir o primeiro acesso."
       : "Digite o codigo atual do seu autenticador para concluir o acesso.";
   }
   if (mfaSecret) {
-    mfaSecret.textContent = enrollmentMode ? mfaLoginState.secret : "";
+    const shouldShowSecret = enrollmentMode && mfaLoginState.secretVisible && Boolean(mfaLoginState.secret);
+    mfaSecret.textContent = shouldShowSecret ? mfaLoginState.secret : "";
+    mfaSecret.hidden = !shouldShowSecret;
+  }
+  if (mfaSecretToggle) {
+    mfaSecretToggle.hidden = !enrollmentMode;
+    mfaSecretToggle.textContent = mfaLoginState.secretVisible ? "Ocultar chave manual" : "Mostrar chave manual";
   }
 }
 
@@ -7656,6 +7699,8 @@ function resetMfaLoginState() {
   mfaLoginState.challengeToken = "";
   mfaLoginState.mode = "";
   mfaLoginState.secret = "";
+  mfaLoginState.secretRaw = "";
+  mfaLoginState.secretVisible = false;
   mfaLoginState.pending = false;
 
   const otpInput = document.getElementById("mfa-otp");
@@ -7670,6 +7715,8 @@ async function showMfaChallenge(session) {
   mfaLoginState.challengeToken = session.challenge_token || session.challengeToken || "";
   mfaLoginState.mode = session.mfa_enrollment_required || session.mfaEnrollmentRequired ? "enroll" : "login";
   mfaLoginState.secret = "";
+  mfaLoginState.secretRaw = "";
+  mfaLoginState.secretVisible = false;
 
   if (mfaLoginState.mode === "enroll") {
     const setup = await apiFetch("/auth/mfa/totp/setup", {
@@ -7681,11 +7728,34 @@ async function showMfaChallenge(session) {
       timeoutMs: 20000
     });
 
-    mfaLoginState.secret = setup.secret_formatted || setup.secret || "";
+    mfaLoginState.secretRaw = setup.secret || "";
+    mfaLoginState.secret = setup.secret_formatted || formatMfaSecret(setup.secret || "");
   }
 
   syncMfaLoginView();
   document.getElementById("mfa-otp")?.focus();
+}
+
+function toggleMfaSecret() {
+  if (mfaLoginState.mode !== "enroll" || !mfaLoginState.secret) {
+    return;
+  }
+
+  mfaLoginState.secretVisible = !mfaLoginState.secretVisible;
+  syncMfaLoginView();
+}
+
+async function copyMfaSecret() {
+  if (mfaLoginState.mode !== "enroll" || !mfaLoginState.secretRaw) {
+    return;
+  }
+
+  try {
+    await copyTextToClipboard(mfaLoginState.secretRaw);
+    showToast("Chave TOTP copiada. Guarde-a com cuidado e finalize o cadastro no autenticador.");
+  } catch (_error) {
+    showToast("Nao foi possivel copiar a chave manual agora.");
+  }
 }
 
 async function submitMfaLogin() {
