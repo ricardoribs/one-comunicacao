@@ -60,7 +60,7 @@ function translateUserWriteError(error) {
 }
 
 function extractAvatarFileId(avatarUrl) {
-  const match = String(avatarUrl || '').match(/\/api\/files\/(\d+)\/access-url/i);
+  const match = String(avatarUrl || '').match(/\/api\/files\/(\d+)\/(?:access-url|content)/i);
   return match ? Number(match[1]) : null;
 }
 

@@ -1,9 +1,12 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const bcrypt = require('bcryptjs');
 const request = require('supertest');
 const app = require('../src/app');
 const pool = require('../src/config/db');
+const env = require('../src/config/env');
 const userModel = require('../src/models/userModel');
 const mfaService = require('../src/services/mfaService');
 
@@ -1296,7 +1299,7 @@ test('comercial nao atualiza invoice de outro tenant por ID', { concurrency: fal
   await pool.query('DELETE FROM clients WHERE id IN ($1, $2)', [clientAId, clientBId]);
 });
 
-test('usuario interno nao obtem access-url de arquivo de outro tenant', { concurrency: false }, async () => {
+test('usuario interno nao obtem stream de arquivo de outro tenant', { concurrency: false }, async () => {
   const suffix = Date.now() + 304;
   const clientAId = await createClient(`Cliente File A ${suffix}`, `Empresa File A ${suffix}`);
   const clientBId = await createClient(`Cliente File B ${suffix}`, `Empresa File B ${suffix}`);
@@ -1322,7 +1325,7 @@ test('usuario interno nao obtem access-url de arquivo de outro tenant', { concur
 
   const auth = await login(designerA.email);
   const response = await request(app)
-    .get(`/api/files/${file.rows[0].id}/access-url`)
+    .get(`/api/files/${file.rows[0].id}/content`)
     .set('Authorization', `Bearer ${auth.body.accessToken}`);
 
   assert.equal(response.status, 404);
@@ -1331,6 +1334,56 @@ test('usuario interno nao obtem access-url de arquivo de outro tenant', { concur
   await userModel.remove(designerB.id);
   await userModel.remove(designerA.id);
   await pool.query('DELETE FROM clients WHERE id IN ($1, $2)', [clientAId, clientBId]);
+});
+
+test('access-url legado devolve URL interna temporaria e o stream abre sem expor o provider', { concurrency: false }, async () => {
+  const suffix = Date.now() + 3041;
+  const clientId = await createClient(`Cliente File Stream ${suffix}`, `Empresa File Stream ${suffix}`);
+  const designer = await createUser({
+    name: `Designer File Stream ${suffix}`,
+    email: `designer.file.stream.${suffix}@one.test`,
+    role: 'designer',
+    clientId,
+  });
+  const fileName = `stream-${suffix}.png`;
+  const filePath = path.join(env.uploadsDir, fileName);
+
+  fs.writeFileSync(
+    filePath,
+    Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7Z0ioAAAAASUVORK5CYII=',
+      'base64'
+    )
+  );
+
+  const file = await pool.query(
+    `INSERT INTO files (client_id, uploaded_by, original_name, stored_name, mime_type, size, url)
+     VALUES ($1, $2, 'stream.png', $3, 'image/png', 68, $4)
+     RETURNING id`,
+    [clientId, designer.id, fileName, `/uploads/${fileName}`]
+  );
+
+  const auth = await login(designer.email);
+  const accessResponse = await request(app)
+    .get(`/api/files/${file.rows[0].id}/access-url`)
+    .set('Authorization', `Bearer ${auth.body.accessToken}`);
+
+  assert.equal(accessResponse.status, 200);
+  assert.match(accessResponse.body.url, new RegExp(`^/api/files/${file.rows[0].id}/content\\?download_token=`));
+  assert.equal(accessResponse.body.url.includes('res.cloudinary.com'), false);
+
+  const contentResponse = await request(app).get(accessResponse.body.url);
+
+  assert.equal(contentResponse.status, 200);
+  assert.match(contentResponse.headers['content-type'] || '', /^image\/png\b/);
+  assert.equal(contentResponse.headers['cache-control'], 'no-store');
+
+  await pool.query('DELETE FROM files WHERE id = $1', [file.rows[0].id]);
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
+  await userModel.remove(designer.id);
+  await pool.query('DELETE FROM clients WHERE id = $1', [clientId]);
 });
 
 test('gestor nao atualiza cobranca de outro tenant por ID', { concurrency: false }, async () => {

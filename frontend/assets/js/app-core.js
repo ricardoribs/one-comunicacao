@@ -137,7 +137,7 @@
         clearSession();
         notifyLogout("session-expired");
         redirectToLogin();
-        throw new Error("Sua sessão expirou. Faça login novamente.");
+        throw new Error("Sua sessao expirou. Faca login novamente.");
       }
 
       const session = await response.json();
@@ -179,7 +179,7 @@
       const session = await ensureFreshSession();
       const accessToken = session?.accessToken || session?.token;
       if (!accessToken) {
-        throw new Error("Sua sessão expirou. Faça login novamente.");
+        throw new Error("Sua sessao expirou. Faca login novamente.");
       }
       headers.set("Authorization", `Bearer ${accessToken}`);
     }
@@ -212,13 +212,13 @@
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data.message || "Não foi possível concluir a solicitação.");
+        throw new Error(data.message || "Nao foi possivel concluir a solicitacao.");
       }
 
       return data;
     } catch (error) {
       if (error.name === "AbortError") {
-        throw new Error("A requisição demorou mais do que o esperado. Tente novamente.");
+        throw new Error("A requisicao demorou mais do que o esperado. Tente novamente.");
       }
 
       throw error;
@@ -227,30 +227,54 @@
     }
   }
 
-  async function openAuthorizedUrl(url) {
-    if (!url) {
-      throw new Error("Arquivo ainda não disponível.");
+  function normalizeProtectedResourceUrl(url) {
+    if (!url || !url.startsWith("/api/files/")) {
+      return url;
     }
 
-    if (url.startsWith("/api/files/")) {
+    return url.replace(/\/access-url(?:\?.*)?$/i, "/content");
+  }
+
+  async function fetchProtectedBlob(url, options = {}) {
+    const session = await ensureFreshSession();
+    const accessToken = session?.accessToken || session?.token;
+
+    if (!accessToken) {
+      throw new Error("Sua sessao expirou. Faca login novamente.");
+    }
+
+    const response = await fetch(buildOriginUrl(url), {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      },
+      credentials: "include"
+    });
+
+    if (response.status === 401 && !options.skipAuthRefresh) {
+      await refreshSession();
+      return fetchProtectedBlob(url, { ...options, skipAuthRefresh: true });
+    }
+
+    if (!response.ok) {
+      throw new Error("Nao foi possivel abrir o arquivo solicitado.");
+    }
+
+    return response.blob();
+  }
+
+  async function openAuthorizedUrl(url) {
+    if (!url) {
+      throw new Error("Arquivo ainda nao disponivel.");
+    }
+
+    const normalizedUrl = normalizeProtectedResourceUrl(url);
+
+    if (normalizedUrl.startsWith("/api/files/") || normalizedUrl.startsWith("/uploads/")) {
       const downloadWindow = window.open("about:blank", "_blank", "noopener,noreferrer");
 
       try {
-        const response = await fetchJson(url, { method: "GET" });
-        if (!response?.url) {
-          throw new Error("Não foi possível preparar o arquivo para download.");
-        }
-
-        const assetResponse = await fetch(response.url, {
-          method: "GET",
-          credentials: "omit"
-        });
-
-        if (!assetResponse.ok) {
-          throw new Error("NÃ£o foi possÃ­vel abrir o arquivo solicitado.");
-        }
-
-        const blob = await assetResponse.blob();
+        const blob = await fetchProtectedBlob(normalizedUrl);
         const blobUrl = window.URL.createObjectURL(blob);
 
         if (downloadWindow) {
@@ -265,33 +289,6 @@
         downloadWindow?.close();
         throw error;
       }
-    }
-
-    if (url.startsWith("/uploads/")) {
-      const session = await ensureFreshSession();
-      const accessToken = session?.accessToken || session?.token;
-
-      if (!accessToken) {
-        throw new Error("Sua sessão expirou. Faça login novamente.");
-      }
-
-      const response = await fetch(buildOriginUrl(url), {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        },
-        credentials: "include"
-      });
-
-      if (!response.ok) {
-        throw new Error("Não foi possível abrir o arquivo solicitado.");
-      }
-
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      window.open(blobUrl, "_blank", "noopener,noreferrer");
-      window.setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60000);
-      return blobUrl;
     }
 
     window.open(url, "_blank", "noopener,noreferrer");

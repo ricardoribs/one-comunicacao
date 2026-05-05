@@ -272,7 +272,7 @@ test('usuario autenticado ajusta preferencias de notificacao e envia avatar real
   fs.unlinkSync(tempAvatarPath);
 
   assert.equal(avatarResponse.status, 201);
-  assert.match(avatarResponse.body.user.avatar_url, /^\/api\/files\/\d+\/access-url$/);
+  assert.match(avatarResponse.body.user.avatar_url, /^\/api\/files\/\d+\/content$/);
 
   const profile = await request(app)
     .get('/api/users/me/profile')
@@ -280,7 +280,7 @@ test('usuario autenticado ajusta preferencias de notificacao e envia avatar real
 
   assert.equal(profile.status, 200);
   assert.equal(profile.body.user.notification_preferences.task_completed, false);
-  assert.match(profile.body.user.avatar_url, /^\/api\/files\/\d+\/access-url$/);
+  assert.match(profile.body.user.avatar_url, /^\/api\/files\/\d+\/content$/);
 
   const removeAvatarResponse = await request(app)
     .delete('/api/users/me/avatar')
