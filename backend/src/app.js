@@ -52,12 +52,32 @@ const assetVersionCache = new Map();
 sentry.initSentry();
 
 app.disable('x-powered-by');
-app.set('trust proxy', 1);
+app.set('trust proxy', env.trustProxy ?? false);
 
 app.use((req, res, next) => {
   res.locals.cspNonce = crypto.randomBytes(16).toString('base64');
   next();
 });
+
+if (env.isProduction && (!env.trustProxyConfigured || env.trustProxy == null)) {
+  throw new Error('TRUST_PROXY deve ser definido explicitamente em producao.');
+}
+
+if (env.isProduction && env.databaseSslRequired && !env.databaseSslCaFile) {
+  throw new Error('DATABASE_SSL_REQUIRED=true exige DATABASE_SSL_CA_FILE em producao.');
+}
+
+if (env.isProduction && env.uploadRequireMalwareScan && env.malwareScanProvider === 'none') {
+  throw new Error('UPLOAD_REQUIRE_MALWARE_SCAN=true exige um provedor de malware scan configurado.');
+}
+
+if (env.isProduction && env.sentryRequired && !env.sentryDsn) {
+  throw new Error('SENTRY_DSN deve ser definido em producao.');
+}
+
+if (env.isProduction && env.mfaRequiredRoles.length > 0 && !env.mfaEncryptionKey) {
+  throw new Error('MFA_ENCRYPTION_KEY deve ser definido em producao para os perfis com MFA obrigatorio.');
+}
 
 if (env.isProduction && (!env.jwtSecret || env.jwtSecret === 'change-me' || env.jwtSecret.length < 64)) {
   throw new Error('JWT_SECRET inválido para produção.');
@@ -145,11 +165,11 @@ app.use(
       useDefaults: true,
       directives: {
         'default-src': ["'self'"],
-        'script-src': ["'self'", "'unsafe-eval'", (req, res) => `'nonce-${res.locals.cspNonce}'`],
-        'script-src-elem': ["'self'", "'unsafe-eval'", (req, res) => `'nonce-${res.locals.cspNonce}'`],
+        'script-src': ["'self'", (req, res) => `'nonce-${res.locals.cspNonce}'`],
+        'script-src-elem': ["'self'", (req, res) => `'nonce-${res.locals.cspNonce}'`],
         'script-src-attr': ["'none'"],
-        'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-        'style-src-elem': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        'style-src': ["'self'", 'https://fonts.googleapis.com'],
+        'style-src-elem': ["'self'", 'https://fonts.googleapis.com', (req, res) => `'nonce-${res.locals.cspNonce}'`],
         'style-src-attr': ["'unsafe-inline'"],
         'font-src': ["'self'", 'https://fonts.gstatic.com', 'data:'],
         'img-src': ["'self'", 'data:', 'https:', 'blob:'],

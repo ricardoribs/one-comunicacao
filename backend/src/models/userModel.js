@@ -13,6 +13,9 @@ const USER_UPDATE_COLUMNS = new Set([
   'role',
   'is_active',
   'email_verified_at',
+  'mfa_totp_secret_encrypted',
+  'mfa_totp_pending_secret_encrypted',
+  'mfa_enabled_at',
   'failed_login_attempts',
   'locked_until',
   'last_login_at',
@@ -56,6 +59,9 @@ const baseSelect = `
     u.role,
     u.is_active,
     u.email_verified_at,
+    u.mfa_totp_secret_encrypted,
+    u.mfa_totp_pending_secret_encrypted,
+    u.mfa_enabled_at,
     u.failed_login_attempts,
     u.locked_until,
     u.last_login_at,
@@ -92,6 +98,7 @@ const safeSelect = `
     u.role,
     u.is_active,
     u.email_verified_at,
+    u.mfa_enabled_at,
     u.created_at,
     c.name AS client_name,
     c.company AS client_company
@@ -111,6 +118,7 @@ const legacySafeSelect = `
     u.role,
     u.is_active,
     u.email_verified_at,
+    NULL::TIMESTAMP AS mfa_enabled_at,
     u.created_at,
     c.name AS client_name,
     c.company AS client_company
@@ -131,6 +139,9 @@ const legacyBaseSelect = `
     u.role,
     u.is_active,
     u.email_verified_at,
+    NULL::TEXT AS mfa_totp_secret_encrypted,
+    NULL::TEXT AS mfa_totp_pending_secret_encrypted,
+    NULL::TIMESTAMP AS mfa_enabled_at,
     u.failed_login_attempts,
     u.locked_until,
     u.last_login_at,
@@ -474,6 +485,16 @@ async function recordFailedLogin(id, lockThreshold, lockMinutes) {
   return rows[0] || null;
 }
 
+async function clearLoginFailures(id, executor = pool) {
+  await getExecutor(executor).query(
+    `UPDATE users
+     SET failed_login_attempts = 0,
+         locked_until = NULL
+     WHERE id = $1`,
+    [id]
+  );
+}
+
 async function resetLoginFailures(id, metadata = {}) {
   try {
     await pool.query(
@@ -685,18 +706,57 @@ async function consumePasswordResetToken(tokenHash) {
   return rows[0] || null;
 }
 
+async function storePendingMfaSecret(id, encryptedSecret, executor = pool) {
+  await getExecutor(executor).query(
+    `UPDATE users
+     SET mfa_totp_pending_secret_encrypted = $2
+     WHERE id = $1`,
+    [id, encryptedSecret]
+  );
+}
+
+async function clearPendingMfaSecret(id, executor = pool) {
+  await getExecutor(executor).query(
+    `UPDATE users
+     SET mfa_totp_pending_secret_encrypted = NULL
+     WHERE id = $1`,
+    [id]
+  );
+}
+
+async function enableMfa(id, encryptedSecret, executor = pool) {
+  await getExecutor(executor).query(
+    `UPDATE users
+     SET mfa_totp_secret_encrypted = $2,
+         mfa_totp_pending_secret_encrypted = NULL,
+         mfa_enabled_at = NOW()
+     WHERE id = $1`,
+    [id, encryptedSecret]
+  );
+}
+
 async function anonymizeUser(id, hashedPassword) {
   const anonymizedEmail = `deleted-user-${id}-${Date.now()}@anon.invalid`;
   await pool.query(
     `UPDATE users
      SET name = 'Conta removida',
          email = $2,
+         phone = NULL,
+         job_title = NULL,
+         avatar_url = NULL,
          password = $3,
          client_id = NULL,
          is_active = false,
          email_verified_at = NULL,
+         mfa_totp_secret_encrypted = NULL,
+         mfa_totp_pending_secret_encrypted = NULL,
+         mfa_enabled_at = NULL,
          failed_login_attempts = 0,
-         locked_until = NULL
+         locked_until = NULL,
+         last_login_at = NULL,
+         last_seen_at = NULL,
+         last_seen_ip = NULL,
+         last_seen_location = NULL
      WHERE id = $1`,
     [id, anonymizedEmail, hashedPassword]
   );
@@ -719,6 +779,7 @@ module.exports = {
   remove,
   findSecurityById,
   recordFailedLogin,
+  clearLoginFailures,
   resetLoginFailures,
   recordPresence,
   createRefreshToken,
@@ -733,5 +794,8 @@ module.exports = {
   createPasswordResetToken,
   findPasswordResetToken,
   consumePasswordResetToken,
+  storePendingMfaSecret,
+  clearPendingMfaSecret,
+  enableMfa,
   anonymizeUser,
 };

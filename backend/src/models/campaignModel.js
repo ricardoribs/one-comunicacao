@@ -139,7 +139,7 @@ async function update(id, data, user = null) {
 }
 
 async function remove(id, user = null) {
-  await tenantDb.query(user, {
+  const result = await tenantDb.query(user, {
     table: 'campaigns',
     scopeConfig: {
       client: 'client_id = $TENANT',
@@ -150,6 +150,7 @@ async function remove(id, user = null) {
     sql: 'DELETE FROM campaigns WHERE id = $1 __TENANT_SCOPE__',
     params: [id],
   });
+  return result.rowCount > 0;
 }
 
 module.exports = {

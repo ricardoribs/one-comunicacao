@@ -9,7 +9,7 @@ const { normalizeClientPlan } = require('../utils/clientPlans');
 const isRecoverableSchemaError = require('../utils/isRecoverableSchemaError');
 
 exports.create = asyncHandler(async (req, res) => {
-  const contact = await contactModel.create(req.body);
+  const contact = await contactModel.create(req.body, req.user);
   res.status(201).json({
     message: 'Lead cadastrado com sucesso.',
     contact,
@@ -38,11 +38,18 @@ exports.list = asyncHandler(async (req, res) => {
 });
 
 exports.update = asyncHandler(async (req, res) => {
-  res.json(await contactModel.update(req.params.id, req.body, req.user));
+  const contact = await contactModel.update(req.params.id, req.body, req.user);
+  if (!contact) {
+    throw new AppError('Lead nao encontrado.', 404);
+  }
+  res.json(contact);
 });
 
 exports.remove = asyncHandler(async (req, res) => {
-  await contactModel.remove(req.params.id, req.user);
+  const removed = await contactModel.remove(req.params.id, req.user);
+  if (!removed) {
+    throw new AppError('Lead nao encontrado.', 404);
+  }
   res.status(204).send();
 });
 

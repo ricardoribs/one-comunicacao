@@ -9,6 +9,7 @@ const app = require('../src/app');
 const userModel = require('../src/models/userModel');
 const pool = require('../src/config/db');
 const env = require('../src/config/env');
+const mfaService = require('../src/services/mfaService');
 let testIpCounter = 10;
 
 async function createVerifiedUser(email) {
@@ -33,6 +34,40 @@ function nextTestIp() {
   return `198.51.100.${testIpCounter}`;
 }
 
+async function completeLoginWithMfa(email, initialResponse, ipAddress) {
+  if (initialResponse.body?.accessToken || initialResponse.status !== 200) {
+    return initialResponse;
+  }
+
+  const challengeToken = initialResponse.body.challenge_token || initialResponse.body.challengeToken;
+  if (!challengeToken) {
+    return initialResponse;
+  }
+
+  if (initialResponse.body.mfa_enrollment_required || initialResponse.body.mfaEnrollmentRequired) {
+    const setup = await request(app)
+      .post('/api/auth/mfa/totp/setup')
+      .set('X-Forwarded-For', ipAddress)
+      .send({ challenge_token: challengeToken });
+    assert.equal(setup.status, 200);
+    assert.ok(setup.body.secret);
+    const otp = mfaService.generateCurrentOtp(setup.body.secret);
+    return request(app)
+      .post('/api/auth/mfa/totp/enroll')
+      .set('X-Forwarded-For', ipAddress)
+      .send({ challenge_token: challengeToken, otp });
+  }
+
+  const user = await userModel.findByEmail(email);
+  assert.ok(user?.mfa_totp_secret_encrypted);
+  const secret = mfaService.decryptSecret(user.mfa_totp_secret_encrypted);
+  const otp = mfaService.generateCurrentOtp(secret);
+  return request(app)
+    .post('/api/auth/mfa/totp/verify')
+    .set('X-Forwarded-For', ipAddress)
+    .send({ challenge_token: challengeToken, otp });
+}
+
 test('login valido retorna access token e cookie de refresh', async () => {
   const email = `auth.valid.${Date.now()}@one.com`;
   const user = await createVerifiedUser(email);
@@ -45,6 +80,37 @@ test('login valido retorna access token e cookie de refresh', async () => {
   assert.equal(response.status, 200);
   assert.ok(response.body.accessToken);
   assert.ok(response.headers['set-cookie']);
+
+  await userModel.remove(user.id);
+});
+
+test('admin recebe challenge MFA e conclui o login com TOTP', async () => {
+  const email = `auth.admin.mfa.${Date.now()}@one.com`;
+  const user = await userModel.create({
+    name: 'Admin MFA',
+    email,
+    password: await bcrypt.hash('Valid@Test123', 12),
+    role: 'admin',
+    is_active: true,
+    email_verified_at: new Date().toISOString(),
+  });
+
+  const ipAddress = nextTestIp();
+  const initial = await request(app)
+    .post('/api/auth/login')
+    .set('X-Forwarded-For', ipAddress)
+    .send({
+      email,
+      password: 'Valid@Test123',
+    });
+
+  assert.equal(initial.status, 200);
+  assert.equal(initial.body.mfa_enrollment_required, true);
+  assert.equal(Boolean(initial.body.accessToken), false);
+
+  const finalLogin = await completeLoginWithMfa(email, initial, ipAddress);
+  assert.equal(finalLogin.status, 200);
+  assert.ok(finalLogin.body.accessToken);
 
   await userModel.remove(user.id);
 });
@@ -159,7 +225,7 @@ test('usuario autenticado ajusta preferencias de notificacao e envia avatar real
     name: 'Perfil Midia',
     email,
     password: await bcrypt.hash('Valid@Test123', 12),
-    role: 'gestor',
+    role: 'designer',
     is_active: true,
     email_verified_at: new Date().toISOString(),
   });
@@ -231,7 +297,7 @@ test('usuario autenticado altera a propria senha', async () => {
     name: 'Senha Atual',
     email,
     password: await bcrypt.hash('Valid@Test123', 12),
-    role: 'gestor',
+    role: 'designer',
     is_active: true,
     email_verified_at: new Date().toISOString(),
   });

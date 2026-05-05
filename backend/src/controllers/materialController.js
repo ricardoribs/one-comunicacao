@@ -1,6 +1,7 @@
 const asyncHandler = require('../utils/asyncHandler');
 const logger = require('../config/logger');
 const materialModel = require('../models/materialModel');
+const AppError = require('../utils/AppError');
 const { ensureClientAccess } = require('../utils/access');
 const { sendPaginated } = require('../utils/response');
 const isRecoverableSchemaError = require('../utils/isRecoverableSchemaError');
@@ -35,14 +36,20 @@ exports.update = asyncHandler(async (req, res) => {
   if (req.body.client_id) {
     await ensureClientAccess(req.user, req.body.client_id);
   }
-  res.json(await materialModel.update(req.params.id, req.body, req.user));
+  const material = await materialModel.update(req.params.id, req.body, req.user);
+  if (!material) {
+    throw new AppError('Entrega nao encontrada.', 404);
+  }
+  res.json(material);
 });
 
 exports.remove = asyncHandler(async (req, res) => {
   const material = await materialModel.findById(req.params.id, req.user);
-  if (material) {
-    await ensureClientAccess(req.user, material.client_id);
-    await materialModel.remove(req.params.id, req.user);
+  if (!material) {
+    throw new AppError('Entrega nao encontrada.', 404);
   }
+
+  await ensureClientAccess(req.user, material.client_id);
+  await materialModel.remove(req.params.id, req.user);
   res.status(204).send();
 });

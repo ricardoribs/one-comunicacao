@@ -7,9 +7,8 @@ const { paginationQuerySchema, idParamSchema } = require('../validators/commonVa
 
 const router = express.Router();
 
-router.post('/', validate(contactSchema), controller.create);
-
 router.use(authenticate);
+router.post('/', authorizeCapability('manage_contacts'), validate(contactSchema), controller.create);
 router.get('/', authorizeCapability('view_contacts'), validate(paginationQuerySchema, 'query'), controller.list);
 router.put('/:id', authorizeCapability('manage_contacts'), validate(idParamSchema, 'params'), validate(contactUpdateSchema), controller.update);
 router.patch('/:id', authorizeCapability('manage_contacts'), validate(idParamSchema, 'params'), validate(contactUpdateSchema), controller.update);

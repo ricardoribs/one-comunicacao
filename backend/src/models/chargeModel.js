@@ -56,14 +56,42 @@ async function list(user, query = {}) {
 }
 
 async function findById(id, user = null) {
+  if (!user || user.role === 'admin') {
+    const { rows } = await tenantDb.query(user || { role: 'admin' }, {
+      table: 'charges',
+      scopeConfig: { internal: '1 = 1' },
+      sql: `SELECT ${selectColumns}, c.name AS client_name, ct.name AS contact_name
+       FROM charges ch
+       LEFT JOIN clients c ON c.id = ch.client_id
+       LEFT JOIN contacts ct ON ct.id = ch.contact_id
+       WHERE ch.id = $1`,
+      params: [id],
+    });
+    return rows[0] || null;
+  }
+
+  if (user.role !== 'client') {
+    const { rows } = await tenantDb.query(user, {
+      table: 'charges',
+      scopeConfig: { internal: '$TENANT = $TENANT' },
+      prefix: 'AND',
+      startIndex: 3,
+      sql: `SELECT ${selectColumns}, c.name AS client_name, ct.name AS contact_name
+       FROM charges ch
+       LEFT JOIN clients c ON c.id = ch.client_id
+       LEFT JOIN contacts ct ON ct.id = ch.contact_id
+       WHERE ch.id = $1
+         AND (ch.created_by = $2 OR c.manager_id = $2)
+       __TENANT_SCOPE__`,
+      params: [id, user.id],
+    });
+    return rows[0] || null;
+  }
+
   const { rows } = await tenantDb.query(user, {
     table: 'charges',
     scopeConfig: {
       client: 'ch.client_id = $TENANT',
-      internal: [
-        'ch.created_by = $TENANT',
-        'EXISTS (SELECT 1 FROM clients scoped_clients WHERE scoped_clients.id = ch.client_id AND scoped_clients.manager_id = $TENANT)',
-      ],
     },
     prefix: 'AND',
     startIndex: 2,
@@ -123,14 +151,30 @@ async function findByIdempotencyKey(createdBy, idempotencyKey, user = null) {
     return null;
   }
 
+  if (user && user.role !== 'admin' && user.role !== 'client') {
+    const { rows } = await tenantDb.query(user, {
+      table: 'charges',
+      scopeConfig: { internal: '$TENANT = $TENANT' },
+      prefix: 'AND',
+      startIndex: 4,
+      sql: `SELECT ${selectColumns}, c.name AS client_name, ct.name AS contact_name
+       FROM charges ch
+       LEFT JOIN clients c ON c.id = ch.client_id
+       LEFT JOIN contacts ct ON ct.id = ch.contact_id
+       WHERE ch.created_by = $1
+         AND ch.idempotency_key = $2
+         AND (ch.created_by = $3 OR c.manager_id = $3)
+       __TENANT_SCOPE__`,
+      params: [createdBy, idempotencyKey, user.id],
+    });
+
+    return rows[0] || null;
+  }
+
   const { rows } = await tenantDb.query(user, {
     table: 'charges',
     scopeConfig: {
       client: 'ch.client_id = $TENANT',
-      internal: [
-        'ch.created_by = $TENANT',
-        'EXISTS (SELECT 1 FROM clients scoped_clients WHERE scoped_clients.id = ch.client_id AND scoped_clients.manager_id = $TENANT)',
-      ],
     },
     prefix: 'AND',
     startIndex: 3,
@@ -147,14 +191,16 @@ async function findByIdempotencyKey(createdBy, idempotencyKey, user = null) {
 }
 
 async function update(id, data, user = null) {
+  const existing = await findById(id, user);
+  if (!existing) {
+    return null;
+  }
+
   const { rows } = await tenantDb.query(user, {
     table: 'charges',
     scopeConfig: {
-      client: 'client_id = $TENANT',
-      internal: [
-        'created_by = $TENANT',
-        'EXISTS (SELECT 1 FROM clients scoped_clients WHERE scoped_clients.id = charges.client_id AND scoped_clients.manager_id = $TENANT)',
-      ],
+      client: '$TENANT = $TENANT',
+      internal: '$TENANT = $TENANT',
     },
     prefix: 'AND',
     startIndex: 9,

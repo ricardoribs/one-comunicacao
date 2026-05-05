@@ -154,6 +154,9 @@ exports.update = asyncHandler(async (req, res) => {
   }
 
   const previousTask = await taskModel.findById(req.params.id, req.user);
+  if (!previousTask) {
+    throw new AppError('Tarefa nao encontrada.', 404);
+  }
   const payload = buildTaskPayload(req.body, previousTask || {});
   await ensureValidTaskAssignees(payload.assigned_to_ids);
   const task = await taskModel.update(req.params.id, payload, req.user);
@@ -163,6 +166,9 @@ exports.update = asyncHandler(async (req, res) => {
 });
 
 exports.remove = asyncHandler(async (req, res) => {
-  await taskModel.remove(req.params.id, req.user);
+  const removed = await taskModel.remove(req.params.id, req.user);
+  if (!removed) {
+    throw new AppError('Tarefa nao encontrada.', 404);
+  }
   res.status(204).send();
 });

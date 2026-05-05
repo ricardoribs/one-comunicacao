@@ -44,4 +44,16 @@ exports.verifyEmailSchema = z.object({
   token: z.string().min(20),
 });
 
+exports.mfaChallengeSchema = z.object({
+  challenge_token: z.string().min(20),
+});
+
+exports.mfaVerifySchema = z.object({
+  challenge_token: z.string().min(20),
+  otp: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, 'Informe um codigo TOTP valido com 6 digitos.'),
+});
+
 exports.authEmptyBodySchema = z.object({}).strict();

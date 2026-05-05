@@ -5,6 +5,10 @@ const { runner } = require('node-pg-migrate');
 const env = require('../config/env');
 
 function buildMigrationDatabaseConfig() {
+  if (env.databaseSslRequired && !env.databaseSslCaFile) {
+    throw new Error('DATABASE_SSL_REQUIRED=true exige DATABASE_SSL_CA_FILE configurado para migrations.');
+  }
+
   if (env.databaseHost && env.databaseUser && env.databaseName) {
     const config = {
       host: env.databaseHost,
@@ -241,6 +245,9 @@ async function reconcileSchemaDrift(databaseConfig) {
         ADD COLUMN IF NOT EXISTS phone VARCHAR(40),
         ADD COLUMN IF NOT EXISTS job_title VARCHAR(120),
         ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(500),
+        ADD COLUMN IF NOT EXISTS mfa_totp_secret_encrypted TEXT,
+        ADD COLUMN IF NOT EXISTS mfa_totp_pending_secret_encrypted TEXT,
+        ADD COLUMN IF NOT EXISTS mfa_enabled_at TIMESTAMP NULL,
         ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER NOT NULL DEFAULT 0,
         ADD COLUMN IF NOT EXISTS locked_until TIMESTAMP NULL,
         ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP NULL,

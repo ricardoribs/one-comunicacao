@@ -14,12 +14,12 @@ const baseSelect = `
   LEFT JOIN clients client ON client.id = ct.converted_client_id
 `;
 
-async function create(data) {
+async function create(data, user = null) {
   const { rows } = await tenantDb.query(
-    { role: 'admin' },
+    user,
     {
       table: 'contacts',
-      scopeConfig: { internal: '1 = 1' },
+      scopeConfig: contactScope(),
       sql: `INSERT INTO contacts (
       name, phone, whatsapp, email, company, service, source, document, lead_stage, estimated_value,
       message, notes, owner_id, assigned_to, birth_date, address_line1, address_line2, neighborhood,
@@ -57,7 +57,7 @@ async function create(data) {
       ],
     }
   );
-  return findById(rows[0].id);
+  return findById(rows[0].id, user);
 }
 
 async function createWithClient(client, data, user) {
@@ -202,7 +202,7 @@ async function update(id, data, user = null) {
 }
 
 async function remove(id, user = null) {
-  await tenantDb.query(user, {
+  const result = await tenantDb.query(user, {
     table: 'contacts',
     scopeConfig: contactScope(),
     prefix: 'AND',
@@ -210,6 +210,7 @@ async function remove(id, user = null) {
     sql: 'DELETE FROM contacts ct WHERE ct.id = $1 __TENANT_SCOPE__',
     params: [id],
   });
+  return result.rowCount > 0;
 }
 
 async function markConverted(id, clientId, user = null) {

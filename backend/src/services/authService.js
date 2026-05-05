@@ -8,6 +8,8 @@ const { withTransaction } = require('../utils/db');
 const { sendMail } = require('./mailService');
 const { buildVerificationEmail, buildPasswordResetEmail } = require('./emailTemplates');
 const logger = require('../config/logger');
+const mfaService = require('./mfaService');
+const securityAlertService = require('./securityAlertService');
 
 function buildUserPayload(user) {
   return {
@@ -26,13 +28,20 @@ function buildUserPayload(user) {
     is_online: Boolean(user.is_online),
     client_name: user.client_name,
     client_company: user.client_company,
+    mfa_enabled_at: user.mfa_enabled_at || null,
+    mfa_required: mfaService.requiresMfa(user),
   };
 }
 
 function signAccessToken(user) {
-  return jwt.sign({ userId: user.id, role: user.role, clientId: user.client_id || null }, env.jwtSecret, {
-    expiresIn: env.jwtExpiresIn,
-  });
+  return jwt.sign(
+    { userId: user.id, role: user.role, clientId: user.client_id || null },
+    env.jwtSecret,
+    {
+      algorithm: env.jwtAlgorithm,
+      expiresIn: env.jwtExpiresIn,
+    }
+  );
 }
 
 function generateTokenValue() {
@@ -67,6 +76,22 @@ function buildAuthResponse(user) {
   };
 }
 
+function buildMfaChallengeResponse(user, purpose = 'login') {
+  const challengeToken = mfaService.createChallengeToken(user, purpose);
+
+  return {
+    challengeToken,
+    challenge_token: challengeToken,
+    mfaRequired: purpose === 'login',
+    mfa_required: purpose === 'login',
+    mfaEnrollmentRequired: purpose === 'enroll',
+    mfa_enrollment_required: purpose === 'enroll',
+    mfaType: 'totp',
+    mfa_type: 'totp',
+    user: buildUserPayload(user),
+  };
+}
+
 async function issueRefreshToken(user, metadata = {}, executor = null, rawToken = generateTokenValue()) {
   const refreshToken = rawToken;
   const tokenHash = hashToken(refreshToken);
@@ -90,11 +115,21 @@ async function issueRefreshToken(user, metadata = {}, executor = null, rawToken 
   };
 }
 
+async function issueAuthenticatedSession(user, metadata = {}) {
+  const refresh = await issueRefreshToken(user, metadata);
+
+  return {
+    ...buildAuthResponse(user),
+    refreshToken: refresh.refreshToken,
+    cookieOptions: buildCookieOptions(),
+  };
+}
+
 async function sendVerificationEmail(user, rawToken) {
   const verifyUrl = `${env.appBaseUrl || 'http://localhost:3000'}/api/auth/verify-email?token=${rawToken}`;
   await sendMail({
     to: user.email,
-    subject: 'Confirme seu cadastro na ONE Comunicação',
+    subject: 'Confirme seu cadastro na ONE Comunicacao',
     html: buildVerificationEmail({
       appBaseUrl: env.appBaseUrl,
       userName: user.name,
@@ -107,7 +142,7 @@ async function sendPasswordResetEmail(user, rawToken) {
   const resetUrl = `${env.appBaseUrl || 'http://localhost:3000'}/reset-password.html?token=${rawToken}`;
   await sendMail({
     to: user.email,
-    subject: 'Redefinição de senha - ONE Comunicação',
+    subject: 'Redefinicao de senha - ONE Comunicacao',
     html: buildPasswordResetEmail({
       appBaseUrl: env.appBaseUrl,
       userName: user.name,
@@ -131,10 +166,88 @@ async function issueEmailVerification(user) {
   await sendVerificationEmail(user, rawToken);
 }
 
+async function loadValidatedUserById(userId) {
+  const user = await userModel.findById(userId);
+
+  if (!user || !user.is_active) {
+    throw new AppError('Usuario invalido ou inativo.', 401);
+  }
+
+  return user;
+}
+
+async function validatePrimaryCredentials({ email, password }) {
+  const user = await userModel.findByEmail(email);
+  if (!user) {
+    throw new AppError('Login ou senha incorretos.', 401);
+  }
+
+  if (user.locked_until && new Date(user.locked_until) > new Date()) {
+    throw new AppError('Conta temporariamente bloqueada. Tente novamente mais tarde.', 423);
+  }
+
+  if (!isLikelyBcryptHash(user.password)) {
+    logger.warn(
+      {
+        user_id: user.id,
+        email: user.email,
+      },
+      'Usuario com hash de senha invalido ou ausente durante login.'
+    );
+    throw new AppError('Login ou senha incorretos.', 401);
+  }
+
+  let passwordMatches = false;
+  try {
+    passwordMatches = await bcrypt.compare(password, user.password);
+  } catch (error) {
+    logger.warn(
+      {
+        user_id: user.id,
+        email: user.email,
+        error: error.message,
+      },
+      'Falha ao validar hash de senha durante o login.'
+    );
+    throw new AppError('Login ou senha incorretos.', 401);
+  }
+
+  if (!passwordMatches) {
+    const securityState = await userModel.recordFailedLogin(user.id, env.loginLockThreshold, env.loginLockMinutes);
+
+    if (securityState?.locked_until) {
+      await securityAlertService.notify(
+        'account_locked_after_bruteforce',
+        {
+          user_id: user.id,
+          email: user.email,
+          locked_until: securityState.locked_until,
+        },
+        {
+          severity: 'high',
+          dedupeKey: `account-lock:${user.id}`,
+        }
+      );
+    }
+
+    throw new AppError('Login ou senha incorretos.', 401);
+  }
+
+  if (!user.is_active) {
+    throw new AppError('Usuario inativo.', 401);
+  }
+
+  if (!user.email_verified_at) {
+    throw new AppError('Confirme seu e-mail antes de acessar a plataforma.', 403);
+  }
+
+  return user;
+}
+
 async function register(payload) {
   const existingUser = await userModel.findByEmail(payload.email);
   if (existingUser) {
-    throw new AppError('Já existe um usuário cadastrado com este e-mail.', 409);
+    throw new AppError('Ja existe um usuario cadastrado com este e-mail.', 409);
   }
 
   const password = await bcrypt.hash(payload.password, env.bcryptRounds);
@@ -158,12 +271,12 @@ async function register(payload) {
       try {
         await userModel.remove(user.id);
       } catch (_cleanupError) {
-        // noop: preserve original delivery error to the caller
+        // noop
       }
     }
 
     throw new AppError(
-      `Não foi possível enviar o e-mail de verificação. ${error.message || 'Confira a configuração do Resend e tente novamente.'}`,
+      `Nao foi possivel enviar o e-mail de verificacao. ${error.message || 'Confira a configuracao do provedor de e-mail e tente novamente.'}`,
       502
     );
   }
@@ -174,73 +287,112 @@ async function register(payload) {
 }
 
 async function login({ email, password }, metadata = {}) {
-  const user = await userModel.findByEmail(email);
-  if (!user) {
-    throw new AppError('Login ou senha incorretos.', 401);
-  }
+  const user = await validatePrimaryCredentials({ email, password });
 
-  if (user.locked_until && new Date(user.locked_until) > new Date()) {
-    throw new AppError('Conta temporariamente bloqueada. Tente novamente mais tarde.', 423);
-  }
-
-  if (!isLikelyBcryptHash(user.password)) {
-    logger.warn(
-      {
-        user_id: user.id,
-        email: user.email,
-      },
-      'Usuário com hash de senha inválido ou ausente durante login.'
-    );
-    throw new AppError('Login ou senha incorretos.', 401);
-  }
-
-  let passwordMatches = false;
-  try {
-    passwordMatches = await bcrypt.compare(password, user.password);
-  } catch (error) {
-    logger.warn(
-      {
-        user_id: user.id,
-        email: user.email,
-        error: error.message,
-      },
-      'Falha ao validar hash de senha durante o login.'
-    );
-    throw new AppError('Login ou senha incorretos.', 401);
-  }
-
-  if (!passwordMatches) {
-    await userModel.recordFailedLogin(user.id, env.loginLockThreshold, env.loginLockMinutes);
-    throw new AppError('Login ou senha incorretos.', 401);
-  }
-
-  if (!user.is_active) {
-    throw new AppError('Usuário inativo.', 401);
-  }
-
-  if (!user.email_verified_at) {
-    throw new AppError('Confirme seu e-mail antes de acessar a plataforma.', 403);
+  if (mfaService.requiresMfa(user)) {
+    await userModel.clearLoginFailures(user.id);
+    return buildMfaChallengeResponse(user, mfaService.isMfaEnabled(user) ? 'login' : 'enroll');
   }
 
   await userModel.resetLoginFailures(user.id, metadata);
-  const freshUser = (await userModel.findById(user.id)) || {
-    ...user,
-    failed_login_attempts: 0,
-    locked_until: null,
-    last_login_at: new Date(),
-  };
-  const refresh = await issueRefreshToken(freshUser, metadata);
+  const freshUser = await loadValidatedUserById(user.id);
+  return issueAuthenticatedSession(freshUser, metadata);
+}
 
-  return {
-    ...buildAuthResponse(freshUser),
-    refreshToken: refresh.refreshToken,
-    cookieOptions: buildCookieOptions(),
-  };
+async function setupTotpEnrollment(challengeToken) {
+  const challenge = mfaService.verifyChallengeToken(challengeToken, 'enroll');
+  const user = await loadValidatedUserById(challenge.userId);
+
+  if (!mfaService.requiresMfa(user)) {
+    throw new AppError('MFA nao obrigatorio para este perfil.', 400);
+  }
+
+  if (mfaService.isMfaEnabled(user)) {
+    throw new AppError('MFA ja habilitado para este usuario.', 409);
+  }
+
+  let secret = null;
+
+  if (user.mfa_totp_pending_secret_encrypted) {
+    try {
+      secret = mfaService.decryptSecret(user.mfa_totp_pending_secret_encrypted);
+    } catch (_error) {
+      await userModel.clearPendingMfaSecret(user.id);
+    }
+  }
+
+  if (!secret) {
+    secret = mfaService.buildEnrollmentSecret(user).secret;
+    await userModel.storePendingMfaSecret(user.id, mfaService.encryptSecret(secret));
+  }
+
+  return mfaService.buildEnrollmentResponse(user, secret);
+}
+
+async function completeTotpEnrollment(challengeToken, otp, metadata = {}) {
+  const challenge = mfaService.verifyChallengeToken(challengeToken, 'enroll');
+  const user = await loadValidatedUserById(challenge.userId);
+
+  if (!mfaService.requiresMfa(user)) {
+    throw new AppError('MFA nao obrigatorio para este perfil.', 400);
+  }
+
+  if (mfaService.isMfaEnabled(user)) {
+    throw new AppError('MFA ja habilitado para este usuario.', 409);
+  }
+
+  if (!user.mfa_totp_pending_secret_encrypted) {
+    throw new AppError('Configuracao TOTP pendente nao encontrada. Reinicie o processo.', 409);
+  }
+
+  const secret = mfaService.decryptSecret(user.mfa_totp_pending_secret_encrypted);
+  if (!mfaService.verifyOtp(secret, otp)) {
+    throw new AppError('Codigo TOTP invalido.', 401);
+  }
+
+  await userModel.enableMfa(user.id, user.mfa_totp_pending_secret_encrypted);
+  await userModel.resetLoginFailures(user.id, metadata);
+  const freshUser = await loadValidatedUserById(user.id);
+  return issueAuthenticatedSession(freshUser, metadata);
+}
+
+async function completeTotpLogin(challengeToken, otp, metadata = {}) {
+  const challenge = mfaService.verifyChallengeToken(challengeToken, 'login');
+  const user = await loadValidatedUserById(challenge.userId);
+
+  if (!mfaService.requiresMfa(user)) {
+    throw new AppError('MFA nao obrigatorio para este perfil.', 400);
+  }
+
+  if (!mfaService.isMfaEnabled(user)) {
+    throw new AppError('MFA ainda nao habilitado para este usuario.', 409);
+  }
+
+  const secret = mfaService.decryptSecret(user.mfa_totp_secret_encrypted);
+  if (!mfaService.verifyOtp(secret, otp)) {
+    await securityAlertService.notify(
+      'mfa_login_failed',
+      {
+        user_id: user.id,
+        email: user.email,
+      },
+      {
+        severity: 'medium',
+        dedupeKey: `mfa-failed:${user.id}`,
+        cooldownMs: 30000,
+      }
+    );
+    throw new AppError('Codigo TOTP invalido.', 401);
+  }
+
+  await userModel.resetLoginFailures(user.id, metadata);
+  const freshUser = await loadValidatedUserById(user.id);
+  return issueAuthenticatedSession(freshUser, metadata);
 }
 
 async function refreshAccessToken(rawRefreshToken, metadata = {}) {
   if (!rawRefreshToken) {
-    throw new AppError('Refresh token não informado.', 401);
+    throw new AppError('Refresh token nao informado.', 401);
   }
 
   const tokenHash = hashToken(rawRefreshToken);
@@ -249,7 +401,7 @@ async function refreshAccessToken(rawRefreshToken, metadata = {}) {
     const tokenRecord = await userModel.findRefreshTokenForUpdate(tokenHash, dbClient);
 
     if (!tokenRecord) {
-      throw new AppError('Refresh token inválido.', 401);
+      throw new AppError('Refresh token invalido.', 401);
     }
 
     if (tokenRecord.revoked_at || tokenRecord.replaced_by_token_hash) {
@@ -260,13 +412,24 @@ async function refreshAccessToken(rawRefreshToken, metadata = {}) {
           token_hash: tokenHash,
           event: 'refresh_token_replay_detected',
         },
-        'Replay de refresh token detectado. Todas as sessões foram revogadas.'
+        'Replay de refresh token detectado. Todas as sessoes foram revogadas.'
       );
-      throw new AppError('Sessão inválida. Faça login novamente.', 401);
+      await securityAlertService.notify(
+        'refresh_token_replay_detected',
+        {
+          user_id: tokenRecord.user_id,
+          ip: metadata.ip || null,
+        },
+        {
+          severity: 'critical',
+          dedupeKey: `refresh-replay:${tokenRecord.user_id}`,
+        }
+      );
+      throw new AppError('Sessao invalida. Faca login novamente.', 401);
     }
 
     if (!tokenRecord.is_active) {
-      throw new AppError('Refresh token inválido.', 401);
+      throw new AppError('Refresh token invalido.', 401);
     }
 
     if (new Date(tokenRecord.expires_at) <= new Date()) {
@@ -276,7 +439,7 @@ async function refreshAccessToken(rawRefreshToken, metadata = {}) {
 
     const user = await userModel.findById(tokenRecord.user_id, dbClient);
     if (!user || !user.is_active) {
-      throw new AppError('Usuário inválido ou inativo.', 401);
+      throw new AppError('Usuario invalido ou inativo.', 401);
     }
 
     const nextRefreshToken = generateTokenValue();
@@ -292,7 +455,7 @@ async function refreshAccessToken(rawRefreshToken, metadata = {}) {
     );
 
     if (!revoked) {
-      throw new AppError('Refresh token inválido.', 401);
+      throw new AppError('Refresh token invalido.', 401);
     }
 
     await userModel.createRefreshToken(
@@ -332,7 +495,7 @@ async function verifyEmail(rawToken) {
   const token = await userModel.findEmailVerificationToken(tokenHash);
 
   if (!token || token.used_at || new Date(token.expires_at) <= new Date()) {
-    throw new AppError('Token de verificação inválido ou expirado.', 400);
+    throw new AppError('Token de verificacao invalido ou expirado.', 400);
   }
 
   await userModel.consumeEmailVerificationToken(tokenHash);
@@ -363,7 +526,7 @@ async function resetPassword(rawToken, newPassword) {
   const token = await userModel.findPasswordResetToken(tokenHash);
 
   if (!token || token.used_at || new Date(token.expires_at) <= new Date()) {
-    throw new AppError('Token de redefinição inválido ou expirado.', 400);
+    throw new AppError('Token de redefinicao invalido ou expirado.', 400);
   }
 
   const password = await bcrypt.hash(newPassword, env.bcryptRounds);
@@ -382,4 +545,7 @@ module.exports = {
   forgotPassword,
   resetPassword,
   buildCookieOptions,
+  setupTotpEnrollment,
+  completeTotpEnrollment,
+  completeTotpLogin,
 };

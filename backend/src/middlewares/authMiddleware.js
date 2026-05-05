@@ -7,6 +7,7 @@ const logger = require('../config/logger');
 const createScopedQuery = require('../utils/scopedQuery');
 const { hasCapability } = require('../utils/access');
 const { resolveRequestAccessMetadata } = require('../utils/requestMetadata');
+
 const requestBuckets = new Map();
 const presenceBuckets = new Map();
 
@@ -22,7 +23,7 @@ function enforceUserRateLimit(userId) {
 
   current.count += 1;
   if (current.count > 200) {
-    throw new AppError('Limite de requisições por usuário excedido. Tente novamente em instantes.', 429);
+    throw new AppError('Limite de requisicoes por usuario excedido. Tente novamente em instantes.', 429);
   }
 }
 
@@ -49,24 +50,26 @@ function schedulePresenceUpdate(userId, req) {
     });
 }
 
-const authenticate = asyncHandler(async (req, res, next) => {
+const authenticate = asyncHandler(async (req, _res, next) => {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
 
   if (!token) {
-    throw new AppError('Token de autenticação não informado.', 401);
+    throw new AppError('Token de autenticacao nao informado.', 401);
   }
 
   let payload;
   try {
-    payload = jwt.verify(token, env.jwtSecret);
+    payload = jwt.verify(token, env.jwtSecret, {
+      algorithms: [env.jwtAlgorithm],
+    });
   } catch {
-    throw new AppError('Token inválido ou expirado.', 401);
+    throw new AppError('Token invalido ou expirado.', 401);
   }
 
   const user = await userModel.findById(payload.userId);
   if (!user || !user.is_active) {
-    throw new AppError('Usuário inválido ou inativo.', 401);
+    throw new AppError('Usuario invalido ou inativo.', 401);
   }
 
   req.user = user;
@@ -83,7 +86,7 @@ const authenticate = asyncHandler(async (req, res, next) => {
 
 const authorize =
   (...roles) =>
-  (req, res, next) => {
+  (req, _res, next) => {
     if (!roles.includes(req.user.role)) {
       logger.warn(
         {
@@ -102,7 +105,7 @@ const authorize =
 
 const authorizeCapability =
   (...capabilities) =>
-  (req, res, next) => {
+  (req, _res, next) => {
     const allowed = capabilities.every((capability) => hasCapability(req.user, capability));
 
     if (!allowed) {

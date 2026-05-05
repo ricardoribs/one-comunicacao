@@ -32,10 +32,16 @@ services:
         sync: false
       - key: DATABASE_SSL_CA_FILE
         sync: false
+      - key: DATABASE_SSL_REQUIRED
+        value: "true"
       - key: DB_POOL_MAX
         value: 8
+      - key: TRUST_PROXY
+        value: 2
       - key: JWT_SECRET
         sync: false
+      - key: JWT_ALGORITHM
+        value: HS256
       - key: APP_BASE_URL
         sync: false
       - key: GEO_LOOKUP_ENABLED
@@ -52,13 +58,35 @@ services:
         sync: false
       - key: SENTRY_DSN
         sync: false
+      - key: SENTRY_REQUIRED
+        value: "true"
       - key: SENTRY_ENVIRONMENT
         value: production
       - key: SENTRY_TRACES_SAMPLE_RATE
         value: 0.1
+      - key: MFA_REQUIRED_ROLES
+        value: admin,gestor,comercial
+      - key: MFA_ENCRYPTION_KEY
+        sync: false
+      - key: UPLOAD_REQUIRE_MALWARE_SCAN
+        value: "true"
+      - key: MALWARE_SCAN_PROVIDER
+        value: clamav
+      - key: CLAMAV_HOST
+        sync: false
+      - key: CLAMAV_PORT
+        value: 3310
+      - key: CLAMAV_TIMEOUT_MS
+        value: 10000
+      - key: SECURITY_ALERT_WEBHOOK_URL
+        sync: false
+      - key: SECURITY_ALERT_TIMEOUT_MS
+        value: 5000
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
+      - key: CLOUDINARY_REQUIRE_PRIVATE_UPLOAD
+        value: "true"

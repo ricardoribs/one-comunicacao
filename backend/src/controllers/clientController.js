@@ -1,5 +1,6 @@
 const asyncHandler = require('../utils/asyncHandler');
 const clientModel = require('../models/clientModel');
+const AppError = require('../utils/AppError');
 const { ensureClientAccess, sanitizeClientForUser } = require('../utils/access');
 const { sendPaginated } = require('../utils/response');
 
@@ -21,11 +22,18 @@ exports.create = asyncHandler(async (req, res) => {
 
 exports.update = asyncHandler(async (req, res) => {
   await ensureClientAccess(req.user, req.params.id);
-  res.json(await clientModel.update(req.params.id, req.body, req.user));
+  const client = await clientModel.update(req.params.id, req.body, req.user);
+  if (!client) {
+    throw new AppError('Cliente nao encontrado.', 404);
+  }
+  res.json(client);
 });
 
 exports.remove = asyncHandler(async (req, res) => {
   await ensureClientAccess(req.user, req.params.id);
-  await clientModel.remove(req.params.id, req.user);
+  const removed = await clientModel.remove(req.params.id, req.user);
+  if (!removed) {
+    throw new AppError('Cliente nao encontrado.', 404);
+  }
   res.status(204).send();
 });
