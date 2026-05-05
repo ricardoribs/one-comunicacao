@@ -134,6 +134,8 @@ button,.btn,.sb-link,.tab,a{touch-action:manipulation}
 .login-secondary-actions .login-btn{margin-top:0}
 .login-link-btn{flex:1;min-height:48px;border:1px solid #ddd7d0;background:#fff;color:var(--ink);font-family:var(--font-login);font-size:14px;font-weight:600;border-radius:8px;cursor:pointer}
 .login-link-btn:hover{border-color:var(--pink);color:var(--pink)}
+.login-secret-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+.login-secret-actions .login-link-btn{min-height:44px}
 .login-secret-box{margin-top:var(--space-3);padding:12px 14px;border:1px dashed #ddd7d0;background:#f9f7f4;border-radius:8px;font-family:var(--font-login);font-size:14px;font-weight:700;letter-spacing:.08em;color:var(--ink);word-break:break-word}
 .login-benefits{display:none}
 .login-benefit-grid{max-width:1020px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-4)}
@@ -1967,8 +1969,12 @@ summary:focus-visible,
             <div id="mfa-step" hidden>
               <p class="login-note" id="mfa-status-text">Digite o codigo de 6 digitos do seu autenticador.</p>
               <div id="mfa-setup-help" hidden>
-                <p class="login-note">Cadastre esta chave no app autenticador antes de validar o primeiro acesso.</p>
-                <div class="login-secret-box" id="mfa-secret"></div>
+                <p class="login-note">Cadastre o MFA no app autenticador. A chave manual fica oculta por padrão e só deve ser exibida se você realmente precisar dela.</p>
+                <div class="login-secret-actions">
+                  <button type="button" class="login-link-btn" id="mfa-secret-toggle" data-action="toggle-mfa-secret">Mostrar chave manual</button>
+                  <button type="button" class="login-link-btn" data-action="copy-mfa-secret">Copiar chave</button>
+                </div>
+                <div class="login-secret-box" id="mfa-secret" hidden></div>
               </div>
               <div class="login-field">
                 <label for="mfa-otp">Codigo TOTP</label>
