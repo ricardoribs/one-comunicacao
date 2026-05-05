@@ -214,7 +214,7 @@ Antes de liberar o uso para a equipe:
 Variaveis adicionais para o go-live seguro:
 
 ```env
-TRUST_PROXY=2
+TRUST_PROXY=1
 JWT_ALGORITHM=HS256
 DATABASE_SSL_REQUIRED=true
 SENTRY_REQUIRED=true
@@ -232,7 +232,7 @@ CLOUDINARY_REQUIRE_PRIVATE_UPLOAD=true
 
 Controles adicionais:
 
-- `TRUST_PROXY` deve refletir a topologia real da borda. Para Cloudflare na frente do provedor, revisar o numero de hops antes do deploy final.
+- `TRUST_PROXY` deve refletir a topologia real da borda. Use `1` para acesso direto via `*.onrender.com` e altere para `2` somente quando a topologia virar `Cloudflare -> Render`.
 - `DATABASE_SSL_REQUIRED=true` e `DATABASE_SSL_CA_FILE` tornam o boot fail-closed para conexoes sem TLS validado.
 - perfis `admin`, `gestor` e `comercial` entram em MFA TOTP obrigatorio no primeiro login.
 - uploads so devem subir para o provider depois do scan antimalware limpo.

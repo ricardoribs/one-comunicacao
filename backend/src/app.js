@@ -60,7 +60,7 @@ app.use((req, res, next) => {
 });
 
 if (env.isProduction && (!env.trustProxyConfigured || env.trustProxy == null)) {
-  throw new Error('TRUST_PROXY deve ser definido explicitamente em producao.');
+  throw new Error('TRUST_PROXY deve ser definido explicitamente em producao. Use 1 para acesso direto via Render e 2 quando houver Cloudflare na frente do Render.');
 }
 
 if (env.isProduction && env.databaseSslRequired && !env.databaseSslCaFile) {
