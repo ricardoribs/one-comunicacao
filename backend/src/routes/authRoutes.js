@@ -10,6 +10,8 @@ const {
   forgotPasswordSchema,
   resetPasswordSchema,
   verifyEmailSchema,
+  mfaChallengeSchema,
+  mfaVerifySchema,
   authEmptyBodySchema,
 } = require('../validators/authValidators');
 
@@ -37,7 +39,16 @@ const forgotPasswordLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => (req.body?.email || req.ip || '').toLowerCase(),
-  message: { message: 'Muitas solicitações de redefinição. Tente novamente mais tarde.' },
+  message: { message: 'Muitas solicitacoes de redefinicao. Tente novamente mais tarde.' },
+});
+
+const mfaLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => String(req.body?.challenge_token || req.ip || ''),
+  message: { message: 'Muitas tentativas de MFA. Tente novamente em alguns minutos.' },
 });
 
 router.post('/login', loginLimiter, validate(loginSchema), controller.login);
@@ -54,6 +65,9 @@ router.post('/logout', validate(emptyBodySchema), controller.logout);
 router.post('/logout-all', authenticate, validate(emptyBodySchema), controller.logoutAll);
 router.post('/forgot-password', forgotPasswordLimiter, validate(forgotPasswordSchema), controller.forgotPassword);
 router.post('/reset-password', validate(resetPasswordSchema), controller.resetPassword);
+router.post('/mfa/totp/setup', mfaLimiter, validate(mfaChallengeSchema), controller.setupTotpEnrollment);
+router.post('/mfa/totp/enroll', mfaLimiter, validate(mfaVerifySchema), controller.completeTotpEnrollment);
+router.post('/mfa/totp/verify', mfaLimiter, validate(mfaVerifySchema), controller.completeTotpLogin);
 router.get('/verify-email', validate(verifyEmailSchema, 'query'), controller.verifyEmail);
 router.get('/me', authenticate, validate(emptyQuerySchema, 'query'), controller.me);
 

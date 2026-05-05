@@ -208,3 +208,37 @@ Antes de liberar o uso para a equipe:
 6. Revisar checklist, Kanban, CRM e campanhas.
 7. Confirmar backup, e-mail e upload.
 8. Registrar a data do go-live no changelog.
+
+## Reforcos de seguranca obrigatorios
+
+Variaveis adicionais para o go-live seguro:
+
+```env
+TRUST_PROXY=2
+JWT_ALGORITHM=HS256
+DATABASE_SSL_REQUIRED=true
+SENTRY_REQUIRED=true
+MFA_REQUIRED_ROLES=admin,gestor,comercial
+MFA_ENCRYPTION_KEY=<segredo com 32 bytes ou mais>
+UPLOAD_REQUIRE_MALWARE_SCAN=true
+MALWARE_SCAN_PROVIDER=clamav
+CLAMAV_HOST=<host do clamd>
+CLAMAV_PORT=3310
+CLAMAV_TIMEOUT_MS=10000
+SECURITY_ALERT_WEBHOOK_URL=<webhook externo para pager ou triagem>
+SECURITY_ALERT_TIMEOUT_MS=5000
+CLOUDINARY_REQUIRE_PRIVATE_UPLOAD=true
+```
+
+Controles adicionais:
+
+- `TRUST_PROXY` deve refletir a topologia real da borda. Para Cloudflare na frente do provedor, revisar o numero de hops antes do deploy final.
+- `DATABASE_SSL_REQUIRED=true` e `DATABASE_SSL_CA_FILE` tornam o boot fail-closed para conexoes sem TLS validado.
+- perfis `admin`, `gestor` e `comercial` entram em MFA TOTP obrigatorio no primeiro login.
+- uploads so devem subir para o provider depois do scan antimalware limpo.
+- `SECURITY_ALERT_WEBHOOK_URL` deve apontar para o canal ou pager operacional do time.
+
+Referencias operacionais:
+
+- [IR-PLAN.md](/c:/Users/ricar/Downloads/Projeto%20One/IR-PLAN.md)
+- [RUNBOOK-CREDENTIAL-ROTATION.md](/c:/Users/ricar/Downloads/Projeto%20One/RUNBOOK-CREDENTIAL-ROTATION.md)

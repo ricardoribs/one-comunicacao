@@ -81,6 +81,9 @@ function createPgMemPool() {
       role VARCHAR(32) NOT NULL,
       is_active BOOLEAN NOT NULL DEFAULT TRUE,
       email_verified_at TIMESTAMP,
+      mfa_totp_secret_encrypted TEXT,
+      mfa_totp_pending_secret_encrypted TEXT,
+      mfa_enabled_at TIMESTAMP,
       failed_login_attempts INTEGER NOT NULL DEFAULT 0,
       locked_until TIMESTAMP,
       last_login_at TIMESTAMP,
@@ -399,6 +402,10 @@ function buildPoolConfig() {
     config.password = env.databasePassword;
   } else {
     config.connectionString = env.databaseUrl;
+  }
+
+  if (env.databaseSslRequired && !env.databaseSslCaFile) {
+    throw new Error('DATABASE_SSL_REQUIRED=true exige DATABASE_SSL_CA_FILE configurado.');
   }
 
   if (env.databaseSslCaFile) {

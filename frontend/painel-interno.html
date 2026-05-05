@@ -130,6 +130,11 @@ button,.btn,.sb-link,.tab,a{touch-action:manipulation}
 .login-btn{width:100%;padding:15px var(--space-4);background:var(--pink);color:#fff;border:none;font-family:var(--font-login);font-size:14px;font-weight:700;cursor:pointer;margin-top:var(--space-4);letter-spacing:.02em;transition:background var(--tr),transform var(--tr);border-radius:2px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.12);text-transform:none}
 .login-btn:hover{background:var(--pink-dark);transform:translateY(-1px)}
 .login-error{font-size:var(--text-sm);color:var(--pink);margin-top:var(--space-3);display:none}
+.login-secondary-actions{display:flex;gap:12px;margin-top:var(--space-4)}
+.login-secondary-actions .login-btn{margin-top:0}
+.login-link-btn{flex:1;min-height:48px;border:1px solid #ddd7d0;background:#fff;color:var(--ink);font-family:var(--font-login);font-size:14px;font-weight:600;border-radius:8px;cursor:pointer}
+.login-link-btn:hover{border-color:var(--pink);color:var(--pink)}
+.login-secret-box{margin-top:var(--space-3);padding:12px 14px;border:1px dashed #ddd7d0;background:#f9f7f4;border-radius:8px;font-family:var(--font-login);font-size:14px;font-weight:700;letter-spacing:.08em;color:var(--ink);word-break:break-word}
 .login-benefits{display:none}
 .login-benefit-grid{max-width:1020px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-4)}
 .login-benefit-card{background:#fff;border:1px solid rgba(13,13,15,.1);box-shadow:0 12px 34px rgba(13,13,15,.06);padding:var(--space-8) var(--space-6);height:168px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
@@ -1959,7 +1964,22 @@ summary:focus-visible,
               <label for="l-pass">Senha</label>
               <input type="password" id="l-pass" placeholder="••••••••" autocomplete="new-password"/>
             </div>
-            <button type="button" class="login-btn" data-action="do-login">Entrar</button>
+            <div id="mfa-step" hidden>
+              <p class="login-note" id="mfa-status-text">Digite o codigo de 6 digitos do seu autenticador.</p>
+              <div id="mfa-setup-help" hidden>
+                <p class="login-note">Cadastre esta chave no app autenticador antes de validar o primeiro acesso.</p>
+                <div class="login-secret-box" id="mfa-secret"></div>
+              </div>
+              <div class="login-field">
+                <label for="mfa-otp">Codigo TOTP</label>
+                <input type="text" id="mfa-otp" placeholder="123456" inputmode="numeric" autocomplete="one-time-code" maxlength="6"/>
+              </div>
+              <div class="login-secondary-actions">
+                <button type="button" class="login-link-btn" data-action="cancel-mfa-login">Voltar</button>
+                <button type="button" class="login-btn" data-action="submit-mfa-login">Validar codigo</button>
+              </div>
+            </div>
+            <button type="button" class="login-btn" id="login-submit-btn" data-action="do-login">Entrar</button>
           </div>
           <p class="login-error" id="login-error">Login ou senha incorretos.</p>
           <div class="login-card-footer">

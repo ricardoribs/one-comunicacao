@@ -48,12 +48,16 @@ async function create(data, user = null) {
 }
 
 async function update(id, data, user = null) {
+  const existing = await findById(id, user);
+  if (!existing) {
+    return null;
+  }
+
   const { rows } = await tenantDb.query(user, {
     table: 'invoices',
     scopeConfig: {
-      client: 'client_id = $TENANT',
-      internal:
-        'EXISTS (SELECT 1 FROM clients scoped_clients WHERE scoped_clients.id = invoices.client_id AND scoped_clients.manager_id = $TENANT)',
+      client: '$TENANT = $TENANT',
+      internal: '$TENANT = $TENANT',
     },
     prefix: 'AND',
     startIndex: 6,
@@ -71,12 +75,40 @@ async function update(id, data, user = null) {
 }
 
 async function findById(id, user = null) {
+  if (!user || user.role === 'admin') {
+    const { rows } = await tenantDb.query(user || { role: 'admin' }, {
+      table: 'invoices',
+      scopeConfig: { internal: '1 = 1' },
+      sql: `SELECT ${selectColumns}, c.name AS client_name
+       FROM invoices i
+       INNER JOIN clients c ON c.id = i.client_id
+       WHERE i.id = $1`,
+      params: [id],
+    });
+    return rows[0] || null;
+  }
+
+  if (user.role !== 'client') {
+    const { rows } = await tenantDb.query(user, {
+      table: 'invoices',
+      scopeConfig: { internal: '$TENANT = $TENANT' },
+      prefix: 'AND',
+      startIndex: 3,
+      sql: `SELECT ${selectColumns}, c.name AS client_name
+       FROM invoices i
+       INNER JOIN clients c ON c.id = i.client_id
+       WHERE i.id = $1
+         AND c.manager_id = $2
+       __TENANT_SCOPE__`,
+      params: [id, user.id],
+    });
+    return rows[0] || null;
+  }
+
   const { rows } = await tenantDb.query(user, {
     table: 'invoices',
     scopeConfig: {
       client: 'i.client_id = $TENANT',
-      internal:
-        'EXISTS (SELECT 1 FROM clients scoped_clients WHERE scoped_clients.id = i.client_id AND scoped_clients.manager_id = $TENANT)',
     },
     prefix: 'AND',
     startIndex: 2,

@@ -12,7 +12,7 @@ async function createInternalUser(email) {
     name: 'Checklist User',
     email,
     password,
-    role: 'admin',
+    role: 'designer',
     is_active: true,
     email_verified_at: new Date().toISOString(),
   });

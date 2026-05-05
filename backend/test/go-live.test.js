@@ -5,6 +5,7 @@ const request = require('supertest');
 const app = require('../src/app');
 const pool = require('../src/config/db');
 const userModel = require('../src/models/userModel');
+const mfaService = require('../src/services/mfaService');
 
 async function createClient(name, company, managerId = null) {
   const { rows } = await pool.query(
@@ -31,10 +32,50 @@ async function createUser({ name, email, role, clientId = null, password = 'Vali
 
 async function login(email, password = 'Valid@Test123') {
   global.__oneLoginRequestCounter = (global.__oneLoginRequestCounter || 10) + 1;
-  return request(app)
+  const ip = `203.0.113.${global.__oneLoginRequestCounter}`;
+  const initial = await request(app)
     .post('/api/auth/login')
-    .set('X-Forwarded-For', `203.0.113.${global.__oneLoginRequestCounter}`)
+    .set('X-Forwarded-For', ip)
     .send({ email, password });
+
+  if (initial.body?.accessToken || initial.status !== 200) {
+    return initial;
+  }
+
+  const challengeToken = initial.body.challenge_token || initial.body.challengeToken;
+  if (!challengeToken) {
+    return initial;
+  }
+
+  if (initial.body.mfa_enrollment_required || initial.body.mfaEnrollmentRequired) {
+    const setup = await request(app)
+      .post('/api/auth/mfa/totp/setup')
+      .set('X-Forwarded-For', ip)
+      .send({ challenge_token: challengeToken });
+    assert.equal(setup.status, 200);
+    assert.ok(setup.body.secret);
+
+    const otp = mfaService.generateCurrentOtp(setup.body.secret);
+    return request(app)
+      .post('/api/auth/mfa/totp/enroll')
+      .set('X-Forwarded-For', ip)
+      .send({
+        challenge_token: challengeToken,
+        otp,
+      });
+  }
+
+  const user = await userModel.findByEmail(email);
+  assert.ok(user?.mfa_totp_secret_encrypted);
+  const secret = mfaService.decryptSecret(user.mfa_totp_secret_encrypted);
+  const otp = mfaService.generateCurrentOtp(secret);
+  return request(app)
+    .post('/api/auth/mfa/totp/verify')
+    .set('X-Forwarded-For', ip)
+    .send({
+      challenge_token: challengeToken,
+      otp,
+    });
 }
 
 test('readiness publico responde 200 sem checks internos', { concurrency: false }, async () => {
@@ -1067,4 +1108,265 @@ test('tarefas antigas ja atribuidas fazem backfill de notificacao ao abrir o pai
   await userModel.remove(thalisson.id);
   await userModel.remove(gestor.id);
   await pool.query('DELETE FROM clients');
+});
+
+test('POST /api/contacts exige autenticacao', { concurrency: false }, async () => {
+  const response = await request(app)
+    .post('/api/contacts')
+    .send({
+      name: 'Lead Publico',
+      phone: '11999999999',
+      email: 'lead.publico@one.test',
+    });
+
+  assert.equal(response.status, 401);
+});
+
+test('exportacao da conta inclui mais de 100 registros por colecao', { concurrency: false }, async () => {
+  const suffix = Date.now() + 301;
+  const clientId = await createClient(`Cliente Export ${suffix}`, `Empresa Export ${suffix}`);
+  const user = await createUser({
+    name: `Cliente Export ${suffix}`,
+    email: `cliente.export.${suffix}@one.test`,
+    role: 'client',
+    clientId,
+  });
+  const peer = await createUser({
+    name: `Cliente Export Peer ${suffix}`,
+    email: `cliente.export.peer.${suffix}@one.test`,
+    role: 'client',
+    clientId,
+  });
+
+  for (let index = 0; index < 101; index += 1) {
+    await pool.query(
+      `INSERT INTO messages (sender_id, receiver_id, context_type, content)
+       VALUES ($1, $2, 'general', $3)`,
+      [peer.id, user.id, `Mensagem ${index + 1}`]
+    );
+  }
+
+  const auth = await login(user.email);
+  const response = await request(app)
+    .get('/api/account/export')
+    .set('Authorization', `Bearer ${auth.body.accessToken}`);
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.messages.length, 101);
+
+  await pool.query('DELETE FROM messages WHERE receiver_id = $1 OR sender_id = $1', [user.id]);
+  await pool.query('DELETE FROM messages WHERE receiver_id = $1 OR sender_id = $1', [peer.id]);
+  await userModel.remove(peer.id);
+  await userModel.remove(user.id);
+  await pool.query('DELETE FROM clients WHERE id = $1', [clientId]);
+});
+
+test('exclusao da conta anonimiza o usuario e remove residuos diretos', { concurrency: false }, async () => {
+  const suffix = Date.now() + 302;
+  const clientId = await createClient(`Cliente Delete ${suffix}`, `Empresa Delete ${suffix}`);
+  const user = await createUser({
+    name: `Designer Delete ${suffix}`,
+    email: `designer.delete.${suffix}@one.test`,
+    role: 'designer',
+    clientId,
+  });
+  const peer = await createUser({
+    name: `Peer Delete ${suffix}`,
+    email: `peer.delete.${suffix}@one.test`,
+    role: 'designer',
+    clientId,
+  });
+
+  const task = await pool.query(
+    `INSERT INTO tasks (client_id, created_by, assigned_to, status, type, column_name, title, description)
+     VALUES ($1, $2, $2, 'Backlog', 'planejamento', 'todo', 'Task de exclusao', 'Fluxo LGPD')
+     RETURNING id`,
+    [clientId, user.id]
+  );
+  await pool.query('INSERT INTO task_assignees (task_id, user_id) VALUES ($1, $2)', [task.rows[0].id, user.id]);
+  const contact = await pool.query(
+    `INSERT INTO contacts (name, phone, email, owner_id, assigned_to)
+     VALUES ($1, $2, $3, $4, $4)
+     RETURNING id`,
+    [`Lead Delete ${suffix}`, '11999999999', `lead.delete.${suffix}@one.test`, user.id]
+  );
+  const material = await pool.query(
+    `INSERT INTO materials (client_id, uploaded_by, title, status, url)
+     VALUES ($1, $2, $3, 'Pendente', 'https://example.com/material')
+     RETURNING id`,
+    [clientId, user.id, `Material Delete ${suffix}`]
+  );
+  const file = await pool.query(
+    `INSERT INTO files (client_id, uploaded_by, original_name, stored_name, mime_type, size, url)
+     VALUES ($1, $2, 'arquivo.pdf', 'arquivo.pdf', 'application/pdf', 10, '/uploads/arquivo.pdf')
+     RETURNING id`,
+    [clientId, user.id]
+  );
+  await pool.query(
+    `INSERT INTO notifications (user_id, type, title, body)
+     VALUES ($1, 'task_assigned', 'Alerta', 'Notificacao de seguranca')`,
+    [user.id]
+  );
+  await pool.query(
+    `INSERT INTO messages (sender_id, receiver_id, context_type, content)
+     VALUES ($1, $2, 'general', 'Mensagem que deve ser removida')`,
+    [user.id, peer.id]
+  );
+  await pool.query(
+    `INSERT INTO user_daily_checklists (user_id, checklist_date, items, completed_at)
+     VALUES ($1, CURRENT_DATE, $2::jsonb, NULL)`,
+    [user.id, JSON.stringify([{ id: 'lgpd_1', label: 'Apagar conta', done: false }])]
+  );
+
+  const auth = await login(user.email);
+  const response = await request(app)
+    .delete('/api/account')
+    .set('Authorization', `Bearer ${auth.body.accessToken}`);
+
+  assert.equal(response.status, 204);
+
+  const anonymizedUser = await userModel.findById(user.id);
+  const notificationCount = await pool.query('SELECT COUNT(*)::int AS total FROM notifications WHERE user_id = $1', [user.id]);
+  const messageCount = await pool.query('SELECT COUNT(*)::int AS total FROM messages WHERE sender_id = $1 OR receiver_id = $1', [user.id]);
+  const checklistCount = await pool.query('SELECT COUNT(*)::int AS total FROM user_daily_checklists WHERE user_id = $1', [user.id]);
+  const taskRow = await pool.query('SELECT assigned_to, created_by FROM tasks WHERE id = $1', [task.rows[0].id]);
+  const contactRow = await pool.query('SELECT owner_id, assigned_to FROM contacts WHERE id = $1', [contact.rows[0].id]);
+  const materialRow = await pool.query('SELECT uploaded_by FROM materials WHERE id = $1', [material.rows[0].id]);
+  const fileRow = await pool.query('SELECT uploaded_by FROM files WHERE id = $1', [file.rows[0].id]);
+
+  assert.equal(anonymizedUser.is_active, false);
+  assert.match(anonymizedUser.email, /@anon\.invalid$/);
+  assert.equal(anonymizedUser.phone, null);
+  assert.equal(anonymizedUser.mfa_enabled_at, null);
+  assert.equal(notificationCount.rows[0].total, 0);
+  assert.equal(messageCount.rows[0].total, 0);
+  assert.equal(checklistCount.rows[0].total, 0);
+  assert.equal(taskRow.rows[0].assigned_to, null);
+  assert.equal(taskRow.rows[0].created_by, null);
+  assert.equal(contactRow.rows[0].owner_id, null);
+  assert.equal(contactRow.rows[0].assigned_to, null);
+  assert.equal(materialRow.rows[0].uploaded_by, null);
+  assert.equal(fileRow.rows[0].uploaded_by, null);
+
+  await pool.query('DELETE FROM task_assignees WHERE task_id = $1', [task.rows[0].id]);
+  await pool.query('DELETE FROM tasks WHERE id = $1', [task.rows[0].id]);
+  await pool.query('DELETE FROM contacts WHERE id = $1', [contact.rows[0].id]);
+  await pool.query('DELETE FROM materials WHERE id = $1', [material.rows[0].id]);
+  await pool.query('DELETE FROM files WHERE id = $1', [file.rows[0].id]);
+  await userModel.remove(peer.id);
+  await userModel.remove(user.id);
+  await pool.query('DELETE FROM clients WHERE id = $1', [clientId]);
+});
+
+test('comercial nao atualiza invoice de outro tenant por ID', { concurrency: false }, async () => {
+  const suffix = Date.now() + 303;
+  const comercialA = await createUser({
+    name: `Comercial Invoice A ${suffix}`,
+    email: `comercial.invoice.a.${suffix}@one.test`,
+    role: 'comercial',
+  });
+  const comercialB = await createUser({
+    name: `Comercial Invoice B ${suffix}`,
+    email: `comercial.invoice.b.${suffix}@one.test`,
+    role: 'comercial',
+  });
+  const clientAId = await createClient(`Cliente Invoice A ${suffix}`, `Empresa Invoice A ${suffix}`, comercialA.id);
+  const clientBId = await createClient(`Cliente Invoice B ${suffix}`, `Empresa Invoice B ${suffix}`, comercialB.id);
+
+  const invoice = await pool.query(
+    `INSERT INTO invoices (client_id, amount, status, due_date)
+     VALUES ($1, 1200, 'Em aberto', CURRENT_DATE)
+     RETURNING id`,
+    [clientBId]
+  );
+
+  const auth = await login(comercialA.email);
+  const response = await request(app)
+    .put(`/api/invoices/${invoice.rows[0].id}`)
+    .set('Authorization', `Bearer ${auth.body.accessToken}`)
+    .send({
+      status: 'Pago',
+    });
+
+  assert.equal(response.status, 404);
+
+  await userModel.remove(comercialB.id);
+  await userModel.remove(comercialA.id);
+  await pool.query('DELETE FROM invoices WHERE id = $1', [invoice.rows[0].id]);
+  await pool.query('DELETE FROM clients WHERE id IN ($1, $2)', [clientAId, clientBId]);
+});
+
+test('usuario interno nao obtem access-url de arquivo de outro tenant', { concurrency: false }, async () => {
+  const suffix = Date.now() + 304;
+  const clientAId = await createClient(`Cliente File A ${suffix}`, `Empresa File A ${suffix}`);
+  const clientBId = await createClient(`Cliente File B ${suffix}`, `Empresa File B ${suffix}`);
+  const designerA = await createUser({
+    name: `Designer File A ${suffix}`,
+    email: `designer.file.a.${suffix}@one.test`,
+    role: 'designer',
+    clientId: clientAId,
+  });
+  const designerB = await createUser({
+    name: `Designer File B ${suffix}`,
+    email: `designer.file.b.${suffix}@one.test`,
+    role: 'designer',
+    clientId: clientBId,
+  });
+
+  const file = await pool.query(
+    `INSERT INTO files (client_id, uploaded_by, original_name, stored_name, mime_type, size, url)
+     VALUES ($1, $2, 'proposta.pdf', 'proposta.pdf', 'application/pdf', 128, '/uploads/proposta.pdf')
+     RETURNING id`,
+    [clientBId, designerB.id]
+  );
+
+  const auth = await login(designerA.email);
+  const response = await request(app)
+    .get(`/api/files/${file.rows[0].id}/access-url`)
+    .set('Authorization', `Bearer ${auth.body.accessToken}`);
+
+  assert.equal(response.status, 404);
+
+  await pool.query('DELETE FROM files WHERE id = $1', [file.rows[0].id]);
+  await userModel.remove(designerB.id);
+  await userModel.remove(designerA.id);
+  await pool.query('DELETE FROM clients WHERE id IN ($1, $2)', [clientAId, clientBId]);
+});
+
+test('gestor nao atualiza cobranca de outro tenant por ID', { concurrency: false }, async () => {
+  const suffix = Date.now() + 305;
+  const gestorA = await createUser({
+    name: `Gestor Charge A ${suffix}`,
+    email: `gestor.charge.a.${suffix}@one.test`,
+    role: 'gestor',
+  });
+  const gestorB = await createUser({
+    name: `Gestor Charge B ${suffix}`,
+    email: `gestor.charge.b.${suffix}@one.test`,
+    role: 'gestor',
+  });
+  const clientAId = await createClient(`Cliente Charge A ${suffix}`, `Empresa Charge A ${suffix}`, gestorA.id);
+  const clientBId = await createClient(`Cliente Charge B ${suffix}`, `Empresa Charge B ${suffix}`, gestorB.id);
+
+  const charge = await pool.query(
+    `INSERT INTO charges (client_id, created_by, payment_method, description, amount, status)
+     VALUES ($1, $2, 'PAYMENT_LINK', 'Cobranca de outro tenant', 250, 'PENDING')
+     RETURNING id`,
+    [clientBId, gestorB.id]
+  );
+
+  const auth = await login(gestorA.email);
+  const response = await request(app)
+    .patch(`/api/charges/${charge.rows[0].id}`)
+    .set('Authorization', `Bearer ${auth.body.accessToken}`)
+    .send({
+      status: 'RECEIVED',
+    });
+
+  assert.equal(response.status, 404);
+
+  await pool.query('DELETE FROM charges WHERE id = $1', [charge.rows[0].id]);
+  await userModel.remove(gestorB.id);
+  await userModel.remove(gestorA.id);
+  await pool.query('DELETE FROM clients WHERE id IN ($1, $2)', [clientAId, clientBId]);
 });

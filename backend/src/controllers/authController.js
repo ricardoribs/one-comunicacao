@@ -33,6 +33,27 @@ function clearRefreshCookie(res) {
   });
 }
 
+function respondWithAuthResult(res, result) {
+  if (result.refreshToken && result.cookieOptions) {
+    setRefreshCookie(res, result.refreshToken, result.cookieOptions);
+  }
+
+  res.json({
+    accessToken: result.accessToken || null,
+    token: result.token || null,
+    expiresIn: result.expiresIn || null,
+    user: result.user || null,
+    challengeToken: result.challengeToken || null,
+    challenge_token: result.challenge_token || null,
+    mfaRequired: Boolean(result.mfaRequired),
+    mfa_required: Boolean(result.mfa_required),
+    mfaEnrollmentRequired: Boolean(result.mfaEnrollmentRequired),
+    mfa_enrollment_required: Boolean(result.mfa_enrollment_required),
+    mfaType: result.mfaType || result.mfa_type || null,
+    mfa_type: result.mfa_type || result.mfaType || null,
+  });
+}
+
 exports.register = asyncHandler(async (req, res) => {
   const result = await authService.register(req.body);
   res.status(201).json(result);
@@ -40,24 +61,12 @@ exports.register = asyncHandler(async (req, res) => {
 
 exports.login = asyncHandler(async (req, res) => {
   const result = await authService.login(req.body, await tokenMetadata(req));
-  setRefreshCookie(res, result.refreshToken, result.cookieOptions);
-  res.json({
-    accessToken: result.accessToken,
-    token: result.token,
-    expiresIn: result.expiresIn,
-    user: result.user,
-  });
+  respondWithAuthResult(res, result);
 });
 
 exports.refresh = asyncHandler(async (req, res) => {
   const result = await authService.refreshAccessToken(req.cookies?.[env.refreshCookieName], await tokenMetadata(req));
-  setRefreshCookie(res, result.refreshToken, result.cookieOptions);
-  res.json({
-    accessToken: result.accessToken,
-    token: result.token,
-    expiresIn: result.expiresIn,
-    user: result.user,
-  });
+  respondWithAuthResult(res, result);
 });
 
 exports.logout = asyncHandler(async (req, res) => {
@@ -93,6 +102,21 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
   });
 });
 
+exports.setupTotpEnrollment = asyncHandler(async (req, res) => {
+  const result = await authService.setupTotpEnrollment(req.body.challenge_token);
+  res.json(result);
+});
+
+exports.completeTotpEnrollment = asyncHandler(async (req, res) => {
+  const result = await authService.completeTotpEnrollment(req.body.challenge_token, req.body.otp, await tokenMetadata(req));
+  respondWithAuthResult(res, result);
+});
+
+exports.completeTotpLogin = asyncHandler(async (req, res) => {
+  const result = await authService.completeTotpLogin(req.body.challenge_token, req.body.otp, await tokenMetadata(req));
+  respondWithAuthResult(res, result);
+});
+
 exports.me = asyncHandler(async (req, res) => {
   res.json({
     user: {
@@ -110,6 +134,8 @@ exports.me = asyncHandler(async (req, res) => {
       last_seen_location: req.user.last_seen_location || null,
       is_online: Boolean(req.user.is_online),
       email_verified_at: req.user.email_verified_at || null,
+      mfa_enabled_at: req.user.mfa_enabled_at || null,
+      mfa_required: env.mfaRequiredRoles.includes(req.user.role),
       created_at: req.user.created_at || null,
       client_name: req.user.client_name,
       client_company: req.user.client_company,

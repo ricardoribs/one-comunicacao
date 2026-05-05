@@ -1,6 +1,7 @@
 const asyncHandler = require('../utils/asyncHandler');
 const logger = require('../config/logger');
 const campaignModel = require('../models/campaignModel');
+const AppError = require('../utils/AppError');
 const { ensureClientAccess, sanitizeCampaignForUser } = require('../utils/access');
 const { sendPaginated } = require('../utils/response');
 const isRecoverableSchemaError = require('../utils/isRecoverableSchemaError');
@@ -41,10 +42,17 @@ exports.update = asyncHandler(async (req, res) => {
   if (req.body.client_id) {
     await ensureClientAccess(req.user, req.body.client_id);
   }
-  res.json(await campaignModel.update(req.params.id, req.body, req.user));
+  const campaign = await campaignModel.update(req.params.id, req.body, req.user);
+  if (!campaign) {
+    throw new AppError('Campanha nao encontrada.', 404);
+  }
+  res.json(campaign);
 });
 
 exports.remove = asyncHandler(async (req, res) => {
-  await campaignModel.remove(req.params.id, req.user);
+  const removed = await campaignModel.remove(req.params.id, req.user);
+  if (!removed) {
+    throw new AppError('Campanha nao encontrada.', 404);
+  }
   res.status(204).send();
 });

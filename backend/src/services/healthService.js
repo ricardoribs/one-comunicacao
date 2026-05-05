@@ -4,6 +4,7 @@ const sentry = require('../config/sentry');
 const mailService = require('./mailService');
 const uploadService = require('./uploadService');
 const asaasGateway = require('./paymentProviders/asaasGateway');
+const securityAlertService = require('./securityAlertService');
 
 async function checkDatabase() {
   try {
@@ -16,6 +17,15 @@ async function checkDatabase() {
   }
 }
 
+function checkDatabaseTls() {
+  const configured = !env.databaseSslRequired || Boolean(env.databaseSslCaFile);
+  return {
+    status: configured ? 'up' : 'down',
+    required: env.databaseSslRequired,
+    configured,
+  };
+}
+
 function checkSentry() {
   const configured = Boolean(env.sentryDsn);
   const initialized = sentry.isInitialized();
@@ -25,6 +35,16 @@ function checkSentry() {
     status,
     configured,
     initialized,
+    required: env.sentryRequired,
+  };
+}
+
+function checkMfa() {
+  const configured = env.mfaRequiredRoles.length === 0 || Boolean(env.mfaEncryptionKey);
+  return {
+    status: configured ? 'up' : 'down',
+    configured,
+    required_roles: env.mfaRequiredRoles,
   };
 }
 
@@ -39,9 +59,12 @@ async function getPublicHealth() {
 
 async function getInternalHealth() {
   const database = await checkDatabase();
+  const databaseTls = checkDatabaseTls();
   const sentryHealth = checkSentry();
   const mailHealth = mailService.getHealth();
   const uploadHealth = uploadService.getHealth();
+  const alertingHealth = securityAlertService.getHealth();
+  const mfaHealth = checkMfa();
   const paymentHealth =
     env.paymentProvider === 'asaas'
       ? asaasGateway.getHealth()
@@ -54,9 +77,9 @@ async function getInternalHealth() {
 
   let status = 'ok';
 
-  if (database.status === 'down') {
+  if (database.status === 'down' || databaseTls.status === 'down' || mfaHealth.status === 'down') {
     status = 'down';
-  } else if ([sentryHealth, mailHealth, uploadHealth, paymentHealth].some((check) => check.status !== 'up')) {
+  } else if ([sentryHealth, mailHealth, uploadHealth, paymentHealth, alertingHealth].some((check) => check.status !== 'up')) {
     status = 'degraded';
   }
 
@@ -66,10 +89,13 @@ async function getInternalHealth() {
     uptime: Math.round(process.uptime()),
     checks: {
       database,
+      database_tls: databaseTls,
       sentry: sentryHealth,
       mail: mailHealth,
       upload: uploadHealth,
       payment: paymentHealth,
+      alerting: alertingHealth,
+      mfa: mfaHealth,
     },
   };
 }

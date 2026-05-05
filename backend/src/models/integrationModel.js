@@ -215,8 +215,9 @@ async function update(id, data, user) {
 }
 
 async function remove(id, user) {
-  await tenantDb.runWithTenantContext(user, async (client) => {
-    await client.query('DELETE FROM client_integrations WHERE id = $1', [id]);
+  return tenantDb.runWithTenantContext(user, async (client) => {
+    const result = await client.query('DELETE FROM client_integrations WHERE id = $1', [id]);
+    return result.rowCount > 0;
   });
 }
 

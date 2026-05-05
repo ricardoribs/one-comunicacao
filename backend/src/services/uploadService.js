@@ -4,6 +4,7 @@ const cloudinary = require('../config/cloudinary');
 const env = require('../config/env');
 const AppError = require('../utils/AppError');
 const CircuitBreaker = require('../utils/circuitBreaker');
+const malwareScanService = require('./malwareScanService');
 
 const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',
@@ -24,22 +25,26 @@ const ALLOWED_MIME_TYPES = new Set([
 const uploadBreaker = new CircuitBreaker({
   failureThreshold: 5,
   cooldownMs: 30000,
-  timeoutMessage: 'Serviço de upload temporariamente indisponível.',
+  timeoutMessage: 'Servico de upload temporariamente indisponivel.',
 });
+
+function deleteLocalFile(filePath) {
+  if (filePath && fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
+}
 
 async function validateFileSignature(file) {
   if (!file?.path) {
-    throw new AppError('Arquivo não enviado.', 400);
+    throw new AppError('Arquivo nao enviado.', 400);
   }
 
   const { fileTypeFromFile } = await import('file-type');
   const detectedType = await fileTypeFromFile(file.path);
 
   if (!detectedType || !ALLOWED_MIME_TYPES.has(detectedType.mime)) {
-    if (fs.existsSync(file.path)) {
-      fs.unlinkSync(file.path);
-    }
-    throw new AppError('Tipo de arquivo não permitido.', 400);
+    deleteLocalFile(file.path);
+    throw new AppError('Tipo de arquivo nao permitido.', 400);
   }
 
   return detectedType;
@@ -47,14 +52,15 @@ async function validateFileSignature(file) {
 
 async function uploadFile(file) {
   if (!file) {
-    throw new AppError('Arquivo não enviado.', 400);
+    throw new AppError('Arquivo nao enviado.', 400);
   }
 
   const detectedType = await validateFileSignature(file);
+  await malwareScanService.scanUploadedFile(file);
 
   if (env.uploadProvider === 'cloudinary') {
     if (!env.cloudinaryCloudName || !env.cloudinaryApiKey || !env.cloudinaryApiSecret) {
-      throw new AppError('Cloudinary não configurado no ambiente.', 500);
+      throw new AppError('Cloudinary nao configurado no ambiente.', 500);
     }
 
     const result = await uploadBreaker.run(() =>
@@ -65,9 +71,7 @@ async function uploadFile(file) {
       })
     );
 
-    if (fs.existsSync(file.path)) {
-      fs.unlinkSync(file.path);
-    }
+    deleteLocalFile(file.path);
 
     return {
       storedName: result.public_id,
@@ -149,14 +153,14 @@ function inferFileFormat(file = {}) {
 
 async function resolveFileAccessUrl(file) {
   if (!file) {
-    throw new AppError('Arquivo não encontrado.', 404);
+    throw new AppError('Arquivo nao encontrado.', 404);
   }
 
   if (env.uploadProvider === 'cloudinary') {
     const format = inferFileFormat(file);
 
     if (!format) {
-      throw new AppError('Não foi possível gerar a URL protegida deste arquivo.', 500);
+      throw new AppError('Nao foi possivel gerar a URL protegida deste arquivo.', 500);
     }
 
     const expiresAt = Math.floor(Date.now() / 1000) + 300;
@@ -187,12 +191,22 @@ module.exports = {
         Boolean(env.cloudinaryApiKey) &&
         Boolean(env.cloudinaryApiSecret));
     const breaker = uploadBreaker.getState();
+    const malware = malwareScanService.getHealth();
+    const privateDeliveryEnforced = env.uploadProvider !== 'cloudinary' || env.cloudinaryRequirePrivateUpload;
+    const status =
+      configured && !breaker.open && malware.status === 'up' && privateDeliveryEnforced
+        ? 'up'
+        : configured && !breaker.open
+          ? 'degraded'
+          : 'degraded';
 
     return {
       provider: env.uploadProvider,
       configured,
+      privateDeliveryEnforced,
+      malware,
       breaker,
-      status: configured && !breaker.open ? 'up' : 'degraded',
+      status,
     };
   },
 };

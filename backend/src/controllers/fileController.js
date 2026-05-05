@@ -45,10 +45,12 @@ exports.getAccessUrl = asyncHandler(async (req, res) => {
 
 exports.remove = asyncHandler(async (req, res) => {
   const file = await fileModel.findById(req.params.id, req.user);
-  if (file) {
-    file.path = path.resolve(__dirname, '../../uploads', file.stored_name);
-    await uploadService.deleteUploadedFile(file);
-    await fileModel.remove(req.params.id, req.user);
+  if (!file) {
+    return res.status(404).json({ message: 'Arquivo nao encontrado.' });
   }
+
+  file.path = path.resolve(__dirname, '../../uploads', file.stored_name);
+  await uploadService.deleteUploadedFile(file);
+  await fileModel.remove(req.params.id, req.user);
   res.status(204).send();
 });

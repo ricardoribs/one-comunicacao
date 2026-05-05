@@ -145,7 +145,7 @@ async function findByFilePath(filePath, user = null) {
 }
 
 async function remove(id, user = null) {
-  await tenantDb.query(user, {
+  const result = await tenantDb.query(user, {
     table: 'materials',
     scopeConfig: {
       client: 'client_id = $TENANT',
@@ -159,6 +159,7 @@ async function remove(id, user = null) {
     sql: 'DELETE FROM materials WHERE id = $1 __TENANT_SCOPE__',
     params: [id],
   });
+  return result.rowCount > 0;
 }
 
 module.exports = {

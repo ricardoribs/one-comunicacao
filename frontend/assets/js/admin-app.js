@@ -382,6 +382,12 @@ const PROFILE_NOTIFICATION_PREFERENCE_OPTIONS = [
 const CALENDAR_VIEW_START_HOUR = 7;
 const CALENDAR_VIEW_END_HOUR = 22;
 const CALENDAR_SLOT_HEIGHT = 58;
+const mfaLoginState = {
+  challengeToken: "",
+  mode: "",
+  secret: "",
+  pending: false,
+};
 
 const state = {
   session: null,
@@ -7048,6 +7054,10 @@ function bindDataActions() {
     switch (action) {
       case "do-login":
         return doLogin();
+      case "submit-mfa-login":
+        return submitMfaLogin();
+      case "cancel-mfa-login":
+        return resetMfaLoginState();
       case "do-logout":
         return doLogout();
       case "go-to":
@@ -7581,12 +7591,149 @@ async function refreshData() {
   }
 }
 
+function setLoginError(message = "") {
+  const errorNode = document.getElementById("login-error");
+  if (!errorNode) {
+    return;
+  }
+
+  errorNode.textContent = message;
+  errorNode.style.display = message ? "block" : "none";
+}
+
+function syncMfaLoginView() {
+  const emailField = document.getElementById("l-email")?.closest(".login-field");
+  const passwordField = document.getElementById("l-pass")?.closest(".login-field");
+  const loginButton = document.getElementById("login-submit-btn");
+  const mfaStep = document.getElementById("mfa-step");
+  const mfaSetupHelp = document.getElementById("mfa-setup-help");
+  const mfaStatusText = document.getElementById("mfa-status-text");
+  const mfaSecret = document.getElementById("mfa-secret");
+  const isMfaStepActive = Boolean(mfaLoginState.challengeToken);
+
+  [emailField, passwordField].filter(Boolean).forEach((field) => {
+    field.hidden = isMfaStepActive;
+  });
+
+  if (loginButton) {
+    loginButton.hidden = isMfaStepActive;
+  }
+
+  if (!mfaStep) {
+    return;
+  }
+
+  mfaStep.hidden = !isMfaStepActive;
+
+  if (!isMfaStepActive) {
+    if (mfaSetupHelp) {
+      mfaSetupHelp.hidden = true;
+    }
+    if (mfaStatusText) {
+      mfaStatusText.textContent = "Digite o codigo de 6 digitos do seu autenticador.";
+    }
+    if (mfaSecret) {
+      mfaSecret.textContent = "";
+    }
+    return;
+  }
+
+  const enrollmentMode = mfaLoginState.mode === "enroll";
+  if (mfaSetupHelp) {
+    mfaSetupHelp.hidden = !enrollmentMode;
+  }
+  if (mfaStatusText) {
+    mfaStatusText.textContent = enrollmentMode
+      ? "Valide o primeiro codigo TOTP depois de cadastrar a chave abaixo no seu autenticador."
+      : "Digite o codigo atual do seu autenticador para concluir o acesso.";
+  }
+  if (mfaSecret) {
+    mfaSecret.textContent = enrollmentMode ? mfaLoginState.secret : "";
+  }
+}
+
+function resetMfaLoginState() {
+  mfaLoginState.challengeToken = "";
+  mfaLoginState.mode = "";
+  mfaLoginState.secret = "";
+  mfaLoginState.pending = false;
+
+  const otpInput = document.getElementById("mfa-otp");
+  if (otpInput) {
+    otpInput.value = "";
+  }
+
+  syncMfaLoginView();
+}
+
+async function showMfaChallenge(session) {
+  mfaLoginState.challengeToken = session.challenge_token || session.challengeToken || "";
+  mfaLoginState.mode = session.mfa_enrollment_required || session.mfaEnrollmentRequired ? "enroll" : "login";
+  mfaLoginState.secret = "";
+
+  if (mfaLoginState.mode === "enroll") {
+    const setup = await apiFetch("/auth/mfa/totp/setup", {
+      method: "POST",
+      body: JSON.stringify({
+        challenge_token: mfaLoginState.challengeToken,
+      }),
+      auth: false,
+      timeoutMs: 20000
+    });
+
+    mfaLoginState.secret = setup.secret_formatted || setup.secret || "";
+  }
+
+  syncMfaLoginView();
+  document.getElementById("mfa-otp")?.focus();
+}
+
+async function submitMfaLogin() {
+  const otp = document.getElementById("mfa-otp")?.value?.trim() || "";
+  const submitButton = document.querySelector('[data-action="submit-mfa-login"]');
+
+  await FORM.submit(
+    { querySelector: () => submitButton },
+    async () => {
+      if (!mfaLoginState.challengeToken) {
+        throw new Error("Reinicie o login para continuar.");
+      }
+
+      if (!/^\d{6}$/.test(otp)) {
+        throw new Error("Informe um codigo TOTP valido com 6 digitos.");
+      }
+
+      const path = mfaLoginState.mode === "enroll" ? "/auth/mfa/totp/enroll" : "/auth/mfa/totp/verify";
+      const session = await apiFetch(path, {
+        method: "POST",
+        body: JSON.stringify({
+          challenge_token: mfaLoginState.challengeToken,
+          otp,
+        }),
+        auth: false,
+        timeoutMs: 20000
+      });
+
+      if (session.user.role === "client") {
+        throw new Error("Este painel é restrito aos perfis internos.");
+      }
+
+      resetMfaLoginState();
+      saveSession(session);
+      await initializeApp();
+    },
+    { loadingText: "Validando...", button: submitButton }
+  )().catch((error) => {
+    const message = String(error?.message || "").trim();
+    setLoginError(message || "Nao foi possivel validar o MFA.");
+  });
+}
+
 async function doLogin() {
   const email = document.getElementById("l-email").value.trim();
   const password = document.getElementById("l-pass").value;
-  const errorNode = document.getElementById("login-error");
-  errorNode.style.display = "none";
-  const submitButton = document.querySelector(".login-btn");
+  setLoginError("");
+  const submitButton = document.getElementById("login-submit-btn");
 
   await FORM.submit(
     { querySelector: () => submitButton },
@@ -7602,6 +7749,11 @@ async function doLogin() {
         timeoutMs: 20000
       });
 
+      if (session.mfa_required || session.mfaRequired || session.mfa_enrollment_required || session.mfaEnrollmentRequired) {
+        await showMfaChallenge(session);
+        return;
+      }
+
       if (session.user.role === "client") {
         throw new Error("Este painel é restrito aos perfis internos.");
       }
@@ -7616,9 +7768,10 @@ async function doLogin() {
       ? "Digite um e-mail e uma senha."
       : /login ou senha incorretos|e-mail ou senha inv[aá]lidos|informe um e-mail v[aá]lido|senha obrigat[oó]ria/i.test(message)
         ? "Login ou senha incorretos."
+        : /codigo totp|codigo mfa|mfa/i.test(message)
+          ? message
         : message || "Erro ao entrar no painel.";
-    errorNode.textContent = normalizedMessage;
-    errorNode.style.display = "block";
+    setLoginError(normalizedMessage);
   });
 }
 
@@ -7643,6 +7796,7 @@ async function initializeApp() {
 function doLogout() {
   closeSidebar();
   stopNotificationPolling();
+  resetMfaLoginState();
   APP.logout({ reason: "manual" }).finally(() => {
     clearSession();
     window.location.href = "/";
@@ -8720,7 +8874,7 @@ function openModal(type, id = null) {
         <div class="field form-full"><label>Título</label><input name="title" value="${escapeHtml(material.title || "")}" required></div>
         <div class="field"><label>Cliente</label><select name="client_id">${clientOptions(material.client_id)}</select></div>
         <div class="field"><label>Campanha</label><select name="campaign_id"><option value="">Nenhuma</option>${campaignOptions(material.client_id, material.campaign_id)}</select></div>
-        <div class="field"><label>Status</label><select name="status"><option ${material.status === "Pendente" ? "selected" : ""}>Pendente</option><option ${material.status === "Aprovado" ? "selected" : ""}>Aprovado</option><option ${material.status === "Revisao" ? "selected" : ""}>Revisão</option></select></div>
+        <div class="field"><label>Status</label><select name="status"><option value="Pendente" ${material.status === "Pendente" ? "selected" : ""}>Pendente</option><option value="Aprovado" ${material.status === "Aprovado" ? "selected" : ""}>Aprovado</option><option value="Revisao" ${material.status === "Revisao" ? "selected" : ""}>Revisão</option><option value="Rejeitado" ${material.status === "Rejeitado" ? "selected" : ""}>Rejeitado</option></select></div>
         <div class="field form-full"><label>Arquivo</label><input type="file" name="file" accept=".jpg,.jpeg,.png,.webp,.gif,.heic,.heif,.pdf,.zip,.docx,.xlsx,.mp4,.mov,.webm"><div class="field-help">Formatos aceitos: imagem, PDF, ZIP, DOCX, XLSX, MP4, MOV e WEBM.</div></div>
       `,
       material.id ? "Salvar entrega" : "Criar entrega"
@@ -9319,6 +9473,7 @@ async function boot() {
   APP.registerActivityTracking();
   APP.onLogout((reason) => {
     clearSession();
+    resetMfaLoginState();
     if (reason === "idle-timeout") {
       window.location.href = "/?session=expirada";
       return;
@@ -9341,6 +9496,7 @@ async function boot() {
   }
 
   clearSession();
+  resetMfaLoginState();
   document.getElementById("login-screen").classList.remove("hidden");
 
   document.addEventListener("keydown", (event) => {

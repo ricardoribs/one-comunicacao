@@ -66,5 +66,9 @@ exports.update = asyncHandler(async (req, res) => {
   if (req.body.client_id) {
     await ensureClientAccess(req.user, req.body.client_id);
   }
-  res.json(await chargeModel.update(req.params.id, req.body, req.user));
+  const charge = await chargeModel.update(req.params.id, req.body, req.user);
+  if (!charge) {
+    throw new AppError('Cobranca nao encontrada.', 404);
+  }
+  res.json(charge);
 });

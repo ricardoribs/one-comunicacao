@@ -1,5 +1,6 @@
 const asyncHandler = require('../utils/asyncHandler');
 const integrationModel = require('../models/integrationModel');
+const AppError = require('../utils/AppError');
 const { ensureClientAccess } = require('../utils/access');
 const { sendPaginated } = require('../utils/response');
 
@@ -17,10 +18,17 @@ exports.update = asyncHandler(async (req, res) => {
     await ensureClientAccess(req.user, req.body.client_id);
   }
 
-  res.json(await integrationModel.update(req.params.id, req.body, req.user));
+  const integration = await integrationModel.update(req.params.id, req.body, req.user);
+  if (!integration) {
+    throw new AppError('Integracao nao encontrada.', 404);
+  }
+  res.json(integration);
 });
 
 exports.remove = asyncHandler(async (req, res) => {
-  await integrationModel.remove(req.params.id, req.user);
+  const removed = await integrationModel.remove(req.params.id, req.user);
+  if (!removed) {
+    throw new AppError('Integracao nao encontrada.', 404);
+  }
   res.status(204).send();
 });
