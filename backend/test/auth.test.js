@@ -51,6 +51,7 @@ async function completeLoginWithMfa(email, initialResponse, ipAddress) {
       .send({ challenge_token: challengeToken });
     assert.equal(setup.status, 200);
     assert.ok(setup.body.secret);
+    assert.match(setup.body.qr_code_data_url || '', /^data:image\/png;base64,/);
     const otp = mfaService.generateCurrentOtp(setup.body.secret);
     return request(app)
       .post('/api/auth/mfa/totp/enroll')

@@ -388,6 +388,7 @@ const mfaLoginState = {
   secret: "",
   secretRaw: "",
   secretVisible: false,
+  qrCodeDataUrl: "",
   pending: false,
 };
 
@@ -7642,6 +7643,8 @@ function syncMfaLoginView() {
   const mfaStatusText = document.getElementById("mfa-status-text");
   const mfaSecret = document.getElementById("mfa-secret");
   const mfaSecretToggle = document.getElementById("mfa-secret-toggle");
+  const mfaQrShell = document.getElementById("mfa-qr-shell");
+  const mfaQrImage = document.getElementById("mfa-qr-image");
   const isMfaStepActive = Boolean(mfaLoginState.challengeToken);
 
   [emailField, passwordField].filter(Boolean).forEach((field) => {
@@ -7672,6 +7675,12 @@ function syncMfaLoginView() {
     if (mfaSecretToggle) {
       mfaSecretToggle.textContent = "Mostrar chave manual";
     }
+    if (mfaQrShell) {
+      mfaQrShell.hidden = true;
+    }
+    if (mfaQrImage) {
+      mfaQrImage.removeAttribute("src");
+    }
     return;
   }
 
@@ -7683,6 +7692,16 @@ function syncMfaLoginView() {
     mfaStatusText.textContent = enrollmentMode
       ? "Cadastre o autenticador e valide o primeiro codigo TOTP para concluir o primeiro acesso."
       : "Digite o codigo atual do seu autenticador para concluir o acesso.";
+  }
+  if (mfaQrShell) {
+    mfaQrShell.hidden = !(enrollmentMode && mfaLoginState.qrCodeDataUrl);
+  }
+  if (mfaQrImage) {
+    if (enrollmentMode && mfaLoginState.qrCodeDataUrl) {
+      mfaQrImage.src = mfaLoginState.qrCodeDataUrl;
+    } else {
+      mfaQrImage.removeAttribute("src");
+    }
   }
   if (mfaSecret) {
     const shouldShowSecret = enrollmentMode && mfaLoginState.secretVisible && Boolean(mfaLoginState.secret);
@@ -7701,6 +7720,7 @@ function resetMfaLoginState() {
   mfaLoginState.secret = "";
   mfaLoginState.secretRaw = "";
   mfaLoginState.secretVisible = false;
+  mfaLoginState.qrCodeDataUrl = "";
   mfaLoginState.pending = false;
 
   const otpInput = document.getElementById("mfa-otp");
@@ -7717,6 +7737,7 @@ async function showMfaChallenge(session) {
   mfaLoginState.secret = "";
   mfaLoginState.secretRaw = "";
   mfaLoginState.secretVisible = false;
+  mfaLoginState.qrCodeDataUrl = "";
 
   if (mfaLoginState.mode === "enroll") {
     const setup = await apiFetch("/auth/mfa/totp/setup", {
@@ -7730,6 +7751,7 @@ async function showMfaChallenge(session) {
 
     mfaLoginState.secretRaw = setup.secret || "";
     mfaLoginState.secret = setup.secret_formatted || formatMfaSecret(setup.secret || "");
+    mfaLoginState.qrCodeDataUrl = setup.qr_code_data_url || "";
   }
 
   syncMfaLoginView();
