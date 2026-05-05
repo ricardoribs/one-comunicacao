@@ -241,13 +241,26 @@
           throw new Error("Não foi possível preparar o arquivo para download.");
         }
 
-        if (downloadWindow) {
-          downloadWindow.location = response.url;
-        } else {
-          window.open(response.url, "_blank", "noopener,noreferrer");
+        const assetResponse = await fetch(response.url, {
+          method: "GET",
+          credentials: "omit"
+        });
+
+        if (!assetResponse.ok) {
+          throw new Error("NÃ£o foi possÃ­vel abrir o arquivo solicitado.");
         }
 
-        return response.url;
+        const blob = await assetResponse.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        if (downloadWindow) {
+          downloadWindow.location = blobUrl;
+        } else {
+          window.open(blobUrl, "_blank", "noopener,noreferrer");
+        }
+
+        window.setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60000);
+        return blobUrl;
       } catch (error) {
         downloadWindow?.close();
         throw error;
