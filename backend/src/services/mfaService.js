@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { generateSecret, generateSync, verifySync, generateURI } = require('otplib');
+const QRCode = require('qrcode');
 const env = require('../config/env');
 const AppError = require('../utils/AppError');
 
@@ -139,12 +140,25 @@ function buildOtpUri(user, secret) {
   });
 }
 
-function buildEnrollmentResponse(user, secret) {
+async function buildEnrollmentResponse(user, secret) {
   const otpauthUrl = buildOtpUri(user, secret);
+  let qrCodeDataUrl = null;
+
+  try {
+    qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl, {
+      errorCorrectionLevel: 'M',
+      margin: 1,
+      width: 240,
+    });
+  } catch (_error) {
+    qrCodeDataUrl = null;
+  }
+
   return {
     secret,
     secret_formatted: formatSecret(secret),
     otpauth_url: otpauthUrl,
+    qr_code_data_url: qrCodeDataUrl,
     issuer: env.mfaIssuer,
     account_name: user.email,
   };

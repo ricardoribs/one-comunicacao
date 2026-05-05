@@ -326,7 +326,7 @@ async function setupTotpEnrollment(challengeToken) {
     await userModel.storePendingMfaSecret(user.id, mfaService.encryptSecret(secret));
   }
 
-  return mfaService.buildEnrollmentResponse(user, secret);
+  return await mfaService.buildEnrollmentResponse(user, secret);
 }
 
 async function completeTotpEnrollment(challengeToken, otp, metadata = {}) {
