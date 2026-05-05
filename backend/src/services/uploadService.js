@@ -117,6 +117,9 @@ async function deleteUploadedFile(file) {
 }
 
 function inferCloudinaryResourceType(mimeType = '') {
+  if (mimeType === 'application/pdf') {
+    return 'image';
+  }
   if (mimeType.startsWith('image/')) {
     return 'image';
   }
@@ -183,6 +186,10 @@ module.exports = {
   uploadFile,
   deleteUploadedFile,
   resolveFileAccessUrl,
+  __private: {
+    inferCloudinaryResourceType,
+    inferFileFormat,
+  },
   getHealth() {
     const configured =
       env.uploadProvider === 'local' ||
