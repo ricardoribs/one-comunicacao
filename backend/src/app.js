@@ -67,8 +67,14 @@ if (env.isProduction && env.databaseSslRequired && !env.databaseSslCaFile) {
   throw new Error('DATABASE_SSL_REQUIRED=true exige DATABASE_SSL_CA_FILE em producao.');
 }
 
-if (env.isProduction && env.uploadRequireMalwareScan && env.malwareScanProvider === 'none') {
-  throw new Error('UPLOAD_REQUIRE_MALWARE_SCAN=true exige um provedor de malware scan configurado.');
+if (env.isProduction && env.uploadRequireMalwareScan) {
+  if (env.malwareScanProvider === 'none') {
+    throw new Error('UPLOAD_REQUIRE_MALWARE_SCAN=true exige MALWARE_SCAN_PROVIDER configurado. Use clamav.');
+  }
+
+  if (env.malwareScanProvider === 'clamav' && !env.clamavHost) {
+    throw new Error('MALWARE_SCAN_PROVIDER=clamav exige CLAMAV_HOST configurado em producao.');
+  }
 }
 
 if (env.isProduction && env.sentryRequired && !env.sentryDsn) {
