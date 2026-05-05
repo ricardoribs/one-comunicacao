@@ -236,6 +236,7 @@ Controles adicionais:
 - `DATABASE_SSL_REQUIRED=true` e `DATABASE_SSL_CA_FILE` tornam o boot fail-closed para conexoes sem TLS validado.
 - perfis `admin`, `gestor` e `comercial` entram em MFA TOTP obrigatorio no primeiro login.
 - uploads so devem subir para o provider depois do scan antimalware limpo.
+- com `UPLOAD_REQUIRE_MALWARE_SCAN=true`, o boot deve falhar se `MALWARE_SCAN_PROVIDER` ou `CLAMAV_HOST` nao estiverem definidos corretamente.
 - `SECURITY_ALERT_WEBHOOK_URL` deve apontar para o canal ou pager operacional do time.
 
 Referencias operacionais:
