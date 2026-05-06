@@ -32,8 +32,8 @@
   function resolveLoginPath() {
     const currentPath = window.location.pathname || "/";
 
-    if (currentPath.includes("painel-interno")) {
-      return "/painel-interno.html";
+    if (currentPath.includes("/app/io") || currentPath.includes("painel-interno")) {
+      return "/app/io";
     }
 
     return "/";

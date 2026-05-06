@@ -349,8 +349,12 @@ app.use('/api/account', accountRoutes);
 app.use('/api/address', addressRoutes);
 app.use('/api/checklists', checklistRoutes);
 
-app.get('/painel-interno.html', (req, res) => {
+app.get('/app/io', (req, res) => {
   sendHtmlPage(res, 'painel-interno.html');
+});
+
+app.get('/painel-interno.html', (req, res) => {
+  res.redirect(302, '/app/io');
 });
 
 app.get('/politica-de-privacidade.html', (req, res) => {
