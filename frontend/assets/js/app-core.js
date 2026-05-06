@@ -137,7 +137,7 @@
         clearSession();
         notifyLogout("session-expired");
         redirectToLogin();
-        throw new Error("Sua sessao expirou. Faca login novamente.");
+        throw new Error("Sua sessão expirou. Faça login novamente.");
       }
 
       const session = await response.json();
@@ -179,7 +179,7 @@
       const session = await ensureFreshSession();
       const accessToken = session?.accessToken || session?.token;
       if (!accessToken) {
-        throw new Error("Sua sessao expirou. Faca login novamente.");
+        throw new Error("Sua sessão expirou. Faça login novamente.");
       }
       headers.set("Authorization", `Bearer ${accessToken}`);
     }
@@ -212,13 +212,13 @@
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data.message || "Nao foi possivel concluir a solicitacao.");
+        throw new Error(data.message || "Não foi possível concluir a solicitação.");
       }
 
       return data;
     } catch (error) {
       if (error.name === "AbortError") {
-        throw new Error("A requisicao demorou mais do que o esperado. Tente novamente.");
+        throw new Error("A requisição demorou mais do que o esperado. Tente novamente.");
       }
 
       throw error;
@@ -240,7 +240,7 @@
     const accessToken = session?.accessToken || session?.token;
 
     if (!accessToken) {
-      throw new Error("Sua sessao expirou. Faca login novamente.");
+      throw new Error("Sua sessão expirou. Faça login novamente.");
     }
 
     const response = await fetch(buildOriginUrl(url), {
@@ -257,7 +257,7 @@
     }
 
     if (!response.ok) {
-      throw new Error("Nao foi possivel abrir o arquivo solicitado.");
+      throw new Error("Não foi possível abrir o arquivo solicitado.");
     }
 
     return response.blob();
@@ -265,7 +265,7 @@
 
   async function openAuthorizedUrl(url) {
     if (!url) {
-      throw new Error("Arquivo ainda nao disponivel.");
+      throw new Error("Arquivo ainda não disponível.");
     }
 
     const normalizedUrl = normalizeProtectedResourceUrl(url);

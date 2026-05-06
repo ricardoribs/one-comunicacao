@@ -7778,7 +7778,7 @@ async function copyMfaSecret() {
     await copyTextToClipboard(mfaLoginState.secretRaw);
     showToast("Chave manual copiada. Guarde-a com cuidado e finalize o cadastro no autenticador.");
   } catch (_error) {
-    showToast("Nao foi possivel copiar a chave manual agora.");
+    showToast("Não foi possível copiar a chave manual agora.");
   }
 }
 
@@ -7819,7 +7819,7 @@ async function submitMfaLogin() {
     { loadingText: "Validando...", button: submitButton }
   )().catch((error) => {
     const message = String(error?.message || "").trim();
-    setLoginError(message || "Nao foi possivel validar o MFA.");
+    setLoginError(message || "Não foi possível validar o MFA.");
   });
 }
 
@@ -7862,7 +7862,7 @@ async function doLogin() {
       ? "Digite um e-mail e uma senha."
       : /login ou senha incorretos|e-mail ou senha inv[aá]lidos|informe um e-mail v[aá]lido|senha obrigat[oó]ria/i.test(message)
         ? "Login ou senha incorretos."
-        : /codigo totp|codigo mfa|mfa/i.test(message)
+        : /c[oó]digo totp|c[oó]digo mfa|mfa/i.test(message)
           ? message
         : message || "Erro ao entrar no painel.";
     setLoginError(normalizedMessage);
