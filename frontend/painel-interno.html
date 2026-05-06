@@ -130,8 +130,9 @@ button,.btn,.sb-link,.tab,a{touch-action:manipulation}
 .login-btn{width:100%;padding:15px var(--space-4);background:var(--pink);color:#fff;border:none;font-family:var(--font-login);font-size:14px;font-weight:700;cursor:pointer;margin-top:var(--space-4);letter-spacing:.02em;transition:background var(--tr),transform var(--tr);border-radius:2px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.12);text-transform:none}
 .login-btn:hover{background:var(--pink-dark);transform:translateY(-1px)}
 .login-error{font-size:var(--text-sm);color:var(--pink);margin-top:var(--space-3);display:none}
-.login-secondary-actions{display:flex;gap:12px;margin-top:var(--space-4)}
-.login-secondary-actions .login-btn{margin-top:0}
+.login-secondary-actions{display:flex;align-items:stretch;gap:12px;margin-top:var(--space-4)}
+.login-secondary-actions .login-btn{margin-top:0;flex:1;width:auto;min-width:0}
+.login-secondary-actions .login-link-btn{flex:0 0 104px;display:inline-flex;align-items:center;justify-content:center;padding:0 18px}
 .login-link-btn{flex:1;min-height:48px;border:1px solid #ddd7d0;background:#fff;color:var(--ink);font-family:var(--font-login);font-size:14px;font-weight:600;border-radius:8px;cursor:pointer}
 .login-link-btn:hover{border-color:var(--pink);color:var(--pink)}
 .login-secret-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
@@ -1971,7 +1972,7 @@ summary:focus-visible,
               <input type="password" id="l-pass" placeholder="••••••••" autocomplete="new-password"/>
             </div>
             <div id="mfa-step" hidden>
-              <p class="login-note" id="mfa-status-text">Digite o codigo de 6 digitos do seu autenticador.</p>
+                <p class="login-note" id="mfa-status-text">Digite o código de verificação de 6 dígitos do seu autenticador.</p>
               <div id="mfa-setup-help" hidden>
                 <p class="login-note">Abra seu app autenticador e escaneie o QR code abaixo. Use a chave manual apenas se o app não conseguir ler o QR.</p>
                 <div class="login-qr-shell" id="mfa-qr-shell" hidden>
@@ -1987,7 +1988,7 @@ summary:focus-visible,
                 <div class="login-secret-box" id="mfa-secret" hidden></div>
               </div>
               <div class="login-field">
-                <label for="mfa-otp">Codigo TOTP</label>
+                  <label for="mfa-otp">Código de verificação</label>
                 <input type="text" id="mfa-otp" placeholder="123456" inputmode="numeric" autocomplete="one-time-code" maxlength="6"/>
               </div>
               <div class="login-secondary-actions">
