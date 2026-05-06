@@ -7666,7 +7666,8 @@ function syncMfaLoginView() {
       mfaSetupHelp.hidden = true;
     }
     if (mfaStatusText) {
-      mfaStatusText.textContent = "Digite o código de verificação de 6 dígitos do seu autenticador.";
+      mfaStatusText.hidden = true;
+      mfaStatusText.textContent = "";
     }
     if (mfaSecret) {
       mfaSecret.textContent = "";
@@ -7689,9 +7690,10 @@ function syncMfaLoginView() {
     mfaSetupHelp.hidden = !enrollmentMode;
   }
   if (mfaStatusText) {
+    mfaStatusText.hidden = !enrollmentMode;
     mfaStatusText.textContent = enrollmentMode
       ? "Cadastre o autenticador e valide o primeiro código de verificação para concluir o primeiro acesso."
-      : "Digite o código de verificação atual do seu autenticador para concluir o acesso.";
+      : "";
   }
   if (mfaQrShell) {
     mfaQrShell.hidden = !(enrollmentMode && mfaLoginState.qrCodeDataUrl);
