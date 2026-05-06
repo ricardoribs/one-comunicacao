@@ -214,7 +214,8 @@ body.sidebar-open #sidebar-backdrop{display:block;opacity:1}
 .notification-shell{position:relative;display:flex;align-items:center;flex:0 0 auto}
 .notification-trigger{position:relative;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border:1px solid var(--border);background:var(--white);color:var(--text);cursor:pointer;transition:var(--tr);border-radius:2px}
 .notification-trigger:hover{border-color:rgba(232,52,105,.32);color:var(--pink)}
-.notification-trigger svg{width:18px;height:18px;fill:currentColor}
+.notification-trigger-icon{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;line-height:0;pointer-events:none}
+.notification-trigger svg{display:block;width:18px;height:18px;fill:currentColor}
 .notification-badge{position:absolute;top:-6px;right:-6px;min-width:22px;height:22px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center;background:var(--pink);color:#fff;font-size:12px;font-weight:700;letter-spacing:.04em;border-radius:999px;box-shadow:0 8px 16px rgba(232,52,105,.24)}
 .notification-panel{position:absolute;top:calc(100% + 10px);right:0;width:min(380px,calc(100vw - 32px));background:var(--white);border:1px solid var(--border);box-shadow:0 24px 40px rgba(13,13,15,.14);display:none;flex-direction:column;max-height:420px;overflow:hidden;z-index:140;border-radius:6px}
 .notification-shell.open .notification-panel{display:flex}
@@ -2151,6 +2152,9 @@ summary:focus-visible,
       <h1 class="text-[28px] font-bold ink-black tracking-tight leading-tight">Meu Perfil</h1>
       <p class="text-[13px] ash-gray font-medium mt-0.5">Informações da sua conta interna e permissões.</p>
     </div>
+    <div class="flex items-center gap-3 topbar-actions">
+      <div class="notification-shell" data-notification-shell="1"></div>
+    </div>
   </header>
 
   <div class="flex-1 p-8 overflow-y-auto custom-scroll">
@@ -2262,16 +2266,14 @@ summary:focus-visible,
           <p class="text-[13px] text-[#6a6a6a] dark:text-gray-400 font-medium mt-0.5">Kanban · Tarefas em tempo real</p>
         </div>
         
-        <div class="flex items-center gap-3 flex-wrap">
+        <div class="flex items-center gap-3 flex-wrap topbar-actions">
           <select id="kanban-client-filter" class="h-[36px] px-3 text-[13px] font-medium border border-[#dddddd] dark:border-[#333333] rounded-[8px] bg-white dark:bg-transparent hover:bg-gray-50 dark:hover:bg-white/5 transition-colors outline-none cursor-pointer" onchange="filterKanban(this.value)">
             <option value="">Todos os clientes</option>
             <option>Sabor & Brasa</option>
             <option>ExpoBusiness</option>
           </select>
           <button type="button" data-action="open-modal" data-modal="nova-tarefa" class="h-[36px] inline-flex items-center justify-center px-5 text-[13px] font-medium text-white rausch-bg rounded-[8px] hover:scale-[0.98] transition-transform shadow-sm">+ Nova tarefa</button>
-          <button type="button" class="w-9 h-[36px] hairline-border rounded-full flex items-center justify-center hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ml-1">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-          </button>
+          <div class="notification-shell" data-notification-shell="1"></div>
         </div>
       </header>
 
@@ -2452,13 +2454,11 @@ summary:focus-visible,
         <p class="text-[13px] ash-gray font-medium mt-0.5">Design, copy e landing pages</p>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 topbar-actions">
         <button id="btn-new-delivery" class="px-5 py-2 text-sm font-medium text-white rausch-bg rounded-[8px] hover:scale-[0.98] transition-transform" data-action="open-modal" data-modal="nova-entrega">
           + Nova entrega
         </button>
-        <button type="button" class="w-10 h-10 hairline-border rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors" aria-label="Notificações">
-          <svg class="w-4 h-4 text-[#222222]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-        </button>
+        <div class="notification-shell" data-notification-shell="1"></div>
       </div>
     </header>
 
@@ -2746,7 +2746,7 @@ summary:focus-visible,
         <p class="text-[13px] ash-gray font-medium mt-0.5">Receitas, custos, margens e acompanhamento de cobranças</p>
       </div>
 
-      <div class="flex items-center gap-2.5 flex-wrap">
+      <div class="flex items-center gap-2.5 flex-wrap topbar-actions">
         <select id="finance-period-filter" class="h-[36px] px-3 text-[13px] font-medium ink-black bg-white hairline-border rounded-[8px] outline-none hover:bg-gray-50 cursor-pointer" onchange="setFinancePeriodFilter(this.value)"></select>
         <button class="h-[36px] inline-flex items-center justify-center px-4 text-[13px] font-medium ink-black bg-white hairline-border rounded-[8px] hover:bg-gray-50 transition-colors" data-action="export-finance">
           Exportar CSV
@@ -2761,9 +2761,7 @@ summary:focus-visible,
         <button class="h-[36px] inline-flex items-center justify-center px-5 text-[13px] font-medium text-white rausch-bg rounded-[8px] hover:scale-[0.98] transition-transform" data-action="open-modal" data-modal="nova-fatura">
           + Nova fatura
         </button>
-        <button class="h-[36px] w-[36px] hairline-border rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors" type="button" aria-label="Notificações">
-          <svg class="w-4 h-4 text-[#222222]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-        </button>
+        <div class="notification-shell" data-notification-shell="1"></div>
       </div>
     </header>
 
