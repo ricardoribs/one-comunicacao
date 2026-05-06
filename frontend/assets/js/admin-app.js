@@ -7666,7 +7666,7 @@ function syncMfaLoginView() {
       mfaSetupHelp.hidden = true;
     }
     if (mfaStatusText) {
-      mfaStatusText.textContent = "Digite o codigo de 6 digitos do seu autenticador.";
+      mfaStatusText.textContent = "Digite o código de verificação de 6 dígitos do seu autenticador.";
     }
     if (mfaSecret) {
       mfaSecret.textContent = "";
@@ -7690,8 +7690,8 @@ function syncMfaLoginView() {
   }
   if (mfaStatusText) {
     mfaStatusText.textContent = enrollmentMode
-      ? "Cadastre o autenticador e valide o primeiro codigo TOTP para concluir o primeiro acesso."
-      : "Digite o codigo atual do seu autenticador para concluir o acesso.";
+      ? "Cadastre o autenticador e valide o primeiro código de verificação para concluir o primeiro acesso."
+      : "Digite o código de verificação atual do seu autenticador para concluir o acesso.";
   }
   if (mfaQrShell) {
     mfaQrShell.hidden = !(enrollmentMode && mfaLoginState.qrCodeDataUrl);
@@ -7774,7 +7774,7 @@ async function copyMfaSecret() {
 
   try {
     await copyTextToClipboard(mfaLoginState.secretRaw);
-    showToast("Chave TOTP copiada. Guarde-a com cuidado e finalize o cadastro no autenticador.");
+    showToast("Chave manual copiada. Guarde-a com cuidado e finalize o cadastro no autenticador.");
   } catch (_error) {
     showToast("Nao foi possivel copiar a chave manual agora.");
   }
@@ -7792,7 +7792,7 @@ async function submitMfaLogin() {
       }
 
       if (!/^\d{6}$/.test(otp)) {
-        throw new Error("Informe um codigo TOTP valido com 6 digitos.");
+        throw new Error("Informe um código de verificação válido com 6 dígitos.");
       }
 
       const path = mfaLoginState.mode === "enroll" ? "/auth/mfa/totp/enroll" : "/auth/mfa/totp/verify";
