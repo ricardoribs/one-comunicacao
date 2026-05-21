@@ -2362,12 +2362,19 @@ summary:focus-visible,
 
       <div class="flex-1 flex flex-col p-8 overflow-hidden">
         <div class="kanban-head-row flex flex-col xl:flex-row items-stretch xl:items-center gap-6 mb-8 flex-shrink-0 w-full">
-          <div id="kanban-exact-quick-focus" class="flex-1 flex items-center gap-3 bg-white dark:bg-[#222222] border border-[#dddddd] dark:border-[#333333] rounded-[8px] px-2 py-2 shadow-sm w-full">
-            <form id="kanban-focus-form" data-checklist-form class="flex-1 flex items-center gap-3 min-w-0">
-              <div class="w-5 h-5 ml-2 border-2 border-gray-300 dark:border-gray-500 rounded-sm flex-shrink-0"></div>
-              <input id="kanban-focus-input" type="text" name="checklist-item" placeholder="Adicione o primeiro item para focar hoje..." class="flex-1 bg-transparent border-none focus:ring-0 text-[14px] font-medium text-[#222222] dark:text-white outline-none placeholder-gray-400">
-              <button type="submit" class="px-4 py-1.5 bg-[#f2f2f2] dark:bg-[#333333] hover:bg-[#e2e2e2] dark:hover:bg-[#444444] text-[13px] font-semibold text-[#222222] dark:text-white rounded-[6px] transition-colors flex-shrink-0">Adicionar</button>
-            </form>
+          <div id="kanban-exact-quick-focus" class="kanban-checklist-card flex-1 bg-white dark:bg-[#222222] border border-[#dddddd] dark:border-[#333333] rounded-[8px] px-5 py-4 shadow-sm w-full">
+            <div class="kanban-checklist-shell">
+              <div class="kanban-checklist-toolbar">
+                <form id="kanban-focus-form" data-checklist-form class="kanban-focus-form">
+                  <div class="kanban-focus-icon" aria-hidden="true"></div>
+                  <input id="kanban-focus-input" type="text" name="checklist-item" placeholder="Adicione o primeiro item para focar hoje..." class="checklist-input flex-1 bg-transparent border-none focus:ring-0 text-[14px] font-medium text-[#222222] dark:text-white outline-none placeholder-gray-400">
+                  <button type="submit" class="px-4 py-1.5 bg-[#f2f2f2] dark:bg-[#333333] hover:bg-[#e2e2e2] dark:hover:bg-[#444444] text-[13px] font-semibold text-[#222222] dark:text-white rounded-[6px] transition-colors flex-shrink-0">Adicionar</button>
+                </form>
+                <div id="kanban-focus-meta" class="kanban-quick-meta"></div>
+              </div>
+              <div id="kanban-focus-active" class="checklist-list"></div>
+              <div id="kanban-focus-history" class="kanban-history-panel" data-checklist-history-panel hidden></div>
+            </div>
           </div>
 
           <div id="kanban-exact-overdue" class="kanban-overdue-banner w-full xl:w-auto flex-shrink-0" aria-live="polite"></div>
