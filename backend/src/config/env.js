@@ -91,6 +91,7 @@ module.exports = {
   databaseUser: process.env.DATABASE_USER || '',
   databasePassword: process.env.DATABASE_PASSWORD || '',
   databaseSslCaFile: process.env.DATABASE_SSL_CA_FILE || '',
+  databaseSslCaPem: process.env.DATABASE_SSL_CA_PEM || '',
   databaseSslRequired: parseBooleanEnv(process.env.DATABASE_SSL_REQUIRED, isProduction),
   uploadProvider: process.env.UPLOAD_PROVIDER || 'local',
   uploadRequireMalwareScan: parseBooleanEnv(process.env.UPLOAD_REQUIRE_MALWARE_SCAN, isProduction),
