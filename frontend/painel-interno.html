@@ -1963,14 +1963,14 @@ summary:focus-visible,
       <div class="login-box">
         <div class="login-box-inner">
           <h2 class="login-title">Entrar no painel</h2>
-          <div class="login-form">
+          <form class="login-form" id="login-form" novalidate>
             <div class="login-field">
               <label for="l-email">E-mail</label>
-              <input type="email" id="l-email" placeholder="seu@email.com" autocomplete="off" autocapitalize="none" spellcheck="false"/>
+              <input type="email" id="l-email" placeholder="seu@email.com" autocomplete="username" autocapitalize="none" spellcheck="false"/>
             </div>
             <div class="login-field">
               <label for="l-pass">Senha</label>
-              <input type="password" id="l-pass" placeholder="••••••••" autocomplete="new-password"/>
+              <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"/>
             </div>
             <div id="mfa-step" hidden>
                 <p class="login-note" id="mfa-status-text" hidden></p>
@@ -1994,11 +1994,11 @@ summary:focus-visible,
               </div>
               <div class="login-secondary-actions">
                 <button type="button" class="login-link-btn" data-action="cancel-mfa-login">Voltar</button>
-                <button type="button" class="login-btn" data-action="submit-mfa-login">Validar código</button>
+                <button type="submit" class="login-btn" id="mfa-submit-btn">Validar código</button>
               </div>
             </div>
-            <button type="button" class="login-btn" id="login-submit-btn" data-action="do-login">Entrar</button>
-          </div>
+            <button type="submit" class="login-btn" id="login-submit-btn">Entrar</button>
+          </form>
           <p class="login-error" id="login-error">Login ou senha incorretos.</p>
           <div class="login-card-footer">
             <p class="login-note">Acesso exclusivo à equipe ONE.</p>
