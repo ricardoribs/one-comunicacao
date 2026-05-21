@@ -433,7 +433,8 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-calendario .calendar-upcoming-meta{font-size:var(--text-xs);font-weight:600;letter-spacing:.04em;color:var(--muted);text-transform:uppercase}
 #page-calendario .calendar-upcoming-note{font-size:var(--text-sm);line-height:1.5;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 #page-calendario .calendar-upcoming-actions{display:flex;flex-wrap:wrap;gap:var(--space-2);padding-top:var(--space-2);border-top:1px solid var(--border)}
-#page-calendario .calendar-upcoming-actions .btn{flex:1 1 132px;justify-content:center}
+#page-calendario .calendar-upcoming-actions > .btn,#page-calendario .calendar-upcoming-actions > .action-menu{flex:1 1 132px}
+#page-calendario .calendar-upcoming-actions > .btn{justify-content:center}
 #page-calendario .calendar-legend-list{display:grid;grid-template-columns:1fr;gap:var(--space-3)}
 #page-calendario .calendar-legend-item{display:flex;align-items:center;gap:var(--space-3);font-size:var(--text-sm);color:var(--muted)}
 #page-calendario .calendar-legend-swatch{width:14px;height:14px;border-radius:999px;flex-shrink:0}
@@ -1284,7 +1285,8 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .login-benefits{padding:var(--space-6) var(--space-4)}
   .login-footer{padding:var(--space-4)}
   .login-footer-links{flex-wrap:wrap;gap:var(--space-4)}
-  #page-calendario .calendar-upcoming-actions .btn{flex:1 1 100%}
+  #page-calendario .calendar-upcoming-actions > .btn,
+  #page-calendario .calendar-upcoming-actions > .action-menu{flex:1 1 100%}
   #page-crm .crm-kpi-grid{grid-template-columns:1fr}
   #page-crm .crm-topbar-separator{display:none}
   #page-crm .crm-pipeline-col{flex-basis:88vw;width:88vw}
