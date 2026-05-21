@@ -21,6 +21,10 @@ function isMfaEnabled(user = {}) {
   return Boolean(user.mfa_totp_secret_encrypted && user.mfa_enabled_at);
 }
 
+function shouldChallengeForMfa(user = {}) {
+  return requiresMfa(user) || isMfaEnabled(user);
+}
+
 function ensureEncryptionKeyAvailable() {
   if (!env.mfaEncryptionKey) {
     throw new AppError('MFA nao configurado no ambiente.', 500);
@@ -167,6 +171,7 @@ async function buildEnrollmentResponse(user, secret) {
 module.exports = {
   requiresMfa,
   isMfaEnabled,
+  shouldChallengeForMfa,
   encryptSecret,
   decryptSecret,
   createChallengeToken,

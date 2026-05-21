@@ -403,6 +403,16 @@ const mfaLoginState = {
   qrCodeDataUrl: "",
   pending: false,
 };
+const profileMfaState = {
+  setupOpen: false,
+  loading: false,
+  pending: false,
+  secret: "",
+  secretRaw: "",
+  secretVisible: false,
+  qrCodeDataUrl: "",
+  otp: "",
+};
 
 const state = {
   session: null,
@@ -1051,6 +1061,7 @@ function clearSession() {
   state.session = null;
   state.profile = null;
   state.profileLoading = false;
+  resetProfileMfaState();
   revokeProfileAvatarAsset();
   state.calendarEvents = [];
   state.calendar = {
@@ -4158,17 +4169,137 @@ function bindProfileThemeToggleHandlers() {
   });
 }
 
+function resetProfileMfaState() {
+  profileMfaState.setupOpen = false;
+  profileMfaState.loading = false;
+  profileMfaState.pending = false;
+  profileMfaState.secret = "";
+  profileMfaState.secretRaw = "";
+  profileMfaState.secretVisible = false;
+  profileMfaState.qrCodeDataUrl = "";
+  profileMfaState.otp = "";
+}
+
+function bindProfileMfaFormHandlers() {
+  const form = document.getElementById("profile-mfa-enrollment-form");
+  if (!form || form.dataset.bound === "true") {
+    return;
+  }
+
+  form.dataset.bound = "true";
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    submitProfileMfaEnrollment();
+  });
+
+  const otpInput = document.getElementById("profile-mfa-otp");
+  if (otpInput) {
+    const syncOtp = () => {
+      profileMfaState.otp = otpInput.value || "";
+    };
+    otpInput.addEventListener("input", syncOtp);
+    otpInput.addEventListener("change", syncOtp);
+  }
+}
+
+async function startProfileMfaEnrollment() {
+  if (profileMfaState.loading || profileMfaState.pending) {
+    return;
+  }
+
+  profileMfaState.loading = true;
+  renderProfile();
+
+  try {
+    const setup = await apiFetch("/users/me/mfa/totp/setup", {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+    profileMfaState.setupOpen = true;
+    profileMfaState.secretRaw = setup.secret || "";
+    profileMfaState.secret = setup.secret_formatted || formatMfaSecret(setup.secret || "");
+    profileMfaState.qrCodeDataUrl = setup.qr_code_data_url || "";
+    profileMfaState.otp = "";
+  } catch (error) {
+    resetProfileMfaState();
+    showToast(error.message || "Não foi possível iniciar o cadastro do MFA.");
+  } finally {
+    profileMfaState.loading = false;
+    renderProfile();
+    if (profileMfaState.setupOpen) {
+      window.setTimeout(() => {
+        document.getElementById("profile-mfa-otp")?.focus();
+      }, 0);
+    }
+  }
+}
+
+function toggleProfileMfaSecret() {
+  if (!profileMfaState.setupOpen || !profileMfaState.secret) {
+    return;
+  }
+
+  profileMfaState.secretVisible = !profileMfaState.secretVisible;
+  renderProfile();
+}
+
+async function copyProfileMfaSecret() {
+  if (!profileMfaState.setupOpen || !profileMfaState.secretRaw) {
+    return;
+  }
+
+  try {
+    await copyTextToClipboard(profileMfaState.secretRaw);
+    showToast("Chave manual copiada. Cadastre o autenticador e valide o código para concluir o MFA.");
+  } catch (_error) {
+    showToast("Não foi possível copiar a chave manual agora.");
+  }
+}
+
+async function submitProfileMfaEnrollment() {
+  if (!profileMfaState.setupOpen || profileMfaState.pending) {
+    return;
+  }
+
+  const otp = String(profileMfaState.otp || document.getElementById("profile-mfa-otp")?.value || "").trim();
+  profileMfaState.otp = otp;
+
+  if (!/^\d{6}$/.test(otp)) {
+    showToast("Digite um código de 6 dígitos para ativar o MFA.");
+    document.getElementById("profile-mfa-otp")?.focus();
+    return;
+  }
+
+  profileMfaState.pending = true;
+  renderProfile();
+
+  try {
+    const response = await apiFetch("/users/me/mfa/totp/enroll", {
+      method: "POST",
+      body: JSON.stringify({ otp }),
+    });
+    syncCurrentUserProfile(response.user || {});
+    resetProfileMfaState();
+    renderProfile();
+    showToast(response.message || "MFA configurado com sucesso.");
+  } catch (error) {
+    profileMfaState.pending = false;
+    renderProfile();
+    showToast(error.message || "Não foi possível concluir o MFA.");
+  }
+}
+
 function renderProfileSecurityCard(profile) {
   const items = [
     {
       title: "Status da conta",
       value: profile.is_active === false ? "Inativa" : "Ativa",
-      meta: profile.is_online ? "Há atividade recente no painel." : "",
+      meta: profile.is_online ? "Há atividade recente no painel." : "Sem atividade recente detectada.",
     },
     {
       title: "Último acesso confirmado",
       value: profile.last_seen_at || profile.last_login_at ? formatDateTime(profile.last_seen_at || profile.last_login_at) : "—",
-      meta: formatAccessLocationLabel(profile.last_seen_location),
+      meta: formatAccessLocationLabel(profile.last_seen_location) || "Localização indisponível.",
     },
     {
       title: "E-mail de acesso",
@@ -4176,28 +4307,108 @@ function renderProfileSecurityCard(profile) {
       meta: profile.email_verified_at ? "Endereço verificado." : "Verificação pendente.",
     },
   ];
+  const mfaEnabled = Boolean(profile.mfa_enabled_at);
+  const mfaRequired = Boolean(profile.mfa_required);
+  const mfaStatusLabel = mfaEnabled ? "Ativo" : mfaRequired ? "Pendente" : "Opcional";
+  const mfaStatusClass = mfaEnabled
+    ? "bg-green-50 text-green-700"
+    : mfaRequired
+      ? "bg-amber-50 text-amber-700"
+      : "bg-[#f2f2f2] text-[#222222]";
+  const mfaDescription = mfaEnabled
+    ? `Proteção ativa desde ${formatDateTime(profile.mfa_enabled_at)}. O código será solicitado nos próximos logins.`
+    : mfaRequired
+      ? "Seu perfil exige MFA. Cadastre o autenticador para concluir a proteção do acesso."
+      : "Ative o MFA para exigir um código do autenticador nos próximos logins da sua conta.";
 
   return `
     <div class="section-header">
       <div>
         <div class="section-title">Acesso e segurança</div>
-        <div class="section-sub">Estado atual da sua conta e do seu acesso.</div>
+        <div class="section-sub">Estado atual da sua conta e configuração do MFA.</div>
       </div>
     </div>
-    <div class="profile-security-list">
+    <div class="space-y-4">
       ${items
         .map(
           (item) => `
-            <div class="profile-security-item">
-              <div class="profile-security-head">
-                <strong class="profile-security-title">${escapeHtml(item.title)}</strong>
-                <span class="profile-security-meta">${escapeHtml(item.value)}</span>
+            <div class="rounded-[12px] border border-[#dddddd] px-4 py-4">
+              <div class="flex items-start justify-between gap-4 flex-wrap">
+                <strong class="text-[14px] font-semibold ink-black">${escapeHtml(item.title)}</strong>
+                <span class="text-[14px] font-medium ink-black">${escapeHtml(item.value)}</span>
               </div>
-              ${item.meta ? `<div class="profile-security-meta">${escapeHtml(item.meta)}</div>` : ""}
+              <div class="text-[13px] font-medium ash-gray mt-2">${escapeHtml(item.meta)}</div>
             </div>
           `
         )
         .join("")}
+    </div>
+
+    <div class="mt-8 pt-6 border-t border-[#dddddd]">
+      <div class="flex items-start justify-between gap-4 flex-wrap">
+        <div class="pr-4 max-w-3xl">
+          <p class="text-[12px] font-bold text-gray-500 uppercase tracking-widest mb-2">Autenticação multifator</p>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest ${mfaStatusClass}">${escapeHtml(mfaStatusLabel)}</span>
+            <span class="text-[11px] font-semibold uppercase tracking-widest ${mfaRequired ? "text-[#ff385c]" : "text-gray-500"}">${escapeHtml(
+              mfaRequired ? "Obrigatório no seu perfil" : "Disponível no perfil"
+            )}</span>
+          </div>
+          <p class="text-[14px] font-medium ash-gray mt-3">${escapeHtml(mfaDescription)}</p>
+        </div>
+        ${
+          mfaEnabled
+            ? '<button type="button" class="btn btn-outline btn-sm" disabled>MFA configurado</button>'
+            : `<button type="button" class="btn btn-pink btn-sm" data-action="start-profile-mfa-enrollment" ${
+                profileMfaState.loading || profileMfaState.pending ? "disabled" : ""
+              }>${escapeHtml(profileMfaState.loading ? "Preparando..." : "Cadastrar MFA")}</button>`
+        }
+      </div>
+
+      ${
+        profileMfaState.setupOpen && !mfaEnabled
+          ? `
+            <div class="mt-6 pt-6 border-t border-[#dddddd]">
+              <div class="text-[14px] font-semibold ink-black">Cadastre seu autenticador</div>
+              <p class="text-[13px] font-medium ash-gray mt-2">Escaneie o QR code abaixo no Google Authenticator, 1Password ou app equivalente. Se preferir, use a chave manual.</p>
+              ${
+                profileMfaState.qrCodeDataUrl
+                  ? `
+                    <div class="login-qr-shell">
+                      <div class="login-qr-card">
+                        <img class="login-qr-image" src="${escapeHtml(profileMfaState.qrCodeDataUrl)}" alt="QR code para configurar o autenticador no perfil" />
+                        <div class="text-[12px] font-medium ash-gray text-center">Depois de cadastrar o app, valide o primeiro código abaixo.</div>
+                      </div>
+                    </div>
+                  `
+                  : '<div class="field-help mt-4">O QR code não pôde ser gerado agora. Continue usando a chave manual.</div>'
+              }
+              <div class="login-secret-actions">
+                <button type="button" class="login-link-btn" data-action="toggle-profile-mfa-secret">${escapeHtml(
+                  profileMfaState.secretVisible ? "Ocultar chave manual" : "Mostrar chave manual"
+                )}</button>
+                <button type="button" class="login-link-btn" data-action="copy-profile-mfa-secret">Copiar chave</button>
+              </div>
+              ${profileMfaState.secretVisible ? `<div class="login-secret-box">${escapeHtml(profileMfaState.secret)}</div>` : ""}
+              <form id="profile-mfa-enrollment-form" class="mt-5" autocomplete="off">
+                <div class="field form-full">
+                  <label for="profile-mfa-otp">Código de verificação</label>
+                  <input type="text" id="profile-mfa-otp" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" value="${escapeHtml(
+                    profileMfaState.otp
+                  )}">
+                  <div class="field-help">Digite o primeiro código de 6 dígitos gerado pelo autenticador para ativar o MFA dentro do app.</div>
+                </div>
+                <div class="modal-actions">
+                  <button type="button" class="btn btn-outline" data-action="cancel-profile-mfa-enrollment">Cancelar</button>
+                  <button type="submit" class="btn btn-pink" ${profileMfaState.pending ? "disabled" : ""}>${escapeHtml(
+                    profileMfaState.pending ? "Validando..." : "Ativar MFA"
+                  )}</button>
+                </div>
+              </form>
+            </div>
+          `
+          : ""
+      }
     </div>
   `;
 }
@@ -4256,8 +4467,9 @@ function renderProfileActivityCard() {
 function renderProfile() {
   const summaryCard = document.getElementById("profile-summary-card");
   const permissionsCard = document.getElementById("profile-permissions-card");
+  const securityCard = document.getElementById("profile-security-card");
   const notificationCard = document.getElementById("profile-notification-card");
-  if (!summaryCard || !permissionsCard || !notificationCard || !state.session?.user) {
+  if (!summaryCard || !permissionsCard || !securityCard || !notificationCard || !state.session?.user) {
     return;
   }
 
@@ -4272,6 +4484,7 @@ function renderProfile() {
       </div>
     `;
     permissionsCard.innerHTML = UI.empty("Carregando permissões...", "", { icon: false, className: "profile-plain-empty is-plain" });
+    securityCard.innerHTML = UI.empty("Carregando segurança...", "", { icon: false, className: "profile-plain-empty is-plain" });
     notificationCard.innerHTML = UI.empty("Carregando preferências...", "", { icon: false, className: "profile-plain-empty is-plain" });
     return;
   }
@@ -4279,9 +4492,11 @@ function renderProfile() {
   const profile = state.profile || state.session.user;
   summaryCard.innerHTML = renderProfileSummaryCard(profile);
   permissionsCard.innerHTML = renderProfilePermissionsCard(profile);
+  securityCard.innerHTML = renderProfileSecurityCard(profile);
   notificationCard.innerHTML = renderProfileNotificationCard(profile);
   bindProfileNotificationToggleHandlers();
   bindProfileThemeToggleHandlers();
+  bindProfileMfaFormHandlers();
   syncPanelTheme();
   bindLegacyInlineHandlers(document.getElementById("page-perfil"));
 }
@@ -7601,6 +7816,15 @@ function bindDataActions() {
         return toggleMfaSecret();
       case "copy-mfa-secret":
         return copyMfaSecret();
+      case "start-profile-mfa-enrollment":
+        return startProfileMfaEnrollment();
+      case "toggle-profile-mfa-secret":
+        return toggleProfileMfaSecret();
+      case "copy-profile-mfa-secret":
+        return copyProfileMfaSecret();
+      case "cancel-profile-mfa-enrollment":
+        resetProfileMfaState();
+        return renderProfile();
       case "do-logout":
         return doLogout();
       case "toggle-sidebar":

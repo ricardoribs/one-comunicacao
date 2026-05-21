@@ -220,6 +220,66 @@ test('usuario autenticado consulta e atualiza o proprio perfil', async () => {
   await userModel.remove(user.id);
 });
 
+test('usuario autenticado habilita MFA no perfil e passa a receber challenge no login', async () => {
+  const email = `auth.profile.mfa.${Date.now()}@one.com`;
+  const user = await userModel.create({
+    name: 'Perfil MFA',
+    email,
+    password: await bcrypt.hash('Valid@Test123', 12),
+    role: 'designer',
+    is_active: true,
+    email_verified_at: new Date().toISOString(),
+  });
+
+  const login = await request(app)
+    .post('/api/auth/login')
+    .set('X-Forwarded-For', nextTestIp())
+    .send({
+      email,
+      password: 'Valid@Test123',
+    });
+
+  assert.equal(login.status, 200);
+  assert.ok(login.body.accessToken);
+
+  const setup = await request(app)
+    .post('/api/users/me/mfa/totp/setup')
+    .set('Authorization', `Bearer ${login.body.accessToken}`)
+    .send({});
+
+  assert.equal(setup.status, 200);
+  assert.ok(setup.body.secret);
+  assert.match(setup.body.qr_code_data_url || '', /^data:image\/png;base64,/);
+
+  const otp = mfaService.generateCurrentOtp(setup.body.secret);
+  const enroll = await request(app)
+    .post('/api/users/me/mfa/totp/enroll')
+    .set('Authorization', `Bearer ${login.body.accessToken}`)
+    .send({ otp });
+
+  assert.equal(enroll.status, 200);
+  assert.equal(enroll.body.user.mfa_required, false);
+  assert.ok(enroll.body.user.mfa_enabled_at);
+
+  const challengedLogin = await request(app)
+    .post('/api/auth/login')
+    .set('X-Forwarded-For', nextTestIp())
+    .send({
+      email,
+      password: 'Valid@Test123',
+    });
+
+  assert.equal(challengedLogin.status, 200);
+  assert.equal(Boolean(challengedLogin.body.accessToken), false);
+  assert.ok(challengedLogin.body.challenge_token || challengedLogin.body.challengeToken);
+
+  const completedLogin = await completeLoginWithMfa(email, challengedLogin, nextTestIp());
+  assert.equal(completedLogin.status, 200);
+  assert.ok(completedLogin.body.accessToken);
+
+  await userModel.remove(user.id);
+});
+
 test('usuario autenticado ajusta preferencias de notificacao e envia avatar real', async () => {
   const email = `auth.profile-assets.${Date.now()}@one.com`;
   const user = await userModel.create({
