@@ -433,6 +433,9 @@ const state = {
   checklist: null,
   loadFailures: new Set(),
   activePage: "home",
+  ui: {
+    sidebarCollapsed: false,
+  },
   calendar: {
     weekStart: null,
     loadedWeekKey: "",
@@ -1990,6 +1993,8 @@ function buildCalendarGridHtml(events, weekStart) {
     const dayDate = addCalendarDays(weekStart, dayIndex);
     const dayKey = getCalendarWeekKey(dayDate);
     const isToday = dayKey === todayKey;
+    const isWeekend = dayDate.getDay() === 0 || dayDate.getDay() === 6;
+    const dayLabel = formatCalendarWeekday(dayDate).replace(/\.$/, "").toUpperCase();
     const dayTrackStart = new Date(dayDate);
     dayTrackStart.setHours(startHour, 0, 0, 0);
     const dayTrackEnd = new Date(dayDate);
@@ -2025,9 +2030,9 @@ function buildCalendarGridHtml(events, weekStart) {
       : "";
 
     return `
-      <div class="calendar-day-column ${isToday ? "is-today" : ""}">
+      <div class="calendar-day-column ${isToday ? "is-today" : ""}${isWeekend ? " is-weekend" : ""}">
         <div class="calendar-day-head">
-          <span>${escapeHtml(formatCalendarWeekday(dayDate))}</span>
+          <span>${escapeHtml(dayLabel)}</span>
           <strong>${padNumber(dayDate.getDate())}</strong>
         </div>
         <div class="calendar-day-track" style="height:${trackHeight}px">
@@ -2128,7 +2133,7 @@ function renderCalendar() {
   const weekStart = getCalendarWeekStartDate(state.calendar.weekStart || new Date());
   state.calendar.weekStart = weekStart.toISOString();
   weekLabel.textContent = `Semana de ${formatCalendarWeekLabel(weekStart)}`;
-  weekSub.textContent = "Vista semanal compartilhada com navegação rápida na lateral.";
+  weekSub.textContent = "Vista semanal compartilhada da equipe com prioridade visual para o dia atual.";
   if (miniMonthLabel) {
     miniMonthLabel.textContent = formatCalendarMonthTitle(addCalendarDays(weekStart, 3));
   }
@@ -3606,6 +3611,7 @@ const PROFILE_ACCESS_STATUS_LABELS = {
 };
 const PANEL_THEME_STORAGE_KEY = "one-panel-theme";
 const LEGACY_PANEL_THEME_STORAGE_KEY = "one-theme";
+const PANEL_SIDEBAR_STORAGE_KEY = "one-panel-sidebar";
 
 const PROFILE_ACTIVITY_PLACEHOLDERS = [];
 
@@ -4268,6 +4274,14 @@ function persistPanelTheme(theme) {
   localStorage.removeItem(LEGACY_PANEL_THEME_STORAGE_KEY);
 }
 
+function getStoredSidebarPreference() {
+  return localStorage.getItem(PANEL_SIDEBAR_STORAGE_KEY) === "collapsed";
+}
+
+function persistSidebarPreference(collapsed) {
+  localStorage.setItem(PANEL_SIDEBAR_STORAGE_KEY, collapsed ? "collapsed" : "expanded");
+}
+
 function syncPanelTheme() {
   const kanbanPage = document.getElementById("page-kanban");
   const kanbanRoot = document.getElementById("kanban-exact-root");
@@ -4346,34 +4360,57 @@ function syncSidebarShell() {
   const sidebar = document.getElementById("sidebar");
   const toggle = document.getElementById("mobile-nav-toggle");
   const backdrop = document.getElementById("sidebar-backdrop");
+  const desktopToggle = document.getElementById("desktop-sidebar-toggle");
   if (!sidebar || !toggle || !backdrop) {
     return;
   }
 
-  if (!isMobileViewport()) {
+  const mobile = isMobileViewport();
+
+  if (!mobile) {
     sidebar.classList.remove("open");
     document.body.classList.remove("sidebar-open");
+    document.body.classList.toggle("sidebar-collapsed", Boolean(state.ui.sidebarCollapsed));
     toggle.setAttribute("aria-expanded", "false");
     toggle.setAttribute("aria-label", "Abrir navegação");
     backdrop.setAttribute("aria-hidden", "true");
+    if (desktopToggle) {
+      const collapsed = Boolean(state.ui.sidebarCollapsed);
+      desktopToggle.setAttribute("aria-hidden", "false");
+      desktopToggle.setAttribute("aria-pressed", collapsed ? "true" : "false");
+      desktopToggle.setAttribute("aria-label", collapsed ? "Expandir menu lateral" : "Recolher menu lateral");
+      desktopToggle.setAttribute("title", collapsed ? "Expandir menu" : "Recolher menu");
+    }
     return;
   }
 
+  document.body.classList.remove("sidebar-collapsed");
   const isOpen = sidebar.classList.contains("open");
   document.body.classList.toggle("sidebar-open", isOpen);
   toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
   toggle.setAttribute("aria-label", isOpen ? "Fechar navegação" : "Abrir navegação");
   backdrop.setAttribute("aria-hidden", isOpen ? "false" : "true");
+  if (desktopToggle) {
+    desktopToggle.setAttribute("aria-hidden", "true");
+  }
 }
 
 function toggleSidebar(forceState) {
   const sidebar = document.getElementById("sidebar");
-  if (!sidebar || !isMobileViewport()) {
+  if (!sidebar) {
     return;
   }
 
-  const shouldOpen = typeof forceState === "boolean" ? forceState : !sidebar.classList.contains("open");
-  sidebar.classList.toggle("open", shouldOpen);
+  if (isMobileViewport()) {
+    const shouldOpen = typeof forceState === "boolean" ? forceState : !sidebar.classList.contains("open");
+    sidebar.classList.toggle("open", shouldOpen);
+    syncSidebarShell();
+    return;
+  }
+
+  const shouldCollapse = typeof forceState === "boolean" ? !forceState : !state.ui.sidebarCollapsed;
+  state.ui.sidebarCollapsed = shouldCollapse;
+  persistSidebarPreference(shouldCollapse);
   syncSidebarShell();
 }
 
@@ -7463,6 +7500,8 @@ function bindDataActions() {
         return copyMfaSecret();
       case "do-logout":
         return doLogout();
+      case "toggle-sidebar":
+        return toggleSidebar();
       case "go-to":
         return goTo(target.dataset.page || "");
       case "set-tab":
@@ -10002,6 +10041,7 @@ async function boot() {
   bindLegacyInlineHandlers();
   bindDataActions();
   bindFloatingActionMenus();
+  state.ui.sidebarCollapsed = getStoredSidebarPreference();
   syncPanelTheme();
   syncSidebarShell();
   APP.registerActivityTracking();
