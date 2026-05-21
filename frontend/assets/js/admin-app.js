@@ -7638,6 +7638,7 @@ function syncMfaLoginView() {
   const emailField = document.getElementById("l-email")?.closest(".login-field");
   const passwordField = document.getElementById("l-pass")?.closest(".login-field");
   const loginButton = document.getElementById("login-submit-btn");
+  const mfaSubmitButton = document.getElementById("mfa-submit-btn");
   const mfaStep = document.getElementById("mfa-step");
   const mfaSetupHelp = document.getElementById("mfa-setup-help");
   const mfaStatusText = document.getElementById("mfa-status-text");
@@ -7653,6 +7654,9 @@ function syncMfaLoginView() {
 
   if (loginButton) {
     loginButton.hidden = isMfaStepActive;
+  }
+  if (mfaSubmitButton) {
+    mfaSubmitButton.hidden = !isMfaStepActive;
   }
 
   if (!mfaStep) {
@@ -7867,6 +7871,26 @@ async function doLogin() {
         : message || "Erro ao entrar no painel.";
     setLoginError(normalizedMessage);
   });
+}
+
+function bindLoginForm() {
+  const loginForm = document.getElementById("login-form");
+  if (!loginForm || loginForm.dataset.bound === "1") {
+    return;
+  }
+
+  loginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (mfaLoginState.challengeToken) {
+      await submitMfaLogin();
+      return;
+    }
+
+    await doLogin();
+  });
+
+  loginForm.dataset.bound = "1";
 }
 
 async function initializeApp() {
@@ -9592,6 +9616,7 @@ async function boot() {
   clearSession();
   resetMfaLoginState();
   document.getElementById("login-screen").classList.remove("hidden");
+  bindLoginForm();
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
