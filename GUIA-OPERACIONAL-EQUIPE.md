@@ -207,6 +207,11 @@ Quando alguem entra pela primeira vez:
 6. Ajustar senha, se necessario.
 7. Conferir se os modulos exibidos batem com a funcao da pessoa.
 
+Importante sobre MFA:
+
+- quando o perfil exigir autenticacao multifator, o cadastro do autenticador acontece na tela de login, antes de entrar no app;
+- dentro do app nao existe opcao para cadastrar, ativar ou gerenciar MFA.
+
 Se algo estiver errado:
 
 - nao improvise;
@@ -383,6 +388,12 @@ E a area da conta do usuario.
 - alterar senha;
 - consultar permissoes do perfil;
 - configurar preferencias de notificacao.
+
+#### Limite atual importante
+
+Hoje o app nao possui nenhuma area interna para cadastrar ou gerenciar MFA.
+
+Se o acesso exigir autenticacao multifator, o usuario deve concluir esse cadastro na tela de login, quando o sistema solicitar.
 
 #### Preferencias de notificacao
 
