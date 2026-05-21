@@ -2214,7 +2214,7 @@ function renderCalendarUpcomingPanel(events, { loading = false } = {}) {
       data-action="open-calendar-upcoming-drawer"
       ${eventCount ? "" : "disabled"}
     >
-      Revisar
+      Ver eventos
     </button>
   `;
 
