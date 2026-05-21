@@ -32,6 +32,11 @@ Nos primeiros minutos:
 5. Troque a senha inicial, se necessário.
 6. Confira se os módulos do seu perfil estão visíveis.
 
+Importante sobre MFA:
+
+- se o seu acesso exigir autenticacao multifator, o cadastro do autenticador acontece na tela de login, antes de entrar no app;
+- dentro do app nao existe area de configuracao para MFA.
+
 ## 4. O que cada perfil faz
 
 ### `admin`
