@@ -64,6 +64,14 @@ const PIPELINE_STAGE_LABELS = {
   fechado: "Fechado"
 };
 
+const LEAD_STAGE_OPTIONS = [
+  { value: "Prospeccao", label: PIPELINE_STAGE_LABELS.prospeccao },
+  { value: "Contato feito", label: PIPELINE_STAGE_LABELS.contato },
+  { value: "Proposta", label: PIPELINE_STAGE_LABELS.proposta },
+  { value: "Negociacao", label: PIPELINE_STAGE_LABELS.negociacao },
+  { value: "Fechado", label: PIPELINE_STAGE_LABELS.fechado }
+];
+
 const PAGE_ACCESS = {
   admin: ["home", "perfil", "kanban", "calendario", "crm", "campanhas", "producao", "trafego", "analytics", "financeiro", "acesso"],
   gestor: ["home", "perfil", "kanban", "calendario", "crm", "campanhas", "producao", "trafego", "analytics"],
@@ -1213,6 +1221,32 @@ function normalizePipelineStage(stage) {
   if (normalized.includes("nego")) return PIPELINE_STAGE_LABELS.negociacao;
   if (normalized.includes("fech")) return PIPELINE_STAGE_LABELS.fechado;
   return stage || "—";
+}
+
+function normalizeLeadStageValue(stage) {
+  const normalized = String(stage || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+
+  if (!normalized) {
+    return "";
+  }
+
+  if (normalized.includes("pros")) return "Prospeccao";
+  if (normalized.includes("contato")) return "Contato feito";
+  if (normalized.includes("proposta")) return "Proposta";
+  if (normalized.includes("nego")) return "Negociacao";
+  if (normalized.includes("fech")) return "Fechado";
+  return String(stage || "").trim();
+}
+
+function leadStageOptions(selected = "") {
+  const selectedValue = normalizeLeadStageValue(selected) || "Prospeccao";
+  return LEAD_STAGE_OPTIONS.map(
+    (option) => `<option value="${option.value}" ${selectedValue === option.value ? "selected" : ""}>${option.label}</option>`
+  ).join("");
 }
 
 function formatCurrencyValue(value) {
@@ -8941,14 +8975,14 @@ function openModal(type, id = null) {
         <div class="field"><label>Nome</label><input name="name" value="${escapeHtml(contact.name || "")}" required></div>
         <div class="field"><label>Empresa</label><input name="company" value="${escapeHtml(contact.company || "")}"></div>
         <div class="field"><label>Serviço</label><input name="service" value="${escapeHtml(contact.service || "")}"></div>
-        <div class="field"><label>Telefone</label><input name="phone" value="${escapeHtml(contact.phone || "")}" required></div>
-        <div class="field"><label>WhatsApp</label><input name="whatsapp" value="${escapeHtml(contact.whatsapp || "")}"></div>
+        <div class="field"><label>Telefone</label><input name="phone" value="${escapeHtml(contact.phone || "")}" required minlength="8" maxlength="30" inputmode="tel" autocomplete="tel"></div>
+        <div class="field"><label>WhatsApp</label><input name="whatsapp" value="${escapeHtml(contact.whatsapp || "")}" minlength="8" maxlength="30" inputmode="tel" autocomplete="tel"></div>
         <div class="field"><label>E-mail</label><input type="email" name="email" value="${escapeHtml(contact.email || "")}" required></div>
         <div class="field"><label>Documento</label><input name="document" value="${escapeHtml(contact.document || "")}"></div>
         <div class="field"><label>Origem</label><input name="source" value="${escapeHtml(contact.source || "")}"></div>
         <div class="field"><label>Owner</label><select name="owner_id"><option value="">Selecione</option>${userOptions(contact.owner_id)}</select></div>
         <div class="field"><label>Responsável</label><select name="assigned_to"><option value="">Selecione</option>${userOptions(contact.assigned_to)}</select></div>
-        <div class="field"><label>Etapa</label><select name="lead_stage"><option ${contact.lead_stage === "Prospeccao" ? "selected" : ""}>Prospecção</option><option ${contact.lead_stage === "Contato feito" ? "selected" : ""}>Contato feito</option><option ${contact.lead_stage === "Proposta" ? "selected" : ""}>Proposta</option><option ${contact.lead_stage === "Negociacao" ? "selected" : ""}>Negociação</option><option ${contact.lead_stage === "Fechado" ? "selected" : ""}>Fechado</option></select></div>
+        <div class="field"><label>Etapa</label><select name="lead_stage">${leadStageOptions(contact.lead_stage || "Prospeccao")}</select></div>
         <div class="field"><label>Valor estimado</label><input type="number" step="0.01" name="estimated_value" value="${contact.estimated_value || ""}"></div>
         <div class="field"><label>Data nascimento</label><input type="date" name="birth_date" value="${contact.birth_date ? String(contact.birth_date).slice(0, 10) : ""}"></div>
         <div class="field"><label>Último contato</label><input type="datetime-local" name="last_contact_at" value="${contact.last_contact_at ? new Date(contact.last_contact_at).toISOString().slice(0, 16) : ""}"></div>
@@ -9249,6 +9283,12 @@ async function submitModal(event, type, id) {
 
     if (type === "novo-lead") {
       const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["owner_id", "assigned_to", "estimated_value", "birth_date", "last_contact_at"]);
+      payload.phone = String(payload.phone || "").trim();
+      payload.whatsapp = String(payload.whatsapp || "").trim();
+      payload.lead_stage = normalizeLeadStageValue(payload.lead_stage) || null;
+      payload.zip_code = formatZipCodeInput(payload.zip_code);
+      payload.state = payload.state ? normalizeStateCode(payload.state) : payload.state;
+      payload.country = normalizeCountry(payload.country);
       await apiFetch(id ? `/contacts/${id}` : "/contacts", {
         method: id ? "PUT" : "POST",
         body: JSON.stringify(payload)
