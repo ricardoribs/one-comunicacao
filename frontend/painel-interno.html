@@ -1202,6 +1202,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   #page-kanban .kanban-quick-meta{justify-content:flex-start}
   #page-kanban .kanban-due-title{max-width:none}
   #page-kanban .kanban-checklist-card{padding:16px}
+  #page-kanban .kanban-overdue-drawer{width:min(420px,100vw)}
   .checklist-composer,.checklist-row{grid-template-columns:1fr}
   .checklist-row{justify-items:start}
   .checklist-remove{padding:0}
@@ -1308,6 +1309,12 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .table-actions > .btn,
   .item-actions > .btn,
   .modal-actions > .btn{flex:1 1 100%;justify-content:center}
+  #page-kanban .kanban-head-row{gap:16px}
+  #page-kanban .kanban-overdue-banner{padding:12px 16px}
+  #page-kanban .kanban-overdue-banner-copy{gap:12px}
+  #page-kanban .kanban-overdue-banner-label{white-space:normal}
+  #page-kanban .kanban-overdue-drawer{width:100vw}
+  #page-kanban .kanban-overdue-drawer-head,#page-kanban .kanban-overdue-list,#page-kanban .kanban-overdue-drawer-footer{padding-left:16px;padding-right:16px}
   .login-stage{padding:var(--space-5) var(--space-4)}
   .login-hero-title{font-size:32px}
   .login-hero-copy{font-size:15px}
@@ -1316,6 +1323,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .login-benefits{padding:var(--space-6) var(--space-4)}
   .login-footer{padding:var(--space-4)}
   .login-footer-links{flex-wrap:wrap;gap:var(--space-4)}
+  #page-kanban .kanban-overdue-item-actions .btn{flex:1 1 100%;justify-content:center}
   #page-calendario .calendar-upcoming-actions{flex-wrap:wrap}
   #page-calendario .calendar-upcoming-actions > .btn,
   #page-calendario .calendar-upcoming-actions > .action-menu{flex:1 1 100%}
@@ -1673,6 +1681,45 @@ td{padding:16px;font-size:14px;color:var(--text)}
 #page-kanban .kanban-focus-form .checklist-input:focus{border:none;box-shadow:none}
 #page-kanban .kanban-focus-form .checklist-input::placeholder{color:#9a9a9a}
 #page-kanban .kanban-focus-form .btn{min-height:36px;padding:0 16px;border-radius:8px}
+#page-kanban .kanban-overdue-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:56px;padding:0 18px;border:1px solid #f7d5da;border-radius:14px;background:linear-gradient(180deg,#fff7f8 0%,#fff3f5 100%);box-shadow:0 8px 20px rgba(185,28,28,.04)}
+#page-kanban .kanban-overdue-banner.is-empty{background:linear-gradient(180deg,#fbfbfb 0%,#f7f7f7 100%);border-color:var(--border);box-shadow:none}
+#page-kanban .kanban-overdue-banner-copy{display:flex;align-items:center;gap:14px;min-width:0}
+#page-kanban .kanban-overdue-banner-count{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:999px;background:#fff;color:#ef4444;font-size:12px;font-weight:700;box-shadow:0 1px 2px rgba(15,23,42,.06)}
+#page-kanban .kanban-overdue-banner.is-empty .kanban-overdue-banner-count{background:#f1f5f9;color:#64748b}
+#page-kanban .kanban-overdue-banner-label{font-size:14px;font-weight:600;color:#be123c;white-space:nowrap}
+#page-kanban .kanban-overdue-banner.is-empty .kanban-overdue-banner-label{color:var(--muted)}
+#page-kanban .kanban-overdue-banner-action{border:none;background:none;padding:0;font-size:14px;font-weight:700;color:#991b1b;cursor:pointer;transition:color var(--tr),opacity var(--tr)}
+#page-kanban .kanban-overdue-banner-action:hover{color:#7f1d1d;text-decoration:underline}
+#page-kanban .kanban-overdue-banner-action:disabled{opacity:.45;cursor:not-allowed;text-decoration:none}
+#page-kanban .kanban-overdue-overlay{position:fixed;inset:0;background:rgba(15,23,42,.38);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .24s ease;z-index:2400}
+#page-kanban .kanban-overdue-overlay.is-open{opacity:1;pointer-events:auto}
+#page-kanban .kanban-overdue-drawer{position:fixed;top:0;right:0;width:min(420px,100vw);height:100vh;display:flex;flex-direction:column;background:#fff;border-left:1px solid var(--border);box-shadow:-24px 0 48px rgba(15,23,42,.12);transform:translateX(100%);transition:transform .28s ease;z-index:2500}
+#page-kanban.dark .kanban-overdue-drawer{background:#1f1f1f;border-left-color:#333333}
+#page-kanban .kanban-overdue-drawer.is-open{transform:translateX(0)}
+#page-kanban .kanban-overdue-drawer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:24px;border-bottom:1px solid var(--border);background:#fff;flex-shrink:0}
+#page-kanban.dark .kanban-overdue-drawer-head{background:#222222;border-bottom-color:#333333}
+#page-kanban .kanban-overdue-drawer-title{font-size:20px;font-weight:700;line-height:1.2;color:var(--text)}
+#page-kanban .kanban-overdue-drawer-subtitle{margin-top:6px;font-size:13px;font-weight:500;line-height:1.5;color:var(--muted)}
+#page-kanban .kanban-overdue-drawer-close{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border:1px solid var(--border);border-radius:999px;background:#fff;color:#6b7280;font-size:26px;line-height:1;cursor:pointer;transition:background var(--tr),color var(--tr),border-color var(--tr)}
+#page-kanban .kanban-overdue-drawer-close:hover{background:#f8fafc;color:var(--text);border-color:#d1d5db}
+#page-kanban.dark .kanban-overdue-drawer-close{background:#1f1f1f;border-color:#333333;color:#d1d5db}
+#page-kanban .kanban-overdue-list{flex:1;overflow:auto;padding:24px;background:linear-gradient(180deg,#fafafa 0%,#f6f6f6 100%);display:flex;flex-direction:column;gap:14px}
+#page-kanban.dark .kanban-overdue-list{background:#161616}
+#page-kanban .kanban-overdue-empty{display:flex;align-items:center;justify-content:center;min-height:240px;padding:24px;border:1px dashed var(--border);border-radius:18px;background:#fff;color:var(--muted);font-size:14px;font-weight:500;text-align:center}
+#page-kanban.dark .kanban-overdue-empty{background:#1f1f1f;border-color:#333333}
+#page-kanban .kanban-overdue-item{display:flex;flex-direction:column;gap:12px;padding:18px;border:1px solid #fecdd3;border-radius:18px;background:#fff;box-shadow:0 10px 22px rgba(15,23,42,.04)}
+#page-kanban.dark .kanban-overdue-item{background:#222222;border-color:#4b1d29}
+#page-kanban .kanban-overdue-item-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#page-kanban .kanban-overdue-item-column{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9ca3af}
+#page-kanban .kanban-overdue-item-state{display:inline-flex;align-items:center;min-height:24px;padding:0 10px;border-radius:999px;background:#fff1f2;color:#e11d48;font-size:11px;font-weight:700}
+#page-kanban .kanban-overdue-item-title{font-size:15px;font-weight:700;line-height:1.4;color:var(--text)}
+#page-kanban .kanban-overdue-item-client{font-size:13px;font-weight:500;line-height:1.45;color:var(--muted)}
+#page-kanban .kanban-overdue-item-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;font-weight:600;color:#64748b}
+#page-kanban .kanban-overdue-item-description{font-size:13px;line-height:1.55;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+#page-kanban .kanban-overdue-item-actions{display:flex;gap:10px;flex-wrap:wrap}
+#page-kanban .kanban-overdue-item-actions .btn{min-height:34px;padding:0 14px;border-radius:10px;font-size:12px;font-weight:600}
+#page-kanban .kanban-overdue-drawer-footer{padding:20px 24px;border-top:1px solid var(--border);background:#fff;flex-shrink:0}
+#page-kanban.dark .kanban-overdue-drawer-footer{background:#222222;border-top-color:#333333}
 #page-kanban .kanban-quick-meta{display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:flex-end}
 #page-kanban .kanban-due-summary{display:flex;align-items:center;gap:10px;min-width:0}
 #page-kanban .kanban-due-title{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:500;color:var(--muted)}
@@ -1731,6 +1778,7 @@ body[data-active-page="kanban"] #page-kanban.active{display:flex;flex-direction:
 #page-kanban .k-card-placeholder{pointer-events:none;border:1px dashed rgba(255,56,92,.28);background:rgba(255,56,92,.05);box-shadow:none;border-radius:8px}
 #page-kanban .kanban-exact-column-body{min-height:0}
 #page-kanban .kanban-exact-overdue-empty{opacity:.72}
+body.kanban-overdue-open{overflow:hidden}
 #login-screen{background:var(--gray)}
 .login-shell{width:100%;min-height:100vh;display:flex;flex-direction:column;background:var(--gray)}
 .login-topbar{height:64px;padding:0 32px;background:var(--gray);border-bottom:none}
@@ -2313,7 +2361,7 @@ summary:focus-visible,
       </header>
 
       <div class="flex-1 flex flex-col p-8 overflow-hidden">
-        <div class="flex flex-col xl:flex-row items-center gap-6 mb-8 flex-shrink-0 w-full">
+        <div class="kanban-head-row flex flex-col xl:flex-row items-stretch xl:items-center gap-6 mb-8 flex-shrink-0 w-full">
           <div id="kanban-exact-quick-focus" class="flex-1 flex items-center gap-3 bg-white dark:bg-[#222222] border border-[#dddddd] dark:border-[#333333] rounded-[8px] px-2 py-2 shadow-sm w-full">
             <form id="kanban-focus-form" data-checklist-form class="flex-1 flex items-center gap-3 min-w-0">
               <div class="w-5 h-5 ml-2 border-2 border-gray-300 dark:border-gray-500 rounded-sm flex-shrink-0"></div>
@@ -2322,13 +2370,7 @@ summary:focus-visible,
             </form>
           </div>
 
-          <div id="kanban-exact-overdue" class="flex items-center justify-between gap-6 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/50 rounded-[8px] px-5 py-3 w-full xl:w-auto flex-shrink-0">
-            <div class="flex items-center gap-3">
-              <span class="flex items-center justify-center w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-[10px] font-bold">1</span>
-              <p class="text-[13px] font-medium text-red-700 dark:text-red-400">Tarefa atrasada: <span class="font-bold">Alinhamento de cobertura...</span></p>
-            </div>
-            <button type="button" class="text-[12px] font-bold text-red-700 dark:text-red-400 hover:underline">Revisar</button>
-          </div>
+          <div id="kanban-exact-overdue" class="kanban-overdue-banner w-full xl:w-auto flex-shrink-0" aria-live="polite"></div>
         </div>
 
         <div id="kanban-top-scroll" class="kanban-scroll-top custom-scroll" aria-hidden="true">
@@ -2338,6 +2380,24 @@ summary:focus-visible,
         <div id="kanban-board" class="flex-1 overflow-x-auto custom-scroll flex gap-6 pb-4"></div>
       </div>
     </main>
+
+    <div id="kanban-overdue-overlay" class="kanban-overdue-overlay" data-action="close-kanban-overdue-drawer" aria-hidden="true"></div>
+
+    <aside id="kanban-overdue-drawer" class="kanban-overdue-drawer" aria-hidden="true" aria-labelledby="kanban-overdue-drawer-title">
+      <div class="kanban-overdue-drawer-head">
+        <div>
+          <h2 id="kanban-overdue-drawer-title" class="kanban-overdue-drawer-title">Revisão de atrasos</h2>
+          <p id="kanban-overdue-drawer-subtitle" class="kanban-overdue-drawer-subtitle">Nenhuma tarefa em atraso no momento.</p>
+        </div>
+        <button type="button" class="kanban-overdue-drawer-close" data-action="close-kanban-overdue-drawer" aria-label="Fechar revisão de atrasos">×</button>
+      </div>
+
+      <div id="kanban-overdue-list" class="kanban-overdue-list"></div>
+
+      <div class="kanban-overdue-drawer-footer">
+        <button type="button" class="btn btn-outline btn-sm w-full justify-center" data-action="close-kanban-overdue-drawer">Fechar revisão</button>
+      </div>
+    </aside>
   </div>
 </section>
 
