@@ -5167,6 +5167,51 @@ function renderKanbanOverduePanel(filteredTasks) {
   }
 }
 
+function renderKanbanChecklistHistory(historyGroups) {
+  if (!historyGroups.length) {
+    return "";
+  }
+
+  return `
+    <div class="kanban-history-head">
+      <span class="kanban-history-title">Histórico do foco</span>
+      <button type="button" class="kanban-history-clear" data-checklist-clear-history>Limpar histórico</button>
+    </div>
+    <div class="kanban-history-list">
+      ${historyGroups
+        .map(
+          (group) => `
+            <div class="checklist-history-group">
+              <div class="checklist-history-title">${escapeHtml(group.title)}</div>
+              ${group.entries
+                .map(
+                  (entry) => `
+                    <div class="checklist-history-card">
+                      <div class="checklist-history-meta">${escapeHtml(formatDate(entry.date))}</div>
+                      <div class="checklist-history-list">
+                        ${entry.items
+                          .map(
+                            (item) => `
+                              <div class="checklist-history-item">
+                                <span aria-hidden="true">✓</span>
+                                <span>${escapeHtml(item.label)}</span>
+                              </div>
+                            `
+                          )
+                          .join("")}
+                      </div>
+                    </div>
+                  `
+                )
+                .join("")}
+            </div>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
 function bindDailyChecklistInteractions(container) {
   if (!container) {
     return;
@@ -5175,28 +5220,6 @@ function bindDailyChecklistInteractions(container) {
   if (container.dataset.boundChecklist === "1") {
     return;
   }
-
-  container.addEventListener("submit", async (event) => {
-    const form = event.target.closest("[data-checklist-form]");
-    if (!form) {
-      return;
-    }
-
-    event.preventDefault();
-    const input = form.querySelector("[name='checklist-item']");
-
-    try {
-      const currentStore = getChecklistStore();
-      await persistChecklistItems([...currentStore.activeItems, createChecklistItem(input?.value || "")]);
-      if (input) {
-        input.value = "";
-      }
-      renderKanban();
-    } catch (error) {
-      showToast(error.message);
-      renderKanban();
-    }
-  });
 
   container.addEventListener("change", async (event) => {
     const input = event.target.closest("[data-daily-checklist]");
@@ -5263,15 +5286,20 @@ function bindDailyChecklistInteractions(container) {
 }
 
 function renderKanbanChecklist(filteredTasks) {
+  const container = document.getElementById("kanban-exact-quick-focus");
   const form = document.getElementById("kanban-focus-form");
   const input = document.getElementById("kanban-focus-input");
+  const meta = document.getElementById("kanban-focus-meta");
+  const activeList = document.getElementById("kanban-focus-active");
+  const historyPanel = document.getElementById("kanban-focus-history");
   const overdueContainer = document.getElementById("kanban-exact-overdue");
 
-  if (!form || !input || !overdueContainer) {
+  if (!container || !form || !input || !meta || !activeList || !historyPanel || !overdueContainer) {
     return;
   }
 
   bindKanbanOverdueDrawerInteractions();
+  bindDailyChecklistInteractions(container);
 
   if (form.dataset.boundChecklist !== "1") {
     form.addEventListener("submit", async (event) => {
@@ -5296,6 +5324,51 @@ function renderKanbanChecklist(filteredTasks) {
     });
 
     form.dataset.boundChecklist = "1";
+  }
+
+  const checklistStore = getChecklistStore();
+  const activeItems = checklistStore.activeItems || [];
+  const openItems = activeItems.filter((item) => !item.done);
+  const doneItems = activeItems.filter((item) => item.done);
+  const historyGroups = getChecklistHistoryGroups(checklistStore.history || []);
+  const hasHistory = historyGroups.length > 0;
+
+  meta.innerHTML = `
+    <span class="checklist-progress">
+      ${
+        activeItems.length
+          ? `${openItems.length} ${openItems.length === 1 ? "item aberto" : "itens abertos"}${doneItems.length ? ` · ${doneItems.length} concluído${doneItems.length === 1 ? "" : "s"}` : ""}`
+          : "Foco do dia vazio"
+      }
+    </span>
+    ${
+      hasHistory
+        ? `<button type="button" class="kanban-history-toggle" data-checklist-history-toggle aria-expanded="false">Ver histórico</button>`
+        : ""
+    }
+  `;
+
+  activeList.innerHTML = activeItems.length
+    ? activeItems
+        .map(
+          (item) => `
+            <label class="kanban-checklist-item${item.done ? " is-done" : ""}">
+              <div class="kanban-checklist-main">
+                <input type="checkbox" data-daily-checklist="${item.id}" ${item.done ? "checked" : ""}>
+                <span class="kanban-checklist-label">${escapeHtml(item.label)}</span>
+              </div>
+              <button type="button" class="kanban-checklist-remove" data-checklist-remove="${item.id}" aria-label="Remover item">×</button>
+            </label>
+          `
+        )
+        .join("")
+    : '<div class="kanban-checklist-item"><div class="kanban-checklist-main"><span class="kanban-checklist-label text-gray-400">Seu foco de hoje aparece aqui assim que você adicionar o primeiro item.</span></div></div>';
+
+  if (hasHistory) {
+    historyPanel.innerHTML = renderKanbanChecklistHistory(historyGroups);
+  } else {
+    historyPanel.innerHTML = "";
+    historyPanel.hidden = true;
   }
 
   renderKanbanOverduePanel(filteredTasks);
