@@ -1,8 +1,8 @@
 const crypto = require("crypto");
-const fs = require("fs");
 const { Pool } = require("pg");
 const env = require("../src/config/env");
 const { applyTenantContext } = require("../src/db/tenantContext");
+const { buildDatabaseSslConfig } = require("../src/utils/databaseSsl");
 
 function assert(condition, message) {
   if (!condition) {
@@ -34,11 +34,13 @@ function buildBasePoolConfig() {
     config.connectionString = env.databaseUrl;
   }
 
-  if (env.databaseSslCaFile) {
-    config.ssl = {
-      ca: fs.readFileSync(env.databaseSslCaFile, "utf8"),
-      rejectUnauthorized: true
-    };
+  const sslConfig = buildDatabaseSslConfig({
+    required: env.databaseSslRequired,
+    caFilePath: env.databaseSslCaFile,
+    caPem: env.databaseSslCaPem
+  });
+  if (sslConfig) {
+    config.ssl = sslConfig;
   }
 
   return config;
@@ -73,6 +75,7 @@ function getTargetHost(config) {
 
 function buildVerificationBasePoolConfig() {
   const verifyCaFile = process.env.VERIFY_DATABASE_SSL_CA_FILE || env.databaseSslCaFile;
+  const verifyCaPem = process.env.VERIFY_DATABASE_SSL_CA_PEM || env.databaseSslCaPem;
 
   let config;
   if (process.env.VERIFY_DATABASE_URL) {
@@ -89,11 +92,15 @@ function buildVerificationBasePoolConfig() {
     config = buildBasePoolConfig();
   }
 
-  if (verifyCaFile) {
-    config.ssl = {
-      ca: fs.readFileSync(verifyCaFile, "utf8"),
-      rejectUnauthorized: true
-    };
+  const sslConfig = buildDatabaseSslConfig({
+    required: env.databaseSslRequired,
+    caFilePath: verifyCaFile,
+    caPem: verifyCaPem,
+    missingConfigMessage:
+      "DATABASE_SSL_REQUIRED=true exige VERIFY_DATABASE_SSL_CA_FILE ou VERIFY_DATABASE_SSL_CA_PEM configurado."
+  });
+  if (sslConfig) {
+    config.ssl = sslConfig;
   }
 
   const targetHost = getTargetHost(config);

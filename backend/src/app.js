@@ -22,6 +22,7 @@ const { authenticate, authorize } = require('./middlewares/authMiddleware');
 const fileModel = require('./models/fileModel');
 const materialModel = require('./models/materialModel');
 const reportModel = require('./models/reportModel');
+const { hasDatabaseSslCa } = require('./utils/databaseSsl');
 
 const authRoutes = require('./routes/authRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
@@ -63,8 +64,12 @@ if (env.isProduction && (!env.trustProxyConfigured || env.trustProxy == null)) {
   throw new Error('TRUST_PROXY deve ser definido explicitamente em producao. Use 1 para acesso direto via Render e 2 quando houver Cloudflare na frente do Render.');
 }
 
-if (env.isProduction && env.databaseSslRequired && !env.databaseSslCaFile) {
-  throw new Error('DATABASE_SSL_REQUIRED=true exige DATABASE_SSL_CA_FILE em producao.');
+if (
+  env.isProduction
+  && env.databaseSslRequired
+  && !hasDatabaseSslCa({ caFilePath: env.databaseSslCaFile, caPem: env.databaseSslCaPem })
+) {
+  throw new Error('DATABASE_SSL_REQUIRED=true exige DATABASE_SSL_CA_FILE ou DATABASE_SSL_CA_PEM em producao.');
 }
 
 if (env.isProduction && env.uploadRequireMalwareScan) {
@@ -114,7 +119,6 @@ const globalLimiter = rateLimit({
 });
 
 app.use(requestContextMiddleware);
-app.use(sentry.requestHandler());
 app.use(
   pinoHttp({
     logger,
@@ -234,7 +238,7 @@ function getAssetVersion(assetPath) {
     const version = String(Math.floor(mtimeMs));
     assetVersionCache.set(normalizedPath, version);
     return version;
-  } catch (_error) {
+  } catch {
     return null;
   }
 }
@@ -388,7 +392,7 @@ app.use((req, res) => {
   sendHtmlPage(res, '404.html', 404);
 });
 
-app.use(sentry.errorHandler());
+sentry.setupExpressErrorHandler(app);
 app.use(errorMiddleware);
 
 module.exports = app;

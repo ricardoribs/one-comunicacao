@@ -14,6 +14,7 @@
 - `MFA_ENCRYPTION_KEY`
 - `DATABASE_PASSWORD`
 - `DATABASE_SSL_CA_FILE`
+- `DATABASE_SSL_CA_PEM`
 - `RESEND_API_KEY`
 - `SENTRY_DSN`
 - `CLOUDINARY_API_KEY`
@@ -46,7 +47,7 @@
 ### Banco
 
 1. Trocar a senha do usuario da aplicacao.
-2. Validar o novo CA bundle em `DATABASE_SSL_CA_FILE`.
+2. Validar o novo CA bundle em `DATABASE_SSL_CA_FILE` ou `DATABASE_SSL_CA_PEM`.
 3. Atualizar `staging`, validar migrations e health interno.
 4. Atualizar `production`.
 5. Confirmar conexao TLS obrigatoria.

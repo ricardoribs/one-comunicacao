@@ -5,12 +5,13 @@ const mailService = require('./mailService');
 const uploadService = require('./uploadService');
 const asaasGateway = require('./paymentProviders/asaasGateway');
 const securityAlertService = require('./securityAlertService');
+const { hasDatabaseSslCa } = require('../utils/databaseSsl');
 
 async function checkDatabase() {
   try {
     await db.query('SELECT 1');
     return { status: 'up' };
-  } catch (_error) {
+  } catch {
     return {
       status: 'down',
     };
@@ -18,7 +19,10 @@ async function checkDatabase() {
 }
 
 function checkDatabaseTls() {
-  const configured = !env.databaseSslRequired || Boolean(env.databaseSslCaFile);
+  const configured = !env.databaseSslRequired || hasDatabaseSslCa({
+    caFilePath: env.databaseSslCaFile,
+    caPem: env.databaseSslCaPem,
+  });
   return {
     status: configured ? 'up' : 'down',
     required: env.databaseSslRequired,

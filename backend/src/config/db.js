@@ -1,6 +1,6 @@
-const fs = require('fs');
 const { Pool } = require('pg');
 const env = require('./env');
+const { buildDatabaseSslConfig } = require('../utils/databaseSsl');
 
 function createPgMemPool() {
   const { newDb } = require('pg-mem');
@@ -404,32 +404,13 @@ function buildPoolConfig() {
     config.connectionString = env.databaseUrl;
   }
 
-  if (env.databaseSslRequired && !env.databaseSslCaFile) {
-    throw new Error('DATABASE_SSL_REQUIRED=true exige DATABASE_SSL_CA_FILE configurado.');
-  }
-
-  if (env.databaseSslCaFile) {
-    if (!fs.existsSync(env.databaseSslCaFile)) {
-      let availableSecretFiles = '(nenhum)';
-
-      try {
-        const secretFiles = fs.readdirSync('/etc/secrets');
-        if (secretFiles.length > 0) {
-          availableSecretFiles = secretFiles.join(', ');
-        }
-      } catch (_error) {
-        availableSecretFiles = '(nao foi possivel listar /etc/secrets)';
-      }
-
-      throw new Error(
-        `DATABASE_SSL_CA_FILE nao encontrado: ${env.databaseSslCaFile}. Arquivos visiveis em /etc/secrets: ${availableSecretFiles}`
-      );
-    }
-
-    config.ssl = {
-      ca: fs.readFileSync(env.databaseSslCaFile, 'utf8'),
-      rejectUnauthorized: true,
-    };
+  const sslConfig = buildDatabaseSslConfig({
+    required: env.databaseSslRequired,
+    caFilePath: env.databaseSslCaFile,
+    caPem: env.databaseSslCaPem,
+  });
+  if (sslConfig) {
+    config.ssl = sslConfig;
   }
 
   return config;

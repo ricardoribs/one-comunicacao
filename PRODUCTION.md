@@ -32,6 +32,7 @@ DATABASE_NAME=postgres
 DATABASE_USER=postgres.<project_ref>
 DATABASE_PASSWORD=<senha do banco>
 DATABASE_SSL_CA_FILE=/etc/secrets/prod-ca-2021.crt
+# ou use DATABASE_SSL_CA_PEM com o conteudo PEM multilinha quando o provedor nao montar Secret File
 DB_POOL_MAX=8
 JWT_SECRET=<resultado do openssl rand -hex 64>
 JWT_EXPIRES_IN=15m
@@ -96,7 +97,7 @@ Configuração esperada:
 - Start Command: `npm run start`;
 - Health Check Path: `/api/health`;
 - `JWT_SECRET`, `DATABASE_URL`, `RESEND_API_KEY`, `EMAIL_FROM`, `SENTRY_DSN` e `CLOUDINARY_*` como segredos;
-- certificado CA do banco adicionado como Secret File no Render, com `DATABASE_SSL_CA_FILE=/etc/secrets/prod-ca-2021.crt`.
+- certificado CA do banco fornecido por `DATABASE_SSL_CA_FILE` ou `DATABASE_SSL_CA_PEM`.
 
 ## Geolocalização de acesso e presença
 
@@ -233,7 +234,7 @@ CLOUDINARY_REQUIRE_PRIVATE_UPLOAD=true
 Controles adicionais:
 
 - `TRUST_PROXY` deve refletir a topologia real da borda. Use `1` para acesso direto via `*.onrender.com` e altere para `2` somente quando a topologia virar `Cloudflare -> Render`.
-- `DATABASE_SSL_REQUIRED=true` e `DATABASE_SSL_CA_FILE` tornam o boot fail-closed para conexoes sem TLS validado.
+- `DATABASE_SSL_REQUIRED=true` e `DATABASE_SSL_CA_FILE` ou `DATABASE_SSL_CA_PEM` tornam o boot fail-closed para conexoes sem TLS validado.
 - perfis `admin`, `gestor` e `comercial` entram em MFA TOTP obrigatorio no primeiro login.
 - uploads so devem subir para o provider depois do scan antimalware limpo.
 - com `UPLOAD_REQUIRE_MALWARE_SCAN=true`, o boot deve falhar se `MALWARE_SCAN_PROVIDER` ou `CLAMAV_HOST` nao estiverem definidos corretamente.

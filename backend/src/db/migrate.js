@@ -1,14 +1,10 @@
-const fs = require('fs');
 const path = require('path');
 const { Client } = require('pg');
 const { runner } = require('node-pg-migrate');
 const env = require('../config/env');
+const { buildDatabaseSslConfig } = require('../utils/databaseSsl');
 
 function buildMigrationDatabaseConfig() {
-  if (env.databaseSslRequired && !env.databaseSslCaFile) {
-    throw new Error('DATABASE_SSL_REQUIRED=true exige DATABASE_SSL_CA_FILE configurado para migrations.');
-  }
-
   if (env.databaseHost && env.databaseUser && env.databaseName) {
     const config = {
       host: env.databaseHost,
@@ -18,19 +14,27 @@ function buildMigrationDatabaseConfig() {
       password: env.databasePassword,
     };
 
-    if (env.databaseSslCaFile) {
-      if (!fs.existsSync(env.databaseSslCaFile)) {
-        throw new Error(`DATABASE_SSL_CA_FILE nao encontrado para migrations: ${env.databaseSslCaFile}`);
-      }
-
-      config.ssl = {
-        ca: fs.readFileSync(env.databaseSslCaFile, 'utf8'),
-        rejectUnauthorized: true,
-      };
+    const sslConfig = buildDatabaseSslConfig({
+      required: env.databaseSslRequired,
+      caFilePath: env.databaseSslCaFile,
+      caPem: env.databaseSslCaPem,
+      missingConfigMessage:
+        'DATABASE_SSL_REQUIRED=true exige DATABASE_SSL_CA_FILE ou DATABASE_SSL_CA_PEM configurado para migrations.',
+    });
+    if (sslConfig) {
+      config.ssl = sslConfig;
     }
 
     return config;
   }
+
+  buildDatabaseSslConfig({
+    required: env.databaseSslRequired,
+    caFilePath: env.databaseSslCaFile,
+    caPem: env.databaseSslCaPem,
+    missingConfigMessage:
+      'DATABASE_SSL_REQUIRED=true exige DATABASE_SSL_CA_FILE ou DATABASE_SSL_CA_PEM configurado para migrations.',
+  });
 
   return env.databaseUrl;
 }
