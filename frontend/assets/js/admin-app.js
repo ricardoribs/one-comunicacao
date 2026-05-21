@@ -255,6 +255,7 @@ const kanbanRuntime = {
   dragOffsetY: 0,
   scrollSyncBound: false,
   scrollResizeObserver: null,
+  overdueDrawerOpen: false,
 };
 const taskAssignState = {
   selected: new Set(),
@@ -4442,6 +4443,7 @@ function goTo(page) {
     return false;
   }
 
+  setKanbanOverdueDrawerOpen(false);
   state.activePage = page;
   syncNavigation();
   closeSidebar();
@@ -5035,6 +5037,136 @@ function getKanbanTasksForToday(filteredTasks) {
     .sort((left, right) => String(left.due_date || left.deadline || "").localeCompare(String(right.due_date || right.deadline || "")));
 }
 
+function getKanbanVisibleOverdueTasks(filteredTasks) {
+  const columnOrder = { backlog: 0, todo: 1, doing: 2, done: 3 };
+
+  return [...filteredTasks]
+    .filter((task) => normalizeTaskStatusLabel(task.status) !== "Concluido")
+    .filter((task) => isOverdueDate(task.due_date || task.deadline))
+    .sort((left, right) => {
+      const leftDue = new Date(left.due_date || left.deadline || 0).getTime();
+      const rightDue = new Date(right.due_date || right.deadline || 0).getTime();
+      if (leftDue !== rightDue) {
+        return leftDue - rightDue;
+      }
+
+      const leftColumn = columnOrder[getTaskColumnName(left)] ?? Number.MAX_SAFE_INTEGER;
+      const rightColumn = columnOrder[getTaskColumnName(right)] ?? Number.MAX_SAFE_INTEGER;
+      if (leftColumn !== rightColumn) {
+        return leftColumn - rightColumn;
+      }
+
+      return String(left.title || "").localeCompare(String(right.title || ""), "pt-BR");
+    });
+}
+
+function setKanbanOverdueDrawerOpen(nextOpen) {
+  kanbanRuntime.overdueDrawerOpen = Boolean(nextOpen);
+
+  const overlay = document.getElementById("kanban-overdue-overlay");
+  const drawer = document.getElementById("kanban-overdue-drawer");
+  if (!overlay || !drawer) {
+    return;
+  }
+
+  overlay.classList.toggle("is-open", kanbanRuntime.overdueDrawerOpen);
+  drawer.classList.toggle("is-open", kanbanRuntime.overdueDrawerOpen);
+  overlay.setAttribute("aria-hidden", String(!kanbanRuntime.overdueDrawerOpen));
+  drawer.setAttribute("aria-hidden", String(!kanbanRuntime.overdueDrawerOpen));
+  document.body.classList.toggle("kanban-overdue-open", kanbanRuntime.overdueDrawerOpen);
+}
+
+function bindKanbanOverdueDrawerInteractions() {
+  if (document.body.dataset.boundKanbanOverdueDrawer === "1") {
+    return;
+  }
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && kanbanRuntime.overdueDrawerOpen) {
+      setKanbanOverdueDrawerOpen(false);
+    }
+  });
+
+  document.body.dataset.boundKanbanOverdueDrawer = "1";
+}
+
+function buildKanbanOverdueItemHtml(task, canEditTasks) {
+  const columnLabel = getTaskStatusDisplayLabel(task);
+  const deadlineValue = task.due_date || task.deadline;
+  const deadlineLabel = deadlineValue ? formatDate(deadlineValue) : "Sem prazo";
+  const assigneeLabel = getTaskAssigneeTitle(task);
+  const descriptionHtml = task.description
+    ? `<p class="kanban-overdue-item-description">${escapeHtml(task.description)}</p>`
+    : "";
+
+  return `
+    <article class="kanban-overdue-item">
+      <div class="kanban-overdue-item-head">
+        <span class="kanban-overdue-item-column">${escapeHtml(columnLabel)}</span>
+        <span class="kanban-overdue-item-state">Atrasada</span>
+      </div>
+      <h3 class="kanban-overdue-item-title">${escapeHtml(task.title || "Tarefa sem título")}</h3>
+      <p class="kanban-overdue-item-client">${escapeHtml(task.client_name || "Operação interna")}</p>
+      <div class="kanban-overdue-item-meta">
+        <span>Prazo ${escapeHtml(deadlineLabel)}</span>
+        <span>•</span>
+        <span>${escapeHtml(assigneeLabel)}</span>
+      </div>
+      ${descriptionHtml}
+      <div class="kanban-overdue-item-actions">
+        ${
+          canEditTasks
+            ? `<button type="button" class="btn btn-outline btn-sm" data-action="review-overdue-task" data-id="${task.id}">Remarcar</button>`
+            : ""
+        }
+        <button type="button" class="btn btn-ghost btn-sm" data-action="focus-kanban-overdue-task" data-id="${task.id}">Ver no Kanban</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderKanbanOverduePanel(filteredTasks) {
+  const overdueContainer = document.getElementById("kanban-exact-overdue");
+  const drawerSubtitle = document.getElementById("kanban-overdue-drawer-subtitle");
+  const drawerList = document.getElementById("kanban-overdue-list");
+  if (!overdueContainer || !drawerSubtitle || !drawerList) {
+    return;
+  }
+
+  const canEditTasks = canManageTasks();
+  const overdueTasks = getKanbanVisibleOverdueTasks(filteredTasks);
+  const overdueCount = overdueTasks.length;
+  const bannerLabel = overdueCount === 1 ? "Tarefa atrasada" : "Tarefas atrasadas";
+  const drawerSubtitleText = overdueCount
+    ? `${overdueCount} ${overdueCount === 1 ? "tarefa requer" : "tarefas requerem"} sua atenção`
+    : "Nenhuma tarefa em atraso no filtro atual.";
+
+  overdueContainer.classList.toggle("is-empty", overdueCount === 0);
+  overdueContainer.innerHTML = `
+    <div class="kanban-overdue-banner-copy">
+      <span class="kanban-overdue-banner-count">${overdueCount}</span>
+      <span class="kanban-overdue-banner-label">${escapeHtml(overdueCount ? bannerLabel : "Nenhuma tarefa atrasada")}</span>
+    </div>
+    <button
+      type="button"
+      class="kanban-overdue-banner-action"
+      data-action="open-kanban-overdue-drawer"
+      ${overdueCount ? "" : "disabled"}
+    >
+      Revisar
+    </button>
+  `;
+
+  drawerSubtitle.textContent = drawerSubtitleText;
+  drawerList.innerHTML = overdueCount
+    ? overdueTasks.map((task) => buildKanbanOverdueItemHtml(task, canEditTasks)).join("")
+    : '<div class="kanban-overdue-empty">Nenhuma tarefa em atraso neste filtro. O board já está alinhado.</div>';
+
+  if (!overdueCount && kanbanRuntime.overdueDrawerOpen) {
+    setKanbanOverdueDrawerOpen(false);
+  }
+}
+
 function bindDailyChecklistInteractions(container) {
   if (!container) {
     return;
@@ -5139,6 +5271,8 @@ function renderKanbanChecklist(filteredTasks) {
     return;
   }
 
+  bindKanbanOverdueDrawerInteractions();
+
   if (form.dataset.boundChecklist !== "1") {
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -5164,27 +5298,7 @@ function renderKanbanChecklist(filteredTasks) {
     form.dataset.boundChecklist = "1";
   }
 
-  const dueTasks = getKanbanTasksForToday(filteredTasks);
-  const overdueTasks = dueTasks.filter((task) => isOverdueDate(task.due_date || task.deadline));
-  const dueSummaryTask = overdueTasks[0] || dueTasks[0] || null;
-  const summaryCount = overdueTasks.length || (dueSummaryTask ? 1 : 0);
-  const summaryPrefix = overdueTasks.length
-    ? "Tarefa atrasada:"
-    : dueSummaryTask
-      ? "Acompanhamento:"
-      : "Tudo em dia:";
-  const summaryTitle = dueSummaryTask ? dueSummaryTask.title : "Sem tarefas atrasadas no momento.";
-  const reviewButtonHtml = dueSummaryTask && canManageTasks()
-    ? `<button type="button" data-action="open-modal" data-modal="nova-tarefa" data-id="${dueSummaryTask.id}" class="text-[12px] font-bold text-red-700 dark:text-red-400 hover:underline">Revisar</button>`
-    : '<button type="button" class="text-[12px] font-bold text-red-700 dark:text-red-400 hover:underline invisible">Revisar</button>';
-
-  overdueContainer.innerHTML = `
-    <div class="flex items-center gap-3">
-      <span class="flex items-center justify-center w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-[10px] font-bold">${summaryCount}</span>
-      <p class="text-[13px] font-medium text-red-700 dark:text-red-400${dueSummaryTask ? "" : " kanban-exact-overdue-empty"}">${summaryPrefix} <span class="font-bold">${escapeHtml(summaryTitle)}</span></p>
-    </div>
-    ${reviewButtonHtml}
-  `;
+  renderKanbanOverduePanel(filteredTasks);
 }
 
 function resolveKanbanClient(filteredTasks) {
@@ -7282,6 +7396,16 @@ function bindDataActions() {
         return setTab(target.dataset.group || "", target.dataset.tab || "");
       case "open-modal":
         return openModal(target.dataset.modal || "", id || null);
+      case "open-kanban-overdue-drawer":
+        return setKanbanOverdueDrawerOpen(true);
+      case "close-kanban-overdue-drawer":
+        return setKanbanOverdueDrawerOpen(false);
+      case "review-overdue-task":
+        setKanbanOverdueDrawerOpen(false);
+        return openModal("nova-tarefa", id || null);
+      case "focus-kanban-overdue-task":
+        setKanbanOverdueDrawerOpen(false);
+        return focusTaskCard(id);
       case "shift-calendar":
         return shiftCalendarWeek(Number(target.dataset.offset || 0));
       case "shift-calendar-month":
