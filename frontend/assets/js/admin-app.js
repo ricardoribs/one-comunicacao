@@ -387,8 +387,8 @@ const PROFILE_NOTIFICATION_PREFERENCE_OPTIONS = [
     description: "Receba alerta imediato quando uma fatura vencer sem pagamento."
   }
 ];
-const CALENDAR_VIEW_START_HOUR = 7;
-const CALENDAR_VIEW_END_HOUR = 22;
+const CALENDAR_DEFAULT_START_HOUR = 7;
+const CALENDAR_DEFAULT_END_HOUR = 22;
 const CALENDAR_SLOT_HEIGHT = 58;
 const mfaLoginState = {
   challengeToken: "",
@@ -1792,7 +1792,43 @@ async function loadCalendarEvents(anchorDate = null, { force = false, silent = f
   }
 }
 
-function buildCalendarSegments(events, weekStart) {
+function getCalendarViewHours(events, weekStart) {
+  let startHour = CALENDAR_DEFAULT_START_HOUR;
+  let endHour = CALENDAR_DEFAULT_END_HOUR;
+
+  events.forEach((event) => {
+    const eventStart = new Date(event.starts_at);
+    const eventEnd = new Date(event.ends_at);
+    if (Number.isNaN(eventStart.getTime()) || Number.isNaN(eventEnd.getTime()) || eventEnd <= eventStart) {
+      return;
+    }
+
+    for (let dayIndex = 0; dayIndex < 7; dayIndex += 1) {
+      const dayStart = addCalendarDays(weekStart, dayIndex);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = addCalendarDays(dayStart, 1);
+
+      const segmentStart = new Date(Math.max(eventStart.getTime(), dayStart.getTime()));
+      const segmentEnd = new Date(Math.min(eventEnd.getTime(), dayEnd.getTime()));
+      if (segmentEnd <= segmentStart) {
+        continue;
+      }
+
+      const segmentStartHour = (segmentStart.getTime() - dayStart.getTime()) / 3600000;
+      const segmentEndHour = (segmentEnd.getTime() - dayStart.getTime()) / 3600000;
+
+      startHour = Math.min(startHour, Math.floor(segmentStartHour));
+      endHour = Math.max(endHour, Math.ceil(segmentEndHour));
+    }
+  });
+
+  startHour = Math.max(0, Math.min(23, startHour));
+  endHour = Math.max(startHour + 1, Math.min(24, endHour));
+
+  return { startHour, endHour };
+}
+
+function buildCalendarSegments(events, weekStart, viewStartHour, viewEndHour) {
   const daySegments = Array.from({ length: 7 }, () => []);
 
   events.forEach((event) => {
@@ -1805,9 +1841,9 @@ function buildCalendarSegments(events, weekStart) {
     for (let dayIndex = 0; dayIndex < 7; dayIndex += 1) {
       const dayStart = addCalendarDays(weekStart, dayIndex);
       const trackStart = new Date(dayStart);
-      trackStart.setHours(CALENDAR_VIEW_START_HOUR, 0, 0, 0);
+      trackStart.setHours(viewStartHour, 0, 0, 0);
       const trackEnd = new Date(dayStart);
-      trackEnd.setHours(CALENDAR_VIEW_END_HOUR, 0, 0, 0);
+      trackEnd.setHours(viewEndHour, 0, 0, 0);
 
       const segmentStart = new Date(Math.max(eventStart.getTime(), trackStart.getTime()));
       const segmentEnd = new Date(Math.min(eventEnd.getTime(), trackEnd.getTime()));
@@ -1830,11 +1866,12 @@ function buildCalendarSegments(events, weekStart) {
 }
 
 function buildCalendarGridHtml(events, weekStart) {
+  const { startHour, endHour } = getCalendarViewHours(events, weekStart);
   const hours = Array.from(
-    { length: CALENDAR_VIEW_END_HOUR - CALENDAR_VIEW_START_HOUR },
-    (_, index) => CALENDAR_VIEW_START_HOUR + index
+    { length: endHour - startHour },
+    (_, index) => startHour + index
   );
-  const daySegments = buildCalendarSegments(events, weekStart);
+  const daySegments = buildCalendarSegments(events, weekStart, startHour, endHour);
   const trackHeight = hours.length * CALENDAR_SLOT_HEIGHT;
   const todayKey = getCalendarWeekKey(new Date());
 
