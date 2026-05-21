@@ -1711,6 +1711,50 @@ function formatCalendarWeekLabel(weekStart) {
   return `${formatCalendarMonthDay(start)} - ${formatCalendarMonthDay(end)} ${end.getFullYear()}`;
 }
 
+function formatCalendarMonthTitle(value) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+function isSameCalendarDate(left, right) {
+  const leftDate = left instanceof Date ? left : new Date(left);
+  const rightDate = right instanceof Date ? right : new Date(right);
+  if (Number.isNaN(leftDate.getTime()) || Number.isNaN(rightDate.getTime())) {
+    return false;
+  }
+
+  return leftDate.getFullYear() === rightDate.getFullYear()
+    && leftDate.getMonth() === rightDate.getMonth()
+    && leftDate.getDate() === rightDate.getDate();
+}
+
+function getCalendarDurationLabel(startsAt, endsAt) {
+  const start = new Date(startsAt);
+  const end = new Date(endsAt);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+    return "";
+  }
+
+  const totalMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours && minutes) {
+    return `${hours}h ${minutes}m`;
+  }
+  if (hours) {
+    return `${hours}h`;
+  }
+  return `${minutes}m`;
+}
+
 function getCalendarColorConfig(value) {
   const normalized = String(value || "pink").trim().toLowerCase();
   const config = {
@@ -1865,6 +1909,57 @@ function buildCalendarSegments(events, weekStart, viewStartHour, viewEndHour) {
   return daySegments;
 }
 
+function buildCalendarMiniMonthHtml(weekStart) {
+  const anchor = getCalendarWeekStartDate(weekStart);
+  const monthAnchor = addCalendarDays(anchor, 3);
+  const monthStart = new Date(monthAnchor.getFullYear(), monthAnchor.getMonth(), 1);
+  const gridStart = startOfCalendarWeek(monthStart);
+  const selectedWeekStart = getCalendarWeekStartDate(anchor);
+  const selectedWeekEnd = addCalendarDays(selectedWeekStart, 6);
+  const today = new Date();
+  const weekdayLabels = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM"];
+
+  const weekdaysHtml = weekdayLabels
+    .map((label) => `<div class="calendar-mini-weekday" aria-hidden="true">${label}</div>`)
+    .join("");
+
+  const dayButtonsHtml = Array.from({ length: 42 }, (_, index) => {
+    const dayDate = addCalendarDays(gridStart, index);
+    const isOutside = dayDate.getMonth() !== monthStart.getMonth();
+    const isToday = isSameCalendarDate(dayDate, today);
+    const isSelectedWeek = dayDate >= selectedWeekStart && dayDate <= selectedWeekEnd;
+    const classes = ["calendar-mini-day"];
+
+    if (isOutside) {
+      classes.push("is-outside");
+    }
+    if (isSelectedWeek) {
+      classes.push("is-selected-week");
+    }
+    if (isToday) {
+      classes.push("is-today");
+    }
+
+    return `
+      <button
+        type="button"
+        class="${classes.join(" ")}"
+        data-action="calendar-jump-date"
+        data-date="${dayDate.toISOString()}"
+        aria-pressed="${isSelectedWeek ? "true" : "false"}"
+        aria-label="Abrir semana de ${escapeHtml(formatCalendarMonthDay(dayDate, { weekday: "long" }))}"
+      >
+        ${dayDate.getDate()}
+      </button>
+    `;
+  }).join("");
+
+  return `
+    <div class="calendar-mini-weekdays">${weekdaysHtml}</div>
+    <div class="calendar-mini-days">${dayButtonsHtml}</div>
+  `;
+}
+
 function buildCalendarGridHtml(events, weekStart) {
   const { startHour, endHour } = getCalendarViewHours(events, weekStart);
   const hours = Array.from(
@@ -1894,6 +1989,11 @@ function buildCalendarGridHtml(events, weekStart) {
     const dayDate = addCalendarDays(weekStart, dayIndex);
     const dayKey = getCalendarWeekKey(dayDate);
     const isToday = dayKey === todayKey;
+    const dayTrackStart = new Date(dayDate);
+    dayTrackStart.setHours(startHour, 0, 0, 0);
+    const dayTrackEnd = new Date(dayDate);
+    dayTrackEnd.setHours(endHour, 0, 0, 0);
+    const now = new Date();
     const segmentsHtml = daySegments[dayIndex]
       .map((event) => {
         const color = getCalendarColorConfig(event.color);
@@ -1915,6 +2015,13 @@ function buildCalendarGridHtml(events, weekStart) {
         `;
       })
       .join("");
+    const nowLineHtml = isToday && now >= dayTrackStart && now <= dayTrackEnd
+      ? `
+        <div class="calendar-now-line" style="top:${((now.getTime() - dayTrackStart.getTime()) / 3600000) * CALENDAR_SLOT_HEIGHT}px">
+          <span>${escapeHtml(formatCalendarTime(now))}</span>
+        </div>
+      `
+      : "";
 
     return `
       <div class="calendar-day-column ${isToday ? "is-today" : ""}">
@@ -1929,6 +2036,7 @@ function buildCalendarGridHtml(events, weekStart) {
                 `<div class="calendar-hour-slot" style="top:${hourIndex * CALENDAR_SLOT_HEIGHT}px;height:${CALENDAR_SLOT_HEIGHT}px"></div>`
             )
             .join("")}
+          ${nowLineHtml}
           ${segmentsHtml}
         </div>
       </div>
@@ -1958,12 +2066,13 @@ function buildCalendarUpcomingHtml(events) {
     .map((event) => {
       const color = getCalendarColorConfig(event.color);
       const canManage = canManageCalendarEvents();
+      const durationLabel = getCalendarDurationLabel(event.starts_at, event.ends_at);
       return `
-        <article class="calendar-upcoming-card" data-calendar-event-id="${event.id}">
+        <article class="calendar-upcoming-card ${color.className}" data-calendar-event-id="${event.id}">
           <div class="calendar-upcoming-head">
             <div class="cell-stack">
               <strong class="cell-title">${escapeHtml(event.title)}</strong>
-              <span class="cell-sub">${escapeHtml(
+              <span class="calendar-upcoming-time">${escapeHtml(
                 `${formatCalendarMonthDay(event.starts_at, { weekday: "short" })} · ${formatCalendarTimeRange(
                   event.starts_at,
                   event.ends_at
@@ -1972,12 +2081,15 @@ function buildCalendarUpcomingHtml(events) {
             </div>
             <span class="badge ${color.badgeClass}">${escapeHtml(color.label)}</span>
           </div>
-          ${event.location ? `<div class="calendar-upcoming-meta">${escapeHtml(event.location)}</div>` : ""}
+          <div class="calendar-upcoming-meta-row">
+            <div class="calendar-upcoming-location">${escapeHtml(event.location || "Sem local definido")}</div>
+            ${durationLabel ? `<div class="calendar-upcoming-duration">${escapeHtml(durationLabel)}</div>` : ""}
+          </div>
           ${event.description ? `<div class="calendar-upcoming-note">${escapeHtml(event.description)}</div>` : ""}
           ${
             canManage
               ? `<div class="calendar-upcoming-actions">
-                  <button type="button" class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="novo-evento" data-id="${event.id}">Editar</button>
+                  <button type="button" class="btn btn-ghost btn-sm calendar-upcoming-edit" data-action="open-modal" data-modal="novo-evento" data-id="${event.id}">Editar</button>
                   ${renderActionMenu(
                     [
                       renderActionMenuButton({
@@ -2002,6 +2114,8 @@ function renderCalendar() {
   const page = document.getElementById("page-calendario");
   const grid = document.getElementById("calendar-week-grid");
   const upcoming = document.getElementById("calendar-upcoming-list");
+  const miniGrid = document.getElementById("calendar-mini-grid");
+  const miniMonthLabel = document.getElementById("calendar-mini-month-label");
   const weekLabel = document.getElementById("calendar-week-label");
   const weekSub = document.getElementById("calendar-week-sub");
   const newEventButton = document.getElementById("btn-new-calendar-event");
@@ -2013,7 +2127,13 @@ function renderCalendar() {
   const weekStart = getCalendarWeekStartDate(state.calendar.weekStart || new Date());
   state.calendar.weekStart = weekStart.toISOString();
   weekLabel.textContent = `Semana de ${formatCalendarWeekLabel(weekStart)}`;
-  weekSub.textContent = "";
+  weekSub.textContent = "Vista semanal compartilhada com navegação rápida na lateral.";
+  if (miniMonthLabel) {
+    miniMonthLabel.textContent = formatCalendarMonthTitle(addCalendarDays(weekStart, 3));
+  }
+  if (miniGrid) {
+    miniGrid.innerHTML = buildCalendarMiniMonthHtml(weekStart);
+  }
 
   if (newEventButton) {
     newEventButton.style.display = canManageCalendarEvents() ? "" : "none";
@@ -2022,6 +2142,9 @@ function renderCalendar() {
   if (!canRenderCalendarPage()) {
     grid.innerHTML = UI.empty("Calendário indisponível", "Este perfil não possui acesso ao calendário interno.");
     upcoming.innerHTML = "";
+    if (miniGrid) {
+      miniGrid.innerHTML = "";
+    }
     return;
   }
 
@@ -2081,6 +2204,21 @@ function shiftCalendarWeek(offset) {
   const currentWeek = getCalendarWeekStartDate(state.calendar.weekStart || new Date());
   const targetWeek = addCalendarDays(currentWeek, Number(offset || 0) * 7);
   loadCalendarEvents(targetWeek, { force: true }).catch(() => {});
+}
+
+function shiftCalendarMonth(offset) {
+  const currentWeek = getCalendarWeekStartDate(state.calendar.weekStart || new Date());
+  const currentMonthAnchor = addCalendarDays(currentWeek, 3);
+  const targetMonth = new Date(currentMonthAnchor.getFullYear(), currentMonthAnchor.getMonth() + Number(offset || 0), 1);
+  loadCalendarEvents(targetMonth, { force: true }).catch(() => {});
+}
+
+function jumpCalendarToDate(dateValue) {
+  if (!dateValue) {
+    return;
+  }
+
+  loadCalendarEvents(dateValue, { force: true }).catch(() => {});
 }
 
 function goToCalendarToday() {
@@ -7146,6 +7284,10 @@ function bindDataActions() {
         return openModal(target.dataset.modal || "", id || null);
       case "shift-calendar":
         return shiftCalendarWeek(Number(target.dataset.offset || 0));
+      case "shift-calendar-month":
+        return shiftCalendarMonth(Number(target.dataset.offset || 0));
+      case "calendar-jump-date":
+        return jumpCalendarToDate(target.dataset.date || "");
       case "calendar-today":
         return goToCalendarToday();
       case "export-finance":
