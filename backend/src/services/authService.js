@@ -244,6 +244,47 @@ async function validatePrimaryCredentials({ email, password }) {
   return user;
 }
 
+async function prepareTotpEnrollmentForUser(user) {
+  if (mfaService.isMfaEnabled(user)) {
+    throw new AppError('MFA ja habilitado para este usuario.', 409);
+  }
+
+  let secret = null;
+
+  if (user.mfa_totp_pending_secret_encrypted) {
+    try {
+      secret = mfaService.decryptSecret(user.mfa_totp_pending_secret_encrypted);
+    } catch (_error) {
+      await userModel.clearPendingMfaSecret(user.id);
+    }
+  }
+
+  if (!secret) {
+    secret = mfaService.buildEnrollmentSecret(user).secret;
+    await userModel.storePendingMfaSecret(user.id, mfaService.encryptSecret(secret));
+  }
+
+  return mfaService.buildEnrollmentResponse(user, secret);
+}
+
+async function enableTotpEnrollmentForUser(user, otp) {
+  if (mfaService.isMfaEnabled(user)) {
+    throw new AppError('MFA ja habilitado para este usuario.', 409);
+  }
+
+  if (!user.mfa_totp_pending_secret_encrypted) {
+    throw new AppError('Configuracao TOTP pendente nao encontrada. Reinicie o processo.', 409);
+  }
+
+  const secret = mfaService.decryptSecret(user.mfa_totp_pending_secret_encrypted);
+  if (!mfaService.verifyOtp(secret, otp)) {
+    throw new AppError('Codigo TOTP invalido.', 401);
+  }
+
+  await userModel.enableMfa(user.id, user.mfa_totp_pending_secret_encrypted);
+  return loadValidatedUserById(user.id);
+}
+
 async function register(payload) {
   const existingUser = await userModel.findByEmail(payload.email);
   if (existingUser) {
@@ -289,7 +330,7 @@ async function register(payload) {
 async function login({ email, password }, metadata = {}) {
   const user = await validatePrimaryCredentials({ email, password });
 
-  if (mfaService.requiresMfa(user)) {
+  if (mfaService.shouldChallengeForMfa(user)) {
     await userModel.clearLoginFailures(user.id);
     return buildMfaChallengeResponse(user, mfaService.isMfaEnabled(user) ? 'login' : 'enroll');
   }
@@ -302,67 +343,20 @@ async function login({ email, password }, metadata = {}) {
 async function setupTotpEnrollment(challengeToken) {
   const challenge = mfaService.verifyChallengeToken(challengeToken, 'enroll');
   const user = await loadValidatedUserById(challenge.userId);
-
-  if (!mfaService.requiresMfa(user)) {
-    throw new AppError('MFA nao obrigatorio para este perfil.', 400);
-  }
-
-  if (mfaService.isMfaEnabled(user)) {
-    throw new AppError('MFA ja habilitado para este usuario.', 409);
-  }
-
-  let secret = null;
-
-  if (user.mfa_totp_pending_secret_encrypted) {
-    try {
-      secret = mfaService.decryptSecret(user.mfa_totp_pending_secret_encrypted);
-    } catch (_error) {
-      await userModel.clearPendingMfaSecret(user.id);
-    }
-  }
-
-  if (!secret) {
-    secret = mfaService.buildEnrollmentSecret(user).secret;
-    await userModel.storePendingMfaSecret(user.id, mfaService.encryptSecret(secret));
-  }
-
-  return await mfaService.buildEnrollmentResponse(user, secret);
+  return prepareTotpEnrollmentForUser(user);
 }
 
 async function completeTotpEnrollment(challengeToken, otp, metadata = {}) {
   const challenge = mfaService.verifyChallengeToken(challengeToken, 'enroll');
   const user = await loadValidatedUserById(challenge.userId);
-
-  if (!mfaService.requiresMfa(user)) {
-    throw new AppError('MFA nao obrigatorio para este perfil.', 400);
-  }
-
-  if (mfaService.isMfaEnabled(user)) {
-    throw new AppError('MFA ja habilitado para este usuario.', 409);
-  }
-
-  if (!user.mfa_totp_pending_secret_encrypted) {
-    throw new AppError('Configuracao TOTP pendente nao encontrada. Reinicie o processo.', 409);
-  }
-
-  const secret = mfaService.decryptSecret(user.mfa_totp_pending_secret_encrypted);
-  if (!mfaService.verifyOtp(secret, otp)) {
-    throw new AppError('Codigo TOTP invalido.', 401);
-  }
-
-  await userModel.enableMfa(user.id, user.mfa_totp_pending_secret_encrypted);
+  const freshUser = await enableTotpEnrollmentForUser(user, otp);
   await userModel.resetLoginFailures(user.id, metadata);
-  const freshUser = await loadValidatedUserById(user.id);
   return issueAuthenticatedSession(freshUser, metadata);
 }
 
 async function completeTotpLogin(challengeToken, otp, metadata = {}) {
   const challenge = mfaService.verifyChallengeToken(challengeToken, 'login');
   const user = await loadValidatedUserById(challenge.userId);
-
-  if (!mfaService.requiresMfa(user)) {
-    throw new AppError('MFA nao obrigatorio para este perfil.', 400);
-  }
 
   if (!mfaService.isMfaEnabled(user)) {
     throw new AppError('MFA ainda nao habilitado para este usuario.', 409);
@@ -388,6 +382,16 @@ async function completeTotpLogin(challengeToken, otp, metadata = {}) {
   await userModel.resetLoginFailures(user.id, metadata);
   const freshUser = await loadValidatedUserById(user.id);
   return issueAuthenticatedSession(freshUser, metadata);
+}
+
+async function setupMyTotpEnrollment(userId) {
+  const user = await loadValidatedUserById(userId);
+  return prepareTotpEnrollmentForUser(user);
+}
+
+async function completeMyTotpEnrollment(userId, otp) {
+  const user = await loadValidatedUserById(userId);
+  return enableTotpEnrollmentForUser(user, otp);
 }
 
 async function refreshAccessToken(rawRefreshToken, metadata = {}) {
@@ -548,4 +552,6 @@ module.exports = {
   setupTotpEnrollment,
   completeTotpEnrollment,
   completeTotpLogin,
+  setupMyTotpEnrollment,
+  completeMyTotpEnrollment,
 };

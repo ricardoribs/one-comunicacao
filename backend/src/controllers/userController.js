@@ -43,6 +43,8 @@ function serializeUserProfile(user) {
     created_at: safeUser.created_at || null,
     client_name: safeUser.client_name || null,
     client_company: safeUser.client_company || null,
+    mfa_enabled_at: safeUser.mfa_enabled_at || null,
+    mfa_required: env.mfaRequiredRoles.includes(safeUser.role),
     notification_preferences: userModel.extractNotificationPreferences(safeUser),
   };
 }
@@ -237,6 +239,21 @@ exports.updateMyPassword = asyncHandler(async (req, res) => {
 
   res.json({
     message: 'Senha atualizada com sucesso.',
+  });
+});
+
+exports.setupMyTotpEnrollment = asyncHandler(async (req, res) => {
+  const enrollment = await authService.setupMyTotpEnrollment(req.user.id);
+  res.setHeader('Cache-Control', 'no-store');
+  res.json(enrollment);
+});
+
+exports.completeMyTotpEnrollment = asyncHandler(async (req, res) => {
+  const user = await authService.completeMyTotpEnrollment(req.user.id, req.body.otp);
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({
+    message: 'MFA configurado com sucesso.',
+    user: serializeUserProfile(user),
   });
 });
 

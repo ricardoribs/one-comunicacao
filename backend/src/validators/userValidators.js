@@ -68,3 +68,10 @@ exports.passwordChangeSchema = z.object({
   current_password: z.string().min(1, 'Informe a senha atual.'),
   new_password: strongPassword,
 });
+
+exports.mfaTotpEnrollSchema = z.object({
+  otp: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, 'Informe um codigo TOTP valido com 6 digitos.'),
+});
