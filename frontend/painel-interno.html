@@ -204,10 +204,11 @@ nav.sb-nav{flex:1;padding:0 12px 16px;overflow-y:auto}
 #sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(13,13,15,.48);z-index:90;opacity:0;transition:opacity var(--tr);touch-action:manipulation}
 body.sidebar-collapsed #sidebar{transform:translateX(-100%)}
 body.sidebar-collapsed #app-main{margin-left:0}
-body.sidebar-collapsed #desktop-sidebar-toggle{left:18px}
+body.sidebar-collapsed #desktop-sidebar-toggle{left:24px}
 body.sidebar-open{overflow:hidden}
 body.sidebar-open #sidebar-backdrop{display:block;opacity:1}
-.topbar{min-height:72px;background:var(--white);padding:0 var(--space-8);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;flex-shrink:0}
+.topbar{min-height:72px;background:var(--white);padding:0 var(--space-8);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;flex-shrink:0;transition:padding-left var(--tr)}
+body.sidebar-collapsed .topbar{padding-left:72px}
 .topbar > :first-child{min-width:0}
 .topbar-title{font-family:var(--font-d);font-size:var(--text-xl);font-weight:700;letter-spacing:-.04em;line-height:1.08}
 .topbar-sub{font-size:var(--text-sm);line-height:1.4;color:var(--muted);margin-top:var(--space-1)}
@@ -404,31 +405,37 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-calendario .calendar-topbar-nav .btn + .btn{border-left:1px solid rgba(13,13,15,.1)}
 #page-calendario .calendar-topbar-nav .btn:hover{background:#f8f8f8}
 #page-calendario .calendar-topbar-nav .btn[data-action="calendar-today"]{background:#fff;font-weight:700;color:var(--text)}
-#page-calendario .calendar-shell{display:grid;grid-template-columns:minmax(302px,302px) minmax(0,1fr);gap:22px;align-items:start}
-#page-calendario .calendar-sidebar-stack{display:flex;flex-direction:column;gap:22px;min-width:0;order:-1;position:sticky;top:calc(80px + var(--space-4))}
-#page-calendario .calendar-main-card,#page-calendario .calendar-mini-card,#page-calendario .calendar-sidebar-card{background:#fff;border:1px solid rgba(13,13,15,.1);border-radius:18px;box-shadow:none}
+#page-calendario .calendar-shell{display:flex;flex-direction:column;gap:22px}
+#page-calendario .calendar-main-card,#page-calendario .calendar-sidebar-card{background:#fff;border:1px solid rgba(13,13,15,.1);border-radius:18px;box-shadow:none}
 #page-calendario .calendar-main-card{padding:0;overflow:hidden;min-width:0}
 #page-calendario .calendar-main-card > .section-header{padding:24px 26px 20px;margin-bottom:0;border-bottom:1px solid rgba(13,13,15,.08);background:#fff}
 #page-calendario .calendar-main-card > .section-header .section-title{font-size:22px;line-height:1.15;letter-spacing:-.02em}
 #page-calendario .calendar-main-card > .section-header .section-sub{margin-top:4px;font-size:14px}
-#page-calendario .calendar-mini-card,#page-calendario .calendar-sidebar-card{padding:20px}
-#page-calendario .calendar-sidebar-card{display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden}
-#page-calendario .calendar-mini-header{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3);margin-bottom:var(--space-4)}
-#page-calendario .calendar-mini-month-label{font-family:var(--font-d);font-size:18px;font-weight:700;letter-spacing:-.02em;color:var(--text)}
-#page-calendario .calendar-mini-navs{display:flex;align-items:center;gap:8px}
-#page-calendario .calendar-mini-nav{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;border:1px solid rgba(13,13,15,.12);background:#fff;color:var(--text);font-size:14px;font-weight:700;cursor:pointer;transition:background var(--tr),border-color var(--tr)}
-#page-calendario .calendar-mini-nav:hover{background:#f8f8f8;border-color:rgba(13,13,15,.18)}
-#page-calendario .calendar-mini-nav:focus-visible,#page-calendario .calendar-mini-day:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
-#page-calendario .calendar-mini-weekdays,#page-calendario .calendar-mini-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
-#page-calendario .calendar-mini-weekdays{margin-bottom:6px}
-#page-calendario .calendar-mini-weekday{display:flex;align-items:center;justify-content:center;height:18px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#98a1ad}
-#page-calendario .calendar-mini-day{position:relative;display:inline-flex;align-items:center;justify-content:center;height:34px;border:none;border-radius:12px;background:transparent;color:var(--text);font-size:13px;font-weight:500;cursor:pointer;transition:background var(--tr),color var(--tr),box-shadow var(--tr)}
-#page-calendario .calendar-mini-day:hover{background:#f5f7fb}
-#page-calendario .calendar-mini-day.is-outside{color:#b7aba2;font-weight:500}
-#page-calendario .calendar-mini-day.is-selected-week{background:#fff1f6;color:var(--pink);box-shadow:inset 0 0 0 1px rgba(232,52,105,.14)}
-#page-calendario .calendar-mini-day.is-today{background:var(--pink);color:#fff;box-shadow:none}
-#page-calendario .calendar-mini-caption{margin-top:var(--space-4);font-size:12px;line-height:1.45;color:var(--muted)}
-#page-calendario .calendar-upcoming-list{min-height:0;max-height:320px;overflow:auto;padding-right:2px;display:flex;flex-direction:column;gap:12px}
+#page-calendario .calendar-upcoming-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:62px;padding:0 18px;border:1px solid #f7d5da;border-radius:18px;background:linear-gradient(180deg,#fff8fa 0%,#fff4f7 100%);box-shadow:none}
+#page-calendario .calendar-upcoming-banner.is-empty{background:linear-gradient(180deg,#fbfbfb 0%,#f7f7f7 100%);border-color:var(--border)}
+#page-calendario .calendar-upcoming-banner-copy{display:flex;align-items:center;gap:14px;min-width:0}
+#page-calendario .calendar-upcoming-banner-count{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:999px;background:#fff;color:var(--pink);font-size:12px;font-weight:700;box-shadow:0 1px 2px rgba(15,23,42,.06);flex-shrink:0}
+#page-calendario .calendar-upcoming-banner.is-empty .calendar-upcoming-banner-count{background:#f1f5f9;color:#64748b}
+#page-calendario .calendar-upcoming-banner-label{font-size:14px;font-weight:600;color:#be123c;white-space:nowrap}
+#page-calendario .calendar-upcoming-banner.is-empty .calendar-upcoming-banner-label{color:var(--muted)}
+#page-calendario .calendar-upcoming-banner-action{border:none;background:none;padding:0;font-size:14px;font-weight:700;color:#991b1b;cursor:pointer;transition:color var(--tr),opacity var(--tr)}
+#page-calendario .calendar-upcoming-banner-action:hover{color:#7f1d1d;text-decoration:underline}
+#page-calendario .calendar-upcoming-banner-action:disabled{opacity:.45;cursor:not-allowed;text-decoration:none}
+#page-calendario .calendar-upcoming-overlay{position:fixed;inset:0;background:rgba(15,23,42,.38);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .24s ease;z-index:2400}
+#page-calendario .calendar-upcoming-overlay.is-open{opacity:1;pointer-events:auto}
+#page-calendario .calendar-upcoming-drawer{position:fixed;top:0;right:0;width:min(420px,100vw);height:100vh;display:flex;flex-direction:column;background:#fff;border-left:1px solid var(--border);box-shadow:-24px 0 48px rgba(15,23,42,.12);transform:translateX(100%);transition:transform .28s ease;z-index:2500}
+#page-calendario .calendar-upcoming-drawer.is-open{transform:translateX(0)}
+#page-calendario .calendar-upcoming-drawer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:24px;border-bottom:1px solid var(--border);background:#fff;flex-shrink:0}
+#page-calendario .calendar-upcoming-drawer-title{font-size:20px;font-weight:700;line-height:1.2;color:var(--text)}
+#page-calendario .calendar-upcoming-drawer-subtitle{margin-top:6px;font-size:13px;font-weight:500;line-height:1.5;color:var(--muted)}
+#page-calendario .calendar-upcoming-drawer-close{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border:1px solid var(--border);border-radius:999px;background:#fff;color:#6b7280;font-size:26px;line-height:1;cursor:pointer;transition:background var(--tr),color var(--tr),border-color var(--tr)}
+#page-calendario .calendar-upcoming-drawer-close:hover{background:#f8fafc;color:var(--text);border-color:#d1d5db}
+#page-calendario .calendar-upcoming-list{flex:1;overflow:auto;padding:24px;background:linear-gradient(180deg,#fafafa 0%,#f6f6f6 100%);display:flex;flex-direction:column;gap:12px}
+#page-calendario .calendar-upcoming-empty{display:flex;align-items:center;justify-content:center;min-height:240px;padding:24px;border:1px dashed var(--border);border-radius:18px;background:#fff;text-align:center}
+#page-calendario .calendar-upcoming-empty .cell-stack{align-items:center}
+#page-calendario .calendar-upcoming-empty strong{font-size:15px;line-height:1.35;color:var(--text)}
+#page-calendario .calendar-upcoming-empty span{font-size:13px;line-height:1.55;color:var(--muted)}
+#page-calendario .calendar-upcoming-drawer-footer{padding:20px 24px;border-top:1px solid var(--border);background:#fff;flex-shrink:0}
 #page-calendario .calendar-scroll{overflow:auto;padding:0;background:#fff}
 #page-calendario .calendar-week-grid{display:grid;grid-template-columns:64px minmax(760px,1fr);gap:0;align-items:start;min-width:824px;border:none;border-radius:0;overflow:hidden;background:#fff}
 #page-calendario .calendar-time-column{display:flex;flex-direction:column;background:#fff;border-right:1px solid var(--calendar-grid-line)}
@@ -465,14 +472,16 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-calendario .calendar-event-block.is-green{background:rgba(26,122,64,.12);border-color:rgba(26,122,64,.2);border-left-color:#1a7a40}
 #page-calendario .calendar-event-block.is-gold{background:rgba(154,125,10,.14);border-color:rgba(154,125,10,.22);border-left-color:#9a7d0a}
 #page-calendario .calendar-event-block.is-highlighted,#page-calendario .calendar-upcoming-card.is-highlighted{box-shadow:0 0 0 2px rgba(232,52,105,.16);border-color:var(--pink)}
-#page-calendario .calendar-upcoming-card{position:relative;display:flex;flex-direction:column;gap:10px;padding:14px 14px 12px 16px;border:none;border-radius:12px;background:#f8fbff;min-width:0;overflow:hidden;box-shadow:none;transition:background var(--tr)}
+#page-calendario .calendar-upcoming-card{position:relative;display:flex;flex-direction:column;gap:10px;padding:14px 14px 12px 16px;border:none;border-radius:12px;background:#f8fbff;min-width:0;overflow:hidden;box-shadow:none;transition:background var(--tr),transform var(--tr)}
 #page-calendario .calendar-upcoming-card::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:999px;background:var(--calendar-card-accent,var(--pink))}
 #page-calendario .calendar-upcoming-card.is-pink{--calendar-card-accent:var(--pink)}
 #page-calendario .calendar-upcoming-card.is-blue{--calendar-card-accent:#1a56b0}
 #page-calendario .calendar-upcoming-card.is-green{--calendar-card-accent:#1a7a40}
 #page-calendario .calendar-upcoming-card.is-gold{--calendar-card-accent:#9a7d0a}
+#page-calendario .calendar-upcoming-card.is-clickable{cursor:pointer}
+#page-calendario .calendar-upcoming-card.is-clickable:hover{background:#eef6ff;transform:translateY(-1px)}
 #page-calendario .calendar-upcoming-manage{position:absolute;top:8px;right:8px;opacity:0;pointer-events:none;transition:opacity var(--tr)}
-#page-calendario .calendar-upcoming-card:hover .calendar-upcoming-manage{opacity:1;pointer-events:auto}
+#page-calendario .calendar-upcoming-card:hover .calendar-upcoming-manage,#page-calendario .calendar-upcoming-card:focus-within .calendar-upcoming-manage{opacity:1;pointer-events:auto}
 #page-calendario .calendar-upcoming-manage .action-menu-trigger{min-width:28px;width:28px;height:28px;padding:0;border-radius:8px;border:1px solid rgba(13,13,15,.1);background:#fff}
 #page-calendario .calendar-upcoming-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3)}
 #page-calendario .calendar-upcoming-head .cell-stack{min-width:0}
@@ -1162,10 +1171,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .fin-grid{grid-template-columns:1fr 1fr}
   .pipeline{grid-template-columns:repeat(5,minmax(220px,1fr))}
   .kanban{grid-auto-columns:minmax(260px,260px)}
-  #page-calendario .calendar-shell{grid-template-columns:1fr}
-  #page-calendario .calendar-sidebar-stack{order:0;position:static}
-  #page-calendario .calendar-sidebar-card{max-height:none}
-  #page-calendario .calendar-upcoming-list{overflow:visible;padding-right:0}
+  #page-calendario .calendar-upcoming-banner{padding:14px 16px}
   .table-wrap table{min-width:0}
   .topbar-actions{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
   .topbar-actions::-webkit-scrollbar{display:none}
@@ -1342,10 +1348,9 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .login-footer{padding:var(--space-4)}
   .login-footer-links{flex-wrap:wrap;gap:var(--space-4)}
   #page-kanban .kanban-overdue-item-actions .btn{flex:1 1 100%;justify-content:center}
-  #page-calendario .calendar-upcoming-actions{flex-wrap:wrap}
-  #page-calendario .calendar-upcoming-actions > .btn,
-  #page-calendario .calendar-upcoming-actions > .action-menu{flex:1 1 100%}
-  #page-calendario .calendar-upcoming-actions > .action-menu{margin-left:0}
+  #page-calendario .calendar-upcoming-banner-label{white-space:normal}
+  #page-calendario .calendar-upcoming-drawer{width:100vw}
+  #page-calendario .calendar-upcoming-drawer-head,#page-calendario .calendar-upcoming-list,#page-calendario .calendar-upcoming-drawer-footer{padding-left:16px;padding-right:16px}
   #page-crm .crm-kpi-grid{grid-template-columns:1fr}
   #page-crm .crm-topbar-separator{display:none}
   #page-crm .crm-pipeline-col{flex-basis:88vw;width:88vw}
@@ -1797,6 +1802,7 @@ body[data-active-page="kanban"] #page-kanban.active{display:flex;flex-direction:
 #page-kanban .kanban-exact-column-body{min-height:0}
 #page-kanban .kanban-exact-overdue-empty{opacity:.72}
 body.kanban-overdue-open{overflow:hidden}
+body.calendar-upcoming-open{overflow:hidden}
 #login-screen{background:var(--gray)}
 .login-shell{width:100%;min-height:100vh;display:flex;flex-direction:column;background:var(--gray)}
 .login-topbar{height:64px;padding:0 32px;background:var(--gray);border-bottom:none}
@@ -2451,6 +2457,7 @@ summary:focus-visible,
   </div>
   <div class="page-body">
     <div class="calendar-shell">
+      <div id="calendar-upcoming-summary" class="calendar-upcoming-banner" aria-live="polite"></div>
       <div class="card calendar-main-card">
         <div class="section-header">
           <div>
@@ -2462,33 +2469,22 @@ summary:focus-visible,
           <div id="calendar-week-grid"></div>
         </div>
       </div>
-      <div class="calendar-sidebar-stack">
-        <div class="card calendar-mini-card">
-          <div class="calendar-mini-header">
-            <div>
-              <div class="calendar-mini-month-label" id="calendar-mini-month-label">—</div>
-              <div class="section-sub">Navegação rápida da agenda.</div>
-            </div>
-            <div class="calendar-mini-navs">
-              <button type="button" class="calendar-mini-nav" data-action="shift-calendar-month" data-offset="-1" aria-label="Mês anterior">&lt;</button>
-              <button type="button" class="calendar-mini-nav" data-action="shift-calendar-month" data-offset="1" aria-label="Próximo mês">&gt;</button>
-            </div>
-          </div>
-          <div id="calendar-mini-grid"></div>
-          <div class="calendar-mini-caption">Clique em um dia para abrir a semana correspondente sem sair da agenda.</div>
-        </div>
-        <div class="card calendar-sidebar-card">
-          <div class="section-header">
-            <div>
-              <div class="section-title">Próximos eventos</div>
-              <div class="section-sub">Resumo desta semana.</div>
-            </div>
-          </div>
-          <div id="calendar-upcoming-list" class="calendar-upcoming-list stack-sm"></div>
-        </div>
-      </div>
     </div>
   </div>
+  <div id="calendar-upcoming-overlay" class="calendar-upcoming-overlay" data-action="close-calendar-upcoming-drawer" aria-hidden="true"></div>
+  <aside id="calendar-upcoming-drawer" class="calendar-upcoming-drawer" aria-hidden="true" aria-labelledby="calendar-upcoming-drawer-title">
+    <div class="calendar-upcoming-drawer-head">
+      <div>
+        <h2 id="calendar-upcoming-drawer-title" class="calendar-upcoming-drawer-title">Próximos eventos</h2>
+        <p id="calendar-upcoming-drawer-subtitle" class="calendar-upcoming-drawer-subtitle">Nenhum evento nesta semana.</p>
+      </div>
+      <button type="button" class="calendar-upcoming-drawer-close" data-action="close-calendar-upcoming-drawer" aria-label="Fechar próximos eventos">×</button>
+    </div>
+    <div id="calendar-upcoming-list" class="calendar-upcoming-list"></div>
+    <div class="calendar-upcoming-drawer-footer">
+      <button type="button" class="btn btn-outline btn-sm w-full justify-center" data-action="close-calendar-upcoming-drawer">Fechar agenda lateral</button>
+    </div>
+  </aside>
 </section>
 
 <!-- CRM -->

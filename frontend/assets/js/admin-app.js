@@ -257,6 +257,9 @@ const kanbanRuntime = {
   scrollResizeObserver: null,
   overdueDrawerOpen: false,
 };
+const calendarRuntime = {
+  upcomingDrawerOpen: false,
+};
 const taskAssignState = {
   selected: new Set(),
   users: [],
@@ -2059,15 +2062,26 @@ function buildCalendarGridHtml(events, weekStart) {
   `;
 }
 
-function buildCalendarUpcomingHtml(events) {
-  const items = events.slice(0, 8);
+function buildCalendarUpcomingEmptyHtml() {
+  return `
+    <div class="calendar-upcoming-empty">
+      <div class="cell-stack">
+        <strong>Nenhum evento nesta semana</strong>
+        <span>Adicione um evento para preencher a agenda compartilhada.</span>
+        ${
+          canManageCalendarEvents()
+            ? '<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-evento">Criar evento</button>'
+            : ""
+        }
+      </div>
+    </div>
+  `;
+}
+
+function buildCalendarUpcomingHtml(events, { limit = null } = {}) {
+  const items = Number.isFinite(limit) ? events.slice(0, Math.max(0, Number(limit))) : events;
   if (!items.length) {
-    return UI.empty("Nenhum evento nesta semana", "Adicione um evento para preencher a agenda compartilhada.", {
-      icon: false,
-      actionHtml: canManageCalendarEvents()
-        ? `<button type="button" class="btn btn-pink btn-sm empty-state-action" data-action="open-modal" data-modal="novo-evento">Criar evento</button>`
-        : ""
-    });
+    return buildCalendarUpcomingEmptyHtml();
   }
 
   return items
@@ -2100,7 +2114,12 @@ function buildCalendarUpcomingHtml(events) {
           `
         : "";
       return `
-        <article class="calendar-upcoming-card ${color.className}" data-calendar-event-id="${event.id}">
+        <article
+          class="calendar-upcoming-card ${color.className} is-clickable"
+          data-action="focus-calendar-event"
+          data-id="${event.id}"
+          data-calendar-event-id="${event.id}"
+        >
           ${manageMenu}
           <div class="calendar-upcoming-head">
             <div class="cell-stack">
@@ -2125,53 +2144,127 @@ function buildCalendarUpcomingHtml(events) {
     .join("");
 }
 
+function setCalendarUpcomingDrawerOpen(nextOpen) {
+  calendarRuntime.upcomingDrawerOpen = Boolean(nextOpen);
+
+  const overlay = document.getElementById("calendar-upcoming-overlay");
+  const drawer = document.getElementById("calendar-upcoming-drawer");
+  if (!overlay || !drawer) {
+    return;
+  }
+
+  overlay.classList.toggle("is-open", calendarRuntime.upcomingDrawerOpen);
+  drawer.classList.toggle("is-open", calendarRuntime.upcomingDrawerOpen);
+  overlay.setAttribute("aria-hidden", String(!calendarRuntime.upcomingDrawerOpen));
+  drawer.setAttribute("aria-hidden", String(!calendarRuntime.upcomingDrawerOpen));
+  document.body.classList.toggle("calendar-upcoming-open", calendarRuntime.upcomingDrawerOpen);
+}
+
+function bindCalendarUpcomingDrawerInteractions() {
+  if (document.body.dataset.boundCalendarUpcomingDrawer === "1") {
+    return;
+  }
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && calendarRuntime.upcomingDrawerOpen) {
+      setCalendarUpcomingDrawerOpen(false);
+    }
+  });
+
+  document.body.dataset.boundCalendarUpcomingDrawer = "1";
+}
+
+function renderCalendarUpcomingPanel(events, { loading = false } = {}) {
+  const summary = document.getElementById("calendar-upcoming-summary");
+  const drawerSubtitle = document.getElementById("calendar-upcoming-drawer-subtitle");
+  const drawerList = document.getElementById("calendar-upcoming-list");
+  if (!summary || !drawerSubtitle || !drawerList) {
+    return;
+  }
+
+  if (loading) {
+    summary.classList.remove("is-empty");
+    summary.innerHTML = `
+      <div class="calendar-upcoming-banner-copy">
+        <span class="calendar-upcoming-banner-count">…</span>
+        <span class="calendar-upcoming-banner-label">Carregando próximos eventos</span>
+      </div>
+      <button type="button" class="calendar-upcoming-banner-action" disabled>Revisar</button>
+    `;
+    drawerSubtitle.textContent = "Atualizando agenda da semana.";
+    drawerList.innerHTML = UI.skeletonCardList(3);
+    return;
+  }
+
+  const eventCount = events.length;
+  const bannerLabel = eventCount ? "Próximos eventos" : "Nenhum próximo evento";
+  const drawerSubtitleText = eventCount
+    ? `${eventCount} ${eventCount === 1 ? "evento programado nesta semana" : "eventos programados nesta semana"}.`
+    : "Nenhum evento cadastrado para a semana atual.";
+
+  summary.classList.toggle("is-empty", eventCount === 0);
+  summary.innerHTML = `
+    <div class="calendar-upcoming-banner-copy">
+      <span class="calendar-upcoming-banner-count">${eventCount}</span>
+      <span class="calendar-upcoming-banner-label">${escapeHtml(bannerLabel)}</span>
+    </div>
+    <button
+      type="button"
+      class="calendar-upcoming-banner-action"
+      data-action="open-calendar-upcoming-drawer"
+      ${eventCount ? "" : "disabled"}
+    >
+      Revisar
+    </button>
+  `;
+
+  drawerSubtitle.textContent = drawerSubtitleText;
+  drawerList.innerHTML = buildCalendarUpcomingHtml(events);
+
+  if (!eventCount && calendarRuntime.upcomingDrawerOpen) {
+    setCalendarUpcomingDrawerOpen(false);
+  }
+}
+
 function renderCalendar() {
   const page = document.getElementById("page-calendario");
+  const summary = document.getElementById("calendar-upcoming-summary");
   const grid = document.getElementById("calendar-week-grid");
   const upcoming = document.getElementById("calendar-upcoming-list");
-  const miniGrid = document.getElementById("calendar-mini-grid");
-  const miniMonthLabel = document.getElementById("calendar-mini-month-label");
   const weekLabel = document.getElementById("calendar-week-label");
   const weekSub = document.getElementById("calendar-week-sub");
   const newEventButton = document.getElementById("btn-new-calendar-event");
 
-  if (!grid || !upcoming || !weekLabel || !weekSub) {
+  if (!summary || !grid || !upcoming || !weekLabel || !weekSub) {
     return;
   }
 
   const weekStart = getCalendarWeekStartDate(state.calendar.weekStart || new Date());
   state.calendar.weekStart = weekStart.toISOString();
+  summary.hidden = false;
   weekLabel.textContent = `Semana de ${formatCalendarWeekLabel(weekStart)}`;
   weekSub.textContent = "Vista semanal compartilhada.";
-  if (miniMonthLabel) {
-    miniMonthLabel.textContent = formatCalendarMonthTitle(addCalendarDays(weekStart, 3));
-  }
-  if (miniGrid) {
-    miniGrid.innerHTML = buildCalendarMiniMonthHtml(weekStart);
-  }
 
   if (newEventButton) {
     newEventButton.style.display = canManageCalendarEvents() ? "" : "none";
   }
 
   if (!canRenderCalendarPage()) {
+    summary.hidden = true;
+    setCalendarUpcomingDrawerOpen(false);
     grid.innerHTML = UI.empty("Calendário indisponível", "Este perfil não possui acesso ao calendário interno.");
-    upcoming.innerHTML = "";
-    if (miniGrid) {
-      miniGrid.innerHTML = "";
-    }
     return;
   }
 
   if (state.calendar.loading) {
     grid.innerHTML = UI.skeletonCalendarGrid();
-    upcoming.innerHTML = UI.skeletonCardList(3);
+    renderCalendarUpcomingPanel([], { loading: true });
     return;
   }
 
   const events = getCalendarEventsForWeek();
   grid.innerHTML = buildCalendarGridHtml(events, weekStart);
-  upcoming.innerHTML = buildCalendarUpcomingHtml(events);
+  renderCalendarUpcomingPanel(events);
   if (page) {
     bindLegacyInlineHandlers(page);
   }
@@ -4490,6 +4583,7 @@ function goTo(page) {
   }
 
   setKanbanOverdueDrawerOpen(false);
+  setCalendarUpcomingDrawerOpen(false);
   state.activePage = page;
   syncNavigation();
   closeSidebar();
@@ -7527,6 +7621,13 @@ function bindDataActions() {
       case "focus-kanban-overdue-task":
         setKanbanOverdueDrawerOpen(false);
         return focusTaskCard(id);
+      case "open-calendar-upcoming-drawer":
+        return setCalendarUpcomingDrawerOpen(true);
+      case "close-calendar-upcoming-drawer":
+        return setCalendarUpcomingDrawerOpen(false);
+      case "focus-calendar-event":
+        setCalendarUpcomingDrawerOpen(false);
+        return focusCalendarEvent(id);
       case "shift-calendar":
         return shiftCalendarWeek(Number(target.dataset.offset || 0));
       case "shift-calendar-month":
@@ -10050,6 +10151,7 @@ async function boot() {
   bindLegacyInlineHandlers();
   bindDataActions();
   bindFloatingActionMenus();
+  bindCalendarUpcomingDrawerInteractions();
   state.ui.sidebarCollapsed = getStoredSidebarPreference();
   syncPanelTheme();
   syncSidebarShell();
