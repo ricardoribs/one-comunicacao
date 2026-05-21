@@ -1918,16 +1918,18 @@ function buildCalendarMiniMonthHtml(weekStart) {
   const monthAnchor = addCalendarDays(anchor, 3);
   const monthStart = new Date(monthAnchor.getFullYear(), monthAnchor.getMonth(), 1);
   const gridStart = startOfCalendarWeek(monthStart);
+  const monthEnd = new Date(monthAnchor.getFullYear(), monthAnchor.getMonth() + 1, 0);
   const selectedWeekStart = getCalendarWeekStartDate(anchor);
   const selectedWeekEnd = addCalendarDays(selectedWeekStart, 6);
   const today = new Date();
-  const weekdayLabels = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM"];
+  const weekdayLabels = ["S", "T", "Q", "Q", "S", "S", "D"];
+  const daysToRender = addCalendarDays(gridStart, 34) >= monthEnd ? 35 : 42;
 
   const weekdaysHtml = weekdayLabels
     .map((label) => `<div class="calendar-mini-weekday" aria-hidden="true">${label}</div>`)
     .join("");
 
-  const dayButtonsHtml = Array.from({ length: 42 }, (_, index) => {
+  const dayButtonsHtml = Array.from({ length: daysToRender }, (_, index) => {
     const dayDate = addCalendarDays(gridStart, index);
     const isOutside = dayDate.getMonth() !== monthStart.getMonth();
     const isToday = isSameCalendarDate(dayDate, today);
@@ -1994,7 +1996,7 @@ function buildCalendarGridHtml(events, weekStart) {
     const dayKey = getCalendarWeekKey(dayDate);
     const isToday = dayKey === todayKey;
     const isWeekend = dayDate.getDay() === 0 || dayDate.getDay() === 6;
-    const dayLabel = formatCalendarWeekday(dayDate).replace(/\.$/, "").toUpperCase();
+    const dayLabel = formatCalendarWeekday(dayDate).toUpperCase();
     const dayTrackStart = new Date(dayDate);
     dayTrackStart.setHours(startHour, 0, 0, 0);
     const dayTrackEnd = new Date(dayDate);
@@ -2073,8 +2075,33 @@ function buildCalendarUpcomingHtml(events) {
       const color = getCalendarColorConfig(event.color);
       const canManage = canManageCalendarEvents();
       const durationLabel = getCalendarDurationLabel(event.starts_at, event.ends_at);
+      const manageMenu = canManage
+        ? `
+            <div class="calendar-upcoming-manage">
+              ${renderActionMenu(
+                [
+                  renderActionMenuButton({
+                    label: "Editar evento",
+                    action: "open-modal",
+                    modal: "novo-evento",
+                    id: event.id,
+                    className: "btn btn-ghost btn-sm"
+                  }),
+                  renderActionMenuButton({
+                    label: "Excluir evento",
+                    action: "delete-calendar-event",
+                    id: event.id,
+                    className: "btn btn-danger-soft btn-sm"
+                  })
+                ],
+                { label: "Mais ações do evento" }
+              )}
+            </div>
+          `
+        : "";
       return `
         <article class="calendar-upcoming-card ${color.className}" data-calendar-event-id="${event.id}">
+          ${manageMenu}
           <div class="calendar-upcoming-head">
             <div class="cell-stack">
               <strong class="cell-title">${escapeHtml(event.title)}</strong>
@@ -2092,24 +2119,6 @@ function buildCalendarUpcomingHtml(events) {
             ${durationLabel ? `<div class="calendar-upcoming-duration">${escapeHtml(durationLabel)}</div>` : ""}
           </div>
           ${event.description ? `<div class="calendar-upcoming-note">${escapeHtml(event.description)}</div>` : ""}
-          ${
-            canManage
-              ? `<div class="calendar-upcoming-actions">
-                  <button type="button" class="btn btn-ghost btn-sm calendar-upcoming-edit" data-action="open-modal" data-modal="novo-evento" data-id="${event.id}">Editar</button>
-                  ${renderActionMenu(
-                    [
-                      renderActionMenuButton({
-                        label: "Excluir evento",
-                        action: "delete-calendar-event",
-                        id: event.id,
-                        className: "btn btn-danger-soft btn-sm"
-                      })
-                    ],
-                    { label: "Mais ações do evento" }
-                  )}
-                </div>`
-              : ""
-          }
         </article>
       `;
     })
@@ -2133,7 +2142,7 @@ function renderCalendar() {
   const weekStart = getCalendarWeekStartDate(state.calendar.weekStart || new Date());
   state.calendar.weekStart = weekStart.toISOString();
   weekLabel.textContent = `Semana de ${formatCalendarWeekLabel(weekStart)}`;
-  weekSub.textContent = "Vista semanal compartilhada da equipe com prioridade visual para o dia atual.";
+  weekSub.textContent = "Vista semanal compartilhada.";
   if (miniMonthLabel) {
     miniMonthLabel.textContent = formatCalendarMonthTitle(addCalendarDays(weekStart, 3));
   }
