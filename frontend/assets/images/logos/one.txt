@@ -1,0 +1,138 @@
+Pedro/Gabriel = Admnistrador
+Gabriel = Comercial
+Pedro = Financeiro
+Demo Motion Designer = Checklist de tarefas dentro do kanbam + adcionar tarefas em ordem de prioridade 
+Operations Lead = Marketing (Coordenadora de Marketing) 
+Demo Sales Specialist + = Social Media
+Demo Graphic Designer + = Social Media
+
+incorporar o drive no site
+
+criar tarefa (erro interno de servidor)
+campanha (autorizar todos os arquivios no up)
+
+Na aba Kanban Add Manual de Marcas (P/ todos os perfis)
+Desing (todos os perfis)
+Revisão Desing (todos)
+
+colocar uma opção de checklist diário para cada perfil dentro do kanbam
+
+
+remover área do cliente
+________________________________________________________________________________________
+
+cd "C:\Users\ricar\Downloads\Projeto One"
+$env:ALLOW_USER_BOOTSTRAP='true'
+$env:BOOTSTRAP_USER_NAME='Demo Marketing Admin'
+$env:BOOTSTRAP_USER_EMAIL='gabriel@one.com'
+$env:BOOTSTRAP_USER_PASSWORD='Senha@Segura123!'
+$env:BOOTSTRAP_USER_ROLE='admin'
+Remove-Item Env:BOOTSTRAP_USER_CLIENT_ID -ErrorAction SilentlyContinue
+npm run bootstrap:user --prefix backend
+
+cd "C:\Users\ricar\Downloads\Projeto One"
+$env:ALLOW_USER_BOOTSTRAP='true'
+$env:BOOTSTRAP_USER_NAME='Demo Operations Manager'
+$env:BOOTSTRAP_USER_EMAIL='janayna@one.com'
+$env:BOOTSTRAP_USER_PASSWORD='Senha@Segura123!'
+$env:BOOTSTRAP_USER_ROLE='gestor'
+Remove-Item Env:BOOTSTRAP_USER_CLIENT_ID -ErrorAction SilentlyContinue
+npm run bootstrap:user --prefix backend
+
+cd "C:\Users\ricar\Downloads\Projeto One"
+$env:ALLOW_USER_BOOTSTRAP='true'
+$env:BOOTSTRAP_USER_NAME='Demo Social Media Specialist'
+$env:BOOTSTRAP_USER_EMAIL='valeria@one.com'
+$env:BOOTSTRAP_USER_PASSWORD='Senha@Segura123!'
+$env:BOOTSTRAP_USER_ROLE='designer'
+Remove-Item Env:BOOTSTRAP_USER_CLIENT_ID -ErrorAction SilentlyContinue
+npm run bootstrap:user --prefix backend
+
+cd "C:\Users\ricar\Downloads\Projeto One"
+$env:ALLOW_USER_BOOTSTRAP='true'
+$env:BOOTSTRAP_USER_NAME='Demo Sales Specialist'
+$env:BOOTSTRAP_USER_EMAIL='elizangela@one.com'
+$env:BOOTSTRAP_USER_PASSWORD='Senha@Segura123!'
+$env:BOOTSTRAP_USER_ROLE='designer'
+Remove-Item Env:BOOTSTRAP_USER_CLIENT_ID -ErrorAction SilentlyContinue
+npm run bootstrap:user --prefix backend
+
+cd "C:\Users\ricar\Downloads\Projeto One"
+$env:ALLOW_USER_BOOTSTRAP='true'
+$env:BOOTSTRAP_USER_NAME='Demo Graphic Designer'
+$env:BOOTSTRAP_USER_EMAIL='camyle@one.com'
+$env:BOOTSTRAP_USER_PASSWORD='Senha@Segura123!'
+$env:BOOTSTRAP_USER_ROLE='designer'
+Remove-Item Env:BOOTSTRAP_USER_CLIENT_ID -ErrorAction SilentlyContinue
+npm run bootstrap:user --prefix backend
+
+cd "C:\Users\ricar\Downloads\Projeto One"
+$env:ALLOW_USER_BOOTSTRAP='true'
+$env:BOOTSTRAP_USER_NAME='Demo Client Manager'
+$env:BOOTSTRAP_USER_EMAIL='lorenasousa@one.com'
+$env:BOOTSTRAP_USER_PASSWORD='Senha@Segura123!'
+$env:BOOTSTRAP_USER_ROLE='designer'
+Remove-Item Env:BOOTSTRAP_USER_CLIENT_ID -ErrorAction SilentlyContinue
+npm run bootstrap:user --prefix backend
+
+cd "C:\Users\ricar\Downloads\Projeto One"
+$env:ALLOW_USER_BOOTSTRAP='true'
+$env:BOOTSTRAP_USER_NAME='Demo Sales Lead'
+$env:BOOTSTRAP_USER_EMAIL='pedrohenrique@one.com'
+$env:BOOTSTRAP_USER_PASSWORD='Senha@Forte123!'
+$env:BOOTSTRAP_USER_ROLE='admin'
+Remove-Item Env:BOOTSTRAP_USER_CLIENT_ID -ErrorAction SilentlyContinue
+npm run bootstrap:user --prefix backend
+
+_________________________________________________________________________________________________
+Acessos:
+
+Demo Marketing Admin  (Admin)
+Email: gabriel@one.com
+Senha: Senha@Segura123!
+
+
+Demo Sales Lead (admin)
+Email: pedrohenrique@one.com
+Senha: Senha@Segura123!
+
+
+Demo Operations Manager (gestor)
+Email: janayna@one.com
+Senha: Senha@Segura123!
+
+
+Demo Social Media Specialist (designer)
+Email: valeria@one.com
+Senha: Senha@Segura123!
+
+
+Demo Sales Specialist (designer)
+Email: elizangela@one.com
+Senha: Senha@Segura123!
+
+
+Demo Graphic Designer (designer)
+Email: camyle@one.com
+Senha: Senha@Segura123!
+
+
+Demo Client Manager (designer)
+Email: lorenasousa@one.com
+Senha: Senha@Segura123!
+
+
+Demo Motion Designer (designer)
+Email: thalisson@one.test
+Senha: Demo Motion DesignerOne2026!
+
+
+_____________________________________________________
+
+credenciais de statging com ingestão
+Use as credenciais da ingestão na staging:
+
+gabriel@one.com / OneEquipe@2026
+janayna@one.com / OneEquipe@2026
+thalisson@one.com / OneEquipe@2026
+pedro@one.com / OneEquipe@2026
