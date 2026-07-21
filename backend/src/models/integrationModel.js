@@ -1,4 +1,3 @@
-const pool = require('../config/db');
 const tenantDb = require('../db/tenantDb');
 const { normalizePagination, paginationClause } = require('../utils/pagination');
 

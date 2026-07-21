@@ -41,10 +41,10 @@ async function fetchWithRetry(url, options, retries = 3) {
       try {
         const payload = await response.json();
         providerMessage = payload?.message || payload?.error || '';
-      } catch (_error) {
+      } catch {
         try {
           providerMessage = await response.text();
-        } catch (__error) {
+        } catch {
           providerMessage = '';
         }
       }
