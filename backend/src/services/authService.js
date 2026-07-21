@@ -254,7 +254,7 @@ async function prepareTotpEnrollmentForUser(user) {
   if (user.mfa_totp_pending_secret_encrypted) {
     try {
       secret = mfaService.decryptSecret(user.mfa_totp_pending_secret_encrypted);
-    } catch (_error) {
+    } catch {
       await userModel.clearPendingMfaSecret(user.id);
     }
   }
@@ -311,7 +311,7 @@ async function register(payload) {
     if (user?.id) {
       try {
         await userModel.remove(user.id);
-      } catch (_cleanupError) {
+      } catch {
         // noop
       }
     }

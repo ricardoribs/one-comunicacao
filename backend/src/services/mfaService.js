@@ -154,7 +154,7 @@ async function buildEnrollmentResponse(user, secret) {
       margin: 1,
       width: 240,
     });
-  } catch (_error) {
+  } catch {
     qrCodeDataUrl = null;
   }
 

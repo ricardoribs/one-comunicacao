@@ -116,6 +116,13 @@ const globalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Limite de requisições excedido. Tente novamente em instantes.' },
+  keyGenerator: (req) => {
+    return req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  },
+  skip: (req) => {
+    const isHealthCheck = req.path.startsWith('/health') || req.path.startsWith('/ready');
+    return isHealthCheck;
+  },
 });
 
 app.use(requestContextMiddleware);
@@ -193,6 +200,15 @@ app.use(
     },
   })
 );
+
+app.use((req, res, next) => {
+  if (env.isProduction) {
+    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), speaker=()');
+    res.setHeader('Expect-CT', 'max-age=86400, enforce');
+    res.setHeader('X-DNS-Prefetch-Control', 'off');
+  }
+  next();
+});
 app.use(globalLimiter);
 app.use(hpp());
 app.use(compression());
