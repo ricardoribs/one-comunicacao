@@ -1,6 +1,7 @@
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/AppError');
 const calendarEventModel = require('../models/calendarEventModel');
+const { ensureClientAccess } = require('../utils/access');
 
 function normalizeEventPayload(input = {}, fallback = {}) {
   const payload = {};
@@ -31,6 +32,13 @@ function normalizeEventPayload(input = {}, fallback = {}) {
     payload.color = String(input.color ?? fallback.color ?? 'pink').trim() || 'pink';
   }
 
+  if (Object.prototype.hasOwnProperty.call(input, 'client_id') || Object.prototype.hasOwnProperty.call(fallback, 'client_id')) {
+    const nextValue = Object.prototype.hasOwnProperty.call(input, 'client_id') ? input.client_id : fallback.client_id;
+    payload.client_id = nextValue == null || nextValue === '' ? null : Number(nextValue);
+  }
+
+  payload.visibility = payload.client_id ? 'client' : 'team';
+
   return payload;
 }
 
@@ -48,7 +56,7 @@ function ensureValidEventRange(startsAt, endsAt) {
 }
 
 exports.list = asyncHandler(async (req, res) => {
-  const events = await calendarEventModel.listRange({
+  const events = await calendarEventModel.listRange(req.user, {
     from: req.query.from,
     to: req.query.to,
   });
@@ -57,7 +65,7 @@ exports.list = asyncHandler(async (req, res) => {
 });
 
 exports.getById = asyncHandler(async (req, res) => {
-  const event = await calendarEventModel.findById(req.params.id);
+  const event = await calendarEventModel.findById(req.params.id, req.user);
 
   if (!event) {
     throw new AppError('Evento não encontrado.', 404);
@@ -69,26 +77,32 @@ exports.getById = asyncHandler(async (req, res) => {
 exports.create = asyncHandler(async (req, res) => {
   const payload = normalizeEventPayload(req.body);
   ensureValidEventRange(payload.starts_at, payload.ends_at);
+  if (payload.client_id) {
+    await ensureClientAccess(req.user, payload.client_id);
+  }
 
   const event = await calendarEventModel.create(payload, req.user);
   res.status(201).json(event);
 });
 
 exports.update = asyncHandler(async (req, res) => {
-  const current = await calendarEventModel.findById(req.params.id);
+  const current = await calendarEventModel.findById(req.params.id, req.user);
   if (!current) {
     throw new AppError('Evento não encontrado.', 404);
   }
 
   const payload = normalizeEventPayload(req.body, current);
   ensureValidEventRange(payload.starts_at, payload.ends_at);
+  if (payload.client_id) {
+    await ensureClientAccess(req.user, payload.client_id);
+  }
 
   const event = await calendarEventModel.update(req.params.id, payload, req.user);
   res.json(event);
 });
 
 exports.remove = asyncHandler(async (req, res) => {
-  const removed = await calendarEventModel.remove(req.params.id);
+  const removed = await calendarEventModel.remove(req.params.id, req.user);
   if (!removed) {
     throw new AppError('Evento não encontrado.', 404);
   }

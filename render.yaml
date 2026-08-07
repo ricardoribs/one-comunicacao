@@ -1,87 +1,73 @@
 services:
   - type: web
-    name: one-comunicacao
-    env: node
+    name: one-comunicacao-staging
+    runtime: node
     plan: starter
-    buildCommand: npm run install:backend:prod
+    buildCommand: npm run install:backend:prod && npm run predeploy:render --prefix backend
     startCommand: npm run start
-    autoDeploy: true
     healthCheckPath: /api/health
+    autoDeployTrigger: commit
     envVars:
       - key: NODE_VERSION
-        value: 22
+        value: "24"
       - key: NODE_ENV
         value: production
-      - key: JWT_EXPIRES_IN
-        value: 15m
-      - key: UPLOAD_PROVIDER
-        value: cloudinary
+      - key: TRUST_PROXY
+        value: "1"
+      - key: APP_BASE_URL
+        value: https://one-comunicacao-staging.onrender.com
       - key: CORS_ORIGINS
-        sync: false
-      - key: DATABASE_URL
-        sync: false
+        value: https://one-comunicacao-staging.onrender.com
       - key: DATABASE_HOST
-        sync: false
+        value: aws-1-us-east-1.pooler.supabase.com
       - key: DATABASE_PORT
-        value: 5432
+        value: "5432"
       - key: DATABASE_NAME
         value: postgres
       - key: DATABASE_USER
         sync: false
       - key: DATABASE_PASSWORD
         sync: false
-      - key: DATABASE_SSL_CA_FILE
-        sync: false
       - key: DATABASE_SSL_REQUIRED
         value: "true"
+      - key: DATABASE_SSL_CA_FILE
+        value: /etc/secrets/prod-ca-2021.crt
+      - key: VERIFY_DATABASE_URL
+        sync: false
       - key: DB_POOL_MAX
-        value: 8
-      - key: TRUST_PROXY
-        value: 1
+        value: "8"
+      - key: DB_CONNECTION_TIMEOUT_MS
+        value: "5000"
+      - key: DB_IDLE_TIMEOUT_MS
+        value: "10000"
+      - key: DB_QUERY_TIMEOUT_MS
+        value: "10000"
+      - key: DB_STATEMENT_TIMEOUT_MS
+        value: "10000"
       - key: JWT_SECRET
         sync: false
       - key: JWT_ALGORITHM
         value: HS256
-      - key: APP_BASE_URL
-        sync: false
-      - key: GEO_LOOKUP_ENABLED
-        value: "true"
-      - key: GEO_LOOKUP_TIMEOUT_MS
-        value: 1200
-      - key: MAINTENANCE_MODE
-        value: "false"
-      - key: EMAIL_PROVIDER
-        value: resend
-      - key: RESEND_API_KEY
-        sync: false
-      - key: EMAIL_FROM
-        sync: false
-      - key: SENTRY_DSN
-        sync: false
-      - key: SENTRY_REQUIRED
-        value: "true"
-      - key: SENTRY_ENVIRONMENT
-        value: production
-      - key: SENTRY_TRACES_SAMPLE_RATE
-        value: 0.1
+      - key: JWT_EXPIRES_IN
+        value: 15m
+      - key: REFRESH_TOKEN_EXPIRES_DAYS
+        value: "7"
+      - key: BCRYPT_ROUNDS
+        value: "12"
       - key: MFA_REQUIRED_ROLES
         value: admin,gestor,comercial
       - key: MFA_ENCRYPTION_KEY
         sync: false
+      - key: FINANCIAL_ENCRYPTION_KEY
+        sync: false
+      - key: UPLOAD_PROVIDER
+        value: cloudinary
+      - key: UPLOAD_MAX_FILE_SIZE_MB
+        value: "10"
       - key: UPLOAD_REQUIRE_MALWARE_SCAN
-        value: "true"
+        value: "false"
       - key: MALWARE_SCAN_PROVIDER
-        value: clamav
-      - key: CLAMAV_HOST
-        sync: false
-      - key: CLAMAV_PORT
-        value: 3310
-      - key: CLAMAV_TIMEOUT_MS
-        value: 10000
-      - key: SECURITY_ALERT_WEBHOOK_URL
-        sync: false
-      - key: SECURITY_ALERT_TIMEOUT_MS
-        value: 5000
+        value: none
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
@@ -90,3 +76,29 @@ services:
         sync: false
       - key: CLOUDINARY_REQUIRE_PRIVATE_UPLOAD
         value: "true"
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: SENTRY_REQUIRED
+        value: "true"
+      - key: SENTRY_DSN
+        sync: false
+      - key: SENTRY_ENVIRONMENT
+        value: production
+      - key: SENTRY_TRACES_SAMPLE_RATE
+        value: "0.1"
+      - key: SMOKE_EMAIL
+        sync: false
+      - key: SMOKE_PASSWORD
+        sync: false
+      - key: PAYMENT_PROVIDER
+        value: manual
+      - key: GEO_LOOKUP_ENABLED
+        value: "true"
+      - key: GEO_LOOKUP_TIMEOUT_MS
+        value: "1200"
+      - key: MAINTENANCE_MODE
+        value: "false"

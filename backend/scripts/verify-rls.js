@@ -192,6 +192,7 @@ async function main() {
     invoices: [],
     contacts: [],
     charges: [],
+    calendarEvents: [],
     messages: []
   };
   const step = async (label, action) => {
@@ -257,7 +258,7 @@ async function main() {
         await owner.query(
           `
             INSERT INTO clients (name, company, plan, mrr, segment, manager_id, started_at)
-            VALUES ($1, $2, 'growth', 1000, 'Teste', $3, CURRENT_DATE)
+            VALUES ($1, $2, 'One Start', 1000, 'Teste', $3, CURRENT_DATE)
             RETURNING id
           `,
           [`Cliente A ${suffix}`, `Empresa A ${suffix}`, managerA.id]
@@ -269,7 +270,7 @@ async function main() {
         await owner.query(
           `
             INSERT INTO clients (name, company, plan, mrr, segment, manager_id, started_at)
-            VALUES ($1, $2, 'growth', 1000, 'Teste', $3, CURRENT_DATE)
+            VALUES ($1, $2, 'One Start', 1000, 'Teste', $3, CURRENT_DATE)
             RETURNING id
           `,
           [`Cliente B ${suffix}`, `Empresa B ${suffix}`, managerB.id]
@@ -397,6 +398,42 @@ async function main() {
       ).rows[0];
       ids.charges.push(chargeB.id);
 
+      const teamEvent = (
+        await owner.query(
+          `
+            INSERT INTO calendar_events (title, starts_at, ends_at, client_id, visibility, created_by)
+            VALUES ($1, NOW(), NOW() + INTERVAL '1 hour', NULL, 'team', $2)
+            RETURNING id
+          `,
+          [`Evento interno ${suffix}`, managerA.id]
+        )
+      ).rows[0];
+      ids.calendarEvents.push(teamEvent.id);
+
+      const calendarEventA = (
+        await owner.query(
+          `
+            INSERT INTO calendar_events (title, starts_at, ends_at, client_id, visibility, created_by)
+            VALUES ($1, NOW(), NOW() + INTERVAL '1 hour', $2, 'client', $3)
+            RETURNING id
+          `,
+          [`Evento Cliente A ${suffix}`, clientA.id, managerA.id]
+        )
+      ).rows[0];
+      ids.calendarEvents.push(calendarEventA.id);
+
+      const calendarEventB = (
+        await owner.query(
+          `
+            INSERT INTO calendar_events (title, starts_at, ends_at, client_id, visibility, created_by)
+            VALUES ($1, NOW(), NOW() + INTERVAL '1 hour', $2, 'client', $3)
+            RETURNING id
+          `,
+          [`Evento Cliente B ${suffix}`, clientB.id, managerB.id]
+        )
+      ).rows[0];
+      ids.calendarEvents.push(calendarEventB.id);
+
       const messageA = (
         await owner.query(
           `
@@ -422,10 +459,26 @@ async function main() {
       ids.messages.push(messageB.id);
 
       await step("verify admin scope", () => withTenant(verifierPool, { role: "admin", id: adminUser.id }, async (client) => {
-        assert((await countRows(client, "clients")) === 2, "Admin deveria enxergar todos os clients.");
-        assert((await countRows(client, "campaigns")) === 2, "Admin deveria enxergar todas as campaigns.");
-        assert((await countRows(client, "invoices")) === 2, "Admin deveria enxergar todas as invoices.");
-        assert((await countRows(client, "charges")) === 2, "Admin deveria enxergar todas as charges.");
+        assert(
+          (await countRows(client, "clients", "WHERE id = ANY($1::int[])", [ids.clients])) === 2,
+          "Admin deveria enxergar todos os clients temporarios."
+        );
+        assert(
+          (await countRows(client, "campaigns", "WHERE id = ANY($1::int[])", [ids.campaigns])) === 2,
+          "Admin deveria enxergar todas as campaigns temporarias."
+        );
+        assert(
+          (await countRows(client, "invoices", "WHERE id = ANY($1::int[])", [ids.invoices])) === 2,
+          "Admin deveria enxergar todas as invoices temporarias."
+        );
+        assert(
+          (await countRows(client, "charges", "WHERE id = ANY($1::int[])", [ids.charges])) === 2,
+          "Admin deveria enxergar todas as charges temporarias."
+        );
+        assert(
+          (await countRows(client, "calendar_events", "WHERE id = ANY($1::int[])", [ids.calendarEvents])) === 3,
+          "Admin deveria enxergar todos os calendar_events temporarios."
+        );
       }));
 
       await step("verify manager scope", () => withTenant(verifierPool, { role: "gestor", id: managerA.id }, async (client) => {
@@ -438,6 +491,14 @@ async function main() {
         assert((await countRows(client, "invoices")) === 1, "Gestor A deveria enxergar apenas a invoice do seu client.");
         assert((await countRows(client, "contacts")) === 1, "Gestor A deveria enxergar apenas seus contacts.");
         assert((await countRows(client, "charges")) === 1, "Gestor A deveria enxergar apenas suas charges.");
+        assert(
+          (await countRows(client, "calendar_events", "WHERE id = ANY($1::int[])", [ids.calendarEvents])) === 2,
+          "Gestor A deveria enxergar evento interno e evento do client gerenciado."
+        );
+        assert(
+          (await countRows(client, "calendar_events", "WHERE id = $1", [calendarEventB.id])) === 0,
+          "Gestor A nao pode enxergar evento de calendario de outro client."
+        );
         assert((await countRows(client, "messages")) === 1, "Gestor A deveria enxergar apenas as suas mensagens.");
 
         await expectRlsFailure(
@@ -461,6 +522,10 @@ async function main() {
           assert((await countRows(client, "campaigns")) === 1, "Client A deveria enxergar apenas suas campaigns.");
           assert((await countRows(client, "invoices")) === 1, "Client A deveria enxergar apenas suas invoices.");
           assert((await countRows(client, "charges")) === 1, "Client A deveria enxergar apenas suas charges.");
+          assert(
+            (await countRows(client, "calendar_events", "WHERE id = ANY($1::int[])", [ids.calendarEvents])) === 1,
+            "Client A deveria enxergar apenas calendar_events marcados para seu client."
+          );
           assert((await countRows(client, "messages")) === 1, "Client A deveria enxergar apenas suas messages.");
           assert((await countRows(client, "contacts")) === 0, "Client A nao deveria enxergar contacts internos.");
           assert(
@@ -496,6 +561,11 @@ async function main() {
       if (ids.charges.length) {
         await step("cleanup charges", () => cleanupPool.query("DELETE FROM charges WHERE id = ANY($1::int[])", [ids.charges]));
       }
+      if (ids.calendarEvents.length) {
+        await step("cleanup calendar_events", () =>
+          cleanupPool.query("DELETE FROM calendar_events WHERE id = ANY($1::int[])", [ids.calendarEvents])
+        );
+      }
       if (ids.contacts.length) {
         await step("cleanup contacts", () => cleanupPool.query("DELETE FROM contacts WHERE id = ANY($1::int[])", [ids.contacts]));
       }
@@ -505,11 +575,11 @@ async function main() {
       if (ids.campaigns.length) {
         await step("cleanup campaigns", () => cleanupPool.query("DELETE FROM campaigns WHERE id = ANY($1::int[])", [ids.campaigns]));
       }
-      if (ids.users.length) {
-        await step("cleanup users", () => cleanupPool.query("DELETE FROM users WHERE id = ANY($1::int[])", [ids.users]));
-      }
       if (ids.clients.length) {
         await step("cleanup clients", () => cleanupPool.query("DELETE FROM clients WHERE id = ANY($1::int[])", [ids.clients]));
+      }
+      if (ids.users.length) {
+        await step("cleanup users", () => cleanupPool.query("DELETE FROM users WHERE id = ANY($1::int[])", [ids.users]));
       }
       await step("cleanup revoke public schema", () => cleanupPool.query(`REVOKE USAGE ON SCHEMA public FROM "${verifierRole}"`));
       await step("cleanup revoke app schema", () => cleanupPool.query(`REVOKE USAGE ON SCHEMA app FROM "${verifierRole}"`));

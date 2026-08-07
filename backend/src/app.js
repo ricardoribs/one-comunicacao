@@ -90,6 +90,10 @@ if (env.isProduction && env.mfaRequiredRoles.length > 0 && !env.mfaEncryptionKey
   throw new Error('MFA_ENCRYPTION_KEY deve ser definido em producao para os perfis com MFA obrigatorio.');
 }
 
+if (env.isProduction && !env.financialEncryptionKey) {
+  throw new Error('FINANCIAL_ENCRYPTION_KEY deve ser definido em producao.');
+}
+
 if (env.isProduction && (!env.jwtSecret || env.jwtSecret === 'change-me' || env.jwtSecret.length < 64)) {
   throw new Error('JWT_SECRET inválido para produção.');
 }
@@ -125,6 +129,16 @@ const globalLimiter = rateLimit({
   },
 });
 
+function sanitizeLoggedUrl(url = '') {
+  const rawUrl = String(url || '');
+  const queryIndex = rawUrl.indexOf('?');
+  if (queryIndex === -1) {
+    return rawUrl;
+  }
+
+  return `${rawUrl.slice(0, queryIndex)}?[redacted]`;
+}
+
 app.use(requestContextMiddleware);
 app.use(
   pinoHttp({
@@ -140,7 +154,7 @@ app.use(
         return {
           id: req.id,
           method: req.method,
-          url: req.url,
+          url: sanitizeLoggedUrl(req.url),
           remoteAddress: req.remoteAddress,
         };
       },

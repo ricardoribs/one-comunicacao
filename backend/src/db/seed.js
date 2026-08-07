@@ -23,7 +23,6 @@ async function run() {
     designer: generatePassword('designer'),
     comercial: generatePassword('comercial'),
     dev: generatePassword('dev'),
-    client: generatePassword('client'),
   };
 
   const passwords = {
@@ -32,7 +31,6 @@ async function run() {
     designer: await bcrypt.hash(rawPasswords.designer, 12),
     comercial: await bcrypt.hash(rawPasswords.comercial, 12),
     dev: await bcrypt.hash(rawPasswords.dev, 12),
-    client: await bcrypt.hash(rawPasswords.client, 12),
   };
 
   const client = await pool.connect();
@@ -107,21 +105,6 @@ async function run() {
     ]);
 
     const [renovar, moda, saber] = clientRows.map((result) => result.rows[0]);
-
-    const renovarUser = (
-      await pool.query(
-        `INSERT INTO users (client_id, name, email, password, role, email_verified_at)
-       VALUES ($1, $2, $3, $4, 'client', NOW())
-       RETURNING *`,
-        [renovar.id, 'João Silva', 'cliente@one.com', passwords.client]
-      )
-    ).rows[0];
-
-    await pool.query(
-      `INSERT INTO users (client_id, name, email, password, role, email_verified_at)
-     VALUES ($1, $2, $3, $4, 'client', NOW())`,
-      [moda.id, 'Ana Mota', 'moda@one.com', passwords.client]
-    );
 
     const campaignRows = await Promise.all([
       pool.query(
@@ -310,7 +293,7 @@ async function run() {
       pool.query(
         'INSERT INTO messages (sender_id, receiver_id, context_type, context_id, content) VALUES ($1, $2, $3, $4, $5)',
         [
-          renovarUser.id,
+          designerUser.id,
           gestorUser.id,
           'campaign',
           campRenovar.id,
@@ -319,7 +302,7 @@ async function run() {
       ),
       pool.query(
         'INSERT INTO messages (sender_id, receiver_id, context_type, context_id, content) VALUES ($1, $2, $3, $4, $5)',
-        [gestorUser.id, renovarUser.id, 'campaign', campRenovar.id, 'Recebido. Vamos priorizar a aprovação ainda hoje.']
+        [gestorUser.id, designerUser.id, 'campaign', campRenovar.id, 'Recebido. Vamos priorizar a aprovação ainda hoje.']
       ),
     ]);
 
@@ -361,7 +344,6 @@ async function run() {
       { email: 'designer@example.test', password: rawPasswords.designer },
       { email: 'sales@example.test', password: rawPasswords.comercial },
       { email: 'developer@example.test', password: rawPasswords.dev },
-      { email: 'cliente@one.com', password: rawPasswords.client },
     ]);
   } catch (error) {
     await client.query('ROLLBACK');

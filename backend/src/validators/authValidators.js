@@ -28,7 +28,7 @@ exports.registerSchema = z.object({
   name: z.string().min(2, 'Nome obrigatório.'),
   email: z.string().email('Informe um e-mail válido.'),
   password: strongPassword,
-  role: z.enum(['client', 'admin', 'designer', 'gestor', 'comercial', 'dev']).default('client'),
+  role: z.enum(['admin', 'designer', 'gestor', 'comercial', 'dev']).default('designer'),
 });
 
 exports.forgotPasswordSchema = z.object({

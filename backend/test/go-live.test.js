@@ -218,6 +218,8 @@ test('calendario interno permite leitura para a equipe e escrita apenas para adm
 
   assert.equal(created.status, 201);
   assert.equal(created.body.title, 'Alinhamento de pauta semanal');
+  assert.equal(created.body.visibility, 'team');
+  assert.equal(created.body.client_id, null);
 
   const designerAuth = await login(designer.email);
   const listed = await request(app)
@@ -248,6 +250,65 @@ test('calendario interno permite leitura para a equipe e escrita apenas para adm
   await pool.query('DELETE FROM calendar_events');
   await userModel.remove(designer.id);
   await userModel.remove(admin.id);
+});
+
+test('calendario nao expõe evento vinculado a cliente para usuario sem acesso ao cliente', { concurrency: false }, async () => {
+  const suffix = Date.now() + 2051;
+  const gestor = await createUser({
+    name: `Gestor Calendar Scope ${suffix}`,
+    email: `gestor.calendar.scope.${suffix}@one.test`,
+    role: 'gestor',
+  });
+  const designer = await createUser({
+    name: `Designer Calendar Scope ${suffix}`,
+    email: `designer.calendar.scope.${suffix}@one.test`,
+    role: 'designer',
+  });
+  const clientId = await createClient(`Cliente Calendar ${suffix}`, `Cliente Calendar ${suffix}`, gestor.id);
+
+  const gestorAuth = await login(gestor.email);
+  const startsAt = new Date(Date.now() + 3 * 60 * 60 * 1000);
+  const endsAt = new Date(startsAt.getTime() + 60 * 60 * 1000);
+
+  const created = await request(app)
+    .post('/api/calendar-events')
+    .set('Authorization', `Bearer ${gestorAuth.body.accessToken}`)
+    .send({
+      title: 'Reuniao restrita do cliente',
+      starts_at: startsAt.toISOString(),
+      ends_at: endsAt.toISOString(),
+      client_id: clientId,
+      color: 'blue',
+    });
+
+  assert.equal(created.status, 201);
+  assert.equal(Number(created.body.client_id), Number(clientId));
+  assert.equal(created.body.visibility, 'client');
+
+  const designerAuth = await login(designer.email);
+  const listed = await request(app)
+    .get('/api/calendar-events')
+    .query({
+      from: new Date(startsAt.getTime() - 24 * 60 * 60 * 1000).toISOString(),
+      to: new Date(endsAt.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+    })
+    .set('Authorization', `Bearer ${designerAuth.body.accessToken}`);
+
+  assert.equal(listed.status, 200);
+  assert.equal(listed.body.some((event) => Number(event.id) === Number(created.body.id)), false);
+
+  const directRead = await request(app)
+    .get(`/api/calendar-events/${created.body.id}`)
+    .set('Authorization', `Bearer ${designerAuth.body.accessToken}`);
+
+  assert.equal(directRead.status, 404);
+
+  await pool.query('DELETE FROM notifications');
+  await pool.query('DELETE FROM calendar_event_reminders');
+  await pool.query('DELETE FROM calendar_events');
+  await pool.query('DELETE FROM clients WHERE id = $1', [clientId]);
+  await userModel.remove(designer.id);
+  await userModel.remove(gestor.id);
 });
 
 test('notificacoes criam lembrete de evento quando a agenda entra na janela de aviso', { concurrency: false }, async () => {
@@ -303,209 +364,6 @@ test('notificacoes criam lembrete de evento quando a agenda entra na janela de a
   await pool.query('DELETE FROM calendar_events');
   await userModel.remove(designer.id);
   await userModel.remove(admin.id);
-});
-
-test('cliente nao envia mensagem para outro cliente fora do canal interno permitido', { concurrency: false }, async () => {
-  const suffix = Date.now() + 202;
-  const gestor = await createUser({
-    name: `Gestor Message ${suffix}`,
-    email: `gestor.message.${suffix}@one.test`,
-    role: 'gestor',
-  });
-
-  const clientAId = await createClient(`Cliente Msg A ${suffix}`, 'Empresa Msg A', gestor.id);
-  const clientBId = await createClient(`Cliente Msg B ${suffix}`, 'Empresa Msg B', gestor.id);
-
-  const clientA = await createUser({
-    name: `Cliente A Msg ${suffix}`,
-    email: `clientea.message.${suffix}@one.test`,
-    role: 'client',
-    clientId: clientAId,
-  });
-  const clientB = await createUser({
-    name: `Cliente B Msg ${suffix}`,
-    email: `clienteb.message.${suffix}@one.test`,
-    role: 'client',
-    clientId: clientBId,
-  });
-
-  const auth = await login(clientA.email);
-  const blocked = await request(app)
-    .post('/api/messages')
-    .set('Authorization', `Bearer ${auth.body.accessToken}`)
-    .send({
-      receiver_id: clientB.id,
-      context_type: 'general',
-      content: 'Mensagem indevida entre clientes',
-    });
-
-  assert.equal(blocked.status, 403);
-
-  const allowed = await request(app)
-    .post('/api/messages')
-    .set('Authorization', `Bearer ${auth.body.accessToken}`)
-    .send({
-      receiver_id: gestor.id,
-      context_type: 'general',
-      content: 'Mensagem permitida para a equipe interna vinculada',
-    });
-
-  assert.equal(allowed.status, 201);
-
-  await pool.query('DELETE FROM messages');
-  await userModel.remove(clientB.id);
-  await userModel.remove(clientA.id);
-  await userModel.remove(gestor.id);
-  await pool.query('DELETE FROM clients');
-});
-
-test(
-  'dashboard do cliente respeita tenant e retorna apenas dados do proprio cliente',
-  { concurrency: false },
-  async () => {
-    const suffix = Date.now();
-    const gestor = await createUser({
-      name: `Gestor ${suffix}`,
-      email: `gestor.dashboard.${suffix}@one.test`,
-      role: 'gestor',
-    });
-
-    const clientAId = await createClient(`Cliente A ${suffix}`, 'Empresa A', gestor.id);
-    const clientBId = await createClient(`Cliente B ${suffix}`, 'Empresa B', gestor.id);
-
-    const clientUser = await createUser({
-      name: `Cliente A ${suffix}`,
-      email: `cliente.dashboard.${suffix}@one.test`,
-      role: 'client',
-      clientId: clientAId,
-    });
-
-    await pool.query(
-      `INSERT INTO campaigns (client_id, name, channel, audience, objective, budget, status)
-     VALUES ($1, 'Campanha A', 'Meta', 'Local', 'Leads', 1000, 'Ativa'),
-            ($2, 'Campanha B', 'Google', 'Regional', 'Leads', 2000, 'Ativa')`,
-      [clientAId, clientBId]
-    );
-
-    const campaigns = await pool.query('SELECT id, client_id FROM campaigns ORDER BY id ASC');
-    const campaignA = campaigns.rows.find((item) => Number(item.client_id) === Number(clientAId));
-    const campaignB = campaigns.rows.find((item) => Number(item.client_id) === Number(clientBId));
-
-    await pool.query(
-      `INSERT INTO metrics (campaign_id, period, leads, revenue, impressions, clicks)
-     VALUES ($1, CURRENT_DATE, 12, 4500, 1000, 120),
-            ($2, CURRENT_DATE, 99, 9900, 2000, 220)`,
-      [campaignA.id, campaignB.id]
-    );
-
-    await pool.query(
-      `INSERT INTO reports (client_id, title, report_month, summary, file_url)
-     VALUES ($1, 'Relatório Cliente A', CURRENT_DATE, 'Resumo A', 'https://example.com/a.pdf'),
-            ($2, 'Relatório Cliente B', CURRENT_DATE, 'Resumo B', 'https://example.com/b.pdf')`,
-      [clientAId, clientBId]
-    );
-
-    await pool.query(
-      `INSERT INTO materials (client_id, campaign_id, uploaded_by, title, status, url)
-     VALUES ($1, $2, $3, 'Criativo A', 'Pendente', 'https://example.com/material-a'),
-            ($4, $5, $3, 'Criativo B', 'Pendente', 'https://example.com/material-b')`,
-      [clientAId, campaignA.id, gestor.id, clientBId, campaignB.id]
-    );
-
-    await pool.query(
-      `INSERT INTO invoices (client_id, amount, status, due_date)
-     VALUES ($1, 1500, 'Em aberto', CURRENT_DATE),
-            ($2, 9900, 'Em aberto', CURRENT_DATE)`,
-      [clientAId, clientBId]
-    );
-
-    await pool.query(
-      `INSERT INTO tasks (client_id, assigned_to, status, type, column_name, title, description, deadline)
-     VALUES ($1, $2, 'Em andamento', 'design', 'doing', 'Task A', 'Descricao A', CURRENT_DATE),
-            ($3, $2, 'Em andamento', 'design', 'doing', 'Task B', 'Descricao B', CURRENT_DATE)`,
-      [clientAId, gestor.id, clientBId]
-    );
-
-    await pool.query(
-      `INSERT INTO messages (sender_id, receiver_id, context_type, content)
-     VALUES ($1, $2, 'general', 'Mensagem cliente A'),
-            ($1, $3, 'general', 'Mensagem cliente B')`,
-      [gestor.id, clientUser.id, gestor.id]
-    );
-
-    const auth = await login(clientUser.email);
-    const response = await request(app).get('/api/dashboard').set('Authorization', `Bearer ${auth.body.accessToken}`);
-
-    assert.equal(response.status, 200);
-    assert.equal(response.body.mode, 'client');
-    assert.equal(response.body.summary.campaigns_count, 1);
-    assert.equal(response.body.campaigns.length, 1);
-    assert.equal(response.body.reports.length, 1);
-    assert.equal(response.body.materials.length, 1);
-    assert.equal(response.body.invoices.length, 1);
-    assert.equal(response.body.tasks.length, 1);
-    assert.equal(response.body.messages.length, 1);
-    assert.ok(Array.isArray(response.body.team));
-
-    await pool.query('DELETE FROM messages');
-    await pool.query('DELETE FROM tasks');
-    await pool.query('DELETE FROM invoices');
-    await pool.query('DELETE FROM materials');
-    await pool.query('DELETE FROM reports');
-    await pool.query('DELETE FROM metrics');
-    await pool.query('DELETE FROM campaigns');
-    await userModel.remove(clientUser.id);
-    await userModel.remove(gestor.id);
-    await pool.query('DELETE FROM clients');
-  }
-);
-
-test('dashboard do cliente limita a equipe ao gerente e usuarios vinculados ao proprio cliente', { concurrency: false }, async () => {
-  const suffix = Date.now() + 10;
-  const gestor = await createUser({
-    name: `Gestor Equipe ${suffix}`,
-    email: `gestor.equipe.${suffix}@one.test`,
-    role: 'gestor',
-  });
-  const designerVinculado = await createUser({
-    name: `Designer Vinculado ${suffix}`,
-    email: `designer.vinculado.${suffix}@one.test`,
-    role: 'designer',
-  });
-  const designerExterno = await createUser({
-    name: `Designer Externo ${suffix}`,
-    email: `designer.externo.${suffix}@one.test`,
-    role: 'designer',
-  });
-
-  const clientAId = await createClient(`Cliente Equipe A ${suffix}`, 'Empresa Equipe A', gestor.id);
-  const clientBId = await createClient(`Cliente Equipe B ${suffix}`, 'Empresa Equipe B', gestor.id);
-
-  await userModel.update(designerVinculado.id, { client_id: clientAId });
-  await userModel.update(designerExterno.id, { client_id: clientBId });
-
-  const clientUser = await createUser({
-    name: `Cliente Equipe ${suffix}`,
-    email: `cliente.equipe.${suffix}@one.test`,
-    role: 'client',
-    clientId: clientAId,
-  });
-
-  const auth = await login(clientUser.email);
-  const response = await request(app).get('/api/dashboard').set('Authorization', `Bearer ${auth.body.accessToken}`);
-
-  assert.equal(response.status, 200);
-  assert.equal(response.body.mode, 'client');
-
-  const teamIds = response.body.team.map((user) => user.id).sort((left, right) => left - right);
-  assert.deepEqual(teamIds, [designerVinculado.id, gestor.id].sort((left, right) => left - right));
-  assert.equal(response.body.team.some((user) => user.id === designerExterno.id), false);
-
-  await userModel.remove(clientUser.id);
-  await userModel.remove(designerExterno.id);
-  await userModel.remove(designerVinculado.id);
-  await userModel.remove(gestor.id);
-  await pool.query('DELETE FROM clients');
 });
 
 test('dashboard interno do gestor aplica widgets e sanitizacao por capacidade', { concurrency: false }, async () => {
@@ -574,9 +432,9 @@ test('equipe interna lista apenas usuarios internos ativos em /users/team e /use
     email: `designer.inativo.${suffix}@one.test`,
     role: 'designer',
   });
-  const clientUser = await createUser({
-    name: `Cliente Interno ${suffix}`,
-    email: `cliente.interno.${suffix}@one.test`,
+  const legacyClientUser = await createUser({
+    name: `Cliente Legado ${suffix}`,
+    email: `cliente.legado.${suffix}@one.test`,
     role: 'client',
   });
 
@@ -598,9 +456,9 @@ test('equipe interna lista apenas usuarios internos ativos em /users/team e /use
   assert.deepEqual(teamIds, expectedIds);
   assert.deepEqual(assignableIds, expectedIds);
   assert.equal(teamResponse.body.some((user) => user.id === designerInativo.id), false);
-  assert.equal(teamResponse.body.some((user) => user.id === clientUser.id), false);
+  assert.equal(teamResponse.body.some((user) => user.id === legacyClientUser.id), false);
 
-  await userModel.remove(clientUser.id);
+  await userModel.remove(legacyClientUser.id);
   await userModel.remove(designerInativo.id);
   await userModel.remove(designerAtivo.id);
   await userModel.remove(gestor.id);
@@ -738,7 +596,7 @@ test('usuario interno limpa o historico do checklist sem afetar os itens ativos 
   await userModel.remove(gestor.id);
 });
 
-test('tarefa compartilhada fica visivel para equipe interna e nao aparece no dashboard do cliente', { concurrency: false }, async () => {
+test('tarefa compartilhada fica visivel para equipe interna', { concurrency: false }, async () => {
   const suffix = Date.now() + 14;
   const gestor = await createUser({
     name: `Gestor Compartilhada ${suffix}`,
@@ -752,12 +610,6 @@ test('tarefa compartilhada fica visivel para equipe interna e nao aparece no das
   });
 
   const clientId = await createClient(`Cliente Compartilhado ${suffix}`, `Empresa Compartilhada ${suffix}`, gestor.id);
-  const clientUser = await createUser({
-    name: `Cliente Compartilhado ${suffix}`,
-    email: `cliente.compartilhado.${suffix}@one.test`,
-    role: 'client',
-    clientId,
-  });
 
   const gestorAuth = await login(gestor.email);
   const createTaskResponse = await request(app)
@@ -798,16 +650,7 @@ test('tarefa compartilhada fica visivel para equipe interna e nao aparece no das
   assert.equal(moveResponse.body.status, 'Concluido');
   assert.equal(moveResponse.body.column_name, 'done');
 
-  const clientAuth = await login(clientUser.email);
-  const clientDashboardResponse = await request(app)
-    .get('/api/dashboard')
-    .set('Authorization', `Bearer ${clientAuth.body.accessToken}`);
-
-  assert.equal(clientDashboardResponse.status, 200);
-  assert.equal(clientDashboardResponse.body.tasks.some((task) => task.id === createTaskResponse.body.id), false);
-
   await pool.query('DELETE FROM tasks');
-  await userModel.remove(clientUser.id);
   await userModel.remove(designer.id);
   await userModel.remove(gestor.id);
   await pool.query('DELETE FROM clients');
@@ -1127,18 +970,15 @@ test('POST /api/contacts exige autenticacao', { concurrency: false }, async () =
 
 test('exportacao da conta inclui mais de 100 registros por colecao', { concurrency: false }, async () => {
   const suffix = Date.now() + 301;
-  const clientId = await createClient(`Cliente Export ${suffix}`, `Empresa Export ${suffix}`);
   const user = await createUser({
-    name: `Cliente Export ${suffix}`,
-    email: `cliente.export.${suffix}@one.test`,
-    role: 'client',
-    clientId,
+    name: `Admin Export ${suffix}`,
+    email: `admin.export.${suffix}@one.test`,
+    role: 'admin',
   });
   const peer = await createUser({
-    name: `Cliente Export Peer ${suffix}`,
-    email: `cliente.export.peer.${suffix}@one.test`,
-    role: 'client',
-    clientId,
+    name: `Designer Export Peer ${suffix}`,
+    email: `designer.export.peer.${suffix}@one.test`,
+    role: 'designer',
   });
 
   for (let index = 0; index < 101; index += 1) {
@@ -1161,7 +1001,6 @@ test('exportacao da conta inclui mais de 100 registros por colecao', { concurren
   await pool.query('DELETE FROM messages WHERE receiver_id = $1 OR sender_id = $1', [peer.id]);
   await userModel.remove(peer.id);
   await userModel.remove(user.id);
-  await pool.query('DELETE FROM clients WHERE id = $1', [clientId]);
 });
 
 test('exclusao da conta anonimiza o usuario e remove residuos diretos', { concurrency: false }, async () => {
@@ -1336,7 +1175,7 @@ test('usuario interno nao obtem stream de arquivo de outro tenant', { concurrenc
   await pool.query('DELETE FROM clients WHERE id IN ($1, $2)', [clientAId, clientBId]);
 });
 
-test('access-url legado devolve URL interna temporaria e o stream abre sem expor o provider', { concurrency: false }, async () => {
+test('access-url legado devolve URL interna protegida e o stream exige bearer token', { concurrency: false }, async () => {
   const suffix = Date.now() + 3041;
   const clientId = await createClient(`Cliente File Stream ${suffix}`, `Empresa File Stream ${suffix}`);
   const designer = await createUser({
@@ -1369,14 +1208,21 @@ test('access-url legado devolve URL interna temporaria e o stream abre sem expor
     .set('Authorization', `Bearer ${auth.body.accessToken}`);
 
   assert.equal(accessResponse.status, 200);
-  assert.match(accessResponse.body.url, new RegExp(`^/api/files/${file.rows[0].id}/content\\?download_token=`));
+  assert.equal(accessResponse.body.url, `/api/files/${file.rows[0].id}/content`);
+  assert.equal(accessResponse.body.requires_authorization, true);
   assert.equal(accessResponse.body.url.includes('res.cloudinary.com'), false);
 
   const contentResponse = await request(app).get(accessResponse.body.url);
 
-  assert.equal(contentResponse.status, 200);
-  assert.match(contentResponse.headers['content-type'] || '', /^image\/png\b/);
-  assert.equal(contentResponse.headers['cache-control'], 'no-store');
+  assert.equal(contentResponse.status, 401);
+
+  const authorizedContentResponse = await request(app)
+    .get(accessResponse.body.url)
+    .set('Authorization', `Bearer ${auth.body.accessToken}`);
+
+  assert.equal(authorizedContentResponse.status, 200);
+  assert.match(authorizedContentResponse.headers['content-type'] || '', /^image\/png\b/);
+  assert.equal(authorizedContentResponse.headers['cache-control'], 'no-store');
 
   await pool.query('DELETE FROM files WHERE id = $1', [file.rows[0].id]);
   if (fs.existsSync(filePath)) {
@@ -1422,4 +1268,67 @@ test('gestor nao atualiza cobranca de outro tenant por ID', { concurrency: false
   await userModel.remove(gestorB.id);
   await userModel.remove(gestorA.id);
   await pool.query('DELETE FROM clients WHERE id IN ($1, $2)', [clientAId, clientBId]);
+});
+
+test('dados sensiveis de cobranca sao criptografados em repouso e mascarados por padrao', { concurrency: false }, async () => {
+  const suffix = Date.now() + 3051;
+  const admin = await createUser({
+    name: `Admin Charge Sensitive ${suffix}`,
+    email: `admin.charge.sensitive.${suffix}@one.test`,
+    role: 'admin',
+  });
+  const clientId = await createClient(`Cliente Charge Sensitive ${suffix}`, `Empresa Charge Sensitive ${suffix}`, admin.id);
+
+  const charge = await pool.query(
+    `INSERT INTO charges (client_id, created_by, payment_method, description, amount, status)
+     VALUES ($1, $2, 'PIX', 'Cobranca sensivel', 250, 'PENDING')
+     RETURNING id`,
+    [clientId, admin.id]
+  );
+
+  const auth = await login(admin.email);
+  const pixCode = '00020126580014BR.GOV.BCB.PIX0114sensitive5204000053039865406250.005802BR5909ONE LTDA6304ABCD';
+  const update = await request(app)
+    .patch(`/api/charges/${charge.rows[0].id}`)
+    .set('Authorization', `Bearer ${auth.body.accessToken}`)
+    .send({
+      status: 'PENDING',
+      pix_copy_paste: pixCode,
+      boleto_barcode: '34191.79001 01043.510047 91020.150008 4 12340000025000',
+      pix_qr_base64: 'base64-sensitive-value',
+      external_payload: {
+        provider: 'asaas',
+        payment: {
+          id: 'pay_sensitive',
+          raw: 'nao deve persistir',
+        },
+      },
+    });
+
+  assert.equal(update.status, 200);
+  assert.equal(update.body.pix_copy_paste, null);
+  assert.equal(update.body.pix_copy_paste_available, true);
+  assert.equal(update.body.boleto_barcode, null);
+  assert.equal(update.body.external_payload, null);
+
+  const stored = await pool.query(
+    'SELECT pix_copy_paste, boleto_barcode, pix_qr_base64, external_payload FROM charges WHERE id = $1',
+    [charge.rows[0].id]
+  );
+  assert.match(stored.rows[0].pix_copy_paste, /^enc:v1:/);
+  assert.match(stored.rows[0].boleto_barcode, /^enc:v1:/);
+  assert.equal(stored.rows[0].pix_qr_base64, null);
+  assert.equal(stored.rows[0].external_payload.payment_id, 'pay_sensitive');
+  assert.equal(stored.rows[0].external_payload.payment, undefined);
+
+  const paymentData = await request(app)
+    .get(`/api/charges/${charge.rows[0].id}/payment-data`)
+    .set('Authorization', `Bearer ${auth.body.accessToken}`);
+
+  assert.equal(paymentData.status, 200);
+  assert.equal(paymentData.body.pix_copy_paste, pixCode);
+
+  await pool.query('DELETE FROM charges WHERE id = $1', [charge.rows[0].id]);
+  await pool.query('DELETE FROM clients WHERE id = $1', [clientId]);
+  await userModel.remove(admin.id);
 });

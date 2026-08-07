@@ -72,6 +72,10 @@ const authenticate = asyncHandler(async (req, _res, next) => {
     throw new AppError('Usuario invalido ou inativo.', 401);
   }
 
+  if (user.role === 'client') {
+    throw new AppError('Este perfil nao possui acesso ao painel.', 403);
+  }
+
   req.user = user;
   req.tenant = {
     clientId: user.client_id || null,

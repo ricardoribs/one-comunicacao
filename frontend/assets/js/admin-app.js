@@ -7,8 +7,7 @@ const ROLE_LABELS = {
   gestor: "Gestor",
   designer: "Designer",
   comercial: "Comercial",
-  dev: "Desenvolvimento",
-  client: "Cliente"
+  dev: "Desenvolvimento"
 };
 
 const INTEGRATION_PROVIDERS = [
@@ -256,9 +255,13 @@ const kanbanRuntime = {
   scrollSyncBound: false,
   scrollResizeObserver: null,
   overdueDrawerOpen: false,
+  checklistExpanded: false,
 };
 const calendarRuntime = {
   upcomingDrawerOpen: false,
+  eventDetailsOpen: false,
+  eventDetailsId: null,
+  eventDetailsAnchor: null,
 };
 const taskAssignState = {
   selected: new Set(),
@@ -1741,6 +1744,20 @@ function formatCalendarMonthTitle(value) {
   }).format(date);
 }
 
+function formatCalendarFullDate(value) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
 function isSameCalendarDate(left, right) {
   const leftDate = left instanceof Date ? left : new Date(left);
   const rightDate = right instanceof Date ? right : new Date(right);
@@ -1992,7 +2009,7 @@ function buildCalendarGridHtml(events, weekStart) {
 
   const timeColumnHtml = `
     <div class="calendar-time-column">
-      <div class="calendar-time-head">Hora</div>
+      <div class="calendar-time-head">GMT-03</div>
       <div class="calendar-time-track" style="height:${trackHeight}px">
         ${hours
           .map(
@@ -2010,7 +2027,7 @@ function buildCalendarGridHtml(events, weekStart) {
     const dayKey = getCalendarWeekKey(dayDate);
     const isToday = dayKey === todayKey;
     const isWeekend = dayDate.getDay() === 0 || dayDate.getDay() === 6;
-    const dayLabel = formatCalendarWeekday(dayDate).toUpperCase();
+    const dayLabel = formatCalendarWeekday(dayDate).replace(".", "").toUpperCase();
     const dayTrackStart = new Date(dayDate);
     dayTrackStart.setHours(startHour, 0, 0, 0);
     const dayTrackEnd = new Date(dayDate);
@@ -2019,21 +2036,28 @@ function buildCalendarGridHtml(events, weekStart) {
     const segmentsHtml = daySegments[dayIndex]
       .map((event) => {
         const color = getCalendarColorConfig(event.color);
-        const manageAction = canManageCalendarEvents()
-          ? ` data-action="open-modal" data-modal="novo-evento" data-id="${event.id}"`
-          : "";
-        const interactiveClass = canManageCalendarEvents() ? " is-clickable" : "";
+        const densityClass = event.height < 52
+          ? " is-micro"
+          : event.height < 68
+            ? " is-tight"
+            : event.height < 96
+              ? " is-compact"
+              : "";
         return `
-          <article
-            class="calendar-event-block ${color.className}${interactiveClass}"
+          <button
+            type="button"
+            class="calendar-event-block ${color.className} is-clickable${densityClass}"
+            data-action="open-calendar-event-details"
+            data-id="${event.id}"
             data-calendar-event-id="${event.id}"
             style="top:${event.top}px;height:${event.height}px"
-            title="${escapeHtml(`${event.title} · ${formatCalendarTimeRange(event.starts_at, event.ends_at)}`)}"${manageAction}
+            title="${escapeHtml(`${event.title} · ${formatCalendarTimeRange(event.starts_at, event.ends_at)}`)}"
+            aria-label="Ver detalhes de ${escapeHtml(event.title)}"
           >
             <strong>${escapeHtml(event.title)}</strong>
             <span>${escapeHtml(formatCalendarTimeRange(event.starts_at, event.ends_at))}</span>
             ${event.location ? `<small>${escapeHtml(event.location)}</small>` : ""}
-          </article>
+          </button>
         `;
       })
       .join("");
@@ -2071,6 +2095,183 @@ function buildCalendarGridHtml(events, weekStart) {
       <div class="calendar-week-columns">${dayColumnsHtml}</div>
     </div>
   `;
+}
+
+function getCalendarEventRecord(eventId) {
+  return state.calendarEvents.find((item) => Number(item.id) === Number(eventId)) || null;
+}
+
+function buildCalendarEventDetailsHtml(eventRecord) {
+  const color = getCalendarColorConfig(eventRecord.color);
+  const startsAt = new Date(eventRecord.starts_at);
+  const endsAt = new Date(eventRecord.ends_at);
+  const sameDate = isSameCalendarDate(startsAt, endsAt);
+  const dateLabel = sameDate
+    ? formatCalendarFullDate(startsAt)
+    : `${formatCalendarFullDate(startsAt)} - ${formatCalendarFullDate(endsAt)}`;
+  const timeLabel = formatCalendarTimeRange(startsAt, endsAt);
+  const durationLabel = getCalendarDurationLabel(startsAt, endsAt);
+  const manageActions = canManageCalendarEvents()
+    ? `
+        <button type="button" class="calendar-event-popover-icon-btn" data-action="open-modal" data-modal="novo-evento" data-id="${eventRecord.id}" aria-label="Editar evento" title="Editar evento">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10.5-10.5a2.8 2.8 0 0 0-4-4L4 16v4z"></path><path d="M13.5 6.5l4 4"></path></svg>
+        </button>
+        <button type="button" class="calendar-event-popover-icon-btn is-danger" data-action="delete-calendar-event" data-id="${eventRecord.id}" aria-label="Excluir evento" title="Excluir evento">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M6 7l1 14h10l1-14"></path><path d="M9 7V4h6v3"></path></svg>
+        </button>
+      `
+    : "";
+
+  return `
+    <div class="calendar-event-popover-head">
+      <div class="calendar-event-popover-title-row">
+        <span class="calendar-event-popover-swatch ${color.className}" aria-hidden="true"></span>
+        <h3 id="calendar-event-popover-title">${escapeHtml(eventRecord.title || "Evento sem título")}</h3>
+      </div>
+      <div class="calendar-event-popover-actions">
+        ${manageActions}
+        <button type="button" class="calendar-event-popover-icon-btn" data-action="close-calendar-event-details" aria-label="Fechar detalhes" title="Fechar">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"></path><path d="M18 6L6 18"></path></svg>
+        </button>
+      </div>
+    </div>
+    <div class="calendar-event-popover-body">
+      <div class="calendar-event-popover-row">
+        <span class="calendar-event-popover-row-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M7 3v4"></path><path d="M17 3v4"></path><path d="M4 9h16"></path><path d="M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"></path></svg>
+        </span>
+        <div class="calendar-event-popover-copy">
+          <strong>${escapeHtml(dateLabel)}</strong>
+          <span>${escapeHtml([timeLabel, durationLabel].filter(Boolean).join(" · "))}</span>
+        </div>
+      </div>
+      <div class="calendar-event-popover-row">
+        <span class="calendar-event-popover-row-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+        </span>
+        <div class="calendar-event-popover-copy">
+          <strong>Local</strong>
+          <span>${escapeHtml(eventRecord.location || "Sem local definido")}</span>
+        </div>
+      </div>
+      ${
+        eventRecord.description
+          ? `
+            <div class="calendar-event-popover-row">
+              <span class="calendar-event-popover-row-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h10"></path></svg>
+              </span>
+              <div class="calendar-event-popover-copy">
+                <strong>Descrição</strong>
+                <span>${escapeHtmlWithBreaks(eventRecord.description)}</span>
+              </div>
+            </div>
+          `
+          : ""
+      }
+    </div>
+  `;
+}
+
+function positionCalendarEventDetails(anchor) {
+  const popover = document.getElementById("calendar-event-popover");
+  if (!popover) {
+    return;
+  }
+
+  const viewportPadding = 16;
+  const popoverWidth = Math.min(380, window.innerWidth - viewportPadding * 2);
+  popover.style.width = `${popoverWidth}px`;
+
+  const anchorRect = anchor?.getBoundingClientRect?.();
+  const popoverRect = popover.getBoundingClientRect();
+  const targetHeight = popoverRect.height || 260;
+  let left = anchorRect ? anchorRect.right + 12 : (window.innerWidth - popoverWidth) / 2;
+  let top = anchorRect ? anchorRect.top - 12 : 96;
+
+  if (left + popoverWidth > window.innerWidth - viewportPadding && anchorRect) {
+    left = anchorRect.left - popoverWidth - 12;
+  }
+  if (left < viewportPadding) {
+    left = Math.max(viewportPadding, Math.min(anchorRect?.left || left, window.innerWidth - popoverWidth - viewportPadding));
+  }
+
+  top = Math.max(viewportPadding, Math.min(top, window.innerHeight - targetHeight - viewportPadding));
+
+  popover.style.left = `${Math.round(left)}px`;
+  popover.style.top = `${Math.round(top)}px`;
+}
+
+function closeCalendarEventDetails({ restoreFocus = false } = {}) {
+  const popover = document.getElementById("calendar-event-popover");
+  if (!popover) {
+    return;
+  }
+
+  popover.classList.remove("is-open");
+  popover.setAttribute("aria-hidden", "true");
+  popover.innerHTML = "";
+  calendarRuntime.eventDetailsOpen = false;
+  calendarRuntime.eventDetailsId = null;
+
+  if (restoreFocus) {
+    calendarRuntime.eventDetailsAnchor?.focus?.();
+  }
+
+  calendarRuntime.eventDetailsAnchor = null;
+}
+
+function openCalendarEventDetails(eventId, anchor = null) {
+  const popover = document.getElementById("calendar-event-popover");
+  const eventRecord = getCalendarEventRecord(eventId);
+  if (!popover || !eventRecord) {
+    return;
+  }
+
+  calendarRuntime.eventDetailsOpen = true;
+  calendarRuntime.eventDetailsId = Number(eventId);
+  calendarRuntime.eventDetailsAnchor = anchor;
+  popover.innerHTML = buildCalendarEventDetailsHtml(eventRecord);
+  popover.classList.add("is-open");
+  popover.setAttribute("aria-hidden", "false");
+  positionCalendarEventDetails(anchor);
+  popover.querySelector("[data-action='close-calendar-event-details']")?.focus?.({ preventScroll: true });
+}
+
+function bindCalendarEventDetailsInteractions() {
+  if (document.body.dataset.boundCalendarEventDetails === "1") {
+    return;
+  }
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && calendarRuntime.eventDetailsOpen) {
+      closeCalendarEventDetails({ restoreFocus: true });
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!calendarRuntime.eventDetailsOpen) {
+      return;
+    }
+
+    const popover = document.getElementById("calendar-event-popover");
+    if (
+      popover?.contains(event.target)
+      || event.target.closest("[data-action='open-calendar-event-details']")
+    ) {
+      return;
+    }
+
+    closeCalendarEventDetails();
+  });
+
+  window.addEventListener("resize", () => {
+    if (calendarRuntime.eventDetailsOpen) {
+      positionCalendarEventDetails(calendarRuntime.eventDetailsAnchor);
+    }
+  });
+
+  document.body.dataset.boundCalendarEventDetails = "1";
 }
 
 function buildCalendarUpcomingEmptyHtml() {
@@ -2157,6 +2358,9 @@ function buildCalendarUpcomingHtml(events, { limit = null } = {}) {
 
 function setCalendarUpcomingDrawerOpen(nextOpen) {
   calendarRuntime.upcomingDrawerOpen = Boolean(nextOpen);
+  if (calendarRuntime.upcomingDrawerOpen) {
+    closeCalendarEventDetails();
+  }
 
   const overlay = document.getElementById("calendar-upcoming-overlay");
   const drawer = document.getElementById("calendar-upcoming-drawer");
@@ -2200,7 +2404,7 @@ function renderCalendarUpcomingPanel(events, { loading = false } = {}) {
         <span class="calendar-upcoming-banner-count">…</span>
         <span class="calendar-upcoming-banner-label">Carregando próximos eventos</span>
       </div>
-      <button type="button" class="calendar-upcoming-banner-action" disabled>Revisar</button>
+      <button type="button" class="calendar-upcoming-banner-action" disabled>Ver eventos</button>
     `;
     drawerSubtitle.textContent = "Atualizando agenda da semana.";
     drawerList.innerHTML = UI.skeletonCardList(3);
@@ -2244,6 +2448,7 @@ function renderCalendar() {
   const upcoming = document.getElementById("calendar-upcoming-list");
   const weekLabel = document.getElementById("calendar-week-label");
   const weekSub = document.getElementById("calendar-week-sub");
+  const monthLabel = document.getElementById("calendar-month-label");
   const newEventButton = document.getElementById("btn-new-calendar-event");
 
   if (!summary || !grid || !upcoming || !weekLabel || !weekSub) {
@@ -2255,6 +2460,9 @@ function renderCalendar() {
   summary.hidden = false;
   weekLabel.textContent = `Semana de ${formatCalendarWeekLabel(weekStart)}`;
   weekSub.textContent = "Vista semanal compartilhada.";
+  if (monthLabel) {
+    monthLabel.textContent = formatCalendarMonthTitle(addCalendarDays(weekStart, 3));
+  }
 
   if (newEventButton) {
     newEventButton.style.display = canManageCalendarEvents() ? "" : "none";
@@ -2263,11 +2471,13 @@ function renderCalendar() {
   if (!canRenderCalendarPage()) {
     summary.hidden = true;
     setCalendarUpcomingDrawerOpen(false);
+    closeCalendarEventDetails();
     grid.innerHTML = UI.empty("Calendário indisponível", "Este perfil não possui acesso ao calendário interno.");
     return;
   }
 
   if (state.calendar.loading) {
+    closeCalendarEventDetails();
     grid.innerHTML = UI.skeletonCalendarGrid();
     renderCalendarUpcomingPanel([], { loading: true });
     return;
@@ -2279,6 +2489,7 @@ function renderCalendar() {
   if (page) {
     bindLegacyInlineHandlers(page);
   }
+  bindCalendarEventDetailsInteractions();
 }
 
 function focusCalendarEvent(eventId) {
@@ -2320,12 +2531,14 @@ async function openCalendarEventById(eventId) {
 }
 
 function shiftCalendarWeek(offset) {
+  closeCalendarEventDetails();
   const currentWeek = getCalendarWeekStartDate(state.calendar.weekStart || new Date());
   const targetWeek = addCalendarDays(currentWeek, Number(offset || 0) * 7);
   loadCalendarEvents(targetWeek, { force: true }).catch(() => {});
 }
 
 function shiftCalendarMonth(offset) {
+  closeCalendarEventDetails();
   const currentWeek = getCalendarWeekStartDate(state.calendar.weekStart || new Date());
   const currentMonthAnchor = addCalendarDays(currentWeek, 3);
   const targetMonth = new Date(currentMonthAnchor.getFullYear(), currentMonthAnchor.getMonth() + Number(offset || 0), 1);
@@ -2337,10 +2550,12 @@ function jumpCalendarToDate(dateValue) {
     return;
   }
 
+  closeCalendarEventDetails();
   loadCalendarEvents(dateValue, { force: true }).catch(() => {});
 }
 
 function goToCalendarToday() {
+  closeCalendarEventDetails();
   loadCalendarEvents(new Date(), { force: true }).catch(() => {});
 }
 
@@ -3720,7 +3935,6 @@ const PROFILE_ACCESS_STATUS_LABELS = {
   designer: "Designer",
   comercial: "Comercial",
   dev: "Desenvolvimento",
-  client: "Cliente",
 };
 const PANEL_THEME_STORAGE_KEY = "one-panel-theme";
 const LEGACY_PANEL_THEME_STORAGE_KEY = "one-theme";
@@ -5506,7 +5720,6 @@ function renderKanbanOverduePanel(filteredTasks) {
       type="button"
       class="kanban-overdue-banner-action"
       data-action="open-kanban-overdue-drawer"
-      ${overdueCount ? "" : "disabled"}
     >
       Revisar
     </button>
@@ -5600,6 +5813,22 @@ function bindDailyChecklistInteractions(container) {
   });
 
   container.addEventListener("click", async (event) => {
+    const activeToggle = event.target.closest("[data-checklist-active-toggle]");
+    if (activeToggle) {
+      event.preventDefault();
+      const activePanel = document.getElementById("kanban-focus-active");
+      if (!activePanel) {
+        return;
+      }
+
+      const willOpen = activePanel.hidden;
+      kanbanRuntime.checklistExpanded = willOpen;
+      activePanel.hidden = !willOpen;
+      activeToggle.setAttribute("aria-expanded", String(willOpen));
+      activeToggle.textContent = willOpen ? "Ocultar foco" : "Ver foco";
+      return;
+    }
+
     const historyToggle = event.target.closest("[data-checklist-history-toggle]");
     if (historyToggle) {
       event.preventDefault();
@@ -5687,15 +5916,19 @@ function renderKanbanChecklist(filteredTasks) {
   const doneItems = activeItems.filter((item) => item.done);
   const historyGroups = getChecklistHistoryGroups(checklistStore.history || []);
   const hasHistory = historyGroups.length > 0;
+  const hasActiveItems = activeItems.length > 0;
 
+  if (!hasActiveItems) {
+    kanbanRuntime.checklistExpanded = false;
+  }
+  meta.hidden = !hasActiveItems && !hasHistory;
   meta.innerHTML = `
-    <span class="checklist-progress">
-      ${
-        activeItems.length
-          ? `${openItems.length} ${openItems.length === 1 ? "item aberto" : "itens abertos"}${doneItems.length ? ` · ${doneItems.length} concluído${doneItems.length === 1 ? "" : "s"}` : ""}`
-          : "Foco do dia vazio"
-      }
-    </span>
+    ${
+      hasActiveItems
+        ? `<span class="kanban-focus-pill">${openItems.length} ${openItems.length === 1 ? "aberto" : "abertos"}${doneItems.length ? ` · ${doneItems.length} concluído${doneItems.length === 1 ? "" : "s"}` : ""}</span>
+          <button type="button" class="kanban-active-focus-toggle" data-checklist-active-toggle aria-expanded="${String(kanbanRuntime.checklistExpanded)}">${kanbanRuntime.checklistExpanded ? "Ocultar foco" : "Ver foco"}</button>`
+        : ""
+    }
     ${
       hasHistory
         ? `<button type="button" class="kanban-history-toggle" data-checklist-history-toggle aria-expanded="false">Ver histórico</button>`
@@ -5703,7 +5936,7 @@ function renderKanbanChecklist(filteredTasks) {
     }
   `;
 
-  activeList.innerHTML = activeItems.length
+  activeList.innerHTML = hasActiveItems
     ? activeItems
         .map(
           (item) => `
@@ -5717,7 +5950,8 @@ function renderKanbanChecklist(filteredTasks) {
           `
         )
         .join("")
-    : '<div class="kanban-checklist-item"><div class="kanban-checklist-main"><span class="kanban-checklist-label text-gray-400">Seu foco de hoje aparece aqui assim que você adicionar o primeiro item.</span></div></div>';
+    : "";
+  activeList.hidden = !hasActiveItems || !kanbanRuntime.checklistExpanded;
 
   if (hasHistory) {
     historyPanel.innerHTML = renderKanbanChecklistHistory(historyGroups);
@@ -5797,14 +6031,14 @@ function renderKanbanBrandManual(filteredTasks) {
 function getKanbanCardMenuButton(task, canEditTasks) {
   if (!canEditTasks) {
     return `
-      <button type="button" class="text-gray-400 hover:text-[#222222] dark:hover:text-white" tabindex="-1" aria-hidden="true">
+      <button type="button" class="k-card-menu-btn" tabindex="-1" aria-hidden="true">
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/></svg>
       </button>
     `;
   }
 
   return `
-    <button type="button" data-action="open-modal" data-modal="nova-tarefa" data-id="${task.id}" class="text-gray-400 hover:text-[#222222] dark:hover:text-white">
+    <button type="button" data-action="open-modal" data-modal="nova-tarefa" data-id="${task.id}" class="k-card-menu-btn">
       <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/></svg>
     </button>
   `;
@@ -5834,33 +6068,27 @@ function getKanbanDeadlineChip(task) {
 }
 
 function renderKanbanCard(task, columnKey, canEditTasks) {
-  const cardBaseClass = columnKey === "done"
-    ? "bg-white dark:bg-[#222222] border border-[#dddddd] dark:border-[#333333] rounded-[8px] p-4 shadow-sm cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
-    : "bg-white dark:bg-[#222222] border border-[#dddddd] dark:border-[#333333] rounded-[8px] p-4 shadow-sm cursor-pointer hover:shadow-[rgba(0,0,0,0.06)_0_4px_12px] transition-shadow";
-  const titleClass = columnKey === "done"
-    ? "text-[14px] font-bold leading-tight mb-2 line-through text-[#6a6a6a] dark:text-gray-400"
-    : "text-[14px] font-bold leading-tight mb-2";
   const descriptionHtml = task.description && columnKey !== "done"
-    ? `<p class="text-[13px] font-medium text-[#6a6a6a] dark:text-gray-400 leading-relaxed">${escapeHtml(task.description)}</p>`
+    ? `<p class="k-card-desc">${escapeHtml(task.description)}</p>`
     : "";
   const cardBadge = getKanbanCardBadge(task);
   const badgeHtml = cardBadge
     ? `<span class="${cardBadge.className}" title="${escapeHtml(cardBadge.title || cardBadge.label)}">${escapeHtml(cardBadge.label)}</span>`
-    : '<span class="text-[11px] font-bold px-2 py-0.5 rounded opacity-0">Info</span>';
+    : '<span class="badge badge-kanban-type opacity-0">Info</span>';
   const footerHtml = `
-    <div class="flex items-center justify-between mt-4 pt-4 border-t border-[#f2f2f2] dark:border-[#333333]">
+    <div class="k-card-footer">
       ${badgeHtml}
       ${renderKanbanAssigneeStack(task)}
     </div>
   `;
 
   return `
-    <div class="k-card ${cardBaseClass}${canEditTasks ? " is-draggable" : ""}" data-task-card="1" data-task-id="${task.id}">
-      <div class="flex justify-between items-start mb-2">
-        <span class="text-[10px] font-bold text-[#6a6a6a] dark:text-gray-400 uppercase tracking-widest">${escapeHtml(task.client_name || "Interno")}</span>
+    <div class="k-card${columnKey === "done" ? " is-done" : ""}${canEditTasks ? " is-draggable" : ""}" data-task-card="1" data-task-id="${task.id}">
+      <div class="k-card-top">
+        <span class="k-card-client">${escapeHtml(task.client_name || "Interno")}</span>
         ${getKanbanCardMenuButton(task, canEditTasks)}
       </div>
-      <h4 class="${titleClass}">${escapeHtml(task.title)}</h4>
+      <h4 class="k-card-title">${escapeHtml(task.title)}</h4>
       ${descriptionHtml}
       ${footerHtml}
     </div>
@@ -5886,20 +6114,20 @@ function renderKanban() {
     .map((column) => {
       const tasks = filtered.filter((task) => getTaskColumnName(task) === column.key);
       return `
-        <div class="w-[300px] flex-shrink-0 flex flex-col kanban-col" data-kanban-column="${column.key}" data-kanban-dropzone="${column.key}">
-          <div class="flex justify-between items-center mb-4 px-1">
-            <div class="flex items-center gap-2">
-              <div class="w-2 h-2 rounded-full ${column.dotClass}"></div>
-              <h3 class="text-[11px] font-bold text-[#6a6a6a] dark:text-gray-400 uppercase tracking-widest">${column.label}</h3>
+        <div class="w-[320px] flex-shrink-0 flex flex-col kanban-col" data-kanban-column="${column.key}" data-kanban-dropzone="${column.key}">
+          <div class="kanban-column-header">
+            <div class="kanban-column-label">
+              <div class="kanban-column-dot ${column.dotClass}"></div>
+              <h3 class="kanban-column-title">${column.label}</h3>
             </div>
-            <span class="text-[11px] font-bold bg-[#f2f2f2] dark:bg-[#333333] text-[#6a6a6a] dark:text-gray-300 px-2 py-0.5 rounded-full">${tasks.length}</span>
+            <span class="kanban-column-count">${tasks.length}</span>
           </div>
           <div class="kanban-exact-column-body flex flex-col gap-3 overflow-y-auto custom-scroll pr-1 pb-2" data-kanban-dropzone="${column.key}">
             ${
               tasks
                 .map((task) => renderKanbanCard(task, column.key, canEditTasks))
                 .join("")
-                || `<div class="rounded-[8px] border border-dashed border-[#dddddd] dark:border-[#333333] px-4 py-6 text-[13px] font-medium text-[#6a6a6a] dark:text-gray-400 bg-transparent">Sem tarefas nesta etapa.</div>`
+                || `<div class="kanban-empty-state">Sem tarefas nesta etapa.</div>`
             }
             <div class="kanban-col-dropzone" data-kanban-dropzone="${column.key}" aria-hidden="true"></div>
           </div>
@@ -6093,7 +6321,7 @@ function bindKanbanBoardInteractions() {
       return;
     }
 
-    const body = column.querySelector(".kanban-col-body");
+    const body = column.querySelector(".kanban-exact-column-body, .kanban-col-body");
     if (!body) {
       return;
     }
@@ -6269,14 +6497,23 @@ function renderCRM() {
   }
 
   if (pipelineBoard) {
-    const pipelineStages = ["Prospecção", "Contato feito", "Proposta", "Negociação", "Fechado"];
+    const pipelineStages = [
+      { label: "Prospecção", dotClass: "" },
+      { label: "Contato feito", dotClass: "is-blue" },
+      { label: "Proposta", dotClass: "is-yellow" },
+      { label: "Negociação", dotClass: "is-pink" },
+      { label: "Fechado", dotClass: "is-green" }
+    ];
     pipelineBoard.innerHTML = pipelineStages
       .map((stage) => {
-        const contacts = state.contacts.filter((contact) => normalizePipelineStage(contact.lead_stage) === stage);
+        const contacts = state.contacts.filter((contact) => normalizePipelineStage(contact.lead_stage) === stage.label);
         return `
           <div class="crm-pipeline-col">
             <div class="crm-pipeline-head">
-              <h3 class="crm-pipeline-stage">${escapeHtml(stage)}</h3>
+              <div class="crm-pipeline-label">
+                <span class="crm-pipeline-dot ${stage.dotClass}" aria-hidden="true"></span>
+                <h3 class="crm-pipeline-stage">${escapeHtml(stage.label)}</h3>
+              </div>
               <span class="crm-pipeline-count">${contacts.length}</span>
             </div>
             <div class="crm-pipeline-body">
@@ -7834,6 +8071,7 @@ function bindDataActions() {
       case "set-tab":
         return setTab(target.dataset.group || "", target.dataset.tab || "");
       case "open-modal":
+        closeCalendarEventDetails();
         return openModal(target.dataset.modal || "", id || null);
       case "open-kanban-overdue-drawer":
         return setKanbanOverdueDrawerOpen(true);
@@ -7849,8 +8087,13 @@ function bindDataActions() {
         return setCalendarUpcomingDrawerOpen(true);
       case "close-calendar-upcoming-drawer":
         return setCalendarUpcomingDrawerOpen(false);
+      case "open-calendar-event-details":
+        return openCalendarEventDetails(id, target);
+      case "close-calendar-event-details":
+        return closeCalendarEventDetails({ restoreFocus: true });
       case "focus-calendar-event":
         setCalendarUpcomingDrawerOpen(false);
+        closeCalendarEventDetails();
         return focusCalendarEvent(id);
       case "shift-calendar":
         return shiftCalendarWeek(Number(target.dataset.offset || 0));
@@ -7891,6 +8134,7 @@ function bindDataActions() {
       case "delete-material":
         return deleteMaterial(id);
       case "delete-calendar-event":
+        closeCalendarEventDetails();
         return deleteCalendarEvent(id);
       case "open-charge-modal":
         return openChargeModalForClient(id);
@@ -7966,12 +8210,6 @@ function renderAccessV2() {
       badgeClass: "bg-[#f0f4f8] text-[#3366cc]",
       avatarClass: "bg-[#f2f2f2] text-[#222222]",
       avatarBorder: ""
-    },
-    client: {
-      label: "Cliente",
-      badgeClass: "bg-gray-100 text-gray-600 hairline-border",
-      avatarClass: "bg-gray-100 text-gray-600",
-      avatarBorder: "hairline-border"
     }
   };
 
@@ -8107,8 +8345,7 @@ function renderAccessV2() {
     { title: "Gestor", badge: "Gestor", badgeClass: "bg-green-50 text-green-700", permissions: ["Dashboard interno", "Kanban", "CRM", "Campanhas", "Produção", "Tráfego", "Analytics", "Cobranças"] },
     { title: "Designer", badge: "Designer", badgeClass: "bg-[#f0f4f8] text-[#3366cc]", permissions: ["Dashboard interno", "Kanban", "Produção"] },
     { title: "Comercial", badge: "Comercial", badgeClass: "bg-orange-50 text-orange-700", permissions: ["Dashboard interno", "Kanban", "CRM", "Campanhas", "Produção", "Financeiro"] },
-    { title: "Dev", badge: "Dev", badgeClass: "bg-blue-50 text-blue-700", permissions: ["Dashboard interno", "Kanban", "Produção", "Analytics"] },
-    { title: "Cliente", badge: "Cliente", badgeClass: "bg-gray-100 text-gray-600 hairline-border", permissions: ["Dashboard", "Campanhas", "Relatórios", "Faturas", "Mensagens"] }
+    { title: "Dev", badge: "Dev", badgeClass: "bg-blue-50 text-blue-700", permissions: ["Dashboard interno", "Kanban", "Produção", "Analytics"] }
   ];
 
   if (profilesGrid) {
@@ -8571,7 +8808,9 @@ async function copyMfaSecret() {
 
 async function submitMfaLogin() {
   const otp = document.getElementById("mfa-otp")?.value?.trim() || "";
-  const submitButton = document.querySelector('[data-action="submit-mfa-login"]');
+  const submitButton =
+    document.querySelector('[data-action="submit-mfa-login"]') ||
+    document.getElementById("mfa-submit-btn");
 
   await FORM.submit(
     { querySelector: () => submitButton },
@@ -8581,6 +8820,7 @@ async function submitMfaLogin() {
       }
 
       if (!/^\d{6}$/.test(otp)) {
+        document.getElementById("mfa-otp")?.focus();
         throw new Error("Informe um código de verificação válido com 6 dígitos.");
       }
 
@@ -8652,6 +8892,12 @@ async function doLogin() {
         : /c[oó]digo totp|c[oó]digo mfa|mfa/i.test(message)
           ? message
         : message || "Erro ao entrar no painel.";
+    const mfaStepVisible = document.getElementById("mfa-step")?.hidden === false;
+    if (mfaLoginState.challengeToken && mfaStepVisible) {
+      setLoginError(normalizedMessage);
+      return;
+    }
+    resetMfaLoginState();
     setLoginError(normalizedMessage);
   });
 }
@@ -9708,6 +9954,7 @@ function openModal(type, id = null) {
         )}" required></div>
         <div class="field"><label>Local</label><input name="location" value="${escapeHtml(eventRecord.location || "")}" placeholder="Ex.: reunião online, estúdio, cliente, auditório"></div>
         <div class="field"><label>Cor</label><select name="color">${calendarColorOptions(eventRecord.color || "pink")}</select></div>
+        <div class="field form-full"><label>Vínculo</label><select name="client_id"><option value="">Equipe interna</option>${clientOptions(eventRecord.client_id)}</select></div>
         <div class="field form-full"><label>Descrição</label><textarea name="description" placeholder="Contexto do evento, entregas esperadas, pauta ou observações.">${escapeHtml(
           eventRecord.description || ""
         )}</textarea></div>
@@ -9793,7 +10040,7 @@ function openModal(type, id = null) {
         <div class="field"><label>Nome</label><input name="name" value="${escapeHtml(user.name || "")}" required></div>
         <div class="field"><label>E-mail</label><input type="email" name="email" value="${escapeHtml(user.email || "")}" required></div>
         <div class="field"><label>Cargo / função</label><input name="job_title" value="${escapeHtml(user.job_title || "")}" placeholder="Ex.: Atendimento, Operações, Design"></div>
-        <div class="field"><label>Perfil</label><select name="role"><option value="admin" ${user.role === "admin" ? "selected" : ""}>Admin</option><option value="gestor" ${user.role === "gestor" ? "selected" : ""}>Gestor</option><option value="designer" ${user.role === "designer" ? "selected" : ""}>Designer</option><option value="comercial" ${user.role === "comercial" ? "selected" : ""}>Comercial</option><option value="dev" ${user.role === "dev" ? "selected" : ""}>Dev</option><option value="client" ${user.role === "client" ? "selected" : ""}>Cliente</option></select></div>
+        <div class="field"><label>Perfil</label><select name="role"><option value="admin" ${user.role === "admin" ? "selected" : ""}>Admin</option><option value="gestor" ${user.role === "gestor" ? "selected" : ""}>Gestor</option><option value="designer" ${user.role === "designer" ? "selected" : ""}>Designer</option><option value="comercial" ${user.role === "comercial" ? "selected" : ""}>Comercial</option><option value="dev" ${user.role === "dev" ? "selected" : ""}>Dev</option></select></div>
         <div class="field"><label>Cliente vinculado</label><select name="client_id"><option value="">Nenhum</option>${clientOptions(user.client_id)}</select></div>
         <div class="field form-full"><label>Senha ${user.id ? "(opcional)" : ""}</label><input type="password" name="password" ${user.id ? "" : "required"}><div class="field-help">${passwordHelp}</div></div>
       `,
@@ -10017,7 +10264,7 @@ async function submitModal(event, type, id) {
     }
 
     if (type === "novo-evento") {
-      const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["description", "location"]);
+      const payload = normalizeFormPayload(Object.fromEntries(formData.entries()), ["description", "location", "client_id"]);
       payload.starts_at = payload.starts_at ? new Date(payload.starts_at).toISOString() : payload.starts_at;
       payload.ends_at = payload.ends_at ? new Date(payload.ends_at).toISOString() : payload.ends_at;
       await apiFetch(id ? `/calendar-events/${id}` : "/calendar-events", {
@@ -10339,13 +10586,14 @@ function openChargeResource(id, field) {
 }
 
 async function copyChargePix(id) {
-  const charge = state.charges.find((item) => item.id === id);
-  if (!charge?.pix_copy_paste) {
-    showToast("Nenhum código Pix disponível nesta cobrança.");
-    return;
-  }
   try {
-    await navigator.clipboard.writeText(charge.pix_copy_paste);
+    const paymentData = await apiFetch(`/charges/${id}/payment-data`, { cache: "no-store" });
+    if (!paymentData?.pix_copy_paste) {
+      showToast("Nenhum código Pix disponível nesta cobrança.");
+      return;
+    }
+
+    await navigator.clipboard.writeText(paymentData.pix_copy_paste);
     showToast("Código Pix copiado com sucesso.");
   } catch (error) {
     showToast("Não foi possível copiar o código Pix.");

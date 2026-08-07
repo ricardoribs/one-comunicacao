@@ -63,6 +63,8 @@ const dbPoolMax = Number.isFinite(requestedDbPoolMax)
   : (isProduction ? 8 : 20);
 const trustProxy = parseTrustProxy(process.env.TRUST_PROXY || (isProduction ? '' : '1'));
 const defaultTestMfaEncryptionKey = nodeEnv === 'test' ? 'test-only-mfa-encryption-key' : '';
+const defaultTestFinancialEncryptionKey = nodeEnv === 'test' ? 'test-only-financial-encryption-key' : '';
+const defaultMfaRequiredRoles = nodeEnv === 'development' ? '' : 'admin,gestor,comercial';
 
 module.exports = {
   nodeEnv,
@@ -94,7 +96,7 @@ module.exports = {
   databaseSslCaPem: process.env.DATABASE_SSL_CA_PEM || '',
   databaseSslRequired: parseBooleanEnv(process.env.DATABASE_SSL_REQUIRED, isProduction),
   uploadProvider: process.env.UPLOAD_PROVIDER || 'local',
-  uploadRequireMalwareScan: parseBooleanEnv(process.env.UPLOAD_REQUIRE_MALWARE_SCAN, isProduction),
+  uploadRequireMalwareScan: parseBooleanEnv(process.env.UPLOAD_REQUIRE_MALWARE_SCAN, false),
   malwareScanProvider: process.env.MALWARE_SCAN_PROVIDER || 'none',
   clamavHost: process.env.CLAMAV_HOST || '',
   clamavPort: Number(process.env.CLAMAV_PORT || 3310),
@@ -121,8 +123,9 @@ module.exports = {
   geoLookupUrlTemplate:
     process.env.GEO_LOOKUP_URL_TEMPLATE
     || 'https://ipwho.is/{ip}?fields=success,country_code,country,region,city',
-  mfaRequiredRoles: parseCsvEnv(process.env.MFA_REQUIRED_ROLES || 'admin,gestor,comercial'),
+  mfaRequiredRoles: parseCsvEnv(process.env.MFA_REQUIRED_ROLES ?? defaultMfaRequiredRoles),
   mfaEncryptionKey: process.env.MFA_ENCRYPTION_KEY || defaultTestMfaEncryptionKey,
+  financialEncryptionKey: process.env.FINANCIAL_ENCRYPTION_KEY || defaultTestFinancialEncryptionKey,
   mfaChallengeExpiresMinutes: Number(process.env.MFA_CHALLENGE_EXPIRES_MINUTES || 5),
   mfaIssuer: process.env.MFA_ISSUER || 'ONE Comunicacao',
   securityAlertWebhookUrl: process.env.SECURITY_ALERT_WEBHOOK_URL || '',

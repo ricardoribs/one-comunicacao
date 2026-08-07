@@ -104,8 +104,10 @@ async function create(data, user) {
   const connectedAt = status === 'connected' ? data.connected_at || new Date().toISOString() : null;
 
   const id = await tenantDb.runWithTenantContext(user, async (client) => {
-    const { rows } = await client.query(
-      `INSERT INTO client_integrations (
+    const { rows } = await tenantDb.queryWithClient(user, client, {
+      table: 'client_integrations',
+      bypassScope: true,
+      sql: `INSERT INTO client_integrations (
          client_id,
          provider_key,
          status,
@@ -140,7 +142,7 @@ async function create(data, user) {
          updated_by = EXCLUDED.updated_by,
          updated_at = NOW()
        RETURNING id`,
-      [
+      params: [
         data.client_id,
         data.provider_key,
         status,
@@ -151,8 +153,8 @@ async function create(data, user) {
         data.last_error || null,
         data.metadata ? JSON.stringify(data.metadata) : null,
         actorId,
-      ]
-    );
+      ],
+    });
 
     return rows[0].id;
   });
@@ -176,8 +178,10 @@ async function update(id, data, user) {
         : existing.connected_at;
 
   await tenantDb.runWithTenantContext(user, async (client) => {
-    await client.query(
-      `UPDATE client_integrations
+    await tenantDb.queryWithClient(user, client, {
+      table: 'client_integrations',
+      bypassScope: true,
+      sql: `UPDATE client_integrations
        SET client_id = COALESCE($2, client_id),
            provider_key = COALESCE($3, provider_key),
            status = COALESCE($4, status),
@@ -194,7 +198,7 @@ async function update(id, data, user) {
            updated_by = $11,
            updated_at = NOW()
        WHERE id = $1`,
-      [
+      params: [
         id,
         data.client_id || null,
         data.provider_key || null,
@@ -206,8 +210,8 @@ async function update(id, data, user) {
         data.last_error ?? null,
         data.metadata ? JSON.stringify(data.metadata) : null,
         actorId,
-      ]
-    );
+      ],
+    });
   });
 
   return findById(id, user);
@@ -215,7 +219,12 @@ async function update(id, data, user) {
 
 async function remove(id, user) {
   return tenantDb.runWithTenantContext(user, async (client) => {
-    const result = await client.query('DELETE FROM client_integrations WHERE id = $1', [id]);
+    const result = await tenantDb.queryWithClient(user, client, {
+      table: 'client_integrations',
+      bypassScope: true,
+      sql: 'DELETE FROM client_integrations WHERE id = $1',
+      params: [id],
+    });
     return result.rowCount > 0;
   });
 }

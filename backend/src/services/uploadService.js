@@ -22,6 +22,12 @@ const ALLOWED_MIME_TYPES = new Set([
   'video/webm',
 ]);
 
+const SCAN_REQUIRED_MIME_TYPES = new Set([
+  'application/zip',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+]);
+
 const uploadBreaker = new CircuitBreaker({
   failureThreshold: 5,
   cooldownMs: 30000,
@@ -56,6 +62,11 @@ async function uploadFile(file) {
   }
 
   const detectedType = await validateFileSignature(file);
+  if (!malwareScanService.isActive() && SCAN_REQUIRED_MIME_TYPES.has(detectedType.mime)) {
+    deleteLocalFile(file.path);
+    throw new AppError('Este tipo de arquivo exige verificacao de malware ativa.', 400);
+  }
+
   await malwareScanService.scanUploadedFile(file);
 
   if (env.uploadProvider === 'cloudinary') {

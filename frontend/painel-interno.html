@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<link rel="icon" type="image/svg+xml" href="/assets/svg/one-favicon.svg"/>
+<link rel="icon" type="image/svg+xml" href="/assets/svg/one-favicon.svg?v=20260806"/>
 <title>ONE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -197,14 +197,14 @@ nav.sb-nav{flex:1;padding:0 12px 16px;overflow-y:auto}
 #mobile-nav-toggle span::before,#mobile-nav-toggle span::after{content:"";position:absolute;left:0;width:18px;height:2px;background:currentColor;border-radius:999px}
 #mobile-nav-toggle span::before{top:-6px}
 #mobile-nav-toggle span::after{top:6px}
-#desktop-sidebar-toggle{position:fixed;top:34px;left:calc(var(--sidebar) + 10px);width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;border:none;background:transparent;color:#98a1ad;box-shadow:none;z-index:160;border-radius:0;cursor:pointer;padding:0;opacity:.9;transition:left var(--tr),color var(--tr),opacity var(--tr)}
+#desktop-sidebar-toggle{position:fixed;top:34px;left:calc(var(--sidebar) - 34px);width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;border:none;background:transparent;color:#cfd5df;box-shadow:none;z-index:160;border-radius:0;cursor:pointer;padding:0;opacity:.9;transition:left var(--tr),color var(--tr),opacity var(--tr)}
 #desktop-sidebar-toggle svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-#desktop-sidebar-toggle:hover{color:var(--text);opacity:1}
+#desktop-sidebar-toggle:hover{color:#fff;opacity:1}
 #desktop-sidebar-toggle:focus-visible{outline:2px solid rgba(232,52,105,.22);outline-offset:4px;border-radius:6px}
 #sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(13,13,15,.48);z-index:90;opacity:0;transition:opacity var(--tr);touch-action:manipulation}
 body.sidebar-collapsed #sidebar{transform:translateX(-100%)}
 body.sidebar-collapsed #app-main{margin-left:0}
-body.sidebar-collapsed #desktop-sidebar-toggle{left:24px}
+body.sidebar-collapsed #desktop-sidebar-toggle{left:24px;color:#98a1ad}
 body.sidebar-open{overflow:hidden}
 body.sidebar-open #sidebar-backdrop{display:block;opacity:1}
 .topbar{min-height:72px;background:var(--white);padding:0 var(--space-8);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;flex-shrink:0;transition:padding-left var(--tr)}
@@ -498,6 +498,94 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-calendario .calendar-legend-swatch.is-blue{background:var(--info)}
 #page-calendario .calendar-legend-swatch.is-green{background:var(--success)}
 #page-calendario .calendar-legend-swatch.is-gold{background:#c59d2a}
+
+#page-calendario{--calendar-slot:58px;--calendar-grid-line:#e5e7eb;--calendar-panel:#fff;--calendar-surface:#fff}
+#page-calendario .topbar{min-height:78px}
+#page-calendario .topbar-actions{gap:12px;align-items:center}
+#page-calendario .calendar-topbar-nav{display:inline-flex;align-items:center;gap:6px;border:0;background:transparent;box-shadow:none;overflow:visible}
+#page-calendario .calendar-nav-btn,#page-calendario .calendar-icon-btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;height:38px;border:1px solid #dadce0;background:#fff;color:#202124;box-shadow:none;cursor:pointer;transition:background var(--tr),border-color var(--tr),color var(--tr)}
+#page-calendario .calendar-nav-btn{min-width:70px;padding:0 18px;border-radius:999px;font-size:14px;font-weight:600}
+#page-calendario .calendar-icon-btn{width:38px;border-radius:999px;padding:0;color:#5f6368}
+#page-calendario .calendar-icon-btn svg{width:18px;height:18px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+#page-calendario .calendar-nav-btn:hover,#page-calendario .calendar-icon-btn:hover{background:#f8fafd;border-color:#cfd4dc;color:#202124}
+#page-calendario .calendar-month-label{min-width:178px;padding:0 4px;font-size:19px;font-weight:600;line-height:1;color:#202124;letter-spacing:-.01em;white-space:nowrap}
+#page-calendario .calendar-shell{gap:18px}
+#page-calendario .calendar-upcoming-banner{min-height:46px;padding:0 16px;border-color:#ffd3dc;border-radius:16px;background:#fff8fb}
+#page-calendario .calendar-upcoming-banner-count{width:28px;height:28px;box-shadow:none}
+#page-calendario .calendar-upcoming-banner-label{color:#d20f46}
+#page-calendario .calendar-upcoming-banner-action{color:#b0002d}
+#page-calendario .calendar-main-card{border-color:#e5e7eb;border-radius:24px;background:#fff;box-shadow:none}
+#page-calendario .calendar-main-card > .section-header{display:none}
+#page-calendario .calendar-scroll{background:#fff;border-radius:24px;scrollbar-gutter:stable}
+#page-calendario .calendar-week-grid{grid-template-columns:64px minmax(900px,1fr);min-width:964px;background:#fff}
+#page-calendario .calendar-time-column,#page-calendario .calendar-time-track,#page-calendario .calendar-week-columns{background:#fff}
+#page-calendario .calendar-time-column{border-right:1px solid var(--calendar-grid-line)}
+#page-calendario .calendar-time-head,#page-calendario .calendar-day-head{min-height:88px;border-bottom:1px solid var(--calendar-grid-line);background:#fff}
+#page-calendario .calendar-time-head{align-items:flex-start;justify-content:center;padding-top:60px;font-size:11px;font-weight:500;color:#5f6368}
+#page-calendario .calendar-time-track{border-top:0}
+#page-calendario .calendar-hour-label{transform:translateY(-7px);font-size:11px;font-weight:500;color:#7c8a9b}
+#page-calendario .calendar-day-column{border-right:1px solid var(--calendar-grid-line)}
+#page-calendario .calendar-day-head{gap:8px;text-transform:uppercase;color:#5f6368}
+#page-calendario .calendar-day-head span{font-size:11px;font-weight:700;letter-spacing:.08em;color:#5f6368}
+#page-calendario .calendar-day-head strong{width:42px;height:42px;border-radius:999px;font-size:26px;font-weight:400;letter-spacing:-.02em;color:#3c4043}
+#page-calendario .calendar-day-column.is-weekend .calendar-day-head{background:#fff}
+#page-calendario .calendar-day-column.is-weekend .calendar-day-head span,#page-calendario .calendar-day-column.is-weekend .calendar-day-head strong{color:#89919c}
+#page-calendario .calendar-day-column.is-today .calendar-day-head span{color:var(--pink)}
+#page-calendario .calendar-day-column.is-today .calendar-day-head strong{width:46px;height:46px;background:var(--pink);color:#fff;font-size:26px;font-weight:700}
+#page-calendario .calendar-day-track{background:repeating-linear-gradient(to bottom,transparent 0,transparent calc(var(--calendar-slot) - 1px),var(--calendar-grid-line) calc(var(--calendar-slot) - 1px),var(--calendar-grid-line) var(--calendar-slot));background-color:#fff}
+#page-calendario .calendar-day-column.is-today .calendar-day-track{background-color:#fff}
+#page-calendario .calendar-day-column.is-weekend .calendar-day-track{background-color:#fbfcfd}
+#page-calendario .calendar-now-line{height:2px;background:var(--pink);box-shadow:none}
+#page-calendario .calendar-now-line span{left:8px;min-height:18px;padding:0 7px;font-size:10px;background:var(--pink)}
+#page-calendario .calendar-event-block{left:5px;right:5px;border:1px solid transparent;border-left-width:0;border-radius:7px;padding:6px 8px;gap:2px;box-shadow:none}
+#page-calendario .calendar-event-block strong{font-size:12px;font-weight:700;line-height:1.22;color:#fff}
+#page-calendario .calendar-event-block span,#page-calendario .calendar-event-block small{font-size:10px;font-weight:600;line-height:1.25;color:rgba(255,255,255,.9)}
+#page-calendario .calendar-event-block.is-clickable:hover{filter:brightness(.96);border-color:transparent}
+#page-calendario .calendar-event-block.is-pink{background:var(--pink);border-color:var(--pink)}
+#page-calendario .calendar-event-block.is-blue{background:#0ea5e9;border-color:#0ea5e9}
+#page-calendario .calendar-event-block.is-green{background:#16a34a;border-color:#16a34a}
+#page-calendario .calendar-event-block.is-gold{background:#ca8a04;border-color:#ca8a04}
+#page-calendario .calendar-event-block.is-highlighted,#page-calendario .calendar-upcoming-card.is-highlighted{box-shadow:0 0 0 2px rgba(255,56,92,.24);border-color:#fff}
+#page-calendario .calendar-event-block{appearance:none;min-width:0;text-align:left;font:inherit;color:#fff;outline:none}
+#page-calendario .calendar-event-block strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#page-calendario .calendar-event-block span,#page-calendario .calendar-event-block small{display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#page-calendario .calendar-event-block.is-compact small,#page-calendario .calendar-event-block.is-tight small,#page-calendario .calendar-event-block.is-micro small{display:none}
+#page-calendario .calendar-event-block.is-tight{padding:4px 6px;gap:1px}
+#page-calendario .calendar-event-block.is-tight strong{font-size:11px;line-height:1.16;-webkit-line-clamp:2}
+#page-calendario .calendar-event-block.is-tight span{font-size:9px;line-height:1.2}
+#page-calendario .calendar-event-block.is-micro{padding:3px 6px;gap:1px}
+#page-calendario .calendar-event-block.is-micro strong{font-size:11px;line-height:1.12;-webkit-line-clamp:1}
+#page-calendario .calendar-event-block.is-micro span{font-size:9px;line-height:1.1}
+#page-calendario .calendar-event-block:focus-visible{box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 0 4px rgba(255,56,92,.42)}
+#page-calendario .calendar-event-popover{position:fixed;z-index:2600;width:min(380px,calc(100vw - 32px));border:1px solid #dde3eb;border-radius:28px;background:#fff;box-shadow:0 18px 48px rgba(15,23,42,.22),0 3px 10px rgba(15,23,42,.08);opacity:0;visibility:hidden;pointer-events:none;transform:translateY(6px) scale(.98);transform-origin:top left;transition:opacity .16s ease,transform .16s ease,visibility 0s linear .16s;overflow:hidden}
+#page-calendario .calendar-event-popover.is-open{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0) scale(1);transition-delay:0s}
+#page-calendario .calendar-event-popover-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 18px 12px 20px;background:#fff}
+#page-calendario .calendar-event-popover-title-row{display:grid;grid-template-columns:18px minmax(0,1fr);align-items:start;gap:14px;min-width:0;padding-top:26px}
+#page-calendario .calendar-event-popover-swatch{width:14px;height:14px;margin-top:4px;border-radius:4px;background:var(--pink)}
+#page-calendario .calendar-event-popover-swatch.is-pink{background:var(--pink)}
+#page-calendario .calendar-event-popover-swatch.is-blue{background:#0ea5e9}
+#page-calendario .calendar-event-popover-swatch.is-green{background:#16a34a}
+#page-calendario .calendar-event-popover-swatch.is-gold{background:#ca8a04}
+#page-calendario .calendar-event-popover-title-row h3{margin:0;font-size:22px;font-weight:500;line-height:1.25;letter-spacing:0;color:#202124}
+#page-calendario .calendar-event-popover-actions{display:flex;align-items:center;gap:4px;flex-shrink:0}
+#page-calendario .calendar-event-popover-icon-btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border:0;border-radius:999px;background:transparent;color:#5f6368;cursor:pointer;transition:background var(--tr),color var(--tr)}
+#page-calendario .calendar-event-popover-icon-btn:hover{background:#f1f3f4;color:#202124}
+#page-calendario .calendar-event-popover-icon-btn.is-danger:hover{background:#fff1f3;color:#c8103a}
+#page-calendario .calendar-event-popover-icon-btn svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#page-calendario .calendar-event-popover-body{display:flex;flex-direction:column;gap:16px;padding:4px 22px 22px}
+#page-calendario .calendar-event-popover-row{display:grid;grid-template-columns:18px minmax(0,1fr);gap:16px;align-items:start}
+#page-calendario .calendar-event-popover-row-icon{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-top:2px;color:#5f6368}
+#page-calendario .calendar-event-popover-row-icon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#page-calendario .calendar-event-popover-copy{display:flex;flex-direction:column;gap:3px;min-width:0;font-size:14px;line-height:1.45;color:#3c4043}
+#page-calendario .calendar-event-popover-copy strong{font-size:14px;font-weight:500;line-height:1.45;color:#202124}
+#page-calendario .calendar-event-popover-copy span{font-size:14px;line-height:1.5;color:#3c4043;overflow-wrap:anywhere}
+@media(max-width:900px){
+  #page-calendario .topbar{align-items:flex-start}
+  #page-calendario .topbar-actions{width:100%;justify-content:flex-start;flex-wrap:wrap}
+  #page-calendario .calendar-topbar-nav{flex-wrap:wrap}
+  #page-calendario .calendar-month-label{order:-1;width:100%;min-width:0;margin-bottom:4px}
+  #page-calendario .calendar-event-popover{left:16px!important;right:16px!important;top:96px!important;width:auto!important;max-height:calc(100vh - 128px);overflow:auto}
+}
 
 /* CHART BARS */
 .chart-bar-wrap{display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-2) 0}
@@ -1222,10 +1310,14 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .team-list .item-row{grid-template-columns:1fr;row-gap:var(--space-2)}
   .team-list .item-row .badge{justify-self:start}
   .team-member-row,.charge-head,.invoice-head,.historic-card-head,.progress-item-head,.urgent-item,.item-row{flex-direction:column;align-items:flex-start}
-  #page-kanban .kanban-focus-form{flex-basis:100%}
+  #page-kanban .kanban-head-row{margin-bottom:16px}
+  #page-kanban .kanban-checklist-toolbar{align-items:stretch;flex-direction:column;gap:12px}
+  #page-kanban .kanban-focus-form{flex-basis:auto;width:100%;padding:0}
+  #page-kanban .kanban-checklist-actions{width:100%;margin-left:0;padding-left:0;padding-top:10px;border-left:none;border-top:1px solid #f2f2f2;justify-content:space-between;flex-wrap:wrap}
   #page-kanban .kanban-quick-meta{justify-content:flex-start}
+  #page-kanban .kanban-overdue-banner{flex:1 1 auto}
   #page-kanban .kanban-due-title{max-width:none}
-  #page-kanban .kanban-checklist-card{padding:16px}
+  #page-kanban .kanban-checklist-card{padding:12px}
   #page-kanban .kanban-overdue-drawer{width:min(420px,100vw)}
   .checklist-composer,.checklist-row{grid-template-columns:1fr}
   .checklist-row{justify-items:start}
@@ -1334,10 +1426,10 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
   .item-actions > .btn,
   .modal-actions > .btn{flex:1 1 100%;justify-content:center}
   #page-kanban .kanban-head-row{gap:16px}
-  #page-kanban .kanban-overdue-banner{padding:12px 16px}
   #page-kanban .kanban-overdue-banner-copy{gap:12px}
   #page-kanban .kanban-overdue-banner-label{white-space:normal}
   #page-kanban .kanban-overdue-drawer{width:100vw}
+  #page-kanban .kanban-col{flex-basis:88vw;width:88vw}
   #page-kanban .kanban-overdue-drawer-head,#page-kanban .kanban-overdue-list,#page-kanban .kanban-overdue-drawer-footer{padding-left:16px;padding-right:16px}
   .login-stage{padding:var(--space-5) var(--space-4)}
   .login-hero-title{font-size:32px}
@@ -1595,31 +1687,39 @@ td{padding:16px;font-size:14px;color:var(--text)}
 #page-crm .crm-page-tab:hover{color:var(--text)}
 #page-crm .crm-page-tab.active{color:var(--text);border-bottom-color:var(--ink);font-weight:600}
 #page-crm .crm-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px;margin-bottom:40px}
-#page-crm .crm-kpi-card{display:flex;flex-direction:column;justify-content:space-between;min-height:120px;padding:24px;background:var(--white);border:1px solid var(--border);border-radius:14px}
+#page-crm .crm-kpi-card{display:flex;flex-direction:column;justify-content:space-between;min-height:120px;padding:24px;background:var(--white);border:1px solid rgba(221,221,221,.75);border-radius:12px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
 #page-crm .crm-kpi-label{margin-bottom:12px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#7b7b7b}
 #page-crm .crm-kpi-value{font-size:30px;font-weight:700;line-height:1.08;letter-spacing:-.03em;color:var(--text)}
 #page-crm .crm-kpi-value.is-currency{font-size:30px}
 #page-crm .crm-kpi-sub{margin-top:8px;font-size:13px;font-weight:500;color:var(--muted)}
-#page-crm .crm-pipeline-board{display:flex;gap:24px;overflow-x:auto;padding-bottom:16px}
+#page-crm .crm-pipeline-board{display:flex;align-items:stretch;gap:24px;overflow-x:auto;padding-bottom:16px}
 #page-crm .crm-pipeline-board::-webkit-scrollbar{height:6px}
 #page-crm .crm-pipeline-board::-webkit-scrollbar-track{background:transparent}
 #page-crm .crm-pipeline-board::-webkit-scrollbar-thumb{background:#dddddd;border-radius:3px}
 #page-crm .crm-pipeline-board::-webkit-scrollbar-thumb:hover{background:#c1c1c1}
-#page-crm .crm-pipeline-col{display:flex;flex-direction:column;flex:0 0 280px;width:280px;background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:visible}
-#page-crm .crm-pipeline-head{display:flex;align-items:center;justify-content:space-between;padding:20px;border-bottom:1px solid var(--border);background:#fcfcfc}
-#page-crm .crm-pipeline-stage{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text)}
-#page-crm .crm-pipeline-count{font-size:12px;font-weight:600;color:#9a9a9a}
-#page-crm .crm-pipeline-body{display:flex;flex-direction:column;gap:16px;flex:1;padding:20px;overflow:visible}
-#page-crm .crm-pipeline-card{display:flex;flex-direction:column;min-height:188px;padding:20px;background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:visible}
-#page-crm .crm-pipeline-name{font-size:16px;font-weight:600;line-height:1.35;color:var(--text)}
-#page-crm .crm-pipeline-company{margin-top:4px;margin-bottom:16px;font-size:13px;font-weight:500;color:var(--muted)}
-#page-crm .crm-pipeline-value{margin-bottom:24px;font-size:20px;font-weight:700;line-height:1.15;letter-spacing:-.02em;color:var(--text)}
-#page-crm .crm-pipeline-footer{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:12px;position:relative}
+#page-crm .crm-pipeline-col{display:flex;flex-direction:column;flex:0 0 320px;width:320px;min-height:420px;background:#f4f4f5;border:1px solid rgba(221,221,221,.55);border-radius:18px;padding:16px;overflow:visible;box-shadow:none}
+#page-crm .crm-pipeline-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;padding:0 2px;border-bottom:0;background:transparent}
+#page-crm .crm-pipeline-label{display:flex;align-items:center;gap:9px;min-width:0}
+#page-crm .crm-pipeline-dot{width:8px;height:8px;flex:0 0 8px;border-radius:999px;background:#cbd5e1}
+#page-crm .crm-pipeline-dot.is-blue{background:#60a5fa}
+#page-crm .crm-pipeline-dot.is-yellow{background:#facc15}
+#page-crm .crm-pipeline-dot.is-pink{background:#fb7185}
+#page-crm .crm-pipeline-dot.is-green{background:#22c55e}
+#page-crm .crm-pipeline-stage{margin:0;min-width:0;font-size:11px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#page-crm .crm-pipeline-count{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 8px;border-radius:999px;background:rgba(255,255,255,.78);box-shadow:0 1px 2px rgba(15,23,42,.04);font-size:12px;font-weight:700;color:#8a8f98}
+#page-crm .crm-pipeline-body{display:flex;flex-direction:column;gap:14px;flex:1;padding:0 2px 2px 0;overflow-y:auto;scrollbar-width:none}
+#page-crm .crm-pipeline-body::-webkit-scrollbar{display:none}
+#page-crm .crm-pipeline-card{display:flex;flex-direction:column;min-height:172px;padding:18px;background:var(--white);border:1px solid rgba(221,221,221,.75);border-radius:12px;box-shadow:0 1px 2px rgba(15,23,42,.04);overflow:visible;transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+#page-crm .crm-pipeline-card:hover{border-color:#dddddd;box-shadow:0 10px 18px rgba(15,23,42,.06);transform:translateY(-1px)}
+#page-crm .crm-pipeline-name{margin:0;font-size:15px;font-weight:700;line-height:1.35;color:var(--text)}
+#page-crm .crm-pipeline-company{margin-top:6px;margin-bottom:18px;font-size:13px;font-weight:500;color:var(--muted)}
+#page-crm .crm-pipeline-value{margin:0 0 22px;font-size:20px;font-weight:700;line-height:1.15;letter-spacing:-.02em;color:var(--text)}
+#page-crm .crm-pipeline-footer{margin-top:auto;padding-top:16px;border-top:1px solid #f2f2f2;display:flex;align-items:center;justify-content:space-between;gap:12px;position:relative}
 #page-crm .crm-text-action{display:inline-flex;align-items:center;border:none;background:none;padding:0;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;text-decoration:none}
 #page-crm .crm-text-action:hover{text-decoration:underline}
 #page-crm .crm-pipeline-footer .action-menu-trigger,#page-crm .crm-row-actions .action-menu-trigger{width:32px;min-width:32px;height:32px;min-height:32px;padding:0;border-radius:999px;border:1px solid var(--border);background:var(--white);color:#888;box-shadow:none}
 #page-crm .crm-pipeline-footer .action-menu-trigger:hover,#page-crm .crm-row-actions .action-menu-trigger:hover{background:#fafafa;border-color:var(--border);color:var(--text);transform:none}
-#page-crm .crm-pipeline-empty{display:flex;align-items:center;justify-content:center;min-height:120px;padding:16px;border:1px dashed var(--border);border-radius:14px;color:var(--muted);font-size:13px;text-align:center}
+#page-crm .crm-pipeline-empty{display:flex;align-items:center;justify-content:center;min-height:80px;padding:16px;border:1px dashed #d7d7d7;border-radius:12px;background:rgba(255,255,255,.42);color:#a1a1aa;font-size:12px;font-weight:600;text-align:center}
 #page-crm .crm-table-shell{background:var(--white);border:1px solid var(--border);border-radius:14px;overflow-x:auto}
 #page-crm .crm-data-table{width:100%;min-width:980px;border-collapse:collapse}
 #page-crm .crm-data-table thead{background:#fcfcfc;border-bottom:1px solid var(--border)}
@@ -1645,7 +1745,7 @@ td{padding:16px;font-size:14px;color:var(--text)}
 #page-campanhas{background:var(--white)}
 #page-campanhas .page-body{background:var(--white)}
 #page-campanhas .campaigns-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;margin-bottom:32px}
-#page-campanhas .campaigns-kpi-card{display:flex;flex-direction:column;justify-content:space-between;min-height:120px;padding:24px;background:var(--white);border:1px solid var(--border);border-radius:14px}
+#page-campanhas .campaigns-kpi-card{display:flex;flex-direction:column;justify-content:space-between;min-height:120px;padding:24px;background:var(--white);border:1px solid rgba(221,221,221,.75);border-radius:12px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
 #page-campanhas .campaigns-kpi-label{margin-bottom:12px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#7b7b7b}
 #page-campanhas .campaigns-kpi-value{font-size:30px;font-weight:700;line-height:1.08;letter-spacing:-.03em;color:var(--text)}
 #page-campanhas .campaigns-kpi-sub{margin-top:8px;font-size:13px;font-weight:500;color:var(--muted)}
@@ -1694,26 +1794,29 @@ td{padding:16px;font-size:14px;color:var(--text)}
 #page-campanhas .campaigns-empty-row .empty-state{min-height:auto}
 #page-kanban .page-body{padding-top:24px}
 #page-kanban .kanban-top-grid{gap:16px;margin-bottom:8px}
-#page-kanban .kanban-checklist-card{padding:16px 20px;border-radius:14px}
-#page-kanban .kanban-checklist-shell{display:flex;flex-direction:column;gap:14px}
-#page-kanban .kanban-checklist-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
-#page-kanban .kanban-focus-form{flex:1 1 560px;display:flex;align-items:center;gap:12px;min-width:0}
+#page-kanban .kanban-head-row{margin-bottom:24px}
+#page-kanban .kanban-checklist-card{padding:8px 10px;border-radius:12px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+#page-kanban .kanban-checklist-shell{display:flex;flex-direction:column;gap:0}
+#page-kanban .kanban-checklist-toolbar{display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:34px}
+#page-kanban .kanban-focus-form{flex:1 1 auto;display:flex;align-items:center;gap:12px;min-width:0;padding:0 6px}
 #page-kanban .kanban-focus-icon{width:20px;height:20px;border:2px solid var(--border);border-radius:6px;flex-shrink:0}
 #page-kanban .kanban-focus-field{display:flex;align-items:center;flex:1;min-width:0}
 #page-kanban .kanban-focus-form .checklist-input{min-height:auto;padding:0;border:none;border-radius:0;background:transparent;font-size:15px;font-weight:500}
 #page-kanban .kanban-focus-form .checklist-input:focus{border:none;box-shadow:none}
 #page-kanban .kanban-focus-form .checklist-input::placeholder{color:#9a9a9a}
-#page-kanban .kanban-focus-form .btn{min-height:36px;padding:0 16px;border-radius:8px}
-#page-kanban .kanban-overdue-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:56px;padding:0 18px;border:1px solid #f7d5da;border-radius:14px;background:linear-gradient(180deg,#fff7f8 0%,#fff3f5 100%);box-shadow:0 8px 20px rgba(185,28,28,.04)}
-#page-kanban .kanban-overdue-banner.is-empty{background:linear-gradient(180deg,#fbfbfb 0%,#f7f7f7 100%);border-color:var(--border);box-shadow:none}
-#page-kanban .kanban-overdue-banner-copy{display:flex;align-items:center;gap:14px;min-width:0}
-#page-kanban .kanban-overdue-banner-count{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:999px;background:#fff;color:#ef4444;font-size:12px;font-weight:700;box-shadow:0 1px 2px rgba(15,23,42,.06)}
-#page-kanban .kanban-overdue-banner.is-empty .kanban-overdue-banner-count{background:#f1f5f9;color:#64748b}
-#page-kanban .kanban-overdue-banner-label{font-size:14px;font-weight:600;color:#be123c;white-space:nowrap}
-#page-kanban .kanban-overdue-banner.is-empty .kanban-overdue-banner-label{color:var(--muted)}
-#page-kanban .kanban-overdue-banner-action{border:none;background:none;padding:0;font-size:14px;font-weight:700;color:#991b1b;cursor:pointer;transition:color var(--tr),opacity var(--tr)}
-#page-kanban .kanban-overdue-banner-action:hover{color:#7f1d1d;text-decoration:underline}
-#page-kanban .kanban-overdue-banner-action:disabled{opacity:.45;cursor:not-allowed;text-decoration:none}
+#page-kanban .kanban-checklist-actions{display:flex;align-items:center;gap:12px;border-left:1px solid #f2f2f2;padding-left:18px;margin-left:auto;flex-shrink:0}
+#page-kanban .kanban-focus-submit{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:0 16px;border:none;border-radius:8px;background:#f2f2f2;color:var(--text);font-size:12px;font-weight:600;cursor:pointer;transition:background var(--tr),color var(--tr)}
+#page-kanban .kanban-focus-submit:hover{background:#e8e8e8;color:var(--text)}
+#page-kanban .kanban-overdue-banner{display:flex;align-items:center;justify-content:flex-start;gap:12px;min-height:0;padding:0;border:none;border-radius:0;background:transparent;box-shadow:none}
+#page-kanban .kanban-overdue-banner.is-empty{background:transparent;border-color:transparent;box-shadow:none}
+#page-kanban .kanban-overdue-banner-copy{display:flex;align-items:center;gap:9px;min-width:0;height:34px;padding:0 12px;border:1px solid #f0f0f0;border-radius:8px;background:#fafafa}
+#page-kanban .kanban-overdue-banner:not(.is-empty) .kanban-overdue-banner-copy{border-color:#f7d5da;background:#fff7f8}
+#page-kanban .kanban-overdue-banner-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:6px;background:#fff;color:#64748b;font-size:12px;font-weight:700;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+#page-kanban .kanban-overdue-banner:not(.is-empty) .kanban-overdue-banner-count{color:#ef4444}
+#page-kanban .kanban-overdue-banner-label{font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap}
+#page-kanban .kanban-overdue-banner:not(.is-empty) .kanban-overdue-banner-label{color:#be123c}
+#page-kanban .kanban-overdue-banner-action{border:none;background:none;padding:0 2px;font-size:12px;font-weight:700;color:var(--pink);cursor:pointer;transition:color var(--tr),opacity var(--tr)}
+#page-kanban .kanban-overdue-banner-action:hover{color:#e11d48;text-decoration:underline}
 #page-kanban .kanban-overdue-overlay{position:fixed;inset:0;background:rgba(15,23,42,.38);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .24s ease;z-index:2400}
 #page-kanban .kanban-overdue-overlay.is-open{opacity:1;pointer-events:auto}
 #page-kanban .kanban-overdue-drawer{position:fixed;top:0;right:0;width:min(420px,100vw);height:100vh;display:flex;flex-direction:column;background:#fff;border-left:1px solid var(--border);box-shadow:-24px 0 48px rgba(15,23,42,.12);transform:translateX(100%);transition:transform .28s ease;z-index:2500}
@@ -1743,12 +1846,19 @@ td{padding:16px;font-size:14px;color:var(--text)}
 #page-kanban .kanban-overdue-item-actions .btn{min-height:34px;padding:0 14px;border-radius:10px;font-size:12px;font-weight:600}
 #page-kanban .kanban-overdue-drawer-footer{padding:20px 24px;border-top:1px solid var(--border);background:#fff;flex-shrink:0}
 #page-kanban.dark .kanban-overdue-drawer-footer{background:#222222;border-top-color:#333333}
-#page-kanban .kanban-quick-meta{display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:flex-end}
+#page-kanban .kanban-quick-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+#page-kanban .kanban-quick-meta[hidden]{display:none}
+#page-kanban .kanban-focus-pill{display:inline-flex;align-items:center;min-height:30px;padding:0 10px;border:1px solid #f0f0f0;border-radius:8px;background:#fafafa;color:var(--muted);font-size:12px;font-weight:600;white-space:nowrap}
+#page-kanban .kanban-active-focus-toggle{border:none;background:none;padding:0;font-size:12px;font-weight:700;color:var(--text);cursor:pointer}
+#page-kanban .kanban-active-focus-toggle:hover{text-decoration:underline}
 #page-kanban .kanban-due-summary{display:flex;align-items:center;gap:10px;min-width:0}
 #page-kanban .kanban-due-title{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:500;color:var(--muted)}
-#page-kanban .kanban-history-toggle,#page-kanban .kanban-history-clear{border:none;background:none;padding:0;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer}
+#page-kanban .kanban-history-toggle,#page-kanban .kanban-history-clear{border:none;background:none;padding:0;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer}
 #page-kanban .kanban-history-toggle:hover,#page-kanban .kanban-history-clear:hover{color:var(--text);text-decoration:underline}
-#page-kanban .kanban-checklist-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--border)}
+#page-kanban #kanban-focus-active{margin-top:10px;max-height:160px;overflow:auto;border-top:1px solid #f2f2f2}
+#page-kanban #kanban-focus-active[hidden]{display:none}
+#page-kanban .kanban-checklist-item{display:flex;align-items:center;gap:12px;padding:10px 6px;border-top:1px solid #f2f2f2}
+#page-kanban #kanban-focus-active .kanban-checklist-item:first-child{border-top:none}
 #page-kanban .kanban-checklist-main{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
 #page-kanban .kanban-checklist-item input[type="checkbox"]{width:16px;height:16px;accent-color:var(--pink)}
 #page-kanban .kanban-checklist-label{font-size:14px;line-height:1.4;color:var(--text);word-break:break-word}
@@ -1760,16 +1870,19 @@ td{padding:16px;font-size:14px;color:var(--text)}
 #page-kanban .kanban-history-title{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 #page-kanban .kanban-history-list{display:flex;flex-direction:column;gap:14px}
 #page-kanban .checklist-history-group{gap:12px}
-#page-kanban .kanban-scroll-top{margin:8px 0 12px}
-#page-kanban .kanban-scroll-top{flex-shrink:0}
-#page-kanban .kanban-scroll-top::-webkit-scrollbar{height:10px}
-#page-kanban .kanban-scroll-top::-webkit-scrollbar-track{background:#ececec;border-radius:999px}
-#page-kanban .kanban-scroll-top::-webkit-scrollbar-thumb{background:#c1c1c1;border-radius:999px}
-#page-kanban.dark .kanban-scroll-top::-webkit-scrollbar-track{background:#242b33}
-#page-kanban.dark .kanban-scroll-top::-webkit-scrollbar-thumb{background:#56606b}
-#page-kanban .kanban-scroll-top::-webkit-scrollbar-thumb:hover{background:#a8a8a8}
+#page-kanban .kanban-scroll-top{display:block !important;height:10px;margin:0 0 14px;flex-shrink:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:#cfcfcf transparent}
+#page-kanban .kanban-scroll-top.is-hidden{display:none !important}
+#page-kanban .kanban-scroll-top-track{height:1px}
+#page-kanban .kanban-scroll-top.custom-scroll::-webkit-scrollbar{height:7px}
+#page-kanban .kanban-scroll-top.custom-scroll::-webkit-scrollbar-track{background:#efefef;border-radius:999px}
+#page-kanban .kanban-scroll-top.custom-scroll::-webkit-scrollbar-thumb{background:#c9c9c9;border-radius:999px}
+#page-kanban.dark .kanban-scroll-top.custom-scroll::-webkit-scrollbar-track{background:#242b33}
+#page-kanban.dark .kanban-scroll-top.custom-scroll::-webkit-scrollbar-thumb{background:#56606b}
+#page-kanban .kanban-scroll-top.custom-scroll::-webkit-scrollbar-thumb:hover{background:#a8a8a8}
 #page-kanban .kanban{padding-top:0}
+#page-kanban #kanban-board{align-items:stretch}
 body[data-active-page="kanban"]{overflow-x:hidden}
+body[data-active-page="kanban"] #desktop-sidebar-toggle{display:none}
 body[data-active-page="kanban"] #app-main{min-height:100vh;height:auto;background:var(--white)}
 body[data-active-page="kanban"] #page-kanban.active{display:flex;flex-direction:column;min-height:100vh;height:auto}
 #page-kanban{background:#fff;color:#222222}
@@ -1793,7 +1906,27 @@ body[data-active-page="kanban"] #page-kanban.active{display:flex;flex-direction:
 #page-kanban .rausch-bg{background-color:#ff385c}
 #page-kanban .rausch-text{color:#ff385c}
 #page-kanban .line-clamp-3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-#page-kanban .kanban-col{min-height:0}
+#page-kanban .kanban-col{flex:0 0 320px;width:320px;min-height:0;background:#f4f4f5;border:1px solid rgba(221,221,221,.55);border-radius:18px;padding:16px;box-shadow:none}
+#page-kanban .kanban-column-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;padding:0 2px}
+#page-kanban .kanban-column-label{display:flex;align-items:center;gap:9px;min-width:0}
+#page-kanban .kanban-column-dot{width:8px;height:8px;border-radius:999px;flex:0 0 8px}
+#page-kanban .kanban-column-title{margin:0;font-size:11px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#page-kanban .kanban-column-count{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 8px;border-radius:999px;background:rgba(255,255,255,.75);color:#9a9a9a;font-size:12px;font-weight:700;box-shadow:0 1px 2px rgba(15,23,42,.03)}
+#page-kanban .kanban-exact-column-body{min-height:0;padding-right:2px}
+#page-kanban .kanban-empty-state{display:flex;align-items:center;justify-content:center;min-height:80px;padding:18px;border:1px dashed #d7d7d7;border-radius:12px;background:rgba(255,255,255,.42);color:#a0a0a0;font-size:12px;font-weight:600;text-align:center}
+#page-kanban .k-card{display:flex;flex-direction:column;min-height:136px;border:1px solid rgba(221,221,221,.75);border-radius:12px;padding:16px;background:var(--white);box-shadow:0 1px 2px rgba(15,23,42,.04)}
+#page-kanban .k-card:hover{transform:none;border-color:#dddddd;box-shadow:0 10px 18px rgba(15,23,42,.06)}
+#page-kanban .k-card.is-done{opacity:.72}
+#page-kanban .k-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+#page-kanban .k-card-client{display:block;max-width:220px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#9a9a9a;font-size:10px;font-weight:700;letter-spacing:.11em;text-transform:uppercase}
+#page-kanban .k-card-menu-btn{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin:-4px -4px 0 0;border:none;background:transparent;color:#a8a8a8;cursor:pointer;opacity:.72;transition:opacity var(--tr),color var(--tr)}
+#page-kanban .k-card:hover .k-card-menu-btn{opacity:1}
+#page-kanban .k-card-menu-btn:hover{color:var(--text)}
+#page-kanban .k-card-title{margin:0 0 6px;color:var(--text);font-size:14px;font-weight:700;line-height:1.35;letter-spacing:0}
+#page-kanban .k-card.is-done .k-card-title{text-decoration:line-through;color:var(--muted)}
+#page-kanban .k-card-desc{margin:0;color:var(--muted);font-size:12px;font-weight:500;line-height:1.5}
+#page-kanban .k-card-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;padding-top:16px}
+#page-kanban .badge-kanban-type,#page-kanban .k-card .badge-blue{background:#f2f4f7;color:var(--muted);border:none;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:.02em;padding:5px 9px}
 #page-kanban .kanban-col.is-drop-target .kanban-exact-column-body{background:rgba(255,56,92,.05);box-shadow:inset 0 0 0 1px rgba(255,56,92,.22);border-radius:10px}
 #page-kanban .k-card.is-draggable{cursor:grab;user-select:none;touch-action:none}
 #page-kanban .k-card.is-pointer-dragging{cursor:grabbing;transition:none;box-shadow:0 18px 34px rgba(13,13,15,.18)}
@@ -1869,19 +2002,55 @@ body.calendar-upcoming-open{overflow:hidden}
   .login-stage{width:min(100%,calc(100% - 24px))}
   .login-hero-stat-value{font-size:18px}
 }
+
+#page-home .kpi-card,
+#page-home .card,
+#page-crm .kpi-card,
+#page-crm .crm-kpi-card,
+#page-crm .crm-table-shell,
+#page-campanhas .kpi-card,
+#page-campanhas .campaigns-kpi-card,
+#page-campanhas .campaigns-table-shell,
+#page-trafego .kpi-card,
+#page-analytics .kpi-card,
+#page-financeiro .kpi-card,
+#page-producao .bg-white.hairline-border.rounded-\[14px\],
+#page-trafego .bg-white.hairline-border.rounded-\[14px\],
+#page-analytics .bg-white.hairline-border.rounded-\[14px\],
+#page-financeiro .bg-white.hairline-border.rounded-\[14px\],
+#page-acesso .bg-white.hairline-border.rounded-\[14px\],
+#page-perfil .bg-white.hairline-border.rounded-\[14px\]{
+  background-color:var(--white) !important;
+  border:1px solid rgba(221,221,221,.75) !important;
+  border-radius:12px !important;
+  box-shadow:0 1px 2px rgba(15,23,42,.04) !important;
+}
+
+#page-crm .pipe-col{
+  flex:0 0 320px;
+  width:320px;
+  min-height:420px;
+  padding:16px;
+  background:#f4f4f5;
+  border-color:rgba(221,221,221,.55);
+  border-radius:18px;
+  box-shadow:none;
+}
+#page-crm .pipe-col-head{border:0;margin-bottom:16px;padding:0 2px;color:var(--muted);font-size:11px;letter-spacing:.11em}
+#page-crm .pipe-card{min-height:132px;padding:18px;background:var(--white);border:1px solid rgba(221,221,221,.75);border-radius:12px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
 body.panel-dark-theme #app-main,
 body.panel-dark-theme #sidebar,
 body.panel-dark-theme .mobile-tabbar,
 body.panel-dark-theme #mobile-nav-toggle{
-  --white:#161a1f;
-  --gray:#0f1318;
-  --gray2:#1f252d;
-  --gray3:#56606b;
-  --table-head:#1b2027;
-  --table-head-line:#2d333b;
-  --text:#f5f7fa;
-  --muted:#aab4c0;
-  --border:#2d333b;
+  --white:#1d222a;
+  --gray:#151a21;
+  --gray2:#252c36;
+  --gray3:#657180;
+  --table-head:#202631;
+  --table-head-line:#343c48;
+  --text:#e8edf3;
+  --muted:#9da8b5;
+  --border:#343c48;
   --danger:#ff8a80;
   --danger-bg:rgba(193,53,21,.16);
   --success:#69d39b;
@@ -1890,11 +2059,11 @@ body.panel-dark-theme #mobile-nav-toggle{
   --warn-bg:rgba(143,107,16,.2);
   --info:#93baff;
   --info-bg:rgba(66,139,255,.18);
-  --panel-shadow:rgba(0,0,0,.28) 0 0 0 1px,rgba(0,0,0,.42) 0 16px 34px;
+  --panel-shadow:rgba(0,0,0,.18) 0 0 0 1px,rgba(0,0,0,.28) 0 14px 28px;
 }
 body.panel-dark-theme #app-main,
 body.panel-dark-theme #app-main .app-screen.active,
-body.panel-dark-theme #app-main .page-body{background:#0f1318;color:var(--text)}
+body.panel-dark-theme #app-main .page-body{background:var(--gray);color:var(--text)}
 body.panel-dark-theme #app-main .topbar,
 body.panel-dark-theme #app-main > .app-screen > header,
 body.panel-dark-theme #app-main .crm-tabbar,
@@ -1909,14 +2078,95 @@ body.panel-dark-theme #app-main .crm-table-shell,
 body.panel-dark-theme #app-main .campaigns-table-shell,
 body.panel-dark-theme #app-main .bg-white,
 body.panel-dark-theme #app-main [class~="bg-white"]{background-color:var(--white) !important;border-color:var(--border) !important;color:var(--text)}
+body.panel-dark-theme #app-main #page-home .kpi-card,
+body.panel-dark-theme #app-main #page-home .card,
+body.panel-dark-theme #app-main #page-crm .kpi-card,
+body.panel-dark-theme #app-main #page-crm .crm-kpi-card,
+body.panel-dark-theme #app-main #page-crm .crm-table-shell,
+body.panel-dark-theme #app-main #page-campanhas .kpi-card,
+body.panel-dark-theme #app-main #page-campanhas .campaigns-kpi-card,
+body.panel-dark-theme #app-main #page-campanhas .campaigns-table-shell,
+body.panel-dark-theme #app-main #page-trafego .kpi-card,
+body.panel-dark-theme #app-main #page-analytics .kpi-card,
+body.panel-dark-theme #app-main #page-financeiro .kpi-card,
+body.panel-dark-theme #app-main #page-producao .bg-white.hairline-border.rounded-\[14px\],
+body.panel-dark-theme #app-main #page-trafego .bg-white.hairline-border.rounded-\[14px\],
+body.panel-dark-theme #app-main #page-analytics .bg-white.hairline-border.rounded-\[14px\],
+body.panel-dark-theme #app-main #page-financeiro .bg-white.hairline-border.rounded-\[14px\],
+body.panel-dark-theme #app-main #page-acesso .bg-white.hairline-border.rounded-\[14px\],
+body.panel-dark-theme #app-main #page-perfil .bg-white.hairline-border.rounded-\[14px\]{
+  background-color:var(--white) !important;
+  border-color:var(--border) !important;
+  box-shadow:0 1px 2px rgba(0,0,0,.12) !important;
+}
+body.panel-dark-theme #app-main #page-crm .crm-pipeline-col,
+body.panel-dark-theme #app-main #page-crm .pipe-col{background:#202631;border-color:#333c48}
+body.panel-dark-theme #app-main #page-crm .crm-pipeline-card,
+body.panel-dark-theme #app-main #page-crm .pipe-card{background:#1a2028;border-color:#343d49;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+body.panel-dark-theme #app-main #page-crm .crm-pipeline-count{background:#303744;color:#d5dde7;box-shadow:none}
+body.panel-dark-theme #app-main #page-crm .crm-pipeline-footer{border-top-color:#29313b}
+body.panel-dark-theme #app-main #page-crm .crm-pipeline-empty{background:rgba(255,255,255,.035);border-color:#39424f;color:#8f9aaa}
+body.panel-dark-theme #page-calendario{--calendar-grid-line:#343c48;--calendar-panel:#1d222a;--calendar-surface:#151a21}
+body.panel-dark-theme #page-calendario .calendar-nav-btn,
+body.panel-dark-theme #page-calendario .calendar-icon-btn{background:#1d222a;border-color:#343c48;color:#d8e0ea}
+body.panel-dark-theme #page-calendario .calendar-nav-btn:hover,
+body.panel-dark-theme #page-calendario .calendar-icon-btn:hover{background:#252c36;border-color:#46515f;color:#fff}
+body.panel-dark-theme #page-calendario .calendar-month-label{color:#e8edf3}
+body.panel-dark-theme #page-calendario .calendar-main-card,
+body.panel-dark-theme #page-calendario .calendar-scroll,
+body.panel-dark-theme #page-calendario .calendar-week-grid,
+body.panel-dark-theme #page-calendario .calendar-time-column,
+body.panel-dark-theme #page-calendario .calendar-time-track,
+body.panel-dark-theme #page-calendario .calendar-week-columns,
+body.panel-dark-theme #page-calendario .calendar-time-head,
+body.panel-dark-theme #page-calendario .calendar-day-head{background:#1d222a;color:#e8edf3;border-color:var(--calendar-grid-line)}
+body.panel-dark-theme #page-calendario .calendar-main-card{box-shadow:0 1px 2px rgba(0,0,0,.12)}
+body.panel-dark-theme #page-calendario .calendar-time-head,
+body.panel-dark-theme #page-calendario .calendar-hour-label,
+body.panel-dark-theme #page-calendario .calendar-day-head span{color:#9da8b5}
+body.panel-dark-theme #page-calendario .calendar-day-head strong{color:#e8edf3}
+body.panel-dark-theme #page-calendario .calendar-day-column{border-color:var(--calendar-grid-line)}
+body.panel-dark-theme #page-calendario .calendar-day-track{background:repeating-linear-gradient(to bottom,transparent 0,transparent calc(var(--calendar-slot) - 1px),var(--calendar-grid-line) calc(var(--calendar-slot) - 1px),var(--calendar-grid-line) var(--calendar-slot));background-color:#1d222a}
+body.panel-dark-theme #page-calendario .calendar-day-column.is-today .calendar-day-head,
+body.panel-dark-theme #page-calendario .calendar-day-column.is-today .calendar-day-track{background-color:#1d222a}
+body.panel-dark-theme #page-calendario .calendar-day-column.is-today .calendar-day-head span{color:var(--pink)}
+body.panel-dark-theme #page-calendario .calendar-day-column.is-today .calendar-day-head strong{background:var(--pink);color:#fff}
+body.panel-dark-theme #page-calendario .calendar-day-column.is-weekend .calendar-day-head,
+body.panel-dark-theme #page-calendario .calendar-day-column.is-weekend .calendar-day-track{background-color:#1a2028}
+body.panel-dark-theme #page-calendario .calendar-day-column.is-weekend .calendar-day-head span,
+body.panel-dark-theme #page-calendario .calendar-day-column.is-weekend .calendar-day-head strong{color:#7f8a98}
+body.panel-dark-theme #page-calendario .calendar-upcoming-banner{background:#211b22;border-color:#422836}
+body.panel-dark-theme #page-calendario .calendar-upcoming-banner.is-empty{background:#202631;border-color:#323b48}
+body.panel-dark-theme #page-calendario .calendar-upcoming-banner-count{background:#3a2230;color:#ff9caf}
+body.panel-dark-theme #page-calendario .calendar-upcoming-banner.is-empty .calendar-upcoming-banner-count{background:#2a313b;color:#d5dde7}
+body.panel-dark-theme #page-calendario .calendar-upcoming-banner-label{color:#ff9caf}
+body.panel-dark-theme #page-calendario .calendar-upcoming-banner.is-empty .calendar-upcoming-banner-label{color:#aeb8c5}
+body.panel-dark-theme #page-calendario .calendar-upcoming-banner-action{color:#ff7f9c}
+body.panel-dark-theme #page-calendario .calendar-upcoming-drawer,
+body.panel-dark-theme #page-calendario .calendar-upcoming-drawer-head,
+body.panel-dark-theme #page-calendario .calendar-upcoming-drawer-footer{background:#1d222a;border-color:#343c48;color:#e8edf3}
+body.panel-dark-theme #page-calendario .calendar-upcoming-list{background:#151a21}
+body.panel-dark-theme #page-calendario .calendar-upcoming-empty{background:#1d222a;border-color:#343c48}
+body.panel-dark-theme #page-calendario .calendar-upcoming-card{background:#202631;color:#e8edf3}
+body.panel-dark-theme #page-calendario .calendar-upcoming-card:hover{background:#252c36}
+body.panel-dark-theme #page-calendario .calendar-event-popover{background:#1d222a;border-color:#343c48;box-shadow:0 18px 48px rgba(0,0,0,.34),0 3px 10px rgba(0,0,0,.2)}
+body.panel-dark-theme #page-calendario .calendar-event-popover-head{background:#1d222a}
+body.panel-dark-theme #page-calendario .calendar-event-popover-title-row h3,
+body.panel-dark-theme #page-calendario .calendar-event-popover-copy strong{color:#eef3f8}
+body.panel-dark-theme #page-calendario .calendar-event-popover-copy,
+body.panel-dark-theme #page-calendario .calendar-event-popover-copy span{color:#c7d0dc}
+body.panel-dark-theme #page-calendario .calendar-event-popover-icon-btn,
+body.panel-dark-theme #page-calendario .calendar-event-popover-row-icon{color:#9da8b5}
+body.panel-dark-theme #page-calendario .calendar-event-popover-icon-btn:hover{background:#29313b;color:#fff}
+body.panel-dark-theme #page-calendario .calendar-event-popover-icon-btn.is-danger:hover{background:#3a2028;color:#ff8aa2}
 body.panel-dark-theme #app-main [class*="bg-[#fcfcfc]"],
 body.panel-dark-theme #app-main thead,
-body.panel-dark-theme #app-main thead th{background:#1b2027 !important}
+body.panel-dark-theme #app-main thead th{background:var(--table-head) !important}
 body.panel-dark-theme #app-main [class*="bg-[#f2f2f2]"],
 body.panel-dark-theme #app-main .bg-gray-50,
 body.panel-dark-theme #app-main .bg-gray-100,
-body.panel-dark-theme #app-main .bg-gray-200{background-color:#20262e !important}
-body.panel-dark-theme #app-main [class*="bg-[#f7f7f7]"]{background-color:#0f1318 !important}
+body.panel-dark-theme #app-main .bg-gray-200{background-color:var(--gray2) !important}
+body.panel-dark-theme #app-main [class*="bg-[#f7f7f7]"]{background-color:var(--gray) !important}
 body.panel-dark-theme #app-main .ink-black,
 body.panel-dark-theme #app-main [class*="text-[#222222]"],
 body.panel-dark-theme #app-main [class*="text-gray-600"],
@@ -1932,10 +2182,10 @@ body.panel-dark-theme #app-main [class*="border-[#dddddd]"],
 body.panel-dark-theme #app-main [class*="border-gray-"],
 body.panel-dark-theme #app-main hr{border-color:var(--border) !important}
 body.panel-dark-theme #app-main tbody tr:hover,
-body.panel-dark-theme #app-main .notification-item:hover{background:#1b2027 !important}
+body.panel-dark-theme #app-main .notification-item:hover{background:var(--table-head) !important}
 body.panel-dark-theme #app-main input,
 body.panel-dark-theme #app-main select,
-body.panel-dark-theme #app-main textarea{background:#11161d !important;color:var(--text) !important;border-color:var(--border) !important}
+body.panel-dark-theme #app-main textarea{background:#171d25 !important;color:var(--text) !important;border-color:var(--border) !important}
 body.panel-dark-theme #app-main input::placeholder,
 body.panel-dark-theme #app-main textarea::placeholder{color:var(--muted) !important}
 body.panel-dark-theme #app-main .toggle-label{background:#39424d !important}
@@ -1949,10 +2199,44 @@ body.panel-dark-theme #app-main .modal-close-btn,
 body.panel-dark-theme #mobile-nav-toggle,
 body.panel-dark-theme #desktop-sidebar-toggle{background:transparent;color:#7f8793;border-color:transparent;box-shadow:none}
 body.panel-dark-theme #app-main .notification-item.is-unread{background:var(--white) !important}
-body.panel-dark-theme #page-kanban .kanban-col{background:#1b2027;border:1px solid var(--border)}
-body.panel-dark-theme #page-kanban .k-card{background:#11161d;border-color:var(--border)}
-body.panel-dark-theme #page-kanban .kanban-col.is-drop-target{background:#2a1d23;box-shadow:inset 0 0 0 1px rgba(255,56,92,.25)}
-body.panel-dark-theme #page-kanban .kanban-scroll-top::-webkit-scrollbar-thumb{background:#46505a}
+body.panel-dark-theme #page-kanban,
+body.panel-dark-theme #page-kanban .one-kanban-exact,
+body.panel-dark-theme #page-kanban .one-kanban-exact > main{background:var(--gray) !important;color:var(--text) !important}
+body.panel-dark-theme #page-kanban .one-kanban-exact > main > header{background:var(--gray) !important}
+body.panel-dark-theme #page-kanban .kanban-checklist-card{background:#1b2028 !important;border-color:#303846 !important;box-shadow:none}
+body.panel-dark-theme #page-kanban .kanban-focus-form .checklist-input{background:transparent !important;color:var(--text) !important}
+body.panel-dark-theme #page-kanban .kanban-focus-form .checklist-input::placeholder{color:#98a3b0 !important}
+body.panel-dark-theme #page-kanban .kanban-focus-icon{border-color:#3a4350}
+body.panel-dark-theme #page-kanban .kanban-checklist-actions{border-left-color:#303846}
+body.panel-dark-theme #page-kanban #kanban-focus-active,
+body.panel-dark-theme #page-kanban .kanban-checklist-item{border-color:#303846}
+body.panel-dark-theme #page-kanban .kanban-focus-pill{background:#202631;border-color:#323b48;color:#aeb8c5}
+body.panel-dark-theme #page-kanban .kanban-focus-submit{background:#2a313b;color:#d5dde7}
+body.panel-dark-theme #page-kanban .kanban-focus-submit:hover{background:#343c48;color:#ffffff}
+body.panel-dark-theme #page-kanban .kanban-overdue-banner .kanban-overdue-banner-copy,
+body.panel-dark-theme #page-kanban .kanban-overdue-banner:not(.is-empty) .kanban-overdue-banner-copy{background:#211b22;border-color:#422836;color:#f1a0b4}
+body.panel-dark-theme #page-kanban .kanban-overdue-banner.is-empty .kanban-overdue-banner-copy{background:#202631;border-color:#323b48;color:#aeb8c5}
+body.panel-dark-theme #page-kanban .kanban-overdue-banner-count{background:#2a313b;color:#d5dde7;box-shadow:none}
+body.panel-dark-theme #page-kanban .kanban-overdue-banner:not(.is-empty) .kanban-overdue-banner-count{background:#3a2230;color:#ff9caf}
+body.panel-dark-theme #page-kanban .kanban-overdue-banner .kanban-overdue-banner-label{color:#aeb8c5}
+body.panel-dark-theme #page-kanban .kanban-overdue-banner:not(.is-empty) .kanban-overdue-banner-label{color:#ff9caf}
+body.panel-dark-theme #page-kanban .kanban-overdue-banner-action{color:#ff7f9c}
+body.panel-dark-theme #page-kanban .kanban-col{background:#202631;border:1px solid #333c48}
+body.panel-dark-theme #page-kanban .kanban-column-count{background:#303744;color:#d5dde7;box-shadow:none}
+body.panel-dark-theme #page-kanban .kanban-empty-state{background:rgba(255,255,255,.035);border-color:#39424f;color:#8f9aaa}
+body.panel-dark-theme #page-kanban .k-card{background:#1a2028;border-color:#343d49;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+body.panel-dark-theme #page-kanban .k-card:hover{border-color:#46515f;box-shadow:0 12px 20px rgba(0,0,0,.16)}
+body.panel-dark-theme #page-kanban .k-card-client{color:#9aa5b1}
+body.panel-dark-theme #page-kanban .k-card-menu-btn{color:#8f99a8}
+body.panel-dark-theme #page-kanban .k-card-footer{border-top-color:#29313b}
+body.panel-dark-theme #page-kanban .badge-kanban-type,
+body.panel-dark-theme #page-kanban .k-card .badge-blue{background:#27303b;color:#b8c2cf}
+body.panel-dark-theme #page-kanban .kanban-col.is-drop-target{background:#2b2028;box-shadow:inset 0 0 0 1px rgba(255,56,92,.22)}
+body.panel-dark-theme #page-kanban .kanban-scroll-top{scrollbar-color:#6b7480 #252c36}
+body.panel-dark-theme #page-kanban .kanban-scroll-top.custom-scroll::-webkit-scrollbar-track{background:#252c36}
+body.panel-dark-theme #page-kanban .kanban-scroll-top.custom-scroll::-webkit-scrollbar-thumb,
+body.panel-dark-theme #page-kanban .kanban-scroll-top::-webkit-scrollbar-thumb{background:#6b7480}
+body.panel-dark-theme #page-kanban .kanban-scroll-top.custom-scroll::-webkit-scrollbar-thumb:hover{background:#7b8796}
 body.panel-dark-theme .mobile-tabbar .mobile-tab-link{color:var(--muted)}
 body.panel-dark-theme .mobile-tabbar .mobile-tab-link.active{color:var(--pink)}
 #login-screen:not(.hidden) ~ #mobile-nav-toggle,
@@ -1961,6 +2245,30 @@ body.panel-dark-theme .mobile-tabbar .mobile-tab-link.active{color:var(--pink)}
 #login-screen:not(.hidden) ~ .mobile-tabbar{display:none !important}
 
 /* FIXES VISUAIS */
+.topbar,
+#app-main > .app-screen > header,
+#page-kanban .one-kanban-exact > main > header,
+#page-producao > div > header,
+#page-trafego > header,
+#page-analytics > header,
+#page-financeiro > div > header,
+#page-acesso > header,
+#page-crm .crm-tabbar,
+#page-producao .px-8.pt-6.bg-white.border-b,
+#page-acesso .px-8.pt-6.bg-white.border-b{
+  border-bottom:0 !important;
+}
+#app-main .topbar-sub:not(#home-date),
+#app-main > .app-screen > header p,
+#page-kanban .one-kanban-exact > main > header p,
+#page-producao > div > header p,
+#page-trafego > header p,
+#page-analytics > header p,
+#page-financeiro > div > header p,
+#page-acesso > header p,
+#page-perfil > header p{
+  display:none !important;
+}
 button:focus,
 summary:focus,
 .crm-text-action:focus,
@@ -2016,11 +2324,6 @@ summary:focus-visible,
 }
 
 .modal-close-btn{z-index:2;box-shadow:none}
-
-#page-crm .crm-pipeline-head{
-  overflow:hidden;
-  border-radius:14px 14px 0 0;
-}
 
 #page-crm .crm-pipeline-board,
 #page-kanban .kanban-exact-column-body,
@@ -2103,7 +2406,7 @@ summary:focus-visible,
               </div>
               <div class="login-secondary-actions">
                 <button type="button" class="login-link-btn" data-action="cancel-mfa-login">Voltar</button>
-                <button type="submit" class="login-btn" id="mfa-submit-btn">Validar código</button>
+                <button type="submit" class="login-btn" id="mfa-submit-btn" data-action="submit-mfa-login">Validar código</button>
               </div>
             </div>
             <button type="submit" class="login-btn" id="login-submit-btn">Entrar</button>
@@ -2394,26 +2697,27 @@ summary:focus-visible,
       </header>
 
       <div class="flex-1 flex flex-col p-8 overflow-hidden">
-        <div class="kanban-head-row flex flex-col xl:flex-row items-stretch xl:items-center gap-6 mb-8 flex-shrink-0 w-full">
-          <div id="kanban-exact-quick-focus" class="kanban-checklist-card flex-1 bg-white dark:bg-[#222222] border border-[#dddddd] dark:border-[#333333] rounded-[8px] px-5 py-4 shadow-sm w-full">
+        <div class="kanban-head-row flex-shrink-0 w-full">
+          <div id="kanban-exact-quick-focus" class="kanban-checklist-card flex-1 bg-white dark:bg-[#222222] border border-[#dddddd] dark:border-[#333333] rounded-[12px] shadow-sm w-full">
             <div class="kanban-checklist-shell">
               <div class="kanban-checklist-toolbar">
                 <form id="kanban-focus-form" data-checklist-form class="kanban-focus-form">
                   <div class="kanban-focus-icon" aria-hidden="true"></div>
                   <input id="kanban-focus-input" type="text" name="checklist-item" placeholder="Adicione o primeiro item para focar hoje..." class="checklist-input flex-1 bg-transparent border-none focus:ring-0 text-[14px] font-medium text-[#222222] dark:text-white outline-none placeholder-gray-400">
-                  <button type="submit" class="px-4 py-1.5 bg-[#f2f2f2] dark:bg-[#333333] hover:bg-[#e2e2e2] dark:hover:bg-[#444444] text-[13px] font-semibold text-[#222222] dark:text-white rounded-[6px] transition-colors flex-shrink-0">Adicionar</button>
                 </form>
-                <div id="kanban-focus-meta" class="kanban-quick-meta"></div>
+                <div class="kanban-checklist-actions">
+                  <div id="kanban-focus-meta" class="kanban-quick-meta"></div>
+                  <div id="kanban-exact-overdue" class="kanban-overdue-banner" aria-live="polite"></div>
+                  <button type="submit" form="kanban-focus-form" class="kanban-focus-submit">Adicionar</button>
+                </div>
               </div>
               <div id="kanban-focus-active" class="checklist-list"></div>
               <div id="kanban-focus-history" class="kanban-history-panel" data-checklist-history-panel hidden></div>
             </div>
           </div>
-
-          <div id="kanban-exact-overdue" class="kanban-overdue-banner w-full xl:w-auto flex-shrink-0" aria-live="polite"></div>
         </div>
 
-        <div id="kanban-top-scroll" class="kanban-scroll-top custom-scroll" aria-hidden="true">
+        <div id="kanban-top-scroll" class="kanban-scroll-top custom-scroll" aria-label="Navegar colunas do Kanban" tabindex="0">
           <div id="kanban-top-scroll-track" class="kanban-scroll-top-track"></div>
         </div>
 
@@ -2448,10 +2752,15 @@ summary:focus-visible,
       <div class="topbar-title">Calendário da Equipe</div>
     </div>
     <div class="topbar-actions">
-      <div class="calendar-topbar-nav">
-        <button class="btn btn-outline btn-sm" data-action="shift-calendar" data-offset="-1">Semana anterior</button>
-        <button class="btn btn-outline btn-sm" data-action="calendar-today">Hoje</button>
-        <button class="btn btn-outline btn-sm" data-action="shift-calendar" data-offset="1">Próxima semana</button>
+      <div class="calendar-topbar-nav" aria-label="Navegação do calendário">
+        <button type="button" class="calendar-nav-btn" data-action="calendar-today">Hoje</button>
+        <button type="button" class="calendar-icon-btn" data-action="shift-calendar" data-offset="-1" aria-label="Semana anterior">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button type="button" class="calendar-icon-btn" data-action="shift-calendar" data-offset="1" aria-label="Próxima semana">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <div id="calendar-month-label" class="calendar-month-label" aria-live="polite">—</div>
       </div>
       <button id="btn-new-calendar-event" class="btn btn-pink btn-sm" data-action="open-modal" data-modal="novo-evento">+ Novo evento</button>
     </div>
@@ -2486,6 +2795,7 @@ summary:focus-visible,
       <button type="button" class="btn btn-outline btn-sm w-full justify-center" data-action="close-calendar-upcoming-drawer">Fechar agenda lateral</button>
     </div>
   </aside>
+  <div id="calendar-event-popover" class="calendar-event-popover" role="dialog" aria-modal="false" aria-labelledby="calendar-event-popover-title" aria-hidden="true"></div>
 </section>
 
 <!-- CRM -->

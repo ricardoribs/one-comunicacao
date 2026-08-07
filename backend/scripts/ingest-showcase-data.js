@@ -1210,24 +1210,6 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
     },
   ];
 
-  const clientUsers = [
-    ['expo', 'Demo Contact 01', 'marina@expobusiness2026.com.br', +55 (00) 00000-0011', 'Coordenadora de Marketing do Evento'],
-    ['belavida', 'Demo Contact 02', 'caroline@wellness.example.test', +55 (00) 00000-0012', 'Gestora da Clinica'],
-    ['tech', 'Demo Contact 03', 'renato@techmaranhao.com.br', +55 (00) 00000-0013', 'Diretor Comercial'],
-    ['sabor', 'Demo Contact 04', 'marcos@saborebrasa.com.br', +55 (00) 00000-0014', 'Socio-operador'],
-    ['horizonte', 'Demo Contact 05', 'debora@institutohorizonte.edu.br', +55 (00) 00000-0015', 'Diretora Academica'],
-  ].map(([client_key, name, email, phone, job_title]) => ({
-    client_key,
-    name,
-    email,
-    phone,
-    job_title,
-    role: 'client',
-    password: passwordHash,
-    is_active: true,
-    email_verified_at: atTime(addDays(now, -10), 11, 0).toISOString(),
-  }));
-
   const campaigns = [
     ['expo-captacao', 'expo', 'Captação de expositores 2026', 'Meta Ads', 'Empresas de servicos, industria e patrocinadores regionais', 'Gerar conversas qualificadas para patrocinio e espaco de estande', 'execucao', 20000, -28, 18, 'Ativa'],
     ['belavida-meta', 'belavida', 'Harmonizacao facial premium', 'Instagram + Meta', 'Mulheres e homens de 27 a 48 anos na Grande Ilha', 'Agendamentos de avaliacao e preenchimento do CRM', 'otimizacao', 7000, -24, 10, 'Ativa'],
@@ -1583,7 +1565,6 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
   return {
     currentMonthLabel,
     internalUsers,
-    clientUsers,
     clients,
     campaigns,
     metrics,
@@ -1638,14 +1619,6 @@ async function ingest() {
         manager_id: ids.users.get(clientData.manager_key),
       });
       ids.clients.set(clientData.key, clientId);
-    }
-
-    for (const user of dataset.clientUsers) {
-      const userId = await upsertUser(client, {
-        ...user,
-        client_id: ids.clients.get(user.client_key),
-      });
-      ids.users.set(`client:${user.client_key}`, userId);
     }
 
     for (const campaign of dataset.campaigns) {
@@ -1839,9 +1812,6 @@ async function ingest() {
     console.log(`- janayna@one.com / ${SHOWCASE_PASSWORD}`);
     console.log(`- thalisson@one.com / ${SHOWCASE_PASSWORD}`);
     console.log(`- pedro@one.com / ${SHOWCASE_PASSWORD}`);
-    console.log('');
-    console.log('[showcase] Cliente de teste:');
-    console.log(`- marina@expobusiness2026.com.br / ${SHOWCASE_PASSWORD}`);
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;

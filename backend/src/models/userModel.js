@@ -245,8 +245,8 @@ async function list(query = {}) {
   const page = paginationClause(limit, offset, 1);
   const { rows } = await queryWithSchemaFallback(
     pool,
-    `${safeSelect} ORDER BY u.created_at DESC${page.clause}`,
-    `${legacySafeSelect} ORDER BY u.created_at DESC${page.clause}`,
+    `${safeSelect} WHERE ${INTERNAL_ROLE_FILTER} ORDER BY u.created_at DESC${page.clause}`,
+    `${legacySafeSelect} WHERE ${INTERNAL_ROLE_FILTER} ORDER BY u.created_at DESC${page.clause}`,
     page.values
   );
   return rows;
@@ -257,8 +257,8 @@ async function listAccessOverview(query = {}) {
   const page = paginationClause(limit, offset, 1);
   const { rows } = await queryWithSchemaFallback(
     pool,
-    `${accessOverviewSelect} ORDER BY u.created_at DESC${page.clause}`,
-    `${legacyAccessOverviewSelect} ORDER BY u.created_at DESC${page.clause}`,
+    `${accessOverviewSelect} WHERE ${INTERNAL_ROLE_FILTER} ORDER BY u.created_at DESC${page.clause}`,
+    `${legacyAccessOverviewSelect} WHERE ${INTERNAL_ROLE_FILTER} ORDER BY u.created_at DESC${page.clause}`,
     page.values
   );
   return rows;
@@ -280,7 +280,8 @@ function extractNotificationPreferences(record = {}) {
 async function listActiveInternalTeam(actor = null) {
   if (actor?.role === 'client' && actor.client_id) {
     const { rows } = await pool.query(
-      `SELECT DISTINCT
+      `/* tenant-audit: allow-direct-query client team lookup scoped by actor.client_id */
+       SELECT DISTINCT
          u.id,
          u.name,
          u.role,

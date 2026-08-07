@@ -21,10 +21,12 @@
     "format": "npm run format --prefix backend",
     "check:frontend": "node scripts/check-frontend.js",
     "smoke": "npm run smoke --prefix backend",
+    "restore:drill": "npm run restore:drill --prefix backend",
     "prepare": "npm exec --prefix backend husky"
   },
   "dependencies": {
-    "sharp": "^0.34.5"
+    "postcss": "^8.5.26",
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
     "tailwindcss": "^3.4.17"
