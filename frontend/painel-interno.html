@@ -2616,8 +2616,8 @@ summary:focus-visible,
       </div>
 
       <div class="p-6 border-b border-[#333333] mb-2">
-        <p id="kanban-shell-user-name" class="text-sm font-bold text-white">Ricardo Ribeiro</p>
-        <p id="kanban-shell-user-role" class="text-[11px] font-medium text-gray-400 mt-0.5">Software Engineer</p>
+        <p id="kanban-shell-user-name" class="text-sm font-bold text-white">Usuário interno</p>
+        <p id="kanban-shell-user-role" class="text-[11px] font-medium text-gray-400 mt-0.5">Equipe ONE</p>
       </div>
 
       <nav class="flex-1 px-3 space-y-1 overflow-y-auto dark-scroll">
@@ -2640,7 +2640,7 @@ summary:focus-visible,
           <div class="flex items-center gap-3">
             <div class="w-1.5 h-1.5 rounded-full rausch-bg"></div> Kanban
           </div>
-          <span data-count-for="kanban" class="bg-[#333333] text-gray-300 text-[10px] px-2 py-0.5 rounded-full font-bold">16</span>
+          <span data-count-for="kanban" class="bg-[#333333] text-gray-300 text-[10px] px-2 py-0.5 rounded-full font-bold" hidden></span>
         </a>
 
         <a href="#" data-action="go-to" data-page="calendario" class="kanban-shell-nav-link flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-[8px] transition-colors">
@@ -2661,7 +2661,7 @@ summary:focus-visible,
           <div class="flex items-center gap-3">
             <div class="w-1.5 h-1.5 rounded-full bg-transparent"></div> Produção
           </div>
-          <span data-count-for="producao" class="bg-[#333333] text-gray-300 text-[10px] px-2 py-0.5 rounded-full font-bold">14</span>
+          <span data-count-for="producao" class="bg-[#333333] text-gray-300 text-[10px] px-2 py-0.5 rounded-full font-bold" hidden></span>
         </a>
         <a href="#" data-action="go-to" data-page="trafego" class="kanban-shell-nav-link flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-[8px] transition-colors">
           <div class="w-1.5 h-1.5 rounded-full bg-transparent"></div> Tráfego Pago
@@ -2705,8 +2705,6 @@ summary:focus-visible,
         <div class="flex items-center gap-3 flex-wrap topbar-actions">
           <select id="kanban-client-filter" class="h-[36px] px-3 text-[13px] font-medium border border-[#dddddd] dark:border-[#333333] rounded-[8px] bg-white dark:bg-transparent hover:bg-gray-50 dark:hover:bg-white/5 transition-colors outline-none cursor-pointer" data-action="filter-kanban">
             <option value="">Todos os clientes</option>
-            <option>Demo Restaurant</option>
-            <option>Demo Events Expo</option>
           </select>
           <button type="button" data-action="open-modal" data-modal="nova-tarefa" class="h-[36px] inline-flex items-center justify-center px-5 text-[13px] font-medium text-white rausch-bg rounded-[8px] hover:scale-[0.98] transition-transform shadow-sm">+ Nova tarefa</button>
           <div class="notification-shell" data-notification-shell="1"></div>

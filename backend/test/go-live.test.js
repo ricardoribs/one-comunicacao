@@ -101,6 +101,22 @@ test('health publico responde 200 com payload reduzido', { concurrency: false },
   });
 });
 
+test('HTML publico do painel nao embute dados de seed ou cliente', { concurrency: false }, async () => {
+  const response = await request(app).get('/app/io');
+  const blockedPublicStrings = [
+    'Ricardo Ribeiro',
+    'Demo Marketing Admin',
+    'Demo Restaurant',
+    'Demo Events Expo',
+  ];
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers['content-type'], /text\/html/);
+  for (const value of blockedPublicStrings) {
+    assert.equal(response.text.includes(value), false, `${value} nao deve aparecer no HTML publico`);
+  }
+});
+
 test('health interno exige admin e expõe checks detalhados apenas autenticado', { concurrency: false }, async () => {
   const suffix = Date.now() + 200;
   const admin = await createUser({

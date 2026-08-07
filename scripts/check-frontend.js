@@ -50,6 +50,20 @@ function assertSafeDomLoadOrder() {
   return [];
 }
 
+function assertNoPublicSeedData() {
+  const html = fs.readFileSync(internalPanelFile, "utf8");
+  const blockedPublicStrings = [
+    "Ricardo Ribeiro",
+    "Demo Marketing Admin",
+    "Demo Restaurant",
+    "Demo Events Expo",
+  ];
+
+  return blockedPublicStrings
+    .filter((value) => html.includes(value))
+    .map((value) => `frontend/painel-interno.html nao deve conter dado de seed no HTML publico: ${value}`);
+}
+
 const jsFiles = walk(jsDir).filter((file) => file.endsWith(".js"));
 const htmlFiles = fs
   .readdirSync(frontendRoot, { withFileTypes: true })
@@ -98,6 +112,8 @@ const directInnerHtmlFiles = jsFiles
 if (directInnerHtmlFiles.length > 0) {
   findings.push(...assertSafeDomLoadOrder());
 }
+
+findings.push(...assertNoPublicSeedData());
 
 if (findings.length > 0) {
   console.error("[FRONTEND CHECK] Falhas de seguranca encontradas:");
