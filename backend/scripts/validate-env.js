@@ -40,6 +40,10 @@ function getCliOption(name) {
   return '';
 }
 
+function hasCliFlag(name) {
+  return process.argv.slice(2).includes(name);
+}
+
 function loadEnv() {
   const envPath = path.resolve(__dirname, '../../.env');
   if (!fs.existsSync(envPath)) {
@@ -56,7 +60,10 @@ function loadEnv() {
     }
 
     const [key, ...valueParts] = trimmed.split('=');
-    fileEnv[key.trim()] = valueParts.join('=').trim().replace(/^["']|["']$/g, '');
+    fileEnv[key.trim()] = valueParts
+      .join('=')
+      .trim()
+      .replace(/^["']|["']$/g, '');
   });
 
   return { ...fileEnv, ...process.env };
@@ -65,6 +72,13 @@ function loadEnv() {
 const env = loadEnv();
 const targetEnvironment = getCliOption('--target') || env.VALIDATE_ENV_TARGET || env.NODE_ENV || 'development';
 const isProductionTarget = targetEnvironment === 'production';
+const requireSmokeCredentials =
+  hasCliFlag('--require-smoke') ||
+  ['1', 'true', 'yes', 'on'].includes(
+    String(env.REQUIRE_SMOKE_CREDENTIALS || '')
+      .trim()
+      .toLowerCase()
+  );
 const errors = [];
 const warnings = [];
 
@@ -197,7 +211,9 @@ if (env.EMAIL_PROVIDER === 'resend' && !hasValue('RESEND_API_KEY') && isProducti
 }
 
 if (env.UPLOAD_PROVIDER === 'cloudinary' && isProductionTarget) {
-  const missingCloudinary = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'].filter((name) => !hasValue(name));
+  const missingCloudinary = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'].filter(
+    (name) => !hasValue(name)
+  );
   if (missingCloudinary.length > 0) {
     pushError(`Credenciais do Cloudinary incompletas: ${missingCloudinary.join(', ')}`);
   }
@@ -221,7 +237,9 @@ if (isProductionTarget && !hasValue('FINANCIAL_ENCRYPTION_KEY')) {
 }
 
 if (isProductionTarget && env.UPLOAD_REQUIRE_MALWARE_SCAN !== 'true') {
-  pushWarning('UPLOAD_REQUIRE_MALWARE_SCAN=false em producao; ClamAV fica em backlog e tipos arriscados seguem bloqueados por mitigacao');
+  pushWarning(
+    'UPLOAD_REQUIRE_MALWARE_SCAN=false em producao; ClamAV fica em backlog e tipos arriscados seguem bloqueados por mitigacao'
+  );
 }
 
 if (isProductionTarget && env.UPLOAD_REQUIRE_MALWARE_SCAN === 'true' && !hasValue('CLAMAV_HOST')) {
@@ -240,8 +258,12 @@ if (isProductionTarget && !hasValue('SECURITY_ALERT_WEBHOOK_URL')) {
   pushWarning('SECURITY_ALERT_WEBHOOK_URL ausente; webhook real fica em backlog e alertas seguem em log estruturado');
 }
 
-if (isProductionTarget && (!hasValue('SMOKE_EMAIL') || !hasValue('SMOKE_PASSWORD'))) {
+if (isProductionTarget && requireSmokeCredentials && (!hasValue('SMOKE_EMAIL') || !hasValue('SMOKE_PASSWORD'))) {
   pushError('SMOKE_EMAIL e SMOKE_PASSWORD obrigatorios porque o gate de deploy executa npm run smoke');
+} else if (isProductionTarget && (!hasValue('SMOKE_EMAIL') || !hasValue('SMOKE_PASSWORD'))) {
+  pushWarning(
+    'SMOKE_EMAIL e SMOKE_PASSWORD ausentes; execute o smoke autenticado no CI ou no pos-deploy quando houver credenciais de teste'
+  );
 }
 
 log(`\n${BOLD}ALTA PRIORIDADE${RESET}`);
