@@ -287,6 +287,9 @@ function injectAssetVersions(html) {
 function sendHtmlPage(res, fileName, status = 200) {
   res.status(status);
   res.setHeader('Cache-Control', 'no-store');
+  if (env.robotsNoindex || ['painel-interno.html', 'reset-password.html'].includes(fileName)) {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, noimageindex');
+  }
   res.type('html');
   res.send(injectAssetVersions(injectNonce(loadHtmlTemplate(fileName), res.locals.cspNonce)));
 }
@@ -388,6 +391,30 @@ app.get('/app/io', (req, res) => {
 
 app.get('/painel-interno.html', (req, res) => {
   res.redirect(302, '/app/io');
+});
+
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.setHeader('Cache-Control', 'no-store');
+
+  if (env.robotsNoindex) {
+    res.send([
+      'User-agent: *',
+      'Disallow: /',
+      '',
+    ].join('\n'));
+    return;
+  }
+
+  res.send([
+    'User-agent: *',
+    'Disallow: /app/',
+    'Disallow: /api/',
+    'Disallow: /uploads/',
+    'Disallow: /painel-interno.html',
+    'Disallow: /reset-password',
+    '',
+  ].join('\n'));
 });
 
 app.get('/politica-de-privacidade.html', (req, res) => {

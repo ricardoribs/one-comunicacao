@@ -65,6 +65,8 @@ const trustProxy = parseTrustProxy(process.env.TRUST_PROXY || (isProduction ? ''
 const defaultTestMfaEncryptionKey = nodeEnv === 'test' ? 'test-only-mfa-encryption-key' : '';
 const defaultTestFinancialEncryptionKey = nodeEnv === 'test' ? 'test-only-financial-encryption-key' : '';
 const defaultMfaRequiredRoles = nodeEnv === 'development' ? '' : 'admin,gestor,comercial';
+const appBaseUrl = process.env.APP_BASE_URL || '';
+const defaultRobotsNoindex = /(?:^|[.-])staging(?:[.-]|$)|\.onrender\.com/i.test(appBaseUrl);
 
 module.exports = {
   nodeEnv,
@@ -116,7 +118,8 @@ module.exports = {
   cloudinaryApiKey: process.env.CLOUDINARY_API_KEY || '',
   cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || '',
   cloudinaryRequirePrivateUpload: parseBooleanEnv(process.env.CLOUDINARY_REQUIRE_PRIVATE_UPLOAD, isProduction),
-  appBaseUrl: process.env.APP_BASE_URL || '',
+  appBaseUrl,
+  robotsNoindex: parseBooleanEnv(process.env.ROBOTS_NOINDEX, defaultRobotsNoindex),
   geoLookupEnabled: process.env.GEO_LOOKUP_ENABLED !== 'false',
   geoLookupTimeoutMs: Number(process.env.GEO_LOOKUP_TIMEOUT_MS || 1200),
   geoLookupCacheTtlMs: Number(process.env.GEO_LOOKUP_CACHE_TTL_MS || 6 * 60 * 60 * 1000),
