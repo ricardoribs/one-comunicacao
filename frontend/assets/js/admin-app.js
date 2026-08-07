@@ -4780,7 +4780,7 @@ async function saveProfileNotificationPreferences(event) {
 function setRoleUI(user) {
   document.getElementById("sb-name").textContent = user.name;
   document.getElementById("sb-role-label").textContent =
-    user.job_title || ROLE_LABELS[user.role] || user.role || "Software Engineer";
+    user.job_title || ROLE_LABELS[user.role] || user.role || "Equipe ONE";
   const badge = document.getElementById("sb-badge");
   badge.textContent = ROLE_LABELS[user.role] || user.role;
   badge.className = `sb-role-badge ${getRoleBadgeClass(user.role)}`;
@@ -4788,10 +4788,10 @@ function setRoleUI(user) {
   const kanbanUserName = document.getElementById("kanban-shell-user-name");
   const kanbanUserRole = document.getElementById("kanban-shell-user-role");
   if (kanbanUserName) {
-    kanbanUserName.textContent = user.name || "Ricardo Ribeiro";
+    kanbanUserName.textContent = user.name || "Usuário interno";
   }
   if (kanbanUserRole) {
-    kanbanUserRole.textContent = user.job_title || ROLE_LABELS[user.role] || user.role || "Software Engineer";
+    kanbanUserRole.textContent = user.job_title || ROLE_LABELS[user.role] || user.role || "Equipe ONE";
   }
 }
 
@@ -6047,8 +6047,8 @@ function getKanbanCardMenuButton(task, canEditTasks) {
 function getKanbanPrimaryAssigneeInitials(task) {
   const assigneeUsers = getTaskAssigneeUsers(task);
   const assigneeNames = assigneeUsers.length ? assigneeUsers.map((user) => user.name).filter(Boolean) : getTaskAssigneeNames(task);
-  const fallbackName = state.session?.user?.name || "Ricardo Ribeiro";
-  return getInitials(assigneeNames[0] || fallbackName) || "RR";
+  const fallbackName = state.session?.user?.name || "Usuário interno";
+  return getInitials(assigneeNames[0] || fallbackName) || "UI";
 }
 
 function getKanbanDeadlineChip(task) {
