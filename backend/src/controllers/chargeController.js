@@ -72,3 +72,12 @@ exports.update = asyncHandler(async (req, res) => {
   }
   res.json(charge);
 });
+
+exports.getPaymentData = asyncHandler(async (req, res) => {
+  const paymentData = await chargeModel.findPaymentData(req.params.id, req.user);
+  if (!paymentData) {
+    throw new AppError('Cobranca nao encontrada.', 404);
+  }
+
+  res.json(paymentData);
+});

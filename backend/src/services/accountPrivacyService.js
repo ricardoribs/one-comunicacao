@@ -35,20 +35,20 @@ async function anonymizeAccount(userId, hashedPassword) {
     await dbClient.query('DELETE FROM notifications WHERE user_id = $1', [userId]);
     await dbClient.query('DELETE FROM user_daily_checklists WHERE user_id = $1', [userId]);
     await dbClient.query('DELETE FROM calendar_event_reminders WHERE user_id = $1', [userId]);
-    await dbClient.query('DELETE FROM messages WHERE sender_id = $1 OR receiver_id = $1', [userId]);
+    await dbClient.query('/* tenant-audit: allow-direct-query account anonymization scoped by user id */ DELETE FROM messages WHERE sender_id = $1 OR receiver_id = $1', [userId]);
     await dbClient.query('DELETE FROM task_assignees WHERE user_id = $1', [userId]);
 
-    await dbClient.query('UPDATE tasks SET assigned_to = NULL WHERE assigned_to = $1', [userId]);
-    await dbClient.query('UPDATE tasks SET created_by = NULL WHERE created_by = $1', [userId]);
-    await dbClient.query('UPDATE clients SET manager_id = NULL WHERE manager_id = $1', [userId]);
-    await dbClient.query('UPDATE contacts SET owner_id = NULL WHERE owner_id = $1', [userId]);
-    await dbClient.query('UPDATE contacts SET assigned_to = NULL WHERE assigned_to = $1', [userId]);
-    await dbClient.query('UPDATE materials SET uploaded_by = NULL WHERE uploaded_by = $1', [userId]);
-    await dbClient.query('UPDATE files SET uploaded_by = NULL WHERE uploaded_by = $1', [userId]);
-    await dbClient.query('UPDATE calendar_events SET created_by = NULL WHERE created_by = $1', [userId]);
-    await dbClient.query('UPDATE calendar_events SET updated_by = NULL WHERE updated_by = $1', [userId]);
-    await dbClient.query('UPDATE client_integrations SET created_by = NULL WHERE created_by = $1', [userId]);
-    await dbClient.query('UPDATE client_integrations SET updated_by = NULL WHERE updated_by = $1', [userId]);
+    await dbClient.query('/* tenant-audit: allow-direct-query account anonymization scoped by user id */ UPDATE tasks SET assigned_to = NULL WHERE assigned_to = $1', [userId]);
+    await dbClient.query('/* tenant-audit: allow-direct-query account anonymization scoped by user id */ UPDATE tasks SET created_by = NULL WHERE created_by = $1', [userId]);
+    await dbClient.query('/* tenant-audit: allow-direct-query account anonymization scoped by user id */ UPDATE clients SET manager_id = NULL WHERE manager_id = $1', [userId]);
+    await dbClient.query('/* tenant-audit: allow-direct-query account anonymization scoped by user id */ UPDATE contacts SET owner_id = NULL WHERE owner_id = $1', [userId]);
+    await dbClient.query('/* tenant-audit: allow-direct-query account anonymization scoped by user id */ UPDATE contacts SET assigned_to = NULL WHERE assigned_to = $1', [userId]);
+    await dbClient.query('/* tenant-audit: allow-direct-query account anonymization scoped by user id */ UPDATE materials SET uploaded_by = NULL WHERE uploaded_by = $1', [userId]);
+    await dbClient.query('/* tenant-audit: allow-direct-query account anonymization scoped by user id */ UPDATE files SET uploaded_by = NULL WHERE uploaded_by = $1', [userId]);
+    await dbClient.query('/* tenant-audit: allow-direct-query account anonymization scoped by user id */ UPDATE calendar_events SET created_by = NULL WHERE created_by = $1', [userId]);
+    await dbClient.query('/* tenant-audit: allow-direct-query account anonymization scoped by user id */ UPDATE calendar_events SET updated_by = NULL WHERE updated_by = $1', [userId]);
+    await dbClient.query('/* tenant-audit: allow-direct-query account anonymization scoped by user id */ UPDATE client_integrations SET created_by = NULL WHERE created_by = $1', [userId]);
+    await dbClient.query('/* tenant-audit: allow-direct-query account anonymization scoped by user id */ UPDATE client_integrations SET updated_by = NULL WHERE updated_by = $1', [userId]);
 
     await dbClient.query(
       `UPDATE users

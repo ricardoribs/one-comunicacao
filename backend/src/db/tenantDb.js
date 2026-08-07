@@ -16,6 +16,7 @@ const TENANT_TABLES = new Set([
   'charges',
   'reports',
   'client_integrations',
+  'calendar_events',
 ]);
 
 async function runWithTenantContext(user, handler) {

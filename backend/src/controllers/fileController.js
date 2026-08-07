@@ -7,7 +7,7 @@ const fileModel = require('../models/fileModel');
 const { ensureClientAccess } = require('../utils/access');
 const uploadService = require('../services/uploadService');
 const AppError = require('../utils/AppError');
-const { buildLegacyFileAccessUrl, decorateFileCollection, decorateFileRecord } = require('../utils/fileAccess');
+const { buildFileAccessPath, decorateFileCollection, decorateFileRecord } = require('../utils/fileAccess');
 const { sendPaginated } = require('../utils/response');
 
 function isInlineMimeType(mimeType = '') {
@@ -105,7 +105,8 @@ exports.getAccessUrl = asyncHandler(async (req, res) => {
   }
 
   res.json({
-    url: buildLegacyFileAccessUrl(file.id, req.user.id),
+    url: buildFileAccessPath(file.id),
+    requires_authorization: true,
   });
 });
 

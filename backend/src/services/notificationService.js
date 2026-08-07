@@ -128,7 +128,7 @@ async function syncUpcomingCalendarReminders(user) {
     const createdNotifications = [];
 
     for (const reminderWindow of CALENDAR_REMINDER_WINDOWS) {
-      const events = await calendarEventModel.listDueReminderCandidates(user.id, {
+      const events = await calendarEventModel.listDueReminderCandidates(user, {
         from: new Date(now + reminderWindow.offsetFromNowMs).toISOString(),
         to: new Date(now + reminderWindow.offsetToNowMs).toISOString(),
         reminderType: reminderWindow.reminderType,

@@ -1,0 +1,35 @@
+{
+  "status": "ok",
+  "executed_at": "2026-08-07T01:10:50.983Z",
+  "finished_at": "2026-08-07T01:11:13.149Z",
+  "source_database": "one_comunicacao",
+  "restore_database": "one_restore_drill_2026_08_07T01_10_50_983Z_36239b54",
+  "restore_database_kept": false,
+  "backup_file": "backups/restore-drills/one-restore-drill-2026-08-07T01-10-50-983Z.sql",
+  "backup_size_bytes": 137226,
+  "retention_days": 30,
+  "rpo_seconds": 1,
+  "rto_seconds": 21.15,
+  "timings": {
+    "backup_ms": 1001,
+    "restore_ms": 4293,
+    "migration_ms": 1626,
+    "smoke_ms": 14970
+  },
+  "checks": {
+    "users": 28,
+    "clients": 1,
+    "campaigns": 0,
+    "calendar_events": 15,
+    "calendar_event_tenant_columns": [
+      "client_id",
+      "visibility"
+    ]
+  },
+  "smoke": {
+    "base_url": "http://127.0.0.1:5112",
+    "ready": "ok",
+    "health": "ok",
+    "login_skipped": "SMOKE_EMAIL/SMOKE_PASSWORD nao configurados."
+  }
+}

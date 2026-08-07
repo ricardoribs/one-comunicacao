@@ -235,13 +235,22 @@ function createPgMemPool() {
       ends_at TIMESTAMP NOT NULL,
       location VARCHAR(160),
       color VARCHAR(24) NOT NULL DEFAULT 'pink',
+      client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
+      visibility VARCHAR(20) NOT NULL DEFAULT 'team',
       created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
       updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
       created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      CONSTRAINT calendar_events_visibility_check CHECK (visibility IN ('team', 'client')),
+      CONSTRAINT calendar_events_visibility_client_check CHECK (
+        (visibility = 'team' AND client_id IS NULL)
+        OR (visibility = 'client' AND client_id IS NOT NULL)
+      )
     );
 
     CREATE INDEX idx_calendar_events_starts_at ON calendar_events(starts_at ASC, ends_at ASC);
+    CREATE INDEX idx_calendar_events_client_id_starts_at ON calendar_events(client_id, starts_at ASC, ends_at ASC);
+    CREATE INDEX idx_calendar_events_visibility_starts_at ON calendar_events(visibility, starts_at ASC, ends_at ASC);
 
     CREATE TABLE calendar_event_reminders (
       id SERIAL PRIMARY KEY,

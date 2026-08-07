@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs');
 const pool = require('../config/db');
 const env = require('../config/env');
 
-const ALLOWED_ROLES = new Set(['admin', 'gestor', 'designer', 'comercial', 'dev', 'client']);
+const ALLOWED_ROLES = new Set(['admin', 'gestor', 'designer', 'comercial', 'dev']);
 
 function required(name) {
   const value = process.env[name];

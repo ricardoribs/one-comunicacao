@@ -66,11 +66,11 @@ async function createExternalCharge(payload, user) {
       payment_link: null,
       boleto_url: null,
       boleto_barcode: null,
-      pix_copy_paste: null,
-      pix_qr_base64: null,
-      resolved_client_id: payload.client_id || null,
-      external_payload: {
-        mode: 'manual',
+    pix_copy_paste: null,
+    pix_qr_base64: null,
+    resolved_client_id: payload.client_id || null,
+    external_payload: {
+      mode: 'manual',
       },
     };
   }
@@ -105,11 +105,14 @@ async function createExternalCharge(payload, user) {
     boleto_url: payment.bankSlipUrl || null,
     boleto_barcode: payment.nossoNumero || null,
     pix_copy_paste: pix?.payload || null,
-    pix_qr_base64: pix?.encodedImage || null,
+    pix_qr_base64: null,
     resolved_client_id: payload.client_id || resolvedClientId || null,
     external_payload: {
-      payment,
-      pix,
+      provider: 'asaas',
+      payment_id: payment.id,
+      status: payment.status || null,
+      billing_type: payment.billingType || billingType,
+      has_pix_payload: Boolean(pix?.payload),
     },
   };
 }

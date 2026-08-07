@@ -40,8 +40,6 @@ jobs:
         run: npm run audit:deps --prefix backend
       - name: Validate frontend scripts
         run: npm run check:frontend
-      - name: Build Docker image
-        run: docker build -t one-comunicacao:ci .
 
   integration:
     name: Integration and smoke

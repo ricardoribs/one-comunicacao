@@ -40,15 +40,10 @@ function getRequestIp(req) {
 }
 
 function getRequestLocation(req) {
-  const city = pickHeaderValue(req.headers['cf-ipcity'] || req.headers['x-vercel-ip-city'] || req.headers['x-geo-city']);
-  const region = pickHeaderValue(
-    req.headers['cf-region']
-      || req.headers['x-vercel-ip-country-region']
-      || req.headers['x-geo-region']
-  );
+  const city = pickHeaderValue(req.headers['cf-ipcity'] || req.headers['x-geo-city']);
+  const region = pickHeaderValue(req.headers['cf-region'] || req.headers['x-geo-region']);
   const country = pickHeaderValue(
     req.headers['cf-ipcountry']
-      || req.headers['x-vercel-ip-country']
       || req.headers['x-country-code']
       || req.headers['x-geo-country']
   );

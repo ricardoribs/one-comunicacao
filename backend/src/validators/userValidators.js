@@ -1,6 +1,6 @@
 const { z } = require('zod');
 
-const roleEnum = z.enum(['client', 'admin', 'designer', 'gestor', 'comercial', 'dev']);
+const roleEnum = z.enum(['admin', 'designer', 'gestor', 'comercial', 'dev']);
 
 const emptyToNullNumber = () =>
   z.preprocess(

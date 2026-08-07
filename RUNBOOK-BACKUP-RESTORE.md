@@ -2,52 +2,110 @@
 
 ## Objetivo
 
-Garantir RPO e RTO claros para o banco de dados antes e depois do go-live.
+Garantir que o banco de producao pode ser restaurado em um ambiente separado antes do go-live e em qualquer incidente real.
 
-## Frequência mínima
+## Donos
 
-- backup automático diário
-- retenção mínima de 7 dias
-- alerta se o último backup tiver mais de 26 horas
+- Dono primario: Engenharia / Operacoes ONE
+- Dono de negocio: responsavel pelo go-live
+- Executor tecnico: pessoa com acesso ao banco, Render e secrets de producao
 
-## Antes de abrir produção
+## Politica minima
 
-1. Confirmar que o provedor do PostgreSQL possui backup automático habilitado.
-2. Registrar onde o backup fica armazenado.
-3. Validar quem possui permissão para restaurar.
-4. Executar um restore drill real em ambiente separado.
+- Backup automatico do provedor habilitado.
+- Backup logico validavel antes de cada release candidate.
+- Retencao minima: 30 dias para backups logicos e a retencao contratada no provedor.
+- Alerta se o backup mais recente tiver mais de 26 horas.
+- RPO alvo: 24 horas ate haver janela contratada menor.
+- RTO alvo: 2 horas ate haver medicao historica melhor.
 
-## Restore drill mínimo
+## Variaveis necessarias
 
-1. Criar um banco temporário.
-2. Restaurar o backup mais recente nesse banco.
-3. Rodar:
+Para drill real contra producao, use conexao direta do Postgres em ambiente separado:
 
 ```bash
-npm run db:migrate
+DATABASE_URL=postgresql://...
+DATABASE_SSL_REQUIRED=true
+DATABASE_SSL_CA_FILE=/caminho/do/ca.crt
+SMOKE_EMAIL=usuario-de-smoke@...
+SMOKE_PASSWORD=...
 ```
 
-4. Validar:
+Para Supabase, use a Direct connection, nao o pooler, quando precisar criar role/banco temporario.
 
-- `GET /api/health`
-- `GET /api/ready`
-- login de administrador
-- consulta de clientes e campanhas
+## Executar Drill
 
-5. Medir:
+O script cria um dump do banco fonte, cria um banco temporario `one_restore_drill_*`, restaura o dump, roda migrations/reconciliation, sobe a API contra o banco restaurado e valida `/api/ready` e `/api/health`.
 
-- tempo total de restore
-- tempo até a aplicação responder como pronta
+```bash
+npm run restore:drill --prefix backend
+```
 
-## Métricas para registrar
+Por padrao, o banco temporario e removido ao final. Para inspecionar manualmente:
 
-- RPO real atingido
-- RTO real atingido
-- data e hora do último drill
-- nome de quem executou
+```bash
+RESTORE_DRILL_KEEP_DB=true npm run restore:drill --prefix backend
+```
 
-## Critério de aceite
+Evidencias ficam em:
 
-- restore concluído sem erro
-- aplicação sobe normalmente após o restore
-- RTO e RPO atendem o combinado com o cliente
+```text
+docs/restore-drills/*.json
+backups/restore-drills/*.sql
+```
+
+## Validacoes Obrigatorias
+
+- O dump foi criado sem erro.
+- O restore em banco separado terminou sem erro.
+- `npm run db:migrate` rodou no banco restaurado.
+- `/api/ready` respondeu `ok`.
+- `/api/health` respondeu `ok`.
+- Se `SMOKE_EMAIL` e `SMOKE_PASSWORD` estiverem definidos, login e `/api/auth/me` tambem devem passar.
+- `calendar_events` precisa conter `client_id` e `visibility`.
+
+## Registrar
+
+Cada drill deve registrar:
+
+- data/hora de execucao
+- banco fonte
+- banco temporario
+- tamanho do backup
+- RPO real em segundos
+- RTO real em segundos
+- retencao configurada
+- resultado dos checks
+- executor
+
+## Ultimo Drill Registrado
+
+- Ambiente: local, banco separado criado pelo script e removido ao final.
+- Evidencia: `docs/restore-drills/2026-08-07T01-10-50-983Z.json`
+- Backup logico usado: `backups/restore-drills/one-restore-drill-2026-08-07T01-10-50-983Z.sql` (ignorado pelo git)
+- RPO medido: 1.00 segundo
+- RTO medido: 21.15 segundos
+- Retencao configurada: 30 dias
+- Resultado: `/api/ready` e `/api/health` responderam `ok`
+- Login de smoke: nao executado porque `SMOKE_EMAIL` e `SMOKE_PASSWORD` nao estavam configurados nesta sessao
+
+Antes do go-live, repetir este mesmo drill com as envs reais de producao e usuario de smoke real.
+
+## Criterio de Go-Live
+
+Go-live so pode ser assinado quando:
+
+- existe evidencia JSON de drill executado contra backup real recente
+- RTO medido esta dentro do alvo combinado
+- RPO medido esta dentro do alvo combinado
+- o banco temporario foi descartado ou transferido para quarentena controlada
+- as credenciais usadas no drill nao ficaram em logs ou artefatos
+
+## Incidente Real
+
+1. Declarar incidente e pausar deploys.
+2. Identificar o ultimo backup valido.
+3. Criar banco separado para restore.
+4. Restaurar e validar `/api/ready`, `/api/health` e login.
+5. Apontar aplicacao para o banco restaurado somente apos validacao.
+6. Registrar RPO/RTO real e causa raiz.

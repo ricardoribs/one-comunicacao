@@ -66,6 +66,16 @@ function isLikelyBcryptHash(value) {
   return typeof value === 'string' && /^\$2[aby]\$\d{2}\$/.test(value);
 }
 
+function isPanelUser(user = {}) {
+  return user.role !== 'client';
+}
+
+function ensurePanelUser(user) {
+  if (!isPanelUser(user)) {
+    throw new AppError('Este perfil nao possui acesso ao painel.', 403);
+  }
+}
+
 function buildAuthResponse(user) {
   const accessToken = signAccessToken(user);
   return {
@@ -169,7 +179,13 @@ async function issueEmailVerification(user) {
 async function loadValidatedUserById(userId) {
   const user = await userModel.findById(userId);
 
-  if (!user || !user.is_active) {
+  if (!user) {
+    throw new AppError('Usuario invalido ou inativo.', 401);
+  }
+
+  ensurePanelUser(user);
+
+  if (!user.is_active) {
     throw new AppError('Usuario invalido ou inativo.', 401);
   }
 
@@ -232,6 +248,8 @@ async function validatePrimaryCredentials({ email, password }) {
 
     throw new AppError('Login ou senha incorretos.', 401);
   }
+
+  ensurePanelUser(user);
 
   if (!user.is_active) {
     throw new AppError('Usuario inativo.', 401);
@@ -300,7 +318,7 @@ async function register(payload) {
     job_title: payload.job_title || null,
     avatar_url: payload.avatar_url || null,
     password,
-    role: payload.role || 'client',
+    role: payload.role || 'designer',
     is_active: true,
     email_verified_at: null,
   });
@@ -445,6 +463,7 @@ async function refreshAccessToken(rawRefreshToken, metadata = {}) {
     if (!user || !user.is_active) {
       throw new AppError('Usuario invalido ou inativo.', 401);
     }
+    ensurePanelUser(user);
 
     const nextRefreshToken = generateTokenValue();
     const nextRefreshHash = hashToken(nextRefreshToken);
@@ -508,7 +527,7 @@ async function verifyEmail(rawToken) {
 
 async function forgotPassword(email) {
   const user = await userModel.findByEmail(email);
-  if (!user || !user.is_active) {
+  if (!user || !user.is_active || !isPanelUser(user)) {
     return;
   }
 
@@ -530,6 +549,11 @@ async function resetPassword(rawToken, newPassword) {
   const token = await userModel.findPasswordResetToken(tokenHash);
 
   if (!token || token.used_at || new Date(token.expires_at) <= new Date()) {
+    throw new AppError('Token de redefinicao invalido ou expirado.', 400);
+  }
+
+  const user = await userModel.findById(token.user_id);
+  if (!user || !user.is_active || !isPanelUser(user)) {
     throw new AppError('Token de redefinicao invalido ou expirado.', 400);
   }
 

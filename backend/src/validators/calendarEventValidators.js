@@ -1,6 +1,13 @@
 const { z } = require('zod');
 
 const calendarColorEnum = z.enum(['pink', 'blue', 'green', 'gold']);
+const visibilityEnum = z.enum(['team', 'client']);
+
+const emptyToNullNumber = () =>
+  z.preprocess(
+    (value) => (value === '' || value === undefined || value === null ? null : value),
+    z.coerce.number().int().positive().nullable()
+  );
 
 const dateTimeString = z
   .string()
@@ -31,6 +38,8 @@ exports.calendarEventSchema = z
     ends_at: dateTimeString,
     location: optionalText(160),
     color: calendarColorEnum.optional(),
+    client_id: emptyToNullNumber().optional(),
+    visibility: visibilityEnum.optional(),
   })
   .refine(({ starts_at, ends_at }) => new Date(ends_at).getTime() > new Date(starts_at).getTime(), {
     message: 'O fim do evento deve acontecer depois do início.',
@@ -45,6 +54,8 @@ exports.calendarEventUpdateSchema = z
     ends_at: dateTimeString.optional(),
     location: optionalText(160),
     color: calendarColorEnum.optional(),
+    client_id: emptyToNullNumber().optional(),
+    visibility: visibilityEnum.optional(),
   })
   .refine(
     (value) =>

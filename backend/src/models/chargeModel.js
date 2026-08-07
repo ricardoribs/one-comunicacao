@@ -1,6 +1,8 @@
 const tenantDb = require('../db/tenantDb');
+const env = require('../config/env');
 const { normalizePagination, paginationClause } = require('../utils/pagination');
 const createScopedQuery = require('../utils/scopedQuery');
+const { encryptString, decryptString } = require('../utils/fieldCrypto');
 
 const selectColumns = `
   ch.id,
@@ -27,6 +29,88 @@ const selectColumns = `
   ch.updated_at
 `;
 
+function encryptFinancialValue(value) {
+  return encryptString(value, env.financialEncryptionKey, 'FINANCIAL_ENCRYPTION_KEY');
+}
+
+function decryptFinancialValue(value) {
+  return decryptString(value, env.financialEncryptionKey, 'FINANCIAL_ENCRYPTION_KEY');
+}
+
+function minimizeExternalPayload(payload) {
+  if (!payload) {
+    return null;
+  }
+
+  if (payload.mode === 'manual') {
+    return { mode: 'manual' };
+  }
+
+  return {
+    provider: payload.provider || 'asaas',
+    payment_id: payload.payment_id || payload.payment?.id || null,
+    status: payload.status || payload.payment?.status || null,
+    billing_type: payload.billing_type || payload.payment?.billingType || null,
+    has_pix_payload: Boolean(payload.has_pix_payload || payload.pix?.payload),
+  };
+}
+
+function prepareStoragePayload(data = {}) {
+  return {
+    ...data,
+    boleto_barcode: encryptFinancialValue(data.boleto_barcode),
+    pix_copy_paste: encryptFinancialValue(data.pix_copy_paste),
+    pix_qr_base64: null,
+    external_payload: minimizeExternalPayload(data.external_payload),
+  };
+}
+
+function decryptChargeRow(row) {
+  if (!row) {
+    return null;
+  }
+
+  return {
+    ...row,
+    boleto_barcode: decryptFinancialValue(row.boleto_barcode),
+    pix_copy_paste: decryptFinancialValue(row.pix_copy_paste),
+    pix_qr_base64: null,
+  };
+}
+
+function maskChargeRow(row) {
+  const decrypted = decryptChargeRow(row);
+  if (!decrypted) {
+    return null;
+  }
+
+  return {
+    ...decrypted,
+    boleto_barcode_available: Boolean(decrypted.boleto_barcode),
+    pix_copy_paste_available: Boolean(decrypted.pix_copy_paste),
+    external_payload_available: Boolean(decrypted.external_payload),
+    boleto_barcode: null,
+    pix_copy_paste: null,
+    pix_qr_base64: null,
+    external_payload: null,
+  };
+}
+
+function revealChargePaymentData(row) {
+  const decrypted = decryptChargeRow(row);
+  if (!decrypted) {
+    return null;
+  }
+
+  return {
+    id: decrypted.id,
+    payment_link: decrypted.payment_link || null,
+    boleto_url: decrypted.boleto_url || null,
+    boleto_barcode: decrypted.boleto_barcode || null,
+    pix_copy_paste: decrypted.pix_copy_paste || null,
+  };
+}
+
 async function list(user, query = {}) {
   const { limit, offset } = normalizePagination(query);
   const scopeConfig = {
@@ -52,10 +136,10 @@ async function list(user, query = {}) {
      ORDER BY ch.created_at DESC${page.clause}`,
     suffixParams: page.values,
   });
-  return rows;
+  return rows.map(maskChargeRow);
 }
 
-async function findById(id, user = null) {
+async function findById(id, user = null, options = {}) {
   if (!user || user.role === 'admin') {
     const { rows } = await tenantDb.query(user || { role: 'admin' }, {
       table: 'charges',
@@ -67,7 +151,7 @@ async function findById(id, user = null) {
        WHERE ch.id = $1`,
       params: [id],
     });
-    return rows[0] || null;
+    return options.revealSensitive ? revealChargePaymentData(rows[0]) : maskChargeRow(rows[0]);
   }
 
   if (user.role !== 'client') {
@@ -85,7 +169,7 @@ async function findById(id, user = null) {
        __TENANT_SCOPE__`,
       params: [id, user.id],
     });
-    return rows[0] || null;
+    return options.revealSensitive ? revealChargePaymentData(rows[0]) : maskChargeRow(rows[0]);
   }
 
   const { rows } = await tenantDb.query(user, {
@@ -103,10 +187,11 @@ async function findById(id, user = null) {
      __TENANT_SCOPE__`,
     params: [id],
   });
-  return rows[0] || null;
+  return options.revealSensitive ? revealChargePaymentData(rows[0]) : maskChargeRow(rows[0]);
 }
 
 async function create(data, user = null) {
+  const prepared = prepareStoragePayload(data);
   const { rows } = await tenantDb.query(user || { role: 'admin' }, {
     table: 'charges',
     scopeConfig: { internal: '1 = 1' },
@@ -125,22 +210,22 @@ async function create(data, user = null) {
       data.client_id || null,
       data.contact_id || null,
       data.created_by,
-      data.provider,
-      data.provider_customer_id || null,
-      data.provider_charge_id || null,
-      data.payment_method,
-      data.description,
-      data.amount,
-      data.due_date || null,
-      data.status || 'pending',
-      data.payment_link || null,
-      data.boleto_url || null,
-      data.boleto_barcode || null,
-      data.pix_copy_paste || null,
-      data.pix_qr_base64 || null,
-      data.external_reference || null,
-      data.idempotency_key || null,
-      data.external_payload || null,
+      prepared.provider,
+      prepared.provider_customer_id || null,
+      prepared.provider_charge_id || null,
+      prepared.payment_method,
+      prepared.description,
+      prepared.amount,
+      prepared.due_date || null,
+      prepared.status || 'pending',
+      prepared.payment_link || null,
+      prepared.boleto_url || null,
+      prepared.boleto_barcode || null,
+      prepared.pix_copy_paste || null,
+      prepared.pix_qr_base64 || null,
+      prepared.external_reference || null,
+      prepared.idempotency_key || null,
+      prepared.external_payload || null,
     ],
   });
   return findById(rows[0].id, user);
@@ -168,7 +253,7 @@ async function findByIdempotencyKey(createdBy, idempotencyKey, user = null) {
       params: [createdBy, idempotencyKey, user.id],
     });
 
-    return rows[0] || null;
+    return maskChargeRow(rows[0]);
   }
 
   const { rows } = await tenantDb.query(user, {
@@ -187,7 +272,11 @@ async function findByIdempotencyKey(createdBy, idempotencyKey, user = null) {
     params: [createdBy, idempotencyKey],
   });
 
-  return rows[0] || null;
+  return maskChargeRow(rows[0]);
+}
+
+async function findPaymentData(id, user = null) {
+  return findById(id, user, { revealSensitive: true });
 }
 
 async function update(id, data, user = null) {
@@ -196,6 +285,7 @@ async function update(id, data, user = null) {
     return null;
   }
 
+  const prepared = prepareStoragePayload(data);
   const { rows } = await tenantDb.query(user, {
     table: 'charges',
     scopeConfig: {
@@ -218,13 +308,13 @@ async function update(id, data, user = null) {
      RETURNING id`,
     params: [
       id,
-      data.status || null,
-      data.payment_link || null,
-      data.boleto_url || null,
-      data.boleto_barcode || null,
-      data.pix_copy_paste || null,
-      data.pix_qr_base64 || null,
-      data.external_payload || null,
+      prepared.status || null,
+      prepared.payment_link || null,
+      prepared.boleto_url || null,
+      prepared.boleto_barcode || null,
+      prepared.pix_copy_paste || null,
+      prepared.pix_qr_base64 || null,
+      prepared.external_payload || null,
     ],
   });
   return rows[0] ? findById(rows[0].id, user) : null;
@@ -233,6 +323,7 @@ async function update(id, data, user = null) {
 module.exports = {
   list,
   findById,
+  findPaymentData,
   findByIdempotencyKey,
   create,
   update,

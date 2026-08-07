@@ -1,142 +1,154 @@
-# ONE Comunicação Integrada
+# ONE Comunicacao Integrada
 
-Plataforma full stack da ONE para operação interna, CRM, campanhas, produção, analytics e financeiro.
-
-## Visão geral
-
-A plataforma é composta por duas frentes:
-
-- `frontend/index.html`: site institucional
-- `frontend/painel-interno.html`: painel interno da equipe
-- `backend/`: API em Node.js, Express e PostgreSQL
-
-O painel interno concentra:
-
-- visão geral por perfil
-- meu perfil
-- kanban operacional
-- calendário da equipe
-- CRM e leads
-- campanhas
-- produção
-- analytics
-- financeiro
-- controle de acesso
+Plataforma interna da ONE para CRM, campanhas, producao, calendario, analytics, financeiro e controle de acesso.
 
 ## Stack
 
-- Frontend: HTML, CSS e JavaScript puro
-- Backend: Node.js + Express
-- Banco: PostgreSQL
-- Autenticação: JWT + refresh token em cookie
-- Segurança: RBAC, isolamento por tenant, validação de entrada e logs estruturados
-- Uploads: provider local para desenvolvimento e Cloudinary para produção
+- Backend: Node.js, Express, PostgreSQL e `node-pg-migrate`.
+- Frontend: HTML, CSS e JavaScript vanilla servido pelo proprio Express.
+- Autenticacao: JWT, refresh token em cookie HttpOnly e MFA/TOTP para perfis criticos.
+- Uploads: Cloudinary em producao, local em desenvolvimento.
+- Observabilidade: logs estruturados com Pino e Sentry opcional/obrigatorio por ambiente.
+- Deploy atual: Render Web Service via `render.yaml`.
 
-## Funcionalidades principais
-
-- login interno com perfis `admin`, `gestor`, `designer`, `comercial` e `dev`
-- notificações internas para atribuição e conclusão de tarefas
-- calendário compartilhado da equipe com lembretes automáticos
-- kanban com múltiplos responsáveis por tarefa
-- checklist diário com histórico e limpeza manual
-- CRM com pipeline, conversão de lead e clientes ativos
-- produção com materiais e arquivos protegidos
-- analytics com integrações e métricas por cliente
-- financeiro com cobranças, faturas e margens
-- controle de acesso com presença, último acesso e localização
-- página de perfil do usuário com edição de dados e troca de senha
-
-## Estrutura do repositório
+## Estrutura
 
 ```text
-frontend/
-  index.html
-  painel-interno.html
-  assets/js/
-  assets/css/
-
 backend/
-  src/routes/
-  src/controllers/
-  src/services/
-  src/models/
-  src/middlewares/
-  src/db/pgmigrations/
+  src/                  API, rotas, modelos, servicos e migrations
+  scripts/              smoke test, validacao de env, backup e RLS
+  test/                 testes automatizados
+frontend/
+  assets/               JS, CSS, SVGs, imagens e midia
+  index.html            site publico
+  painel-interno.html   painel da equipe
+docs/
+  openapi.yaml          contrato HTTP
+scripts/
+  audit-tenant.js       guarda contra queries fora do escopo tenant
+  check-frontend.js     validacao sintatica dos JS do frontend
+render.yaml             blueprint Render
 ```
 
-## Como rodar localmente
+## Rodar Localmente
 
-1. Copie `.env.example` para `.env`.
-2. Ajuste as variáveis obrigatórias.
-3. Instale o backend:
+Prerequisitos:
+
+- Node.js 24 recomendado.
+- PostgreSQL 16+.
+- npm.
+
+Passos:
 
 ```bash
-npm run install:backend
+cp .env.example .env
+npm ci --prefix backend
+npm run db:migrate --prefix backend
+npm run bootstrap:admin --prefix backend
+npm run dev --prefix backend
 ```
 
-4. Inicialize o banco:
+Acesse:
 
-```bash
-npm run db:init
-```
+- Site: `http://localhost:3000/`
+- Painel interno: `http://localhost:3000/app/io`
 
-5. Se quiser massa de teste local:
-
-```bash
-npm run db:seed
-```
-
-6. Suba a aplicação:
-
-```bash
-npm run dev
-```
-
-7. Acesse:
-
-- `http://localhost:3000/`
-- `http://localhost:3000/painel-interno.html`
-
-## Bootstrap do primeiro administrador
-
-```bash
-ALLOW_ADMIN_BOOTSTRAP=true \
-BOOTSTRAP_ADMIN_NAME="Admin ONE" \
-BOOTSTRAP_ADMIN_EMAIL="admin@one.local" \
-BOOTSTRAP_ADMIN_PASSWORD="SenhaForte@123" \
-npm run bootstrap:admin
-```
-
-## Variáveis de ambiente principais
-
-- `NODE_ENV`
-- `PORT`
-- `DATABASE_URL`
-- `JWT_SECRET`
-- `JWT_EXPIRES_IN`
-- `APP_BASE_URL`
-- `CORS_ORIGINS`
-- `UPLOAD_PROVIDER`
-- `EMAIL_PROVIDER`
-- `SENTRY_DSN`
-
-## Documentação
-
-- [GUIA-DA-PLATAFORMA.md](GUIA-DA-PLATAFORMA.md)
-- [GUIA-OPERACIONAL-EQUIPE.md](GUIA-OPERACIONAL-EQUIPE.md)
-- [PLAYBOOK-ONBOARDING.md](PLAYBOOK-ONBOARDING.md)
-- [MAPEAMENTO-EQUIPE-ACESSOS.md](MAPEAMENTO-EQUIPE-ACESSOS.md)
-- [PERMISSIONS-MATRIX.md](PERMISSIONS-MATRIX.md)
-- [DEPLOY.md](DEPLOY.md)
-- [ENVIRONMENTS.md](ENVIRONMENTS.md)
-- [PRODUCTION.md](PRODUCTION.md)
-- [RUNBOOK.md](RUNBOOK.md)
-- [RUNBOOK-BACKUP-RESTORE.md](RUNBOOK-BACKUP-RESTORE.md)
-
-## Validações recomendadas
+## Comandos
 
 ```bash
 npm run check:frontend
+npm run lint --prefix backend
 npm test --prefix backend
-npm run audit:tenant --prefix backend
+npm run db:migrate --prefix backend
+npm run verify:rls --prefix backend
+npm run validate:env --prefix backend
+npm run smoke --prefix backend
 ```
+
+## Deploy no Render
+
+O deploy atual usa `render.yaml` com runtime Node nativo. O frontend e a API sobem no mesmo servico Render.
+
+Configuracao principal:
+
+- Build Command: `npm run install:backend:prod`
+- Start Command: `npm run start`
+- Health Check Path: `/api/health`
+- Auto deploy: commits na branch conectada
+
+Variaveis obrigatorias no Render:
+
+```env
+NODE_ENV=production
+APP_BASE_URL=https://one-comunicacao-staging.onrender.com
+CORS_ORIGINS=https://one-comunicacao-staging.onrender.com
+TRUST_PROXY=1
+
+DATABASE_HOST=aws-1-us-east-1.pooler.supabase.com
+DATABASE_PORT=5432
+DATABASE_NAME=postgres
+DATABASE_USER=<valor no Render>
+DATABASE_PASSWORD=<valor no Render>
+DATABASE_SSL_REQUIRED=true
+DATABASE_SSL_CA_FILE=/etc/secrets/prod-ca-2021.crt
+VERIFY_DATABASE_URL=<direct connection do Supabase para verify:rls>
+
+JWT_SECRET=<64+ caracteres>
+JWT_EXPIRES_IN=15m
+MFA_ENCRYPTION_KEY=<32+ caracteres>
+FINANCIAL_ENCRYPTION_KEY=<32+ caracteres>
+
+UPLOAD_PROVIDER=cloudinary
+UPLOAD_REQUIRE_MALWARE_SCAN=false
+MALWARE_SCAN_PROVIDER=none
+CLOUDINARY_CLOUD_NAME=<valor no Render>
+CLOUDINARY_API_KEY=<valor no Render>
+CLOUDINARY_API_SECRET=<valor no Render>
+CLOUDINARY_REQUIRE_PRIVATE_UPLOAD=true
+
+EMAIL_PROVIDER=resend
+EMAIL_FROM=<valor no Render>
+RESEND_API_KEY=<valor no Render>
+
+SENTRY_DSN=<valor no Render>
+SENTRY_ENVIRONMENT=production
+SENTRY_TRACES_SAMPLE_RATE=0.1
+SMOKE_EMAIL=<usuario interno sem MFA para smoke>
+SMOKE_PASSWORD=<senha do usuario smoke>
+MAINTENANCE_MODE=false
+```
+
+Backlog operacional de servicos externos:
+
+- ClamAV: quando houver scanner real, trocar `UPLOAD_REQUIRE_MALWARE_SCAN=true`, `MALWARE_SCAN_PROVIDER=clamav`, `CLAMAV_HOST=<host>` e `CLAMAV_PORT=3310`. Ate la, o app bloqueia tipos de upload arriscados quando o scan esta inativo.
+- Webhook de alerta: quando houver endpoint real, configurar `SECURITY_ALERT_WEBHOOK_URL`. Ate la, os alertas de seguranca seguem em log estruturado.
+
+Antes de publicar:
+
+```bash
+npm run validate:env --prefix backend
+npm run lint --prefix backend
+npm test --prefix backend
+npm run check:frontend
+```
+
+Depois do deploy:
+
+- `GET /api/health`
+- `GET /api/ready`
+- login no painel interno
+- fluxo basico de cliente, campanha, tarefa e calendario
+
+## Documentacao Mantida
+
+- `ARCHITECTURE.md`
+- `CHANGELOG.md`
+- `RUNBOOK.md`
+- `RUNBOOK-BACKUP-RESTORE.md`
+- `AUDITORIA-CHECKLIST-PRODUCAO.md`
+- `GUIA-DA-PLATAFORMA.md`
+- `GUIA-OPERACIONAL-EQUIPE.md`
+- `PLAYBOOK-ONBOARDING.md`
+- `PERMISSIONS-MATRIX.md`
+- `MAPEAMENTO-EQUIPE-ACESSOS.md`
+- `docs/openapi.yaml`

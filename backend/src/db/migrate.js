@@ -746,6 +746,8 @@ async function reconcileSchemaDrift(databaseConfig) {
         ends_at TIMESTAMP NOT NULL,
         location VARCHAR(160),
         color VARCHAR(24) NOT NULL DEFAULT 'pink',
+        client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
+        visibility VARCHAR(20) NOT NULL DEFAULT 'team',
         created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
         updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -759,15 +761,110 @@ async function reconcileSchemaDrift(databaseConfig) {
         ADD COLUMN IF NOT EXISTS ends_at TIMESTAMP,
         ADD COLUMN IF NOT EXISTS location VARCHAR(160),
         ADD COLUMN IF NOT EXISTS color VARCHAR(24) NOT NULL DEFAULT 'pink',
+        ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
+        ADD COLUMN IF NOT EXISTS visibility VARCHAR(20) NOT NULL DEFAULT 'team',
         ADD COLUMN IF NOT EXISTS created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
         ADD COLUMN IF NOT EXISTS updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
         ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW();
 
+      UPDATE calendar_events
+         SET visibility = CASE
+           WHEN client_id IS NULL THEN 'team'
+           ELSE 'client'
+         END
+       WHERE visibility IS NULL
+          OR visibility NOT IN ('team', 'client');
+
+      ALTER TABLE calendar_events
+        ALTER COLUMN visibility SET DEFAULT 'team',
+        ALTER COLUMN visibility SET NOT NULL;
+
+      ALTER TABLE calendar_events
+        DROP CONSTRAINT IF EXISTS calendar_events_visibility_check;
+
+      ALTER TABLE calendar_events
+        ADD CONSTRAINT calendar_events_visibility_check
+        CHECK (visibility IN ('team', 'client'));
+
+      ALTER TABLE calendar_events
+        DROP CONSTRAINT IF EXISTS calendar_events_visibility_client_check;
+
+      ALTER TABLE calendar_events
+        ADD CONSTRAINT calendar_events_visibility_client_check
+        CHECK (
+          (visibility = 'team' AND client_id IS NULL)
+          OR (visibility = 'client' AND client_id IS NOT NULL)
+        );
+
       CREATE INDEX IF NOT EXISTS idx_calendar_events_starts_at
         ON calendar_events(starts_at ASC, ends_at ASC);
       CREATE INDEX IF NOT EXISTS idx_calendar_events_created_by
         ON calendar_events(created_by);
+      CREATE INDEX IF NOT EXISTS idx_calendar_events_client_id_starts_at
+        ON calendar_events(client_id, starts_at ASC, ends_at ASC);
+      CREATE INDEX IF NOT EXISTS idx_calendar_events_visibility_starts_at
+        ON calendar_events(visibility, starts_at ASC, ends_at ASC);
+
+      CREATE OR REPLACE FUNCTION app.can_read_calendar_event_row(
+        target_client_id INTEGER,
+        event_visibility TEXT,
+        created_by_user_id INTEGER
+      )
+      RETURNS BOOLEAN
+      LANGUAGE SQL
+      STABLE
+      SET search_path = public
+      AS $$
+        SELECT
+          app.is_admin()
+          OR (
+            app.is_client()
+            AND event_visibility = 'client'
+            AND target_client_id = app.current_client_id()
+          )
+          OR (
+            app.is_internal()
+            AND (
+              (event_visibility = 'team' AND target_client_id IS NULL)
+              OR created_by_user_id = app.current_user_id()
+              OR (event_visibility = 'client' AND app.can_access_client(target_client_id))
+            )
+          );
+      $$;
+
+      CREATE OR REPLACE FUNCTION app.can_write_calendar_event_row(
+        target_client_id INTEGER,
+        event_visibility TEXT
+      )
+      RETURNS BOOLEAN
+      LANGUAGE SQL
+      STABLE
+      SET search_path = public
+      AS $$
+        SELECT
+          app.is_admin()
+          OR (
+            app.is_client()
+            AND event_visibility = 'client'
+            AND target_client_id = app.current_client_id()
+          )
+          OR (
+            app.is_internal()
+            AND (
+              (event_visibility = 'team' AND target_client_id IS NULL)
+              OR (event_visibility = 'client' AND app.can_access_client(target_client_id))
+            )
+          );
+      $$;
+
+      ALTER TABLE calendar_events ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE calendar_events FORCE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS calendar_events_tenant_isolation ON calendar_events;
+      CREATE POLICY calendar_events_tenant_isolation ON calendar_events
+        FOR ALL
+        USING (app.can_read_calendar_event_row(client_id, visibility, created_by))
+        WITH CHECK (app.can_write_calendar_event_row(client_id, visibility));
 
       CREATE TABLE IF NOT EXISTS calendar_event_reminders (
         id SERIAL PRIMARY KEY,
