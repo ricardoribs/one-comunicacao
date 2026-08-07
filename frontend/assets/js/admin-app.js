@@ -8826,6 +8826,14 @@ async function copyMfaSecret() {
   }
 }
 
+function formatServerErrorForLogin(error, fallbackMessage) {
+  const message = String(error?.message || fallbackMessage || "").trim();
+  if (Number(error?.status || 0) >= 500 && error?.requestId) {
+    return `${message || "Erro interno no servidor."} ID: ${error.requestId}`;
+  }
+  return message || fallbackMessage || "Erro ao entrar no painel.";
+}
+
 async function submitMfaLogin() {
   const otp = document.getElementById("mfa-otp")?.value?.trim() || "";
   const submitButton =
@@ -8865,8 +8873,7 @@ async function submitMfaLogin() {
     },
     { loadingText: "Validando...", button: submitButton }
   )().catch((error) => {
-    const message = String(error?.message || "").trim();
-    setLoginError(message || "Não foi possível validar o MFA.");
+    setLoginError(formatServerErrorForLogin(error, "Não foi possível validar o MFA."));
   });
 }
 
@@ -8904,7 +8911,7 @@ async function doLogin() {
     },
     { loadingText: "Entrando...", button: submitButton }
   )().catch((error) => {
-    const message = String(error?.message || "").trim();
+    const message = formatServerErrorForLogin(error, "");
     const normalizedMessage = /digite um e-mail e( uma)? senha/i.test(message)
       ? "Digite um e-mail e uma senha."
       : /login ou senha incorretos|e-mail ou senha inv[aá]lidos|informe um e-mail v[aá]lido|senha obrigat[oó]ria/i.test(message)

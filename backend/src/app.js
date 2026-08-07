@@ -90,8 +90,16 @@ if (env.isProduction && env.mfaRequiredRoles.length > 0 && !env.mfaEncryptionKey
   throw new Error('MFA_ENCRYPTION_KEY deve ser definido em producao para os perfis com MFA obrigatorio.');
 }
 
+if (env.isProduction && env.mfaRequiredRoles.length > 0 && env.mfaEncryptionKey.length < 32) {
+  throw new Error('MFA_ENCRYPTION_KEY deve ter pelo menos 32 caracteres em producao.');
+}
+
 if (env.isProduction && !env.financialEncryptionKey) {
   throw new Error('FINANCIAL_ENCRYPTION_KEY deve ser definido em producao.');
+}
+
+if (env.isProduction && env.financialEncryptionKey.length < 32) {
+  throw new Error('FINANCIAL_ENCRYPTION_KEY deve ter pelo menos 32 caracteres em producao.');
 }
 
 if (env.isProduction && (!env.jwtSecret || env.jwtSecret === 'change-me' || env.jwtSecret.length < 64)) {
