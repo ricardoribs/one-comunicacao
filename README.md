@@ -91,7 +91,6 @@ DATABASE_USER=<valor no Render>
 DATABASE_PASSWORD=<valor no Render>
 DATABASE_SSL_REQUIRED=true
 DATABASE_SSL_CA_FILE=/etc/secrets/prod-ca-2021.crt
-VERIFY_DATABASE_URL=<direct connection do Supabase para verify:rls>
 
 JWT_SECRET=<64+ caracteres>
 JWT_EXPIRES_IN=15m
@@ -122,6 +121,12 @@ O smoke autenticado deve rodar no CI ou no pos-deploy, nao no build do Render. P
 
 ```bash
 SMOKE_BASE_URL=https://one-comunicacao-staging.onrender.com SMOKE_EMAIL=<usuario interno> SMOKE_PASSWORD=<senha> npm run postdeploy:smoke --prefix backend
+```
+
+O `verify:rls` exige uma conexao direta ao Postgres porque cria um role temporario para testar isolamento. Quando a Direct Connection do Supabase resolver apenas por IPv6, o build do Render pode falhar com `ENETUNREACH`; por isso esse gate roda no CI ou manualmente de um ambiente com acesso direto ao banco:
+
+```bash
+VERIFY_DATABASE_URL=<direct connection do Supabase> npm run verify:rls --prefix backend
 ```
 
 Backlog operacional de servicos externos:
