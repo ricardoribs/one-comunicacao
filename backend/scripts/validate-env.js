@@ -79,6 +79,13 @@ const requireSmokeCredentials =
       .trim()
       .toLowerCase()
   );
+const requireRlsVerification =
+  hasCliFlag('--require-rls') ||
+  ['1', 'true', 'yes', 'on'].includes(
+    String(env.REQUIRE_RLS_VERIFICATION || '')
+      .trim()
+      .toLowerCase()
+  );
 const errors = [];
 const warnings = [];
 
@@ -152,7 +159,6 @@ const CRITICAL_VARS = {
   TRUST_PROXY: 'Configuracao de proxy reverso',
   APP_BASE_URL: 'URL base da aplicacao',
   EMAIL_PROVIDER: 'Provider de email; em producao use resend',
-  VERIFY_DATABASE_URL: 'URL direta do banco para executar verify:rls no gate de deploy',
 };
 
 const HIGH_PRIORITY_VARS = {
@@ -181,6 +187,14 @@ if (isProductionTarget && env.NODE_ENV !== 'production') {
 log(`${BOLD}CRITICAS${RESET}`);
 Object.entries(CRITICAL_VARS).forEach(([name, description]) => validateVar(name, description, 'critical'));
 validateDatabaseConfig();
+
+if (isProductionTarget && requireRlsVerification) {
+  validateVar('VERIFY_DATABASE_URL', 'URL direta do banco para executar verify:rls no gate de deploy', 'critical');
+} else if (isProductionTarget && !hasValue('VERIFY_DATABASE_URL')) {
+  pushWarning(
+    'VERIFY_DATABASE_URL ausente; execute verify:rls no CI ou manualmente de um ambiente com acesso direto ao banco'
+  );
+}
 
 const jwtSecret = env.JWT_SECRET;
 if (jwtSecret && isProductionTarget) {

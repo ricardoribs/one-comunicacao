@@ -32,8 +32,6 @@ services:
         value: "true"
       - key: DATABASE_SSL_CA_FILE
         value: /etc/secrets/prod-ca-2021.crt
-      - key: VERIFY_DATABASE_URL
-        sync: false
       - key: DB_POOL_MAX
         value: "8"
       - key: DB_CONNECTION_TIMEOUT_MS

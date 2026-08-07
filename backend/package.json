@@ -25,8 +25,8 @@
     "validate:env": "node scripts/validate-env.js",
     "backup:db": "node scripts/backup-database.js",
     "restore:drill": "node scripts/restore-drill.js",
-    "predeploy": "npm run validate:env -- --target=production --require-smoke && npm audit && npm run verify:rls && npm run smoke",
-    "predeploy:render": "npm run validate:env -- --target=production && npm run audit:deps && npm run verify:rls",
+    "predeploy": "npm run validate:env -- --target=production --require-smoke --require-rls && npm audit && npm run verify:rls && npm run smoke",
+    "predeploy:render": "npm run validate:env -- --target=production && npm run audit:deps",
     "postdeploy:smoke": "npm run smoke"
   },
   "lint-staged": {

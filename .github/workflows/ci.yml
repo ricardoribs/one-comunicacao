@@ -93,7 +93,7 @@ jobs:
           write_env SMOKE_EMAIL ci-admin@example.test
           write_env SMOKE_PASSWORD StrongPassword!123456
       - name: Validate Render production env contract
-        run: npm run validate:env --prefix backend -- --target=production --require-smoke
+        run: npm run validate:env --prefix backend -- --target=production --require-smoke --require-rls
 
   integration:
     name: Integration and smoke
