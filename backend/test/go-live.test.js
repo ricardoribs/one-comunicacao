@@ -112,9 +112,19 @@ test('HTML publico do painel nao embute dados de seed ou cliente', { concurrency
 
   assert.equal(response.status, 200);
   assert.match(response.headers['content-type'], /text\/html/);
+  assert.match(response.headers['x-robots-tag'] || '', /noindex/);
   for (const value of blockedPublicStrings) {
     assert.equal(response.text.includes(value), false, `${value} nao deve aparecer no HTML publico`);
   }
+});
+
+test('robots.txt bloqueia rotas internas do painel', { concurrency: false }, async () => {
+  const response = await request(app).get('/robots.txt');
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers['content-type'], /text\/plain/);
+  assert.match(response.text, /Disallow: \/app\//);
+  assert.match(response.text, /Disallow: \/api\//);
 });
 
 test('health interno exige admin e expõe checks detalhados apenas autenticado', { concurrency: false }, async () => {
