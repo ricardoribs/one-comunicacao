@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const pool = require('../config/db');
 const env = require('../config/env');
+const { assertStrongPassword } = require('../utils/passwordPolicy');
 
 const ALLOWED_ROLES = new Set(['admin', 'gestor', 'designer', 'comercial', 'dev']);
 
@@ -15,24 +16,6 @@ function required(name) {
 function optional(name) {
   const value = process.env[name];
   return value && value.trim() ? value.trim() : null;
-}
-
-function validatePassword(password) {
-  if (password.length < 12) {
-    throw new Error('BOOTSTRAP_USER_PASSWORD deve ter pelo menos 12 caracteres.');
-  }
-  if (!/[A-Z]/.test(password)) {
-    throw new Error('BOOTSTRAP_USER_PASSWORD deve conter ao menos uma letra maiuscula.');
-  }
-  if (!/[a-z]/.test(password)) {
-    throw new Error('BOOTSTRAP_USER_PASSWORD deve conter ao menos uma letra minuscula.');
-  }
-  if (!/[0-9]/.test(password)) {
-    throw new Error('BOOTSTRAP_USER_PASSWORD deve conter ao menos um numero.');
-  }
-  if (!/[^A-Za-z0-9]/.test(password)) {
-    throw new Error('BOOTSTRAP_USER_PASSWORD deve conter ao menos um simbolo.');
-  }
 }
 
 async function run() {
@@ -55,7 +38,7 @@ async function run() {
     throw new Error('BOOTSTRAP_USER_CLIENT_ID deve ser um inteiro positivo quando informado.');
   }
 
-  validatePassword(password);
+  assertStrongPassword(password, 'BOOTSTRAP_USER_PASSWORD');
 
   const existing = await pool.query('SELECT id FROM users WHERE email = $1 LIMIT 1', [email]);
   if (existing.rowCount > 0) {
@@ -64,8 +47,8 @@ async function run() {
 
   const hash = await bcrypt.hash(password, env.bcryptRounds);
   const result = await pool.query(
-    `INSERT INTO users (client_id, name, email, password, role, is_active, email_verified_at)
-     VALUES ($1, $2, $3, $4, $5, true, NOW())
+    `INSERT INTO users (client_id, name, email, password, role, is_active, email_verified_at, must_change_password)
+     VALUES ($1, $2, $3, $4, $5, true, NOW(), true)
      RETURNING id, email, role`,
     [clientId, name, email, hash, role]
   );

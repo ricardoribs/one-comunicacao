@@ -36,12 +36,26 @@ CREATE TABLE users (
   password VARCHAR(255) NOT NULL,
   role VARCHAR(20) NOT NULL CHECK (role IN ('client', 'admin', 'designer', 'gestor', 'comercial', 'dev')),
   is_active BOOLEAN DEFAULT TRUE,
+  session_version INTEGER NOT NULL DEFAULT 0,
+  must_change_password BOOLEAN NOT NULL DEFAULT FALSE,
   notify_task_assigned BOOLEAN NOT NULL DEFAULT TRUE,
   notify_task_completed BOOLEAN NOT NULL DEFAULT TRUE,
   notify_calendar_24h BOOLEAN NOT NULL DEFAULT TRUE,
   notify_calendar_1h BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+CREATE TABLE revoked_access_tokens (
+  id SERIAL PRIMARY KEY,
+  token_hash VARCHAR(128) NOT NULL UNIQUE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  expires_at TIMESTAMP NOT NULL,
+  revoked_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  revoked_by_ip VARCHAR(80)
+);
+
+CREATE INDEX idx_revoked_access_tokens_user_id ON revoked_access_tokens(user_id);
+CREATE INDEX idx_revoked_access_tokens_expires_at ON revoked_access_tokens(expires_at);
 
 ALTER TABLE clients
   ADD CONSTRAINT fk_clients_manager

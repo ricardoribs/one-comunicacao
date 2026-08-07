@@ -5,9 +5,10 @@ const bcrypt = require('bcryptjs');
 const { Client } = require('pg');
 
 const env = require('../src/config/env');
+const { assertStrongPassword } = require('../src/utils/passwordPolicy');
 
 const BACKEND_ROOT = path.resolve(__dirname, '..');
-const SHOWCASE_PASSWORD = 'OneEquipe@2026';
+const SHOWCASE_PASSWORD = process.env.SHOWCASE_PASSWORD;
 const SHOWCASE_IPS = [
   '192.0.2.10',
   '192.0.2.11',
@@ -1585,6 +1586,11 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
 }
 
 async function ingest() {
+  if (!SHOWCASE_PASSWORD) {
+    throw new Error('Defina SHOWCASE_PASSWORD para gerar dados de demonstracao.');
+  }
+  assertStrongPassword(SHOWCASE_PASSWORD, 'SHOWCASE_PASSWORD');
+
   await ensureDatabaseExists();
   runMigrations();
 
@@ -1807,11 +1813,7 @@ async function ingest() {
     console.log(`- custos: ${costsCount}`);
     console.log(`- notificacoes: ${notificationsCount}`);
     console.log('');
-    console.log('[showcase] Credenciais internas:');
-    console.log(`- gabriel@one.com / ${SHOWCASE_PASSWORD}`);
-    console.log(`- janayna@one.com / ${SHOWCASE_PASSWORD}`);
-    console.log(`- thalisson@one.com / ${SHOWCASE_PASSWORD}`);
-    console.log(`- pedro@one.com / ${SHOWCASE_PASSWORD}`);
+    console.log('[showcase] Usuarios internos criados com a senha definida em SHOWCASE_PASSWORD.');
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;

@@ -2972,12 +2972,12 @@ function setSidebarCount(page, value) {
   countNodes.forEach((countNode) => {
     if (total <= 0) {
       countNode.textContent = "0";
-      countNode.style.display = "none";
+      countNode.hidden = true;
       return;
     }
 
     countNode.textContent = formatNumber(total);
-    countNode.style.display = "inline-flex";
+    countNode.hidden = false;
   });
 }
 
@@ -8153,6 +8153,26 @@ function bindDataActions() {
     }
   });
 
+  document.addEventListener("change", (event) => {
+    const target = event.target.closest("select[data-action]");
+    if (!target) {
+      return;
+    }
+
+    switch (target.dataset.action) {
+      case "filter-kanban":
+        return filterKanban(target.value);
+      case "set-analytics-client-filter":
+        return setAnalyticsClientFilter(target.value);
+      case "set-analytics-period-filter":
+        return setAnalyticsPeriodFilter(target.value);
+      case "set-finance-period-filter":
+        return setFinancePeriodFilter(target.value);
+      default:
+        return;
+    }
+  });
+
   document.body.dataset.boundDataActions = "1";
 }
 
@@ -8935,6 +8955,14 @@ async function initializeApp() {
   syncNavigation();
   bindSidebarInteractions();
   bindLegacyInlineHandlers();
+  if (me.user?.must_change_password) {
+    state.activePage = "perfil";
+    syncNavigation();
+    await loadMyProfile({ force: true, silent: true });
+    openModal("alterar-senha");
+    showToast("Atualize sua senha antes de continuar.");
+    return;
+  }
   await refreshData();
   await refreshNotifications({ silent: true, suppressErrors: true });
   startNotificationPolling();
@@ -10235,6 +10263,7 @@ async function submitModal(event, type, id) {
       });
       closeModal();
       showToast(response.message || "Senha atualizada com sucesso.");
+      window.setTimeout(() => doLogout(), 800);
       return;
     }
 

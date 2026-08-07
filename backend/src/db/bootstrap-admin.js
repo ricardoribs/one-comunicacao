@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const pool = require('../config/db');
 const env = require('../config/env');
+const { assertStrongPassword } = require('../utils/passwordPolicy');
 
 function required(name) {
   const value = process.env[name];
@@ -19,19 +20,22 @@ async function run() {
   const email = required('BOOTSTRAP_ADMIN_EMAIL').toLowerCase();
   const password = required('BOOTSTRAP_ADMIN_PASSWORD');
 
-  if (password.length < 12) {
-    throw new Error('BOOTSTRAP_ADMIN_PASSWORD deve ter pelo menos 12 caracteres.');
+  assertStrongPassword(password, 'BOOTSTRAP_ADMIN_PASSWORD');
+
+  const existingAdmin = await pool.query("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
+  if (existingAdmin.rowCount > 0) {
+    throw new Error('Bootstrap bloqueado: ja existe um administrador cadastrado.');
   }
 
-  const existing = await pool.query('SELECT id FROM users WHERE email = $1 LIMIT 1', [email]);
-  if (existing.rowCount > 0) {
+  const existingUser = await pool.query('SELECT id FROM users WHERE email = $1 LIMIT 1', [email]);
+  if (existingUser.rowCount > 0) {
     throw new Error('Ja existe um usuario com este email.');
   }
 
   const hash = await bcrypt.hash(password, env.bcryptRounds);
   const result = await pool.query(
-    `INSERT INTO users (name, email, password, role, is_active, email_verified_at)
-     VALUES ($1, $2, $3, 'admin', true, NOW())
+    `INSERT INTO users (name, email, password, role, is_active, email_verified_at, must_change_password)
+     VALUES ($1, $2, $3, 'admin', true, NOW(), true)
      RETURNING id, email`,
     [name, email, hash]
   );

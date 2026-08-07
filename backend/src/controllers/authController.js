@@ -70,7 +70,11 @@ exports.refresh = asyncHandler(async (req, res) => {
 });
 
 exports.logout = asyncHandler(async (req, res) => {
-  await authService.logout(req.cookies?.[env.refreshCookieName], await tokenMetadata(req));
+  await authService.logout(
+    req.cookies?.[env.refreshCookieName],
+    await tokenMetadata(req),
+    authService.extractBearerToken(req.headers.authorization)
+  );
   clearRefreshCookie(res);
   res.status(204).send();
 });

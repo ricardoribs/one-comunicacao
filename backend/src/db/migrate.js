@@ -262,6 +262,8 @@ async function reconcileSchemaDrift(databaseConfig) {
         ADD COLUMN IF NOT EXISTS notify_task_completed BOOLEAN NOT NULL DEFAULT true,
         ADD COLUMN IF NOT EXISTS notify_calendar_24h BOOLEAN NOT NULL DEFAULT true,
         ADD COLUMN IF NOT EXISTS notify_calendar_1h BOOLEAN NOT NULL DEFAULT true,
+        ADD COLUMN IF NOT EXISTS session_version INTEGER NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT false,
         ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMP NULL;
 
       CREATE INDEX IF NOT EXISTS idx_users_last_seen_at
@@ -282,6 +284,20 @@ async function reconcileSchemaDrift(databaseConfig) {
 
       CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
       CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token_hash ON refresh_tokens(token_hash);
+
+      CREATE TABLE IF NOT EXISTS revoked_access_tokens (
+        id SERIAL PRIMARY KEY,
+        token_hash VARCHAR(128) NOT NULL UNIQUE,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        expires_at TIMESTAMP NOT NULL,
+        revoked_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        revoked_by_ip VARCHAR(80) NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_revoked_access_tokens_user_id
+        ON revoked_access_tokens(user_id);
+      CREATE INDEX IF NOT EXISTS idx_revoked_access_tokens_expires_at
+        ON revoked_access_tokens(expires_at);
 
       CREATE TABLE IF NOT EXISTS email_verification_tokens (
         id SERIAL PRIMARY KEY,

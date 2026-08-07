@@ -10,6 +10,7 @@ const { buildVerificationEmail, buildPasswordResetEmail } = require('./emailTemp
 const logger = require('../config/logger');
 const mfaService = require('./mfaService');
 const securityAlertService = require('./securityAlertService');
+const { hashToken } = require('../utils/tokenHash');
 
 function buildUserPayload(user) {
   return {
@@ -22,6 +23,7 @@ function buildUserPayload(user) {
     avatar_url: user.avatar_url || null,
     role: user.role,
     is_active: user.is_active,
+    must_change_password: Boolean(user.must_change_password),
     last_login_at: user.last_login_at,
     last_seen_at: user.last_seen_at || null,
     last_seen_location: user.last_seen_location || null,
@@ -35,21 +37,23 @@ function buildUserPayload(user) {
 
 function signAccessToken(user) {
   return jwt.sign(
-    { userId: user.id, role: user.role, clientId: user.client_id || null },
+    {
+      userId: user.id,
+      role: user.role,
+      clientId: user.client_id || null,
+      sessionVersion: Number(user.session_version || 0),
+    },
     env.jwtSecret,
     {
       algorithm: env.jwtAlgorithm,
       expiresIn: env.jwtExpiresIn,
+      jwtid: crypto.randomUUID(),
     }
   );
 }
 
 function generateTokenValue() {
   return crypto.randomBytes(48).toString('hex');
-}
-
-function hashToken(token) {
-  return crypto.createHash('sha256').update(token).digest('hex');
 }
 
 function buildCookieOptions() {
@@ -60,6 +64,40 @@ function buildCookieOptions() {
     path: '/api/auth',
     maxAge: env.refreshTokenExpiresInDays * 24 * 60 * 60 * 1000,
   };
+}
+
+function extractBearerToken(authorizationHeader = '') {
+  const header = String(authorizationHeader || '');
+  return header.startsWith('Bearer ') ? header.slice(7) : null;
+}
+
+async function revokeAccessToken(rawAccessToken, metadata = {}, executor = undefined) {
+  if (!rawAccessToken) {
+    return null;
+  }
+
+  let payload;
+  try {
+    payload = jwt.verify(rawAccessToken, env.jwtSecret, {
+      algorithms: [env.jwtAlgorithm],
+    });
+  } catch {
+    return null;
+  }
+
+  if (!payload?.jti || !payload?.userId || !payload?.exp) {
+    return null;
+  }
+
+  return userModel.createRevokedAccessToken(
+    {
+      token_hash: hashToken(payload.jti),
+      user_id: payload.userId,
+      expires_at: new Date(payload.exp * 1000),
+      revoked_by_ip: metadata.ip || null,
+    },
+    executor
+  );
 }
 
 function isLikelyBcryptHash(value) {
@@ -428,6 +466,7 @@ async function refreshAccessToken(rawRefreshToken, metadata = {}) {
 
     if (tokenRecord.revoked_at || tokenRecord.replaced_by_token_hash) {
       await userModel.revokeAllRefreshTokensForUser(tokenRecord.user_id, metadata.ip, dbClient);
+      await userModel.incrementSessionVersion(tokenRecord.user_id, dbClient);
       logger.warn(
         {
           user_id: tokenRecord.user_id,
@@ -500,17 +539,26 @@ async function refreshAccessToken(rawRefreshToken, metadata = {}) {
   });
 }
 
-async function logout(rawRefreshToken, metadata = {}) {
-  if (!rawRefreshToken) {
-    return;
-  }
+async function logout(rawRefreshToken, metadata = {}, rawAccessToken = null) {
+  await withTransaction(async (dbClient) => {
+    if (rawAccessToken) {
+      await revokeAccessToken(rawAccessToken, metadata, dbClient);
+    }
 
-  const tokenHash = hashToken(rawRefreshToken);
-  await userModel.revokeRefreshToken(tokenHash, { revoked_by_ip: metadata.ip });
+    if (!rawRefreshToken) {
+      return;
+    }
+
+    const tokenHash = hashToken(rawRefreshToken);
+    await userModel.revokeRefreshToken(tokenHash, { revoked_by_ip: metadata.ip }, dbClient);
+  });
 }
 
 async function logoutAll(userId, ip) {
-  await userModel.revokeAllRefreshTokensForUser(userId, ip);
+  await withTransaction(async (dbClient) => {
+    await userModel.revokeAllRefreshTokensForUser(userId, ip, dbClient);
+    await userModel.incrementSessionVersion(userId, dbClient);
+  });
 }
 
 async function verifyEmail(rawToken) {
@@ -558,9 +606,12 @@ async function resetPassword(rawToken, newPassword) {
   }
 
   const password = await bcrypt.hash(newPassword, env.bcryptRounds);
-  await userModel.update(token.user_id, { password });
-  await userModel.consumePasswordResetToken(tokenHash);
-  await userModel.revokeAllRefreshTokensForUser(token.user_id);
+  await withTransaction(async (dbClient) => {
+    await userModel.update(token.user_id, { password, must_change_password: false }, dbClient);
+    await userModel.consumePasswordResetToken(tokenHash, dbClient);
+    await userModel.revokeAllRefreshTokensForUser(token.user_id, null, dbClient);
+    await userModel.incrementSessionVersion(token.user_id, dbClient);
+  });
 }
 
 module.exports = {
@@ -572,6 +623,8 @@ module.exports = {
   verifyEmail,
   forgotPassword,
   resetPassword,
+  extractBearerToken,
+  revokeAccessToken,
   buildCookieOptions,
   setupTotpEnrollment,
   completeTotpEnrollment,

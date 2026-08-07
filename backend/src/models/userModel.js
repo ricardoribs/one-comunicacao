@@ -12,6 +12,8 @@ const USER_UPDATE_COLUMNS = new Set([
   'password',
   'role',
   'is_active',
+  'session_version',
+  'must_change_password',
   'email_verified_at',
   'mfa_totp_secret_encrypted',
   'mfa_totp_pending_secret_encrypted',
@@ -58,6 +60,8 @@ const baseSelect = `
     u.password,
     u.role,
     u.is_active,
+    u.session_version,
+    u.must_change_password,
     u.email_verified_at,
     u.mfa_totp_secret_encrypted,
     u.mfa_totp_pending_secret_encrypted,
@@ -97,6 +101,8 @@ const safeSelect = `
     u.avatar_url,
     u.role,
     u.is_active,
+    u.session_version,
+    u.must_change_password,
     u.email_verified_at,
     u.mfa_enabled_at,
     u.created_at,
@@ -117,6 +123,8 @@ const legacySafeSelect = `
     NULL::VARCHAR(500) AS avatar_url,
     u.role,
     u.is_active,
+    0 AS session_version,
+    false AS must_change_password,
     u.email_verified_at,
     NULL::TIMESTAMP AS mfa_enabled_at,
     u.created_at,
@@ -138,6 +146,8 @@ const legacyBaseSelect = `
     u.password,
     u.role,
     u.is_active,
+    0 AS session_version,
+    false AS must_change_password,
     u.email_verified_at,
     NULL::TEXT AS mfa_totp_secret_encrypted,
     NULL::TEXT AS mfa_totp_pending_secret_encrypted,
@@ -169,6 +179,8 @@ const accessOverviewSelect = `
     u.job_title,
     u.role,
     u.is_active,
+    u.session_version,
+    u.must_change_password,
     u.email_verified_at,
     u.last_login_at,
     u.last_seen_at,
@@ -196,6 +208,8 @@ const legacyAccessOverviewSelect = `
     NULL::VARCHAR(120) AS job_title,
     u.role,
     u.is_active,
+    0 AS session_version,
+    false AS must_change_password,
     u.email_verified_at,
     u.last_login_at,
     NULL::TIMESTAMP AS last_seen_at,
@@ -367,8 +381,21 @@ async function listAssignableInternalUsers(actor = null) {
 
 async function create(data, executor = pool) {
   const { rows } = await getExecutor(executor).query(
-    `INSERT INTO users (client_id, name, email, phone, job_title, avatar_url, password, role, is_active, email_verified_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, true), $10)
+    `INSERT INTO users (
+       client_id,
+       name,
+       email,
+       phone,
+       job_title,
+       avatar_url,
+       password,
+       role,
+       is_active,
+       email_verified_at,
+       session_version,
+       must_change_password
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, true), $10, COALESCE($11, 0), COALESCE($12, false))
      RETURNING id`,
     [
       data.client_id || null,
@@ -381,6 +408,8 @@ async function create(data, executor = pool) {
       data.role,
       data.is_active,
       data.email_verified_at || null,
+      data.session_version,
+      data.must_change_password,
     ]
   );
   return findById(rows[0].id, executor);
@@ -620,6 +649,51 @@ async function revokeAllRefreshTokensForUser(userId, ip, executor = pool) {
   );
 }
 
+async function incrementSessionVersion(userId, executor = pool) {
+  const { rows } = await getExecutor(executor).query(
+    `UPDATE users
+     SET session_version = COALESCE(session_version, 0) + 1
+     WHERE id = $1
+     RETURNING session_version`,
+    [userId]
+  );
+  return rows[0] || null;
+}
+
+async function createRevokedAccessToken(data, executor = pool) {
+  const { rows } = await getExecutor(executor).query(
+    `INSERT INTO revoked_access_tokens (token_hash, user_id, expires_at, revoked_by_ip)
+     VALUES ($1, $2, $3, $4)
+     ON CONFLICT (token_hash) DO NOTHING
+     RETURNING id, token_hash, user_id, expires_at, revoked_at, revoked_by_ip`,
+    [data.token_hash, data.user_id, data.expires_at, data.revoked_by_ip || null]
+  );
+  return rows[0];
+}
+
+async function findRevokedAccessToken(tokenHash, executor = pool) {
+  const { rows } = await getExecutor(executor).query(
+    `SELECT id, token_hash, user_id, expires_at, revoked_at, revoked_by_ip
+     FROM revoked_access_tokens
+     WHERE token_hash = $1
+       AND expires_at > CURRENT_TIMESTAMP::timestamp
+     LIMIT 1`,
+    [tokenHash]
+  );
+  return rows[0] || null;
+}
+
+async function findAnyAdmin(executor = pool) {
+  const { rows } = await getExecutor(executor).query(
+    `SELECT id, email
+     FROM users
+     WHERE role = 'admin'
+     ORDER BY id ASC
+     LIMIT 1`
+  );
+  return rows[0] || null;
+}
+
 async function createEmailVerificationToken(data) {
   const { rows } = await pool.query(
     `INSERT INTO email_verification_tokens (user_id, token_hash, expires_at)
@@ -696,8 +770,8 @@ async function findPasswordResetToken(tokenHash) {
   return rows[0] || null;
 }
 
-async function consumePasswordResetToken(tokenHash) {
-  const { rows } = await pool.query(
+async function consumePasswordResetToken(tokenHash, executor = pool) {
+  const { rows } = await getExecutor(executor).query(
     `UPDATE password_reset_tokens
      SET used_at = NOW()
      WHERE token_hash = $1 AND used_at IS NULL
@@ -788,6 +862,10 @@ module.exports = {
   findRefreshTokenForUpdate,
   revokeRefreshToken,
   revokeAllRefreshTokensForUser,
+  incrementSessionVersion,
+  createRevokedAccessToken,
+  findRevokedAccessToken,
+  findAnyAdmin,
   createEmailVerificationToken,
   findEmailVerificationToken,
   consumeEmailVerificationToken,
