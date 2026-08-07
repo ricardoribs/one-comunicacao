@@ -90,10 +90,6 @@ services:
         value: production
       - key: SENTRY_TRACES_SAMPLE_RATE
         value: "0.1"
-      - key: SMOKE_EMAIL
-        sync: false
-      - key: SMOKE_PASSWORD
-        sync: false
       - key: PAYMENT_PROVIDER
         value: manual
       - key: GEO_LOOKUP_ENABLED

@@ -71,7 +71,7 @@ O deploy atual usa `render.yaml` com runtime Node nativo. O frontend e a API sob
 
 Configuracao principal:
 
-- Build Command: `npm run install:backend:prod`
+- Build Command: `npm run install:backend:prod && npm run predeploy:render --prefix backend`
 - Start Command: `npm run start`
 - Health Check Path: `/api/health`
 - Auto deploy: commits na branch conectada
@@ -95,6 +95,7 @@ VERIFY_DATABASE_URL=<direct connection do Supabase para verify:rls>
 
 JWT_SECRET=<64+ caracteres>
 JWT_EXPIRES_IN=15m
+BCRYPT_ROUNDS=12
 MFA_ENCRYPTION_KEY=<32+ caracteres>
 FINANCIAL_ENCRYPTION_KEY=<32+ caracteres>
 
@@ -111,11 +112,16 @@ EMAIL_FROM=<valor no Render>
 RESEND_API_KEY=<valor no Render>
 
 SENTRY_DSN=<valor no Render>
+SENTRY_REQUIRED=true
 SENTRY_ENVIRONMENT=production
 SENTRY_TRACES_SAMPLE_RATE=0.1
-SMOKE_EMAIL=<usuario interno sem MFA para smoke>
-SMOKE_PASSWORD=<senha do usuario smoke>
 MAINTENANCE_MODE=false
+```
+
+O smoke autenticado deve rodar no CI ou no pos-deploy, nao no build do Render. Para executar manualmente:
+
+```bash
+SMOKE_BASE_URL=https://one-comunicacao-staging.onrender.com SMOKE_EMAIL=<usuario interno> SMOKE_PASSWORD=<senha> npm run postdeploy:smoke --prefix backend
 ```
 
 Backlog operacional de servicos externos:
