@@ -1,12 +1,16 @@
 const { z } = require('zod');
+const { validateStrongPassword } = require('../utils/passwordPolicy');
 
 const strongPassword = z
   .string()
-  .min(12, 'A senha deve ter, no mínimo, 12 caracteres.')
-  .regex(/[A-Z]/, 'A senha deve conter ao menos uma letra maiúscula.')
-  .regex(/[a-z]/, 'A senha deve conter ao menos uma letra minúscula.')
-  .regex(/[0-9]/, 'A senha deve conter ao menos um número.')
-  .regex(/[^A-Za-z0-9]/, 'A senha deve conter ao menos um símbolo.');
+  .superRefine((value, ctx) => {
+    for (const message of validateStrongPassword(value)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message,
+      });
+    }
+  });
 
 exports.loginSchema = z
   .object({

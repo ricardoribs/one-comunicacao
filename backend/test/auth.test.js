@@ -84,6 +84,39 @@ test('login valido retorna access token e cookie de refresh', async () => {
   await userModel.remove(user.id);
 });
 
+test('logout revoga access token imediatamente', async () => {
+  const email = `auth.logout.${Date.now()}@one.com`;
+  const user = await createVerifiedUser(email);
+
+  const login = await request(app)
+    .post('/api/auth/login')
+    .send({
+      email,
+      password: 'Valid@Test123',
+    })
+    .set('X-Forwarded-For', nextTestIp());
+
+  assert.equal(login.status, 200);
+  assert.ok(login.body.accessToken);
+  const refreshCookie = findRefreshCookie(login.headers['set-cookie']);
+  assert.ok(refreshCookie);
+
+  const activeSession = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${login.body.accessToken}`);
+  assert.equal(activeSession.status, 200);
+
+  const logout = await request(app)
+    .post('/api/auth/logout')
+    .set('Authorization', `Bearer ${login.body.accessToken}`)
+    .set('Cookie', refreshCookie)
+    .send({});
+  assert.equal(logout.status, 204);
+
+  const revokedSession = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${login.body.accessToken}`);
+  assert.equal(revokedSession.status, 401);
+
+  await userModel.remove(user.id);
+});
+
 test('admin recebe challenge MFA e conclui o login com TOTP', async () => {
   const email = `auth.admin.mfa.${Date.now()}@one.com`;
   const user = await userModel.create({
@@ -405,6 +438,9 @@ test('usuario autenticado altera a propria senha', async () => {
 
   assert.equal(changed.status, 200);
   assert.equal(changed.body.message, 'Senha atualizada com sucesso.');
+
+  const revokedSession = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${login.body.accessToken}`);
+  assert.equal(revokedSession.status, 401);
 
   const oldLogin = await request(app)
     .post('/api/auth/login')

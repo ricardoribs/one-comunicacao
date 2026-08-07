@@ -80,6 +80,8 @@ function createPgMemPool() {
       password TEXT NOT NULL,
       role VARCHAR(32) NOT NULL,
       is_active BOOLEAN NOT NULL DEFAULT TRUE,
+      session_version INTEGER NOT NULL DEFAULT 0,
+      must_change_password BOOLEAN NOT NULL DEFAULT FALSE,
       email_verified_at TIMESTAMP,
       mfa_totp_secret_encrypted TEXT,
       mfa_totp_pending_secret_encrypted TEXT,
@@ -112,6 +114,15 @@ function createPgMemPool() {
       created_by_ip VARCHAR(64),
       revoked_by_ip VARCHAR(64),
       user_agent TEXT
+    );
+
+    CREATE TABLE revoked_access_tokens (
+      id SERIAL PRIMARY KEY,
+      token_hash TEXT NOT NULL UNIQUE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      expires_at TIMESTAMP NOT NULL,
+      revoked_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      revoked_by_ip VARCHAR(80)
     );
 
     CREATE TABLE email_verification_tokens (

@@ -201,7 +201,6 @@ app.use(
         'script-src-attr': ["'none'"],
         'style-src': ["'self'", 'https://fonts.googleapis.com'],
         'style-src-elem': ["'self'", 'https://fonts.googleapis.com', (req, res) => `'nonce-${res.locals.cspNonce}'`],
-        'style-src-attr': ["'unsafe-inline'"],
         'font-src': ["'self'", 'https://fonts.gstatic.com', 'data:'],
         'img-src': ["'self'", 'data:', 'https:', 'blob:'],
         'connect-src': ["'self'", 'https://viacep.com.br'],

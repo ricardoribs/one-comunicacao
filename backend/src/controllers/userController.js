@@ -35,6 +35,7 @@ function serializeUserProfile(user) {
     avatar_url: safeUser.avatar_url || null,
     role: safeUser.role,
     is_active: safeUser.is_active,
+    must_change_password: Boolean(safeUser.must_change_password),
     email_verified_at: safeUser.email_verified_at || null,
     last_login_at: safeUser.last_login_at || null,
     last_seen_at: safeUser.last_seen_at || null,
@@ -234,8 +235,8 @@ exports.updateMyPassword = asyncHandler(async (req, res) => {
   }
 
   const passwordHash = await bcrypt.hash(nextPassword, env.bcryptRounds);
-  await userModel.update(req.user.id, { password: passwordHash });
-  await userModel.revokeAllRefreshTokensForUser(req.user.id, req.ip || null);
+  await userModel.update(req.user.id, { password: passwordHash, must_change_password: false });
+  await authService.logoutAll(req.user.id, req.ip || null);
 
   res.json({
     message: 'Senha atualizada com sucesso.',
@@ -287,11 +288,16 @@ exports.create = asyncHandler(async (req, res) => {
 exports.update = asyncHandler(async (req, res) => {
   try {
     const payload = { ...req.body };
+    const rotatedPassword = Boolean(payload.password);
     if (payload.password) {
       payload.password = await bcrypt.hash(payload.password, env.bcryptRounds);
+      payload.must_change_password = true;
     }
 
     const user = await userModel.update(req.params.id, payload);
+    if (rotatedPassword) {
+      await authService.logoutAll(req.params.id, req.ip || null);
+    }
     res.json(stripPassword(user));
   } catch (error) {
     translateUserWriteError(error);

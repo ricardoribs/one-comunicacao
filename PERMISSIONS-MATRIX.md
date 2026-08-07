@@ -1,145 +1,71 @@
-# Matriz de Permissões
+# Matriz de Permissoes
 
-Este documento resume os perfis internos, os limites de acesso e os principais módulos protegidos da plataforma ONE.
+Fonte de verdade: `backend/src/utils/access.js`.
 
-## Perfis e responsabilidades
+O frontend pode ocultar telas e acoes, mas a decisao final de acesso sempre acontece no backend via `authorize`, `authorizeCapability` e queries escopadas por usuario/tenant.
 
-### `admin`
+## Perfis
 
-- administra a plataforma de ponta a ponta;
-- acessa todos os módulos internos;
-- gerencia usuários, permissões, clientes, campanhas, tarefas, eventos, cobranças e faturas;
-- visualiza indicadores financeiros e operacionais completos;
-- cria e administra o calendário da equipe.
+- `admin`: acesso total operacional, comercial, financeiro, calendario, usuarios e configuracoes.
+- `gestor`: gestao operacional e comercial do escopo; ve financeiro de campanhas/cobrancas, mas nao gerencia faturas.
+- `designer`: execucao de tarefas, producao, arquivos e relatorios; ve clientes de forma limitada; nao acessa CRM nem financeiro.
+- `comercial`: CRM, clientes, campanhas, tarefas e financeiro comercial; nao gerencia calendario nem arquivos/producao.
+- `dev`: suporte tecnico; ve dashboard, clientes limitados, calendario, tarefas, materiais, arquivos, relatorios e metricas; nao acessa CRM nem financeiro.
 
-### `gestor`
+## Capacidades
 
-- coordena o escopo operacional da carteira;
-- acompanha dashboard, CRM, campanhas, tarefas, produção, relatórios, analytics, notificações e calendário;
-- cria e edita clientes, contatos, campanhas, tarefas, materiais, arquivos, cobranças e eventos;
-- não acessa o controle completo de membros nem o financeiro administrativo por faturas.
+| Capability | admin | gestor | designer | comercial | dev |
+| --- | --- | --- | --- | --- | --- |
+| `view_dashboard` | sim | sim | sim | sim | sim |
+| `view_dashboard_financial` | sim | nao | nao | sim | nao |
+| `view_dashboard_team` | sim | sim | nao | nao | nao |
+| `view_internal_directory` | sim | sim | sim | sim | sim |
+| `view_calendar_events` | sim | sim | sim | sim | sim |
+| `manage_calendar_events` | sim | sim | nao | nao | nao |
+| `view_clients` | sim | sim | sim | sim | sim |
+| `view_clients_sensitive` | sim | sim | nao | sim | nao |
+| `manage_clients` | sim | sim | nao | sim | nao |
+| `view_contacts` | sim | sim | nao | sim | nao |
+| `manage_contacts` | sim | sim | nao | sim | nao |
+| `view_campaigns` | sim | sim | sim | sim | nao |
+| `view_campaign_financials` | sim | sim | nao | sim | nao |
+| `manage_campaigns` | sim | sim | nao | sim | nao |
+| `view_tasks` | sim | sim | sim | sim | sim |
+| `manage_tasks` | sim | sim | sim | sim | sim |
+| `view_materials` | sim | sim | sim | sim | sim |
+| `manage_materials` | sim | sim | sim | nao | nao |
+| `view_files` | sim | sim | sim | sim | sim |
+| `manage_files` | sim | sim | sim | nao | nao |
+| `view_reports` | sim | sim | sim | sim | sim |
+| `view_metrics` | sim | sim | nao | nao | sim |
+| `view_invoices` | sim | nao | nao | sim | nao |
+| `manage_invoices` | sim | nao | nao | sim | nao |
+| `view_charges` | sim | sim | nao | sim | nao |
+| `manage_charges` | sim | sim | nao | sim | nao |
+| `send_messages` | sim | sim | sim | sim | sim |
 
-### `designer`
+## Rotas Principais
 
-- atua na execução operacional;
-- usa Kanban, Produção, Arquivos, Relatórios, Checklist diário, notificações, calendário e Meu Perfil;
-- cria e atualiza tarefas, materiais e arquivos do escopo;
-- não acessa CRM, cobranças, faturas nem controle de acesso.
+| Area | Rotas | Regra |
+| --- | --- | --- |
+| Auth | `/api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`, `/api/auth/reset-password` | Publicas com validacao propria |
+| Auth protegida | `/api/auth/me`, `/api/auth/logout-all` | Usuario interno autenticado |
+| Meu perfil | `/api/users/me/*` | Usuario interno autenticado |
+| Usuarios | `/api/users`, `/api/users/:id`, `/api/users/access-overview` | `admin` |
+| Equipe | `/api/users/team` | `view_dashboard_team` |
+| Diretorio interno | `/api/users/assignable` | `view_internal_directory` |
+| Clientes | `/api/clients` | `view_clients` / `manage_clients`; delete somente `admin` |
+| CRM | `/api/contacts` | `view_contacts` / `manage_contacts` |
+| Campanhas | `/api/campaigns` | leitura por `view_campaigns`; escrita por `admin`, `gestor`, `comercial`; delete somente `admin` |
+| Kanban/checklist | `/api/tasks`, `/api/checklists/daily` | `view_tasks` / `manage_tasks`; delete de tarefa somente `admin` |
+| Calendario | `/api/calendar-events` | `view_calendar_events` / `manage_calendar_events` |
+| Producao | `/api/materials`, `/api/files`, `/api/reports` | `view_*` / `manage_*` conforme capability |
+| Analytics | `/api/metrics`, `/api/integrations` | metricas por `view_metrics`; integracoes escrevem somente `admin` e `gestor` |
+| Financeiro | `/api/charges`, `/api/invoices`, `/api/cost-entries` | charges/invoices por capabilities; custos por `admin` e `comercial` |
 
-### `comercial`
-
-- atua em pipeline, relacionamento e receita;
-- usa CRM, campanhas, relatórios, financeiro comercial, notificações e Meu Perfil;
-- cria e atualiza clientes, contatos, campanhas, cobranças e faturas do escopo;
-- não administra a operação completa do time.
-
-### `dev`
-
-- atua em suporte técnico, analytics e integrações;
-- usa Kanban, calendário, analytics, integrações, notificações e Meu Perfil;
-- pode criar e atualizar tarefas do escopo técnico;
-- não acessa CRM, faturamento e controle de acesso.
-
-## Visão rápida por módulo
-
-| Módulo             | `admin`      | `gestor`         | `designer`        | `comercial`         | `dev`            |
-| ------------------ | ------------ | ---------------- | ----------------- | ------------------- | ---------------- |
-| Visão Geral        | Total        | Escopo           | Operacional       | Comercial           | Técnico          |
-| Meu Perfil         | Sim          | Sim              | Sim               | Sim                 | Sim              |
-| Notificações       | Total        | Escopo           | Escopo            | Escopo              | Escopo           |
-| Calendário         | Gestão total | Gestão do escopo | Leitura           | Leitura             | Leitura          |
-| Kanban             | Total        | Gestão do escopo | Execução          | Leitura operacional | Execução técnica |
-| Checklist diário   | Sim          | Sim              | Sim               | Sim                 | Sim              |
-| Clientes           | Gestão total | Gestão do escopo | Leitura limitada  | Gestão comercial    | Não              |
-| CRM / Leads        | Total        | Escopo           | Não               | Escopo              | Não              |
-| Campanhas          | Total        | Escopo           | Leitura do escopo | Escopo              | Não              |
-| Produção           | Total        | Gestão do escopo | Execução          | Leitura             | Leitura          |
-| Arquivos           | Total        | Escopo           | Escopo            | Leitura             | Leitura          |
-| Relatórios         | Total        | Escopo           | Escopo            | Escopo              | Escopo           |
-| Analytics          | Total        | Escopo           | Não               | Não                 | Técnico          |
-| Integrações        | Total        | Escopo           | Não               | Não                 | Escopo técnico   |
-| Cobranças          | Total        | Escopo           | Não               | Escopo              | Não              |
-| Faturas            | Total        | Não              | Não               | Escopo              | Não              |
-| Controle de Acesso | Total        | Não              | Não               | Não                 | Não              |
-
-## Rotas principais
-
-### Autenticação
-
-- `POST /api/auth/login`
-- `POST /api/auth/refresh`
-- `POST /api/auth/logout`
-- `POST /api/auth/logout-all`
-- `POST /api/auth/forgot-password`
-- `POST /api/auth/reset-password`
-- `GET /api/auth/verify-email`
-- `GET /api/auth/me`
-
-### Meu Perfil
-
-- `GET /api/users/me/profile`
-- `PATCH /api/users/me/profile`
-- `PATCH /api/users/me/password`
-
-### Equipe e acessos
-
-- `GET /api/users`: `admin`
-- `POST /api/users`: `admin`
-- `PUT /api/users/:id`: `admin`
-- `DELETE /api/users/:id`: `admin`
-- `GET /api/users/team`: `admin` e `gestor`
-- `GET /api/users/assignable`: perfis internos autenticados
-- `GET /api/users/access-overview`: `admin`
-
-### Operação
-
-- `GET /api/tasks`: perfis com leitura de tarefas
-- `POST /api/tasks`: perfis com gestão de tarefas
-- `PUT /api/tasks/:id`: perfis com gestão de tarefas
-- `GET /api/checklists/daily`: perfis internos autenticados
-- `DELETE /api/checklists/daily/history`: perfis internos autenticados
-- `GET /api/calendar-events`: perfis internos autenticados
-- `POST /api/calendar-events`: `admin` e `gestor`
-- `GET /api/notifications`: perfis internos autenticados
-
-### Comercial
-
-- `GET /api/clients`
-- `POST /api/clients`
-- `PUT /api/clients/:id`
-- `GET /api/contacts`
-- `POST /api/contacts`
-- `PUT /api/contacts/:id`
-- `POST /api/contacts/:id/convert`
-- `GET /api/campaigns`
-- `POST /api/campaigns`
-- `PUT /api/campaigns/:id`
-
-### Produção, arquivos e analytics
-
-- `GET /api/materials`
-- `POST /api/materials`
-- `PUT /api/materials/:id`
-- `GET /api/files`
-- `GET /api/files/:id/access-url`
-- `POST /api/files`
-- `GET /api/reports`
-- `GET /api/metrics`
-- `GET /api/integrations`
-
-### Financeiro
-
-- `GET /api/charges`
-- `POST /api/charges`
-- `PATCH /api/charges/:id`
-- `GET /api/invoices`
-- `POST /api/invoices`
-- `PUT /api/invoices/:id`
-- `PATCH /api/invoices/:id/status`
-
-## Regras de escopo
+## Escopo
 
 - `admin` enxerga todos os registros.
-- Os demais perfis operam apenas o escopo liberado pelo backend.
-- O frontend adapta a interface, mas a decisão final de acesso sempre acontece no backend.
-- Tarefas podem ter um responsável, múltiplos responsáveis ou ficar como `Todos da equipe`.
+- Perfis internos sem acesso total passam por queries escopadas por `client_id`, responsavel ou permissao operacional.
+- Campos sensiveis de cliente e financeiro sao mascarados quando o perfil nao tem a capability correspondente.
+- Perfil `client` permanece bloqueado no painel interno.

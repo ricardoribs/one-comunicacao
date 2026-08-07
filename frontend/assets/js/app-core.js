@@ -296,10 +296,19 @@
   }
 
   async function logout(options = {}) {
+    const session = loadSession();
+    const accessToken = session?.accessToken || session?.token || null;
+    const headers = {};
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
+
     try {
       await fetch(buildApiUrl("/auth/logout"), {
         method: "POST",
-        credentials: "include"
+        credentials: "include",
+        headers
       });
     } finally {
       clearSession();
