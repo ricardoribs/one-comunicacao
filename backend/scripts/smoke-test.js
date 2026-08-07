@@ -12,6 +12,10 @@ async function requestJson(url, options = {}) {
   };
 }
 
+function getDatabaseStatus(data = {}) {
+  return data.checks?.database?.status || data.database || null;
+}
+
 async function main() {
   const baseUrl = process.env.SMOKE_BASE_URL || env.appBaseUrl;
   const email = process.env.SMOKE_EMAIL;
@@ -22,8 +26,9 @@ async function main() {
   }
 
   const health = await requestJson(`${baseUrl}/api/health`);
-  if (!health.ok || health.data.status !== "ok" || health.data.checks?.database?.status !== "up") {
-    throw new Error(`Health check falhou: ${health.status}`);
+  const databaseStatus = getDatabaseStatus(health.data);
+  if (!health.ok || health.data.status !== "ok" || databaseStatus !== "up") {
+    throw new Error(`Health check falhou: ${health.status} ${JSON.stringify(health.data)}`);
   }
 
   const readiness = await requestJson(`${baseUrl}/api/ready`);
