@@ -34,6 +34,7 @@ const costEntryRoutes = require('./routes/costEntryRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const calendarEventRoutes = require('./routes/calendarEventRoutes');
+const calendarIntegrationRoutes = require('./routes/calendarIntegrationRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const materialRoutes = require('./routes/materialRoutes');
 const metricRoutes = require('./routes/metricRoutes');
@@ -45,6 +46,7 @@ const chargeRoutes = require('./routes/chargeRoutes');
 const accountRoutes = require('./routes/accountRoutes');
 const addressRoutes = require('./routes/addressRoutes');
 const checklistRoutes = require('./routes/checklistRoutes');
+const calendarSyncService = require('./services/calendarSyncService');
 
 const app = express();
 const htmlCache = new Map();
@@ -432,6 +434,7 @@ app.use('/api/cost-entries', costEntryRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/calendar-events', calendarEventRoutes);
+app.use('/api/calendar-integrations', calendarIntegrationRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/materials', materialRoutes);
 app.use('/api/metrics', metricRoutes);
@@ -509,5 +512,9 @@ app.use((req, res) => {
 
 sentry.setupExpressErrorHandler(app);
 app.use(errorMiddleware);
+
+if (env.googleClientId && env.googleClientSecret) {
+  calendarSyncService.startScheduledSync();
+}
 
 module.exports = app;

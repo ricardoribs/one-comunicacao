@@ -24,6 +24,8 @@ const baseSelect = `
     e.color,
     e.client_id,
     e.visibility,
+    e.google_event_id,
+    e.synced_from_google,
     e.created_by,
     e.updated_by,
     e.created_at,
@@ -87,10 +89,12 @@ async function create(data, actor) {
          color,
          client_id,
          visibility,
+         google_event_id,
+         synced_from_google,
          created_by,
          updated_by
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11)
        RETURNING id`,
       params: [
         data.title,
@@ -101,6 +105,8 @@ async function create(data, actor) {
         data.color || 'pink',
         data.client_id || null,
         visibility,
+        data.google_event_id || null,
+        data.synced_from_google || false,
         actor?.id || null,
       ],
     });
@@ -131,6 +137,7 @@ async function update(id, data, actor) {
   appendField('location');
   appendField('color');
   appendField('client_id');
+  appendField('google_event_id');
 
   if (Object.prototype.hasOwnProperty.call(data, 'client_id')) {
     updates.push(`visibility = $${index++}`);
@@ -221,10 +228,28 @@ async function registerReminderDelivery({ eventId, userId, reminderType }) {
   return rows[0] || null;
 }
 
+async function findByGoogleId(user, googleEventId) {
+  const { rows } = await tenantDb.query(user, {
+    table: 'calendar_events',
+    scopeConfig: calendarScopeConfig('e'),
+    prefix: 'AND',
+    startIndex: 2,
+    sql:
+    `${baseSelect}
+     WHERE e.google_event_id = $1
+       __TENANT_SCOPE__
+     LIMIT 1`,
+    params: [googleEventId],
+  });
+
+  return rows[0] || null;
+}
+
 module.exports = {
   calendarScopeConfig,
   listRange,
   findById,
+  findByGoogleId,
   create,
   update,
   remove,
