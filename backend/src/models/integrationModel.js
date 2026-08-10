@@ -65,13 +65,14 @@ async function list(user, query = {}) {
     values.push(query.status);
   }
 
-  const page = paginationClause(limit, offset, index);
+  const scopeIndex = index;
+  const page = paginationClause(limit, offset, index + 1); // +1 para o tenant scope
 
   const { rows } = await tenantDb.query(user, {
     table: 'client_integrations',
     scopeConfig,
     prefix: where.length ? 'AND' : 'WHERE',
-    startIndex: index,
+    startIndex: scopeIndex,
     sql: `${baseSelect}
       ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
       __TENANT_SCOPE__
