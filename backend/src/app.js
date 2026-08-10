@@ -122,6 +122,57 @@ if (env.isProduction && env.uploadProvider === 'local') {
   throw new Error('UPLOAD_PROVIDER=local não é permitido em produção.');
 }
 
+function normalizeOrigin(value) {
+  try {
+    const parsed = new URL(value);
+    return `${parsed.protocol}//${parsed.host}`.toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
+function getForwardedHost(req) {
+  const host = req.headers['x-forwarded-host'] || req.headers.host || '';
+  return String(Array.isArray(host) ? host[0] : host)
+    .split(',')[0]
+    .trim()
+    .toLowerCase();
+}
+
+function isSameHostOrigin(req, origin) {
+  const normalizedOrigin = normalizeOrigin(origin);
+  const requestHost = getForwardedHost(req);
+
+  if (!normalizedOrigin || !requestHost) {
+    return false;
+  }
+
+  const originHost = new URL(normalizedOrigin).host.toLowerCase();
+  const allowedProtocol = !env.isProduction || normalizedOrigin.startsWith('https://');
+  return allowedProtocol && originHost === requestHost;
+}
+
+function isAllowedCorsOrigin(req, origin) {
+  if (!origin || env.corsOrigins.length === 0) {
+    return true;
+  }
+
+  const normalizedOrigin = normalizeOrigin(origin);
+  const configuredOrigins = new Set(
+    [...env.corsOrigins, env.appBaseUrl]
+      .map(normalizeOrigin)
+      .filter(Boolean)
+  );
+
+  return configuredOrigins.has(normalizedOrigin) || isSameHostOrigin(req, origin);
+}
+
+function buildCorsError() {
+  const error = new Error('Origem nao permitida por CORS.');
+  error.statusCode = 403;
+  return error;
+}
+
 const globalLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 100,
@@ -177,17 +228,17 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(
+app.use((req, res, next) => {
   cors({
     origin(origin, callback) {
-      if (!origin || env.corsOrigins.length === 0 || env.corsOrigins.includes(origin)) {
+      if (isAllowedCorsOrigin(req, origin)) {
         return callback(null, true);
       }
-      return callback(new Error('Origem não permitida por CORS.'));
+      return callback(buildCorsError());
     },
     credentials: true,
-  })
-);
+  })(req, res, next);
+});
 app.use(
   helmet({
     hsts: env.isProduction

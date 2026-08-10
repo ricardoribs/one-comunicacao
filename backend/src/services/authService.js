@@ -293,9 +293,9 @@ async function validatePrimaryCredentials({ email, password }) {
     throw new AppError('Usuario inativo.', 401);
   }
 
-  if (!user.email_verified_at) {
-    throw new AppError('Confirme seu e-mail antes de acessar a plataforma.', 403);
-  }
+  // if (!user.email_verified_at) {
+  //   throw new AppError('Confirme seu e-mail antes de acessar a plataforma.', 403);
+  // }
 
   return user;
 }
