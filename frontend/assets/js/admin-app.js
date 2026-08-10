@@ -1136,12 +1136,43 @@ function parseCurrencyNumber(value) {
     return null;
   }
 
+  // Se só tem números, é um valor inteiro
   if (/^\d+$/.test(raw)) {
     return Number(raw);
   }
 
-  const normalized = raw.includes(",") ? raw.replace(/\./g, "").replace(",", ".") : raw;
-  const parsed = Number(normalized);
+  // Se tem vírgula, é formato pt-BR: remove pontos (milhares) e troca vírgula por ponto (decimal)
+  if (raw.includes(",")) {
+    const normalized = raw.replace(/\./g, "").replace(",", ".");
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  // Se tem apenas ponto, verifica:
+  // - Se tem mais de um ponto ou ponto seguido de 3+ dígitos, é separador de milhar
+  // - Se tem ponto seguido de 1 ou 2 dígitos no final, é decimal
+  const dotCount = (raw.match(/\./g) || []).length;
+  if (dotCount > 1) {
+    // Múltiplos pontos = separadores de milhar (ex: 1.000.000)
+    const normalized = raw.replace(/\./g, "");
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  
+  // Um único ponto
+  const parts = raw.split(".");
+  if (parts.length === 2) {
+    const decimalPart = parts[1];
+    // Se parte decimal tem mais de 2 dígitos, assume que o ponto é separador de milhar
+    if (decimalPart.length > 2) {
+      const normalized = raw.replace(/\./g, "");
+      const parsed = Number(normalized);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+  }
+
+  // Caso padrão: trata ponto como decimal (padrão internacional)
+  const parsed = Number(raw);
   return Number.isFinite(parsed) ? parsed : null;
 }
 
@@ -7533,7 +7564,7 @@ function renderAnalytics() {
                   <div class="group relative">
                     <p class="text-[14px] font-semibold ink-black truncate cursor-default">${escapeHtml(metric.clientName)}</p>
                     <p class="text-[12px] ash-gray font-medium truncate mt-0.5">${escapeHtml(metric.campaignName)}</p>
-                    <div class="absolute left-0 bottom-full mb-2 hidden group-hover:block w-auto min-w-[max-content] bg-gray-800 text-white text-[12px] p-2 rounded-[8px] z-10 shadow-lg">
+                    <div class="absolute left-0 bottom-full mb-2 hidden group-hover:block w-auto min-w-[max-content] max-w-[400px] bg-gray-800 text-white text-[12px] p-2 rounded-[8px] z-50 shadow-lg pointer-events-none">
                       ${escapeHtml(`${metric.clientName} - ${metric.campaignName}`)}
                     </div>
                   </div>
