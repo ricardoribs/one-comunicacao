@@ -464,6 +464,7 @@ const state = {
     weekStart: null,
     loadedWeekKey: "",
     loading: false,
+    view: "week",
   },
   filters: {
     kanbanClient: "",
@@ -1079,6 +1080,7 @@ function clearSession() {
     weekStart: null,
     loadedWeekKey: "",
     loading: false,
+    view: state.calendar?.view || "week",
   };
 }
 
@@ -1851,6 +1853,19 @@ function calendarColorOptions(selected = "pink") {
 
 function getCalendarQueryRange(weekStart) {
   const start = getCalendarWeekStartDate(weekStart);
+  if (state.calendar.view === "month") {
+    const monthAnchor = addCalendarDays(start, 3);
+    const monthBegin = new Date(monthAnchor.getFullYear(), monthAnchor.getMonth(), 1);
+    const monthEnd = new Date(monthAnchor.getFullYear(), monthAnchor.getMonth() + 1, 0);
+    const gridStart = startOfCalendarWeek(monthBegin);
+    const gridEnd = addCalendarDays(gridStart, addCalendarDays(gridStart, 6) < monthEnd ? 42 : 35);
+    return {
+      start: gridStart,
+      end: gridEnd,
+      from: gridStart.toISOString(),
+      to: gridEnd.toISOString(),
+    };
+  }
   const end = addCalendarDays(start, 7);
   return {
     start,
@@ -2132,6 +2147,77 @@ function buildCalendarGridHtml(events, weekStart) {
     <div class="calendar-week-grid">
       ${timeColumnHtml}
       <div class="calendar-week-columns">${dayColumnsHtml}</div>
+    </div>
+  `;
+}
+
+function buildCalendarMonthGridHtml(events, monthStart) {
+  const year = monthStart.getFullYear();
+  const month = monthStart.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const gridStart = startOfCalendarWeek(firstDay);
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${padNumber(today.getMonth() + 1)}-${padNumber(today.getDate())}`;
+  const weekdayLabels = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+
+  const totalDays = Math.ceil((addCalendarDays(gridStart, 6) < lastDay ? 42 : 35));
+
+  const eventsByDay = {};
+  events.forEach((event) => {
+    const eventDate = normalizeDateKey(event.starts_at);
+    if (!eventsByDay[eventDate]) {
+      eventsByDay[eventDate] = [];
+    }
+    eventsByDay[eventDate].push(event);
+  });
+
+  const weekdaysHtml = weekdayLabels
+    .map((label) => `<div class="calendar-month-weekday">${label}</div>`)
+    .join("");
+
+  const dayCellsHtml = Array.from({ length: totalDays }, (_, index) => {
+    const dayDate = addCalendarDays(gridStart, index);
+    const dayKey = `${dayDate.getFullYear()}-${padNumber(dayDate.getMonth() + 1)}-${padNumber(dayDate.getDate())}`;
+    const isCurrentMonth = dayDate.getMonth() === month;
+    const isToday = dayKey === todayKey;
+    const dayEvents = eventsByDay[dayKey] || [];
+
+    const classes = ["calendar-month-day"];
+    if (!isCurrentMonth) classes.push("is-outside");
+    if (isToday) classes.push("is-today");
+
+    const eventsHtml = dayEvents.slice(0, 3).map((event) => {
+      const color = getCalendarColorConfig(event.color);
+      return `
+        <button
+          type="button"
+          class="calendar-month-event is-clickable ${color.className}"
+          data-action="open-calendar-event-details"
+          data-id="${event.id}"
+          data-calendar-event-id="${event.id}"
+          title="${escapeHtml(event.title)}"
+        >${escapeHtml(event.title)}</button>
+      `;
+    }).join("");
+
+    const extraCount = dayEvents.length - 3;
+    const extraHtml = extraCount > 0
+      ? `<span class="calendar-month-more">+${extraCount}</span>`
+      : "";
+
+    return `
+      <div class="${classes.join(" ")}">
+        <div class="calendar-month-day-num">${dayDate.getDate()}</div>
+        <div class="calendar-month-day-events">${eventsHtml}${extraHtml}</div>
+      </div>
+    `;
+  }).join("");
+
+  return `
+    <div class="calendar-month-grid">
+      <div class="calendar-month-weekdays">${weekdaysHtml}</div>
+      <div class="calendar-month-days">${dayCellsHtml}</div>
     </div>
   `;
 }
@@ -2494,11 +2580,20 @@ function renderCalendar() {
     return;
   }
 
+  const isMonthView = state.calendar.view === "month";
   const weekStart = getCalendarWeekStartDate(state.calendar.weekStart || new Date());
   state.calendar.weekStart = weekStart.toISOString();
   summary.hidden = false;
-  weekLabel.textContent = `Semana de ${formatCalendarWeekLabel(weekStart)}`;
-  weekSub.textContent = "Vista semanal compartilhada.";
+
+  if (isMonthView) {
+    const monthAnchor = addCalendarDays(weekStart, 3);
+    weekLabel.textContent = formatCalendarMonthTitle(monthAnchor);
+    weekSub.textContent = "Vista mensal compartilhada.";
+  } else {
+    weekLabel.textContent = `Semana de ${formatCalendarWeekLabel(weekStart)}`;
+    weekSub.textContent = "Vista semanal compartilhada.";
+  }
+
   if (monthLabel) {
     monthLabel.textContent = formatCalendarMonthTitle(addCalendarDays(weekStart, 3));
   }
@@ -2508,6 +2603,7 @@ function renderCalendar() {
   }
 
   loadGoogleCalendarStatus();
+  updateCalendarViewToggle();
 
   if (!canRenderCalendarPage()) {
     summary.hidden = true;
@@ -2525,7 +2621,13 @@ function renderCalendar() {
   }
 
   const events = getCalendarEventsForWeek();
-  grid.innerHTML = buildCalendarGridHtml(events, weekStart);
+  if (isMonthView) {
+    const monthAnchor = addCalendarDays(weekStart, 3);
+    const monthStart = new Date(monthAnchor.getFullYear(), monthAnchor.getMonth(), 1);
+    grid.innerHTML = buildCalendarMonthGridHtml(events, monthStart);
+  } else {
+    grid.innerHTML = buildCalendarGridHtml(events, weekStart);
+  }
   renderCalendarUpcomingPanel(events);
   if (page) {
     bindLegacyInlineHandlers(page);
@@ -2707,6 +2809,10 @@ async function openCalendarEventById(eventId) {
 
 function shiftCalendarWeek(offset) {
   closeCalendarEventDetails();
+  if (state.calendar.view === "month") {
+    shiftCalendarMonth(offset);
+    return;
+  }
   const currentWeek = getCalendarWeekStartDate(state.calendar.weekStart || new Date());
   const targetWeek = addCalendarDays(currentWeek, Number(offset || 0) * 7);
   loadCalendarEvents(targetWeek, { force: true }).catch(() => {});
@@ -2732,6 +2838,26 @@ function jumpCalendarToDate(dateValue) {
 function goToCalendarToday() {
   closeCalendarEventDetails();
   loadCalendarEvents(new Date(), { force: true }).catch(() => {});
+}
+
+function setCalendarView(view) {
+  const normalized = view === "month" ? "month" : "week";
+  if (state.calendar.view === normalized) return;
+  state.calendar.view = normalized;
+  state.calendar.loadedWeekKey = "";
+  updateCalendarViewToggle();
+  loadCalendarEvents(state.calendar.weekStart || new Date(), { force: true }).catch(() => {});
+}
+
+function updateCalendarViewToggle() {
+  const weekBtn = document.getElementById("btn-calendar-view-week");
+  const monthBtn = document.getElementById("btn-calendar-view-month");
+  if (weekBtn) {
+    weekBtn.classList.toggle("active", state.calendar.view === "week");
+  }
+  if (monthBtn) {
+    monthBtn.classList.toggle("active", state.calendar.view === "month");
+  }
 }
 
 function invoiceStatusOptions(selected = "") {
@@ -8278,6 +8404,8 @@ function bindDataActions() {
         return jumpCalendarToDate(target.dataset.date || "");
       case "calendar-today":
         return goToCalendarToday();
+      case "set-calendar-view":
+        return setCalendarView(target.dataset.view || "week");
       case "export-finance":
         return exportFinanceCsv();
       case "sync-traffic":

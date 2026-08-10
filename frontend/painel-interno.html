@@ -499,6 +499,35 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 #page-calendario .calendar-legend-swatch.is-green{background:var(--success)}
 #page-calendario .calendar-legend-swatch.is-gold{background:#c59d2a}
 
+/* CALENDAR VIEW TOGGLE */
+.calendar-view-toggle{display:inline-flex;border:1px solid #dadce0;border-radius:999px;overflow:hidden;background:#fff}
+.calendar-view-btn{min-height:36px;padding:0 16px;font-size:13px;font-weight:600;border:none;background:transparent;color:#5f6368;cursor:pointer;transition:background .2s,color .2s}
+.calendar-view-btn + .calendar-view-btn{border-left:1px solid #dadce0}
+.calendar-view-btn:hover{background:#f1f3f4}
+.calendar-view-btn.active{background:var(--pink);color:#fff}
+.calendar-view-btn.active:hover{background:var(--pink-dark)}
+
+/* CALENDAR MONTH VIEW */
+.calendar-month-grid{display:flex;flex-direction:column;background:#fff;border-radius:0;overflow:hidden}
+.calendar-month-weekdays{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--calendar-grid-line)}
+.calendar-month-weekday{padding:10px 0;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f6368;text-align:center}
+.calendar-month-days{display:grid;grid-template-columns:repeat(7,1fr);flex:1}
+.calendar-month-day{min-height:100px;border-right:1px solid var(--calendar-grid-line);border-bottom:1px solid var(--calendar-grid-line);padding:6px 8px;display:flex;flex-direction:column;gap:3px;overflow:hidden}
+.calendar-month-day:nth-child(7n){border-right:none}
+.calendar-month-day.is-outside{background:#fafafa}
+.calendar-month-day.is-outside .calendar-month-day-num{color:#c2c7cf}
+.calendar-month-day.is-today .calendar-month-day-num{background:var(--pink);color:#fff;border-radius:50%;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-weight:700}
+.calendar-month-day-num{font-size:13px;font-weight:500;color:#3c4043;margin-bottom:2px;line-height:1}
+.calendar-month-day-events{display:flex;flex-direction:column;gap:2px;flex:1;overflow:hidden}
+.calendar-month-event{display:block;width:100%;padding:2px 6px;font-size:11px;font-weight:600;line-height:1.4;border-radius:4px;border:none;text-align:left;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:filter .15s}
+.calendar-month-event:hover{filter:brightness(.92)}
+.calendar-month-event.is-clickable:hover{transform:none}
+.calendar-month-event.is-pink{background:rgba(232,52,105,.15);color:#c42558}
+.calendar-month-event.is-blue{background:rgba(14,165,233,.15);color:#0369a1}
+.calendar-month-event.is-green{background:rgba(22,163,74,.15);color:#15803d}
+.calendar-month-event.is-gold{background:rgba(202,138,4,.15);color:#a16207}
+.calendar-month-more{font-size:11px;font-weight:600;color:var(--muted);padding:1px 6px}
+
 /* GOOGLE CALENDAR INTEGRATION */
 .google-calendar-status-card{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 20px;border:1px solid #e5e7eb;border-radius:14px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .google-calendar-status-left{display:flex;align-items:center;gap:12px;min-width:0}
@@ -2792,6 +2821,10 @@ summary:focus-visible,
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
         </button>
         <div id="calendar-month-label" class="calendar-month-label" aria-live="polite">—</div>
+      </div>
+      <div class="calendar-view-toggle" role="group" aria-label="Tipo de visualização">
+        <button type="button" id="btn-calendar-view-week" class="calendar-view-btn active" data-action="set-calendar-view" data-view="week">Semana</button>
+        <button type="button" id="btn-calendar-view-month" class="calendar-view-btn" data-action="set-calendar-view" data-view="month">Mês</button>
       </div>
       <button id="btn-new-calendar-event" class="btn btn-pink btn-sm" data-action="open-modal" data-modal="novo-evento">+ Novo evento</button>
     </div>
