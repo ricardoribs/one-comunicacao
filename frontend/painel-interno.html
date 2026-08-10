@@ -776,6 +776,7 @@ th[data-align="right"],td[data-align="right"]{text-align:right}
 .metric-note{color:var(--muted)}
 .strong-value{font-weight:600}
 .hidden-panel{display:none}
+.is-hidden{display:none}
 .charge-item,.invoice-item{display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-4);border:1px solid var(--border);border-radius:var(--radius-0);background:var(--gray);margin-bottom:var(--space-3)}
 .charge-head,.invoice-head{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3)}
 .charge-name,.invoice-name{font-weight:500;font-size:var(--text-sm)}
@@ -2797,7 +2798,7 @@ summary:focus-visible,
   </div>
   <div class="page-body">
     <div class="calendar-shell">
-      <div id="google-calendar-status" class="google-calendar-status-card" style="display:none"></div>
+      <div id="google-calendar-status" class="google-calendar-status-card is-hidden"></div>
       <div id="calendar-upcoming-summary" class="calendar-upcoming-banner" aria-live="polite"></div>
       <div class="card calendar-main-card">
         <div class="section-header">

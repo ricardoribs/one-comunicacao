@@ -2563,11 +2563,11 @@ function renderGoogleCalendarStatus() {
   const gc = calendarRuntime.googleCalendar;
 
   if (gc.loading && !gc.connected) {
-    container.style.display = "none";
+    container.classList.add("is-hidden");
     return;
   }
 
-  container.style.display = "flex";
+  container.classList.remove("is-hidden");
 
   if (gc.connected) {
     const lastSyncText = gc.lastSyncAt
