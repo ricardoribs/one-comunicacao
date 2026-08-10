@@ -262,6 +262,14 @@ const calendarRuntime = {
   eventDetailsOpen: false,
   eventDetailsId: null,
   eventDetailsAnchor: null,
+  googleCalendar: {
+    connected: false,
+    syncEnabled: false,
+    lastSyncAt: null,
+    calendarId: null,
+    loading: false,
+    syncing: false,
+  },
 };
 const taskAssignState = {
   selected: new Set(),
@@ -2499,6 +2507,8 @@ function renderCalendar() {
     newEventButton.style.display = canManageCalendarEvents() ? "" : "none";
   }
 
+  loadGoogleCalendarStatus();
+
   if (!canRenderCalendarPage()) {
     summary.hidden = true;
     setCalendarUpcomingDrawerOpen(false);
@@ -2521,6 +2531,140 @@ function renderCalendar() {
     bindLegacyInlineHandlers(page);
   }
   bindCalendarEventDetailsInteractions();
+}
+
+async function loadGoogleCalendarStatus() {
+  const gc = calendarRuntime.googleCalendar;
+  if (gc.loading) return;
+  gc.loading = true;
+
+  try {
+    const data = await apiFetch("/calendar-integrations/status", { cache: "no-store" });
+    gc.connected = Boolean(data.connected);
+    gc.syncEnabled = Boolean(data.sync_enabled);
+    gc.lastSyncAt = data.last_sync_at || null;
+    gc.calendarId = data.calendar_id || null;
+  } catch (_err) {
+    gc.connected = false;
+    gc.syncEnabled = false;
+    gc.lastSyncAt = null;
+    gc.calendarId = null;
+  } finally {
+    gc.loading = false;
+  }
+
+  renderGoogleCalendarStatus();
+}
+
+function renderGoogleCalendarStatus() {
+  const container = document.getElementById("google-calendar-status");
+  if (!container) return;
+
+  const gc = calendarRuntime.googleCalendar;
+
+  if (gc.loading && !gc.connected) {
+    container.style.display = "none";
+    return;
+  }
+
+  container.style.display = "flex";
+
+  if (gc.connected) {
+    const lastSyncText = gc.lastSyncAt
+      ? `Última sincronização: ${formatDateTime(gc.lastSyncAt)}`
+      : "Nunca sincronizado";
+    container.innerHTML = `
+      <div class="google-calendar-status-left">
+        <div class="google-calendar-status-icon is-connected">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/></svg>
+        </div>
+        <div class="google-calendar-status-info">
+          <div class="google-calendar-status-title">Google Agenda conectado</div>
+          <div class="google-calendar-status-sub">${escapeHtml(lastSyncText)}</div>
+        </div>
+      </div>
+      <div class="google-calendar-status-actions">
+        <button type="button" class="btn btn-outline" id="btn-gc-sync" ${gc.syncing ? "disabled" : ""}>
+          ${gc.syncing ? '<svg class="google-calendar-sync-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Sincronizando...' : "Sincronizar agora"}
+        </button>
+        <button type="button" class="btn btn-danger-soft" id="btn-gc-disconnect">Desconectar</button>
+      </div>
+    `;
+  } else {
+    container.innerHTML = `
+      <div class="google-calendar-status-left">
+        <div class="google-calendar-status-icon is-disconnected">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="google-calendar-status-info">
+          <div class="google-calendar-status-title">Google Agenda não conectado</div>
+          <div class="google-calendar-status-sub">Conecte para sincronizar eventos automaticamente.</div>
+        </div>
+      </div>
+      <div class="google-calendar-status-actions">
+        <button type="button" class="btn btn-pink btn-sm" id="btn-gc-connect">Conectar Google Agenda</button>
+      </div>
+    `;
+  }
+
+  const connectBtn = container.querySelector("#btn-gc-connect");
+  const syncBtn = container.querySelector("#btn-gc-sync");
+  const disconnectBtn = container.querySelector("#btn-gc-disconnect");
+
+  if (connectBtn) {
+    connectBtn.addEventListener("click", connectGoogleCalendar);
+  }
+  if (syncBtn) {
+    syncBtn.addEventListener("click", syncGoogleCalendar);
+  }
+  if (disconnectBtn) {
+    disconnectBtn.addEventListener("click", disconnectGoogleCalendar);
+  }
+}
+
+function connectGoogleCalendar() {
+  window.location.href = `${API_BASE}/calendar-integrations/google/auth`;
+}
+
+async function syncGoogleCalendar() {
+  const gc = calendarRuntime.googleCalendar;
+  if (gc.syncing) return;
+
+  gc.syncing = true;
+  renderGoogleCalendarStatus();
+
+  try {
+    const result = await apiFetch("/calendar-integrations/sync", { method: "POST" });
+    showToast(`Sincronização concluída: ${result.created} novos, ${result.skipped} ignorados`);
+    gc.lastSyncAt = new Date().toISOString();
+    renderGoogleCalendarStatus();
+    loadCalendarEvents(state.calendar.weekStart || new Date(), { force: true }).catch(() => {});
+  } catch (err) {
+    showToast(err.message || "Erro ao sincronizar com Google Agenda");
+  } finally {
+    gc.syncing = false;
+    renderGoogleCalendarStatus();
+  }
+}
+
+async function disconnectGoogleCalendar() {
+  if (!confirm("Desconectar Google Agenda? Eventos já sincronizados não serão removidos.")) return;
+
+  try {
+    await apiFetch("/calendar-integrations/disconnect", { method: "DELETE" });
+    showToast("Google Agenda desconectado");
+    calendarRuntime.googleCalendar = {
+      connected: false,
+      syncEnabled: false,
+      lastSyncAt: null,
+      calendarId: null,
+      loading: false,
+      syncing: false,
+    };
+    renderGoogleCalendarStatus();
+  } catch (err) {
+    showToast(err.message || "Erro ao desconectar Google Agenda");
+  }
 }
 
 function focusCalendarEvent(eventId) {
