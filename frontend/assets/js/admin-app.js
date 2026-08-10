@@ -7564,7 +7564,7 @@ function renderAnalytics() {
                   <div class="group relative">
                     <p class="text-[14px] font-semibold ink-black truncate cursor-default">${escapeHtml(metric.clientName)}</p>
                     <p class="text-[12px] ash-gray font-medium truncate mt-0.5">${escapeHtml(metric.campaignName)}</p>
-                    <div class="absolute left-0 bottom-full mb-2 hidden group-hover:block w-auto min-w-[max-content] bg-gray-800 text-white text-[12px] p-2 rounded-[8px] z-10 shadow-lg">
+                    <div class="absolute left-0 bottom-full mb-2 hidden group-hover:block w-auto min-w-[max-content] max-w-[400px] bg-gray-800 text-white text-[12px] p-2 rounded-[8px] z-50 shadow-lg pointer-events-none">
                       ${escapeHtml(`${metric.clientName} - ${metric.campaignName}`)}
                     </div>
                   </div>
