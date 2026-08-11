@@ -227,7 +227,7 @@ const ROLE_DATA_ACCESS = {
     charges: false,
     costs: false,
     invoices: false,
-    metrics: true,
+    metrics: false,
     reports: true,
     materials: true,
     files: true,

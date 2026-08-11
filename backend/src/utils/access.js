@@ -144,7 +144,7 @@ const ROLE_CAPABILITIES = {
     view_files: true,
     manage_files: false,
     view_reports: true,
-    view_metrics: true,
+    view_metrics: false,
     view_invoices: false,
     manage_invoices: false,
     view_charges: false,
