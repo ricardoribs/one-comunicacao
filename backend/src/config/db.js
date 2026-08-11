@@ -252,6 +252,8 @@ function createPgMemPool() {
       updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
       created_at TIMESTAMP NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      google_event_id VARCHAR(255),
+      synced_from_google BOOLEAN NOT NULL DEFAULT false,
       CONSTRAINT calendar_events_visibility_check CHECK (visibility IN ('team', 'client')),
       CONSTRAINT calendar_events_visibility_client_check CHECK (
         (visibility = 'team' AND client_id IS NULL)
