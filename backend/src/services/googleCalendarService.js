@@ -62,10 +62,13 @@ function setOAuth2Credentials(oauth2Client, integration) {
 
 /**
  * Gera URL de autorização para o usuário
+ * Inclui state com userId para identificar o usuário no callback
  */
-function getAuthUrl() {
+function getAuthUrl(userId) {
   const oauth2Client = createOAuth2Client();
   
+  const state = Buffer.from(JSON.stringify({ userId })).toString('base64');
+
   return oauth2Client.generateAuthUrl({
     access_type: 'offline',
     prompt: 'consent',
@@ -73,6 +76,7 @@ function getAuthUrl() {
       'https://www.googleapis.com/auth/calendar',
       'https://www.googleapis.com/auth/calendar.events',
     ],
+    state,
   });
 }
 
