@@ -96,3 +96,11 @@ services:
         value: "1200"
       - key: MAINTENANCE_MODE
         value: "false"
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        value: https://one-comunicacao-staging.onrender.com/api/calendar-integrations/google/callback
+      - key: GOOGLE_CALENDAR_SYNC_INTERVAL_MS
+        value: "1800000"
