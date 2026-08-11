@@ -1,7 +1,54 @@
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/AppError');
 const calendarEventModel = require('../models/calendarEventModel');
+const calendarIntegrationModel = require('../models/calendarIntegrationModel');
+const googleCalendarService = require('../services/googleCalendarService');
 const { ensureClientAccess } = require('../utils/access');
+const logger = require('../config/logger');
+
+/**
+ * Sincroniza evento com Google Calendar se integração estiver ativa
+ */
+async function syncEventToGoogle(user, event, action = 'create') {
+  try {
+    // Verificar se usuário tem integração ativa
+    const integration = await calendarIntegrationModel.getByUser(user);
+    
+    if (!integration || !integration.sync_enabled) {
+      return; // Sem integração ou sync desabilitado
+    }
+    
+    // Não sincronizar eventos que vieram do Google
+    if (event.synced_from_google) {
+      return;
+    }
+    
+    // Verificar e renovar token se necessário
+    let activeIntegration = integration;
+    if (calendarIntegrationModel.isTokenExpired(integration)) {
+      const newTokens = await googleCalendarService.refreshAccessToken(integration);
+      activeIntegration = await calendarIntegrationModel.updateTokens(user, integration.id, newTokens);
+    }
+    
+    if (action === 'create') {
+      const googleEventId = await googleCalendarService.createEvent(activeIntegration, event);
+      
+      // Atualizar evento local com ID do Google
+      await calendarEventModel.update(event.id, { google_event_id: googleEventId }, user);
+      
+      logger.info(`Evento ${event.id} criado no Google Calendar: ${googleEventId}`);
+    } else if (action === 'update' && event.google_event_id) {
+      await googleCalendarService.updateEvent(activeIntegration, event.google_event_id, event);
+      logger.info(`Evento ${event.id} atualizado no Google Calendar`);
+    } else if (action === 'delete' && event.google_event_id) {
+      await googleCalendarService.deleteEvent(activeIntegration, event.google_event_id);
+      logger.info(`Evento ${event.id} deletado no Google Calendar`);
+    }
+  } catch (error) {
+    // Não falhar a operação local se sincronização falhar
+    logger.error(`Erro ao sincronizar evento ${event.id} com Google Calendar:`, error);
+  }
+}
 
 function normalizeEventPayload(input = {}, fallback = {}) {
   const payload = {};
@@ -82,6 +129,10 @@ exports.create = asyncHandler(async (req, res) => {
   }
 
   const event = await calendarEventModel.create(payload, req.user);
+  
+  // Sincronizar com Google Calendar (não bloqueia resposta)
+  syncEventToGoogle(req.user, event, 'create').catch(() => {});
+  
   res.status(201).json(event);
 });
 
@@ -98,14 +149,26 @@ exports.update = asyncHandler(async (req, res) => {
   }
 
   const event = await calendarEventModel.update(req.params.id, payload, req.user);
+  
+  // Sincronizar com Google Calendar (não bloqueia resposta)
+  syncEventToGoogle(req.user, event, 'update').catch(() => {});
+  
   res.json(event);
 });
 
 exports.remove = asyncHandler(async (req, res) => {
+  const event = await calendarEventModel.findById(req.params.id, req.user);
+  if (!event) {
+    throw new AppError('Evento não encontrado.', 404);
+  }
+  
   const removed = await calendarEventModel.remove(req.params.id, req.user);
   if (!removed) {
     throw new AppError('Evento não encontrado.', 404);
   }
+  
+  // Sincronizar com Google Calendar (não bloqueia resposta)
+  syncEventToGoogle(req.user, event, 'delete').catch(() => {});
 
   res.status(204).send();
 });

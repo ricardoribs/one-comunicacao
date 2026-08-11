@@ -262,6 +262,14 @@ const calendarRuntime = {
   eventDetailsOpen: false,
   eventDetailsId: null,
   eventDetailsAnchor: null,
+  googleCalendar: {
+    connected: false,
+    syncEnabled: false,
+    lastSyncAt: null,
+    calendarId: null,
+    loading: false,
+    syncing: false,
+  },
 };
 const taskAssignState = {
   selected: new Set(),
@@ -456,6 +464,7 @@ const state = {
     weekStart: null,
     loadedWeekKey: "",
     loading: false,
+    view: "week",
   },
   filters: {
     kanbanClient: "",
@@ -1071,6 +1080,7 @@ function clearSession() {
     weekStart: null,
     loadedWeekKey: "",
     loading: false,
+    view: state.calendar?.view || "week",
   };
 }
 
@@ -1843,6 +1853,19 @@ function calendarColorOptions(selected = "pink") {
 
 function getCalendarQueryRange(weekStart) {
   const start = getCalendarWeekStartDate(weekStart);
+  if (state.calendar.view === "month") {
+    const monthAnchor = addCalendarDays(start, 3);
+    const monthBegin = new Date(monthAnchor.getFullYear(), monthAnchor.getMonth(), 1);
+    const monthEnd = new Date(monthAnchor.getFullYear(), monthAnchor.getMonth() + 1, 0);
+    const gridStart = startOfCalendarWeek(monthBegin);
+    const gridEnd = addCalendarDays(gridStart, addCalendarDays(gridStart, 6) < monthEnd ? 42 : 35);
+    return {
+      start: gridStart,
+      end: gridEnd,
+      from: gridStart.toISOString(),
+      to: gridEnd.toISOString(),
+    };
+  }
   const end = addCalendarDays(start, 7);
   return {
     start,
@@ -2124,6 +2147,77 @@ function buildCalendarGridHtml(events, weekStart) {
     <div class="calendar-week-grid">
       ${timeColumnHtml}
       <div class="calendar-week-columns">${dayColumnsHtml}</div>
+    </div>
+  `;
+}
+
+function buildCalendarMonthGridHtml(events, monthStart) {
+  const year = monthStart.getFullYear();
+  const month = monthStart.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const gridStart = startOfCalendarWeek(firstDay);
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${padNumber(today.getMonth() + 1)}-${padNumber(today.getDate())}`;
+  const weekdayLabels = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+
+  const totalDays = Math.ceil((addCalendarDays(gridStart, 6) < lastDay ? 42 : 35));
+
+  const eventsByDay = {};
+  events.forEach((event) => {
+    const eventDate = normalizeDateKey(event.starts_at);
+    if (!eventsByDay[eventDate]) {
+      eventsByDay[eventDate] = [];
+    }
+    eventsByDay[eventDate].push(event);
+  });
+
+  const weekdaysHtml = weekdayLabels
+    .map((label) => `<div class="calendar-month-weekday">${label}</div>`)
+    .join("");
+
+  const dayCellsHtml = Array.from({ length: totalDays }, (_, index) => {
+    const dayDate = addCalendarDays(gridStart, index);
+    const dayKey = `${dayDate.getFullYear()}-${padNumber(dayDate.getMonth() + 1)}-${padNumber(dayDate.getDate())}`;
+    const isCurrentMonth = dayDate.getMonth() === month;
+    const isToday = dayKey === todayKey;
+    const dayEvents = eventsByDay[dayKey] || [];
+
+    const classes = ["calendar-month-day"];
+    if (!isCurrentMonth) classes.push("is-outside");
+    if (isToday) classes.push("is-today");
+
+    const eventsHtml = dayEvents.slice(0, 3).map((event) => {
+      const color = getCalendarColorConfig(event.color);
+      return `
+        <button
+          type="button"
+          class="calendar-month-event is-clickable ${color.className}"
+          data-action="open-calendar-event-details"
+          data-id="${event.id}"
+          data-calendar-event-id="${event.id}"
+          title="${escapeHtml(event.title)}"
+        >${escapeHtml(event.title)}</button>
+      `;
+    }).join("");
+
+    const extraCount = dayEvents.length - 3;
+    const extraHtml = extraCount > 0
+      ? `<span class="calendar-month-more">+${extraCount}</span>`
+      : "";
+
+    return `
+      <div class="${classes.join(" ")}">
+        <div class="calendar-month-day-num">${dayDate.getDate()}</div>
+        <div class="calendar-month-day-events">${eventsHtml}${extraHtml}</div>
+      </div>
+    `;
+  }).join("");
+
+  return `
+    <div class="calendar-month-grid">
+      <div class="calendar-month-weekdays">${weekdaysHtml}</div>
+      <div class="calendar-month-days">${dayCellsHtml}</div>
     </div>
   `;
 }
@@ -2486,11 +2580,20 @@ function renderCalendar() {
     return;
   }
 
+  const isMonthView = state.calendar.view === "month";
   const weekStart = getCalendarWeekStartDate(state.calendar.weekStart || new Date());
   state.calendar.weekStart = weekStart.toISOString();
   summary.hidden = false;
-  weekLabel.textContent = `Semana de ${formatCalendarWeekLabel(weekStart)}`;
-  weekSub.textContent = "Vista semanal compartilhada.";
+
+  if (isMonthView) {
+    const monthAnchor = addCalendarDays(weekStart, 3);
+    weekLabel.textContent = formatCalendarMonthTitle(monthAnchor);
+    weekSub.textContent = "Vista mensal compartilhada.";
+  } else {
+    weekLabel.textContent = `Semana de ${formatCalendarWeekLabel(weekStart)}`;
+    weekSub.textContent = "Vista semanal compartilhada.";
+  }
+
   if (monthLabel) {
     monthLabel.textContent = formatCalendarMonthTitle(addCalendarDays(weekStart, 3));
   }
@@ -2498,6 +2601,9 @@ function renderCalendar() {
   if (newEventButton) {
     newEventButton.style.display = canManageCalendarEvents() ? "" : "none";
   }
+
+  loadGoogleCalendarStatus();
+  updateCalendarViewToggle();
 
   if (!canRenderCalendarPage()) {
     summary.hidden = true;
@@ -2515,12 +2621,152 @@ function renderCalendar() {
   }
 
   const events = getCalendarEventsForWeek();
-  grid.innerHTML = buildCalendarGridHtml(events, weekStart);
+  if (isMonthView) {
+    const monthAnchor = addCalendarDays(weekStart, 3);
+    const monthStart = new Date(monthAnchor.getFullYear(), monthAnchor.getMonth(), 1);
+    grid.innerHTML = buildCalendarMonthGridHtml(events, monthStart);
+  } else {
+    grid.innerHTML = buildCalendarGridHtml(events, weekStart);
+  }
   renderCalendarUpcomingPanel(events);
   if (page) {
     bindLegacyInlineHandlers(page);
   }
   bindCalendarEventDetailsInteractions();
+}
+
+async function loadGoogleCalendarStatus() {
+  const gc = calendarRuntime.googleCalendar;
+  if (gc.loading) return;
+  gc.loading = true;
+
+  try {
+    const data = await apiFetch("/calendar-integrations/status", { cache: "no-store" });
+    gc.connected = Boolean(data.connected);
+    gc.syncEnabled = Boolean(data.sync_enabled);
+    gc.lastSyncAt = data.last_sync_at || null;
+    gc.calendarId = data.calendar_id || null;
+  } catch (_err) {
+    gc.connected = false;
+    gc.syncEnabled = false;
+    gc.lastSyncAt = null;
+    gc.calendarId = null;
+  } finally {
+    gc.loading = false;
+  }
+
+  renderGoogleCalendarStatus();
+}
+
+function renderGoogleCalendarStatus() {
+  const container = document.getElementById("google-calendar-status");
+  if (!container) return;
+
+  const gc = calendarRuntime.googleCalendar;
+
+  if (gc.loading && !gc.connected) {
+    container.classList.add("is-hidden");
+    return;
+  }
+
+  container.classList.remove("is-hidden");
+
+  if (gc.connected) {
+    const lastSyncText = gc.lastSyncAt
+      ? `Última sincronização: ${formatDateTime(gc.lastSyncAt)}`
+      : "Nunca sincronizado";
+    container.innerHTML = `
+      <div class="google-calendar-status-left">
+        <div class="google-calendar-status-icon is-connected">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/></svg>
+        </div>
+        <div class="google-calendar-status-info">
+          <div class="google-calendar-status-title">Google Agenda conectado</div>
+          <div class="google-calendar-status-sub">${escapeHtml(lastSyncText)}</div>
+        </div>
+      </div>
+      <div class="google-calendar-status-actions">
+        <button type="button" class="btn btn-outline" id="btn-gc-sync" ${gc.syncing ? "disabled" : ""}>
+          ${gc.syncing ? '<svg class="google-calendar-sync-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Sincronizando...' : "Sincronizar agora"}
+        </button>
+        <button type="button" class="btn btn-danger-soft" id="btn-gc-disconnect">Desconectar</button>
+      </div>
+    `;
+  } else {
+    container.innerHTML = `
+      <div class="google-calendar-status-left">
+        <div class="google-calendar-status-icon is-disconnected">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="google-calendar-status-info">
+          <div class="google-calendar-status-title">Google Agenda não conectado</div>
+          <div class="google-calendar-status-sub">Conecte para sincronizar eventos automaticamente.</div>
+        </div>
+      </div>
+      <div class="google-calendar-status-actions">
+        <button type="button" class="btn btn-pink btn-sm" id="btn-gc-connect">Conectar Google Agenda</button>
+      </div>
+    `;
+  }
+
+  const connectBtn = container.querySelector("#btn-gc-connect");
+  const syncBtn = container.querySelector("#btn-gc-sync");
+  const disconnectBtn = container.querySelector("#btn-gc-disconnect");
+
+  if (connectBtn) {
+    connectBtn.addEventListener("click", connectGoogleCalendar);
+  }
+  if (syncBtn) {
+    syncBtn.addEventListener("click", syncGoogleCalendar);
+  }
+  if (disconnectBtn) {
+    disconnectBtn.addEventListener("click", disconnectGoogleCalendar);
+  }
+}
+
+function connectGoogleCalendar() {
+  window.location.href = `${API_BASE}/calendar-integrations/google/auth`;
+}
+
+async function syncGoogleCalendar() {
+  const gc = calendarRuntime.googleCalendar;
+  if (gc.syncing) return;
+
+  gc.syncing = true;
+  renderGoogleCalendarStatus();
+
+  try {
+    const result = await apiFetch("/calendar-integrations/sync", { method: "POST" });
+    showToast(`Sincronização concluída: ${result.created} novos, ${result.skipped} ignorados`);
+    gc.lastSyncAt = new Date().toISOString();
+    renderGoogleCalendarStatus();
+    loadCalendarEvents(state.calendar.weekStart || new Date(), { force: true }).catch(() => {});
+  } catch (err) {
+    showToast(err.message || "Erro ao sincronizar com Google Agenda");
+  } finally {
+    gc.syncing = false;
+    renderGoogleCalendarStatus();
+  }
+}
+
+async function disconnectGoogleCalendar() {
+  if (!confirm("Desconectar Google Agenda? Eventos já sincronizados não serão removidos.")) return;
+
+  try {
+    await apiFetch("/calendar-integrations/disconnect", { method: "DELETE" });
+    showToast("Google Agenda desconectado");
+    calendarRuntime.googleCalendar = {
+      connected: false,
+      syncEnabled: false,
+      lastSyncAt: null,
+      calendarId: null,
+      loading: false,
+      syncing: false,
+    };
+    renderGoogleCalendarStatus();
+  } catch (err) {
+    showToast(err.message || "Erro ao desconectar Google Agenda");
+  }
 }
 
 function focusCalendarEvent(eventId) {
@@ -2563,6 +2809,10 @@ async function openCalendarEventById(eventId) {
 
 function shiftCalendarWeek(offset) {
   closeCalendarEventDetails();
+  if (state.calendar.view === "month") {
+    shiftCalendarMonth(offset);
+    return;
+  }
   const currentWeek = getCalendarWeekStartDate(state.calendar.weekStart || new Date());
   const targetWeek = addCalendarDays(currentWeek, Number(offset || 0) * 7);
   loadCalendarEvents(targetWeek, { force: true }).catch(() => {});
@@ -2588,6 +2838,26 @@ function jumpCalendarToDate(dateValue) {
 function goToCalendarToday() {
   closeCalendarEventDetails();
   loadCalendarEvents(new Date(), { force: true }).catch(() => {});
+}
+
+function setCalendarView(view) {
+  const normalized = view === "month" ? "month" : "week";
+  if (state.calendar.view === normalized) return;
+  state.calendar.view = normalized;
+  state.calendar.loadedWeekKey = "";
+  updateCalendarViewToggle();
+  loadCalendarEvents(state.calendar.weekStart || new Date(), { force: true }).catch(() => {});
+}
+
+function updateCalendarViewToggle() {
+  const weekBtn = document.getElementById("btn-calendar-view-week");
+  const monthBtn = document.getElementById("btn-calendar-view-month");
+  if (weekBtn) {
+    weekBtn.classList.toggle("active", state.calendar.view === "week");
+  }
+  if (monthBtn) {
+    monthBtn.classList.toggle("active", state.calendar.view === "month");
+  }
 }
 
 function invoiceStatusOptions(selected = "") {
@@ -8134,6 +8404,8 @@ function bindDataActions() {
         return jumpCalendarToDate(target.dataset.date || "");
       case "calendar-today":
         return goToCalendarToday();
+      case "set-calendar-view":
+        return setCalendarView(target.dataset.view || "week");
       case "export-finance":
         return exportFinanceCsv();
       case "sync-traffic":
