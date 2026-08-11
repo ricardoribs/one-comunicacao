@@ -76,7 +76,7 @@ const PAGE_ACCESS = {
   gestor: ["home", "perfil", "kanban", "calendario", "crm", "campanhas", "producao", "trafego", "analytics"],
   designer: ["home", "perfil", "kanban", "calendario", "producao"],
   comercial: ["home", "perfil", "kanban", "calendario", "crm", "campanhas", "producao", "financeiro"],
-  dev: ["home", "perfil", "kanban", "calendario", "producao", "analytics"]
+  dev: ["home", "perfil", "kanban", "calendario", "producao"]
 };
 
 const PAGE_LABELS = {
@@ -8670,7 +8670,7 @@ function renderAccessV2() {
     { title: "Gestor", badge: "Gestor", badgeClass: "bg-green-50 text-green-700", permissions: ["Dashboard interno", "Kanban", "CRM", "Campanhas", "Produção", "Tráfego", "Analytics", "Cobranças"] },
     { title: "Designer", badge: "Designer", badgeClass: "bg-[#f0f4f8] text-[#3366cc]", permissions: ["Dashboard interno", "Kanban", "Produção"] },
     { title: "Comercial", badge: "Comercial", badgeClass: "bg-orange-50 text-orange-700", permissions: ["Dashboard interno", "Kanban", "CRM", "Campanhas", "Produção", "Financeiro"] },
-    { title: "Dev", badge: "Dev", badgeClass: "bg-blue-50 text-blue-700", permissions: ["Dashboard interno", "Kanban", "Produção", "Analytics"] }
+    { title: "Dev", badge: "Dev", badgeClass: "bg-blue-50 text-blue-700", permissions: ["Dashboard interno", "Kanban", "Produção"] }
   ];
 
   if (profilesGrid) {
