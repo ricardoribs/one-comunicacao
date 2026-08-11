@@ -4,20 +4,62 @@ const calendarIntegrationModel = require('../models/calendarIntegrationModel');
 const calendarEventModel = require('../models/calendarEventModel');
 const googleCalendarService = require('../services/googleCalendarService');
 const logger = require('../config/logger');
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const env = require('../config/env');
+const userModel = require('../models/userModel');
+
+/**
+ * Verifica JWT manualmente (usado em rotas OAuth que não passam pelo middleware)
+ */
+async function verifyTokenFromQuery(token) {
+  if (!token) {
+    throw new AppError('Token de autenticacao nao informado.', 401);
+  }
+
+  let payload;
+  try {
+    payload = jwt.verify(token, env.jwtSecret, {
+      algorithms: [env.jwtAlgorithm],
+    });
+  } catch {
+    throw new AppError('Token invalido ou expirado.', 401);
+  }
+
+  if (!payload?.jti || payload.sessionVersion === undefined) {
+    throw new AppError('Token invalido ou expirado.', 401);
+  }
+
+  const user = await userModel.findById(payload.userId);
+  if (!user || !user.is_active) {
+    throw new AppError('Usuario invalido ou inativo.', 401);
+  }
+
+  if (Number(payload.sessionVersion) !== Number(user.session_version || 0)) {
+    throw new AppError('Sessao revogada. Faca login novamente.', 401);
+  }
+
+  return user;
+}
 
 /**
  * Inicia fluxo OAuth - redireciona usuário para autorização Google
+ * Token é enviado via query param pois redirect do browser não envia headers
  */
 exports.initiateAuth = asyncHandler(async (req, res) => {
-  const authUrl = googleCalendarService.getAuthUrl();
+  const token = req.query.token;
+  const user = await verifyTokenFromQuery(token);
+
+  const authUrl = googleCalendarService.getAuthUrl(user.id);
   res.redirect(authUrl);
 });
 
 /**
  * Callback OAuth - recebe código e salva tokens
+ * userId é extraído do state param que o Google retorna
  */
 exports.handleCallback = asyncHandler(async (req, res) => {
-  const { code, error } = req.query;
+  const { code, error, state } = req.query;
   
   if (error) {
     logger.error('Erro no callback OAuth:', error);
@@ -27,23 +69,44 @@ exports.handleCallback = asyncHandler(async (req, res) => {
   if (!code) {
     throw new AppError('Código de autorização não fornecido', 400);
   }
+
+  if (!state) {
+    return res.redirect('/painel-interno?tab=agenda&error=invalid_state');
+  }
+
+  let userId;
+  try {
+    const decoded = JSON.parse(Buffer.from(state, 'base64').toString());
+    userId = decoded.userId;
+    if (!userId) throw new Error('missing userId');
+  } catch {
+    return res.redirect('/painel-interno?tab=agenda&error=invalid_state');
+  }
+
+  const user = await userModel.findById(userId);
+  if (!user || !user.is_active) {
+    return res.redirect('/painel-interno?tab=agenda&error=invalid_user');
+  }
+
+  // Criar objeto user-like para o model
+  const actor = { id: user.id, role: user.role };
   
   try {
     // Trocar código por tokens
     const tokens = await googleCalendarService.exchangeCodeForTokens(code);
     
     // Verificar se já existe integração
-    const existing = await calendarIntegrationModel.getByUser(req.user);
+    const existing = await calendarIntegrationModel.getByUser(actor);
     
     if (existing) {
       // Atualizar tokens existentes
-      await calendarIntegrationModel.updateTokens(req.user, existing.id, {
+      await calendarIntegrationModel.updateTokens(actor, existing.id, {
         accessToken: tokens.accessToken,
         expiresAt: tokens.expiresAt,
       });
     } else {
       // Criar nova integração
-      await calendarIntegrationModel.create(req.user, {
+      await calendarIntegrationModel.create(actor, {
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
         expiresAt: tokens.expiresAt,
@@ -52,7 +115,7 @@ exports.handleCallback = asyncHandler(async (req, res) => {
       });
     }
     
-    logger.info(`Google Calendar conectado para usuário ${req.user.id}`);
+    logger.info(`Google Calendar conectado para usuário ${userId}`);
     res.redirect('/painel-interno?tab=agenda&success=connected');
   } catch (error) {
     logger.error('Erro ao processar callback OAuth:', error);
