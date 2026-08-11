@@ -4,9 +4,9 @@ const { authenticate, authorizeCapability } = require('../middlewares/authMiddle
 
 const router = express.Router();
 
-// OAuth flow - não requer autenticação prévia pois é usado no redirect
-router.get('/google/auth', authenticate, controller.initiateAuth);
-router.get('/google/callback', authenticate, controller.handleCallback);
+// OAuth flow - usa token via query param e state do Google (redirect do browser não envia headers)
+router.get('/google/auth', controller.initiateAuth);
+router.get('/google/callback', controller.handleCallback);
 
 // Endpoints protegidos
 router.use(authenticate);

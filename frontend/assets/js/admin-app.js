@@ -2725,7 +2725,9 @@ function renderGoogleCalendarStatus() {
 }
 
 function connectGoogleCalendar() {
-  window.location.href = `${API_BASE}/calendar-integrations/google/auth`;
+  const session = APP.loadSession();
+  const token = session?.accessToken || session?.token || "";
+  window.location.href = `${API_BASE}/calendar-integrations/google/auth?token=${encodeURIComponent(token)}`;
 }
 
 async function syncGoogleCalendar() {
