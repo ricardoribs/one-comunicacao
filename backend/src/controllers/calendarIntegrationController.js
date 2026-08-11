@@ -5,7 +5,6 @@ const calendarEventModel = require('../models/calendarEventModel');
 const googleCalendarService = require('../services/googleCalendarService');
 const logger = require('../config/logger');
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
 const env = require('../config/env');
 const userModel = require('../models/userModel');
 
