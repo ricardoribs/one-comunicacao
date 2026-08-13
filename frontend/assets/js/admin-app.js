@@ -5324,10 +5324,68 @@ function syncNavigation() {
   ensureNotificationUi();
 }
 
-function goTo(page) {
+function getAllowedPagesForCurrentUser() {
+  return PAGE_ACCESS[state.session?.user?.role] || [];
+}
+
+function getPageFromCurrentUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const legacyTab = params.get("tab");
+  const page = params.get("page") || (legacyTab === "agenda" ? "calendario" : "home");
+  return page.replace(/[^a-z0-9_-]/gi, "");
+}
+
+function buildAppPageUrl(page) {
+  const url = new URL(window.location.href);
+  url.pathname = "/app/io";
+  url.searchParams.delete("tab");
+  if (page && page !== "home") {
+    url.searchParams.set("page", page);
+  } else {
+    url.searchParams.delete("page");
+  }
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+function syncCurrentPageToHistory({ replace = false } = {}) {
+  if (!window.history?.pushState) {
+    return;
+  }
+
+  const page = state.activePage || "home";
+  const nextUrl = buildAppPageUrl(page);
+  const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  const method = replace || currentUrl !== nextUrl ? (replace ? "replaceState" : "pushState") : "";
+
+  if (!method) {
+    return;
+  }
+
+  window.history[method]({ page }, "", nextUrl);
+}
+
+function applyRouteSideEffects(page) {
+  if (page === "perfil") {
+    loadMyProfile({ silent: true }).catch(() => {});
+  }
+  if (page === "calendario") {
+    loadCalendarEvents(state.calendar.weekStart || new Date(), { silent: true }).catch(() => {});
+  }
+}
+
+function initializePageFromUrl() {
+  const requestedPage = getPageFromCurrentUrl();
+  const allowed = getAllowedPagesForCurrentUser();
+  state.activePage = allowed.includes(requestedPage) ? requestedPage : "home";
+  syncCurrentPageToHistory({ replace: true });
+}
+
+function activatePage(page, { pushHistory = true, replaceHistory = false, showDeniedToast = true } = {}) {
   const allowed = PAGE_ACCESS[state.session.user.role] || [];
   if (!allowed.includes(page)) {
-    showToast("Acesso não permitido para este perfil.");
+    if (showDeniedToast) {
+      showToast("Acesso não permitido para este perfil.");
+    }
     return false;
   }
 
@@ -5336,13 +5394,15 @@ function goTo(page) {
   state.activePage = page;
   syncNavigation();
   closeSidebar();
-  if (page === "perfil") {
-    loadMyProfile({ silent: true }).catch(() => {});
+  if (pushHistory) {
+    syncCurrentPageToHistory({ replace: replaceHistory });
   }
-  if (page === "calendario") {
-    loadCalendarEvents(state.calendar.weekStart || new Date(), { silent: true }).catch(() => {});
-  }
+  applyRouteSideEffects(page);
   return true;
+}
+
+function goTo(page) {
+  return activatePage(page, { pushHistory: true });
 }
 
 function goToTab(page, group, tab) {
@@ -9565,11 +9625,13 @@ async function initializeApp() {
   document.getElementById("home-date").textContent = new Intl.DateTimeFormat("pt-BR", {
     dateStyle: "full"
   }).format(new Date());
+  initializePageFromUrl();
   syncNavigation();
   bindSidebarInteractions();
   bindLegacyInlineHandlers();
   if (me.user?.must_change_password) {
     state.activePage = "perfil";
+    syncCurrentPageToHistory({ replace: true });
     syncNavigation();
     await loadMyProfile({ force: true, silent: true });
     renderAll();
@@ -9580,6 +9642,7 @@ async function initializeApp() {
   }
   await refreshData();
   await refreshNotifications({ silent: true, suppressErrors: true });
+  applyRouteSideEffects(state.activePage);
   document.getElementById("login-screen").classList.add("hidden");
   startNotificationPolling();
 }
@@ -11314,6 +11377,19 @@ async function boot() {
 
   window.addEventListener("resize", syncSidebarShell);
   window.addEventListener("orientationchange", syncSidebarShell);
+
+  window.addEventListener("popstate", () => {
+    if (!state.session?.user) {
+      return;
+    }
+
+    const requestedPage = getPageFromCurrentUrl();
+    if (activatePage(requestedPage, { pushHistory: false, showDeniedToast: false })) {
+      return;
+    }
+
+    activatePage("home", { pushHistory: true, replaceHistory: true, showDeniedToast: false });
+  });
 
   window.addEventListener("offline", () => {
     showToast("Você está sem conexão. Verifique sua internet.");
