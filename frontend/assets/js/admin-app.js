@@ -219,7 +219,7 @@ const ROLE_DATA_ACCESS = {
     homeTeam: false,
     assignableUsers: true,
     calendarEvents: true,
-    clients: true,
+    clients: false,
     contacts: false,
     campaigns: false,
     tasks: true,
@@ -837,6 +837,10 @@ function canDeleteTasks() {
 }
 
 function getScopedClientOptions() {
+  if (!hasRoleDataAccess("clients")) {
+    return [];
+  }
+
   if (state.clients.length) {
     return state.clients.map((client) => ({ id: client.id, name: client.name }));
   }
@@ -9428,10 +9432,19 @@ async function refreshData() {
 
   const kanbanFilter = document.getElementById("kanban-client-filter");
   if (kanbanFilter) {
-    kanbanFilter.innerHTML = `<option value="">Todos os clientes</option>${scopedClients
-      .map((client) => `<option value="${client.id}">${escapeHtml(client.name)}</option>`)
-      .join("")}`;
-    kanbanFilter.value = state.filters.kanbanClient;
+    const canFilterByClient = hasRoleDataAccess("clients");
+    kanbanFilter.hidden = !canFilterByClient;
+    kanbanFilter.disabled = !canFilterByClient;
+
+    if (!canFilterByClient) {
+      state.filters.kanbanClient = "";
+      kanbanFilter.innerHTML = "";
+    } else {
+      kanbanFilter.innerHTML = `<option value="">Todos os clientes</option>${scopedClients
+        .map((client) => `<option value="${client.id}">${escapeHtml(client.name)}</option>`)
+        .join("")}`;
+      kanbanFilter.value = state.filters.kanbanClient;
+    }
   }
 
   const analyticsClientFilter = document.getElementById("analytics-client-filter");

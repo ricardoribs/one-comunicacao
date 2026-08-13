@@ -129,7 +129,7 @@ const ROLE_CAPABILITIES = {
     view_internal_directory: true,
     view_calendar_events: true,
     manage_calendar_events: false,
-    view_clients: true,
+    view_clients: false,
     view_clients_sensitive: false,
     manage_clients: false,
     view_contacts: false,
@@ -226,6 +226,14 @@ function sanitizeDashboardSummary(summary, user) {
 
   if (!hasCapability(user, 'view_contacts')) {
     safeSummary.leads = 0;
+  }
+
+  if (!hasCapability(user, 'view_clients')) {
+    safeSummary.clients_count = 0;
+  }
+
+  if (!hasCapability(user, 'view_campaigns')) {
+    safeSummary.campaigns_count = 0;
   }
 
   if (!hasCapability(user, 'view_dashboard_financial')) {

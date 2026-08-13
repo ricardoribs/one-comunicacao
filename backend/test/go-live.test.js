@@ -743,6 +743,26 @@ test('gestor atualiza manual da marca e designer relacionado visualiza o cliente
   await pool.query('DELETE FROM clients');
 });
 
+test('dev nao acessa lista geral de clientes', { concurrency: false }, async () => {
+  const suffix = Date.now() + 9;
+  const dev = await createUser({
+    name: `Dev Clientes ${suffix}`,
+    email: `dev.clients.${suffix}@one.test`,
+    role: 'dev',
+  });
+  const clientId = await createClient(`Cliente Restrito ${suffix}`, `Empresa Restrita ${suffix}`);
+  const devAuth = await login(dev.email);
+
+  const response = await request(app)
+    .get('/api/clients')
+    .set('Authorization', `Bearer ${devAuth.body.accessToken}`);
+
+  assert.equal(response.status, 403);
+
+  await userModel.remove(dev.id);
+  await pool.query('DELETE FROM clients WHERE id = $1', [clientId]);
+});
+
 test('gestor nao cria cobranca para lead fora do proprio tenant operacional', { concurrency: false }, async () => {
   const suffix = Date.now() + 2;
   const gestorA = await createUser({
