@@ -4087,6 +4087,7 @@ function renderActionMenuButton({
 }
 
 const FLOATING_ACTION_MENU_SELECTOR = "details.action-menu, details.prod-menu, details.analytics-menu, details.finance-menu, details.access-menu";
+const KANBAN_CARD_MENU_SELECTOR = "[data-kanban-card-menu]";
 
 function getFloatingActionMenuPanel(menu) {
   if (!menu) {
@@ -4227,6 +4228,147 @@ function bindFloatingActionMenus() {
   }
 
   syncFloatingActionMenus();
+}
+
+function clearKanbanCardMenuPosition(menu) {
+  const panel = menu?.querySelector?.("[data-floating-menu-panel]");
+  if (!panel) {
+    return;
+  }
+
+  panel.style.position = "";
+  panel.style.left = "";
+  panel.style.top = "";
+  panel.style.right = "";
+  panel.style.bottom = "";
+  panel.style.zIndex = "";
+  panel.style.maxWidth = "";
+}
+
+function positionKanbanCardMenu(menu) {
+  if (!menu?.classList?.contains("is-open")) {
+    clearKanbanCardMenuPosition(menu);
+    return;
+  }
+
+  const trigger = menu.querySelector("[data-kanban-card-menu-trigger]");
+  const panel = menu.querySelector("[data-floating-menu-panel]");
+  if (!trigger || !panel) {
+    return;
+  }
+
+  panel.style.position = "fixed";
+  panel.style.left = "0";
+  panel.style.top = "0";
+  panel.style.right = "auto";
+  panel.style.bottom = "auto";
+  panel.style.zIndex = "270";
+  panel.style.maxWidth = "min(220px, calc(100vw - 24px))";
+
+  const triggerRect = trigger.getBoundingClientRect();
+  const panelRect = panel.getBoundingClientRect();
+  const gap = 8;
+  const viewportPadding = 12;
+
+  let left = triggerRect.right - panelRect.width;
+  if (left < viewportPadding) {
+    left = viewportPadding;
+  }
+  if (left + panelRect.width > window.innerWidth - viewportPadding) {
+    left = Math.max(viewportPadding, window.innerWidth - viewportPadding - panelRect.width);
+  }
+
+  let top = triggerRect.bottom + gap;
+  if (top + panelRect.height > window.innerHeight - viewportPadding) {
+    top = Math.max(viewportPadding, triggerRect.top - gap - panelRect.height);
+  }
+
+  panel.style.left = `${Math.round(left)}px`;
+  panel.style.top = `${Math.round(top)}px`;
+}
+
+function syncKanbanCardMenus() {
+  document.querySelectorAll(`${KANBAN_CARD_MENU_SELECTOR}.is-open`).forEach((menu) => {
+    positionKanbanCardMenu(menu);
+  });
+}
+
+function closeKanbanCardMenus(exceptMenu = null) {
+  document.querySelectorAll(`${KANBAN_CARD_MENU_SELECTOR}.is-open`).forEach((menu) => {
+    if (menu === exceptMenu) {
+      return;
+    }
+
+    menu.classList.remove("is-open");
+    menu.querySelector("[data-kanban-card-menu-trigger]")?.setAttribute("aria-expanded", "false");
+    clearKanbanCardMenuPosition(menu);
+  });
+}
+
+function setKanbanCardMenuOpen(menu, nextOpen) {
+  if (!menu) {
+    return;
+  }
+
+  if (nextOpen) {
+    closeKanbanCardMenus(menu);
+    closeFloatingActionMenus();
+    menu.classList.add("is-open");
+    menu.querySelector("[data-kanban-card-menu-trigger]")?.setAttribute("aria-expanded", "true");
+    requestAnimationFrame(() => positionKanbanCardMenu(menu));
+    return;
+  }
+
+  menu.classList.remove("is-open");
+  menu.querySelector("[data-kanban-card-menu-trigger]")?.setAttribute("aria-expanded", "false");
+  clearKanbanCardMenuPosition(menu);
+}
+
+function bindKanbanCardMenus() {
+  if (document.body.dataset.boundKanbanCardMenus !== "1") {
+    document.addEventListener("click", (event) => {
+      const menu = event.target.closest?.(KANBAN_CARD_MENU_SELECTOR);
+      if (!menu) {
+        closeKanbanCardMenus();
+        return;
+      }
+
+      if (event.target.closest?.("[data-action]")) {
+        requestAnimationFrame(() => closeKanbanCardMenus());
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeKanbanCardMenus();
+      }
+    });
+
+    window.addEventListener("resize", syncKanbanCardMenus);
+    document.addEventListener("scroll", syncKanbanCardMenus, true);
+    document.body.dataset.boundKanbanCardMenus = "1";
+  }
+
+  document.querySelectorAll("[data-kanban-card-menu-trigger]").forEach((trigger) => {
+    if (trigger.dataset.boundKanbanMenuTrigger === "1") {
+      return;
+    }
+
+    trigger.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+    });
+
+    trigger.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const menu = trigger.closest(KANBAN_CARD_MENU_SELECTOR);
+      setKanbanCardMenuOpen(menu, !menu?.classList?.contains("is-open"));
+    });
+
+    trigger.dataset.boundKanbanMenuTrigger = "1";
+  });
+
+  syncKanbanCardMenus();
 }
 
 const ACCESS_COUNTRY_LABELS = {
@@ -5517,6 +5659,32 @@ function getRuntimeEnvironmentInfo() {
   return { value: "PRD", sub: "ambiente de produção" };
 }
 
+function getDevOpenTasks() {
+  const currentUserId = Number(state.session?.user?.id || 0);
+  const openTasks = state.tasks.filter((task) => normalizeTaskStatusLabel(task.status) !== "Concluido");
+  const assignedOrUnassignedTasks = openTasks.filter((task) => {
+    const assigneeIds = getTaskAssigneeIds(task);
+    return !assigneeIds.length || assigneeIds.includes(currentUserId);
+  });
+  const source = assignedOrUnassignedTasks.length ? assignedOrUnassignedTasks : openTasks;
+
+  return [...source].sort((left, right) => {
+    const leftDue = new Date(left.due_date || left.deadline || left.created_at || 0).getTime();
+    const rightDue = new Date(right.due_date || right.deadline || right.created_at || 0).getTime();
+    if (leftDue !== rightDue) {
+      return leftDue - rightDue;
+    }
+
+    return String(left.title || "").localeCompare(String(right.title || ""), "pt-BR");
+  });
+}
+
+function getDevProductionQueue() {
+  return state.materials
+    .filter((material) => normalizeMaterialStatus(material.status) !== "Aprovado")
+    .sort((left, right) => new Date(left.due_date || left.created_at || 0).getTime() - new Date(right.due_date || right.created_at || 0).getTime());
+}
+
 function renderHomeKpiCards(grid, cards) {
   grid.innerHTML = cards
     .map((item) => {
@@ -5584,52 +5752,51 @@ function renderDevHomeSections() {
   }
 
   if (lowerCards[0]) {
-    const accessiblePages = (PAGE_ACCESS.dev || [])
-      .filter((page) => !["home", "perfil"].includes(page))
-      .map((page) => PAGE_LABELS[page])
-      .filter(Boolean);
+    const devTasks = getDevOpenTasks().slice(0, 4);
 
     lowerCards[0].innerHTML = `
-      <div class="section-header"><div><div class="section-title">Acessos técnicos</div><div class="section-sub">Módulos liberados para suporte</div></div></div>
-      ${accessiblePages
-        .map(
-          (label) => `
-            <div class="item-row">
-              <div>
-                <div class="block-title-sm">${escapeHtml(label)}</div>
-                <div class="block-text-xs">Acesso restrito ao perfil de desenvolvimento</div>
-              </div>
-              <span class="badge badge-gray">Leitura</span>
-            </div>
-          `
-        )
-        .join("")}
-    `;
-  }
-
-  if (lowerCards[1]) {
-    const checklistItems = getChecklistStore().activeItems || [];
-    const openChecklist = checklistItems.filter((item) => !item.done);
-
-    lowerCards[1].innerHTML = `
-      <div class="section-header"><div><div class="section-title">Checklist técnico</div><div class="section-sub">Foco diário do perfil dev</div></div></div>
+      <div class="section-header"><div><div class="section-title">Fila técnica</div><div class="section-sub">Tarefas para suporte e ajustes</div></div></div>
       ${
-        openChecklist.length
-          ? openChecklist
-              .slice(0, 4)
+        devTasks.length
+          ? devTasks
               .map(
-                (item) => `
+                (task) => `
                   <div class="item-row">
                     <div>
-                      <div class="block-title-sm">${escapeHtml(item.label)}</div>
-                      <div class="block-text-xs">Pendente no checklist de hoje</div>
+                      <div class="block-title-sm">${escapeHtml(task.title)}</div>
+                      <div class="block-text-xs">${escapeHtml(task.client_name || "Interno")} · ${formatDate(task.due_date || task.deadline)}</div>
                     </div>
-                    <span class="badge badge-yellow">Aberto</span>
+                    <button type="button" class="btn btn-ghost btn-sm" data-action="open-modal" data-modal="nova-tarefa" data-id="${task.id}">Abrir</button>
                   </div>
                 `
               )
               .join("")
-          : UI.empty("Sem checklist técnico", "Use o foco diário no Kanban para registrar pendências técnicas.")
+          : UI.empty("Sem tarefas técnicas", "A fila mostra tarefas abertas atribuídas ao perfil dev ou sem responsável.")
+      }
+    `;
+  }
+
+  if (lowerCards[1]) {
+    const productionQueue = getDevProductionQueue().slice(0, 4);
+
+    lowerCards[1].innerHTML = `
+      <div class="section-header"><div><div class="section-title">Produção em atenção</div><div class="section-sub">Entregas pendentes ou em revisão</div></div></div>
+      ${
+        productionQueue.length
+          ? productionQueue
+              .map(
+                (material) => `
+                  <div class="item-row">
+                    <div>
+                      <div class="block-title-sm">${escapeHtml(material.title)}</div>
+                      <div class="block-text-xs">${escapeHtml(material.client_name || "Operação interna")} · ${formatDate(material.due_date || material.created_at)}</div>
+                    </div>
+                    <span class="badge ${material.status === "Revisao" ? "badge-yellow" : "badge-gray"}">${escapeHtml(normalizeMaterialStatus(material.status || "Pendente"))}</span>
+                  </div>
+                `
+              )
+              .join("")
+          : UI.empty("Sem produção pendente", "Entregas aprovadas ficam fora desta fila técnica.")
       }
     `;
   }
@@ -5642,7 +5809,8 @@ function renderHome() {
     if (state.session?.user?.role === "dev") {
       const environment = getRuntimeEnvironmentInfo();
       const failureCount = state.loadFailures instanceof Set ? state.loadFailures.size : 0;
-      const openChecklist = getChecklistStore().activeItems.filter((item) => !item.done).length;
+      const devOpenTasks = getDevOpenTasks().length;
+      const productionQueue = getDevProductionQueue().length;
 
       renderHomeKpiCards(grid, [
         { label: "Ambiente", displayValue: environment.value, sub: environment.sub },
@@ -5651,12 +5819,17 @@ function renderHome() {
           displayValue: failureCount ? "Falha" : "OK",
           sub: failureCount ? `${failureCount} módulo(s) com falha` : "dados carregados"
         },
-        { label: "Falhas", value: failureCount, sub: "módulos com erro na sessão" },
         {
-          label: "Checklist",
-          value: openChecklist,
-          sub: `${openChecklist} ${openChecklist === 1 ? "pendência técnica" : "pendências técnicas"}`,
+          label: "Tarefas dev",
+          value: devOpenTasks,
+          sub: `${devOpenTasks} ${devOpenTasks === 1 ? "item aberto" : "itens abertos"}`,
           page: canAccessPage("kanban") ? "kanban" : ""
+        },
+        {
+          label: "Produção",
+          value: productionQueue,
+          sub: `${productionQueue} ${productionQueue === 1 ? "entrega em atenção" : "entregas em atenção"}`,
+          page: canAccessPage("producao") ? "producao" : ""
         }
       ]);
       renderHomeQuickActions();
@@ -6597,14 +6770,14 @@ function getKanbanCardMenuButton(task, canEditTasks, canRemoveTasks) {
   }
 
   return `
-    <details class="action-menu kanban-card-menu" data-kanban-card-control="1">
-      <summary class="k-card-menu-btn" aria-label="Ações da tarefa" title="Ações da tarefa" data-kanban-card-control="1">
+    <div class="action-menu kanban-card-menu" data-kanban-card-menu="${task.id}" data-kanban-card-control="1">
+      <button type="button" class="k-card-menu-btn" aria-label="Ações da tarefa" title="Ações da tarefa" aria-haspopup="menu" aria-expanded="false" data-kanban-card-menu-trigger="1" data-kanban-card-control="1">
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/></svg>
-      </summary>
-      <div class="action-menu-panel" data-floating-menu-panel="1">
+      </button>
+      <div class="action-menu-panel" role="menu" data-floating-menu-panel="1">
         ${actions}
       </div>
-    </details>
+    </div>
   `;
 }
 
@@ -6908,6 +7081,8 @@ function bindKanbanBoardInteractions() {
     return;
   }
 
+  bindKanbanCardMenus();
+
   const clearDropTargets = () => {
     board.querySelectorAll("[data-kanban-column]").forEach((column) => column.classList.remove("is-drop-target"));
   };
@@ -6998,6 +7173,7 @@ function bindKanbanBoardInteractions() {
     kanbanRuntime.dragPlaceholderEl = placeholder;
     kanbanRuntime.dragStarted = true;
     closeFloatingActionMenus();
+    closeKanbanCardMenus();
 
     card.insertAdjacentElement("afterend", placeholder);
     card.classList.add("is-dragging", "is-pointer-dragging");
