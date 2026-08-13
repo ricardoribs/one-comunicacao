@@ -4091,7 +4091,6 @@ function renderActionMenuButton({
 }
 
 const FLOATING_ACTION_MENU_SELECTOR = "details.action-menu, details.prod-menu, details.analytics-menu, details.finance-menu, details.access-menu";
-const KANBAN_CARD_MENU_SELECTOR = "[data-kanban-card-menu]";
 
 function getFloatingActionMenuPanel(menu) {
   if (!menu) {
@@ -4232,147 +4231,6 @@ function bindFloatingActionMenus() {
   }
 
   syncFloatingActionMenus();
-}
-
-function clearKanbanCardMenuPosition(menu) {
-  const panel = menu?.querySelector?.("[data-floating-menu-panel]");
-  if (!panel) {
-    return;
-  }
-
-  panel.style.position = "";
-  panel.style.left = "";
-  panel.style.top = "";
-  panel.style.right = "";
-  panel.style.bottom = "";
-  panel.style.zIndex = "";
-  panel.style.maxWidth = "";
-}
-
-function positionKanbanCardMenu(menu) {
-  if (!menu?.classList?.contains("is-open")) {
-    clearKanbanCardMenuPosition(menu);
-    return;
-  }
-
-  const trigger = menu.querySelector("[data-kanban-card-menu-trigger]");
-  const panel = menu.querySelector("[data-floating-menu-panel]");
-  if (!trigger || !panel) {
-    return;
-  }
-
-  panel.style.position = "fixed";
-  panel.style.left = "0";
-  panel.style.top = "0";
-  panel.style.right = "auto";
-  panel.style.bottom = "auto";
-  panel.style.zIndex = "270";
-  panel.style.maxWidth = "min(220px, calc(100vw - 24px))";
-
-  const triggerRect = trigger.getBoundingClientRect();
-  const panelRect = panel.getBoundingClientRect();
-  const gap = 8;
-  const viewportPadding = 12;
-
-  let left = triggerRect.right - panelRect.width;
-  if (left < viewportPadding) {
-    left = viewportPadding;
-  }
-  if (left + panelRect.width > window.innerWidth - viewportPadding) {
-    left = Math.max(viewportPadding, window.innerWidth - viewportPadding - panelRect.width);
-  }
-
-  let top = triggerRect.bottom + gap;
-  if (top + panelRect.height > window.innerHeight - viewportPadding) {
-    top = Math.max(viewportPadding, triggerRect.top - gap - panelRect.height);
-  }
-
-  panel.style.left = `${Math.round(left)}px`;
-  panel.style.top = `${Math.round(top)}px`;
-}
-
-function syncKanbanCardMenus() {
-  document.querySelectorAll(`${KANBAN_CARD_MENU_SELECTOR}.is-open`).forEach((menu) => {
-    positionKanbanCardMenu(menu);
-  });
-}
-
-function closeKanbanCardMenus(exceptMenu = null) {
-  document.querySelectorAll(`${KANBAN_CARD_MENU_SELECTOR}.is-open`).forEach((menu) => {
-    if (menu === exceptMenu) {
-      return;
-    }
-
-    menu.classList.remove("is-open");
-    menu.querySelector("[data-kanban-card-menu-trigger]")?.setAttribute("aria-expanded", "false");
-    clearKanbanCardMenuPosition(menu);
-  });
-}
-
-function setKanbanCardMenuOpen(menu, nextOpen) {
-  if (!menu) {
-    return;
-  }
-
-  if (nextOpen) {
-    closeKanbanCardMenus(menu);
-    closeFloatingActionMenus();
-    menu.classList.add("is-open");
-    menu.querySelector("[data-kanban-card-menu-trigger]")?.setAttribute("aria-expanded", "true");
-    requestAnimationFrame(() => positionKanbanCardMenu(menu));
-    return;
-  }
-
-  menu.classList.remove("is-open");
-  menu.querySelector("[data-kanban-card-menu-trigger]")?.setAttribute("aria-expanded", "false");
-  clearKanbanCardMenuPosition(menu);
-}
-
-function bindKanbanCardMenus() {
-  if (document.body.dataset.boundKanbanCardMenus !== "1") {
-    document.addEventListener("click", (event) => {
-      const menu = event.target.closest?.(KANBAN_CARD_MENU_SELECTOR);
-      if (!menu) {
-        closeKanbanCardMenus();
-        return;
-      }
-
-      if (event.target.closest?.("[data-action]")) {
-        requestAnimationFrame(() => closeKanbanCardMenus());
-      }
-    });
-
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") {
-        closeKanbanCardMenus();
-      }
-    });
-
-    window.addEventListener("resize", syncKanbanCardMenus);
-    document.addEventListener("scroll", syncKanbanCardMenus, true);
-    document.body.dataset.boundKanbanCardMenus = "1";
-  }
-
-  document.querySelectorAll("[data-kanban-card-menu-trigger]").forEach((trigger) => {
-    if (trigger.dataset.boundKanbanMenuTrigger === "1") {
-      return;
-    }
-
-    trigger.addEventListener("pointerdown", (event) => {
-      event.stopPropagation();
-    });
-
-    trigger.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      const menu = trigger.closest(KANBAN_CARD_MENU_SELECTOR);
-      setKanbanCardMenuOpen(menu, !menu?.classList?.contains("is-open"));
-    });
-
-    trigger.dataset.boundKanbanMenuTrigger = "1";
-  });
-
-  syncKanbanCardMenus();
 }
 
 const ACCESS_COUNTRY_LABELS = {
@@ -6774,14 +6632,14 @@ function getKanbanCardMenuButton(task, canEditTasks, canRemoveTasks) {
   }
 
   return `
-    <div class="action-menu kanban-card-menu" data-kanban-card-menu="${task.id}" data-kanban-card-control="1">
-      <button type="button" class="k-card-menu-btn" aria-label="Ações da tarefa" title="Ações da tarefa" aria-haspopup="menu" aria-expanded="false" data-kanban-card-menu-trigger="1" data-kanban-card-control="1">
+    <details class="action-menu kanban-card-menu" data-kanban-card-control="1">
+      <summary class="k-card-menu-btn" aria-label="Ações da tarefa" title="Ações da tarefa" data-kanban-card-control="1">
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/></svg>
-      </button>
+      </summary>
       <div class="action-menu-panel" role="menu" data-floating-menu-panel="1">
         ${actions}
       </div>
-    </div>
+    </details>
   `;
 }
 
@@ -7085,8 +6943,6 @@ function bindKanbanBoardInteractions() {
     return;
   }
 
-  bindKanbanCardMenus();
-
   const clearDropTargets = () => {
     board.querySelectorAll("[data-kanban-column]").forEach((column) => column.classList.remove("is-drop-target"));
   };
@@ -7177,7 +7033,6 @@ function bindKanbanBoardInteractions() {
     kanbanRuntime.dragPlaceholderEl = placeholder;
     kanbanRuntime.dragStarted = true;
     closeFloatingActionMenus();
-    closeKanbanCardMenus();
 
     card.insertAdjacentElement("afterend", placeholder);
     card.classList.add("is-dragging", "is-pointer-dragging");
