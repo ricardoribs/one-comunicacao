@@ -252,6 +252,10 @@ const kanbanRuntime = {
   pointerId: null,
   dragOffsetX: 0,
   dragOffsetY: 0,
+  dragClientX: 0,
+  dragClientY: 0,
+  autoScrollFrame: null,
+  autoScrollX: 0,
   scrollSyncBound: false,
   scrollResizeObserver: null,
   overdueDrawerOpen: false,
@@ -825,7 +829,7 @@ function canManageMaterials() {
 }
 
 function canDeleteTasks() {
-  return state.session?.user?.role === "admin";
+  return hasRoleDataAccess("manageTasks");
 }
 
 function getScopedClientOptions() {
@@ -6502,19 +6506,41 @@ function renderKanbanBrandManual(filteredTasks) {
   `;
 }
 
-function getKanbanCardMenuButton(task, canEditTasks) {
-  if (!canEditTasks) {
-    return `
-      <button type="button" class="k-card-menu-btn" tabindex="-1" aria-hidden="true">
-        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/></svg>
-      </button>
-    `;
+function getKanbanCardMenuButton(task, canEditTasks, canRemoveTasks) {
+  const actions = [
+    canEditTasks
+      ? renderActionMenuButton({
+          label: "Editar",
+          action: "open-modal",
+          modal: "nova-tarefa",
+          id: task.id,
+        })
+      : "",
+    canRemoveTasks
+      ? renderActionMenuButton({
+          label: "Excluir",
+          action: "delete-task",
+          id: task.id,
+          className: "btn-danger-link",
+        })
+      : "",
+  ]
+    .filter(Boolean)
+    .join("");
+
+  if (!actions) {
+    return "";
   }
 
   return `
-    <button type="button" data-action="open-modal" data-modal="nova-tarefa" data-id="${task.id}" class="k-card-menu-btn">
-      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/></svg>
-    </button>
+    <details class="action-menu kanban-card-menu">
+      <summary class="k-card-menu-btn" aria-label="Ações da tarefa" title="Ações da tarefa">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/></svg>
+      </summary>
+      <div class="action-menu-panel" data-floating-menu-panel="1">
+        ${actions}
+      </div>
+    </details>
   `;
 }
 
@@ -6541,7 +6567,7 @@ function getKanbanDeadlineChip(task) {
   return "";
 }
 
-function renderKanbanCard(task, columnKey, canEditTasks) {
+function renderKanbanCard(task, columnKey, canEditTasks, canRemoveTasks) {
   const descriptionHtml = task.description && columnKey !== "done"
     ? `<p class="k-card-desc">${escapeHtml(task.description)}</p>`
     : "";
@@ -6560,7 +6586,7 @@ function renderKanbanCard(task, columnKey, canEditTasks) {
     <div class="k-card${columnKey === "done" ? " is-done" : ""}${canEditTasks ? " is-draggable" : ""}" data-task-card="1" data-task-id="${task.id}">
       <div class="k-card-top">
         <span class="k-card-client">${escapeHtml(task.client_name || "Interno")}</span>
-        ${getKanbanCardMenuButton(task, canEditTasks)}
+        ${getKanbanCardMenuButton(task, canEditTasks, canRemoveTasks)}
       </div>
       <h4 class="k-card-title">${escapeHtml(task.title)}</h4>
       ${descriptionHtml}
@@ -6580,6 +6606,7 @@ function renderKanban() {
     ? state.tasks.filter((task) => String(task.client_id) === String(state.filters.kanbanClient))
     : state.tasks;
   const canEditTasks = canManageTasks();
+  const canRemoveTasks = canDeleteTasks();
 
   syncPanelTheme();
   renderKanbanChecklist(filtered);
@@ -6599,7 +6626,7 @@ function renderKanban() {
           <div class="kanban-exact-column-body flex flex-col gap-3 overflow-y-auto custom-scroll pr-1 pb-2" data-kanban-dropzone="${column.key}">
             ${
               tasks
-                .map((task) => renderKanbanCard(task, column.key, canEditTasks))
+                .map((task) => renderKanbanCard(task, column.key, canEditTasks, canRemoveTasks))
                 .join("")
                 || `<div class="kanban-empty-state">Sem tarefas nesta etapa.</div>`
             }
@@ -6668,7 +6695,32 @@ async function moveTaskToColumn(taskId, nextColumn) {
   }
 }
 
+function stopKanbanDragAutoScroll() {
+  if (kanbanRuntime.autoScrollFrame) {
+    window.cancelAnimationFrame(kanbanRuntime.autoScrollFrame);
+  }
+  kanbanRuntime.autoScrollFrame = null;
+  kanbanRuntime.autoScrollX = 0;
+}
+
+function getKanbanAutoScrollSpeed(pointerPosition, start, end) {
+  const edgeSize = 96;
+  const maxSpeed = 28;
+
+  if (pointerPosition < start + edgeSize) {
+    return -Math.ceil(((start + edgeSize - pointerPosition) / edgeSize) * maxSpeed);
+  }
+
+  if (pointerPosition > end - edgeSize) {
+    return Math.ceil(((pointerPosition - (end - edgeSize)) / edgeSize) * maxSpeed);
+  }
+
+  return 0;
+}
+
 function clearKanbanDragArtifacts() {
+  stopKanbanDragAutoScroll();
+
   if (kanbanRuntime.dragSourceEl) {
     if (kanbanRuntime.dragPlaceholderEl?.parentElement) {
       kanbanRuntime.dragPlaceholderEl.replaceWith(kanbanRuntime.dragSourceEl);
@@ -6693,6 +6745,8 @@ function clearKanbanDragArtifacts() {
   kanbanRuntime.pointerId = null;
   kanbanRuntime.dragOffsetX = 0;
   kanbanRuntime.dragOffsetY = 0;
+  kanbanRuntime.dragClientX = 0;
+  kanbanRuntime.dragClientY = 0;
 }
 
 function resolveKanbanColumnFromPoint(board, clientX, clientY) {
@@ -6805,22 +6859,75 @@ function bindKanbanBoardInteractions() {
     }
   };
 
-  const handlePointerMove = (event) => {
-    if (!kanbanRuntime.dragTaskId || event.pointerId !== kanbanRuntime.pointerId || !kanbanRuntime.dragSourceEl) {
-      return;
-    }
-
-    const left = Number(event.clientX || 0) - kanbanRuntime.dragOffsetX;
-    const top = Number(event.clientY || 0) - kanbanRuntime.dragOffsetY;
-    kanbanRuntime.dragSourceEl.style.left = `${left}px`;
-    kanbanRuntime.dragSourceEl.style.top = `${top}px`;
-
-    const column = resolveKanbanColumnFromPoint(board, Number(event.clientX), Number(event.clientY));
+  const syncDropTargetAtPointer = () => {
+    const column = resolveKanbanColumnFromPoint(
+      board,
+      Number(kanbanRuntime.dragClientX),
+      Number(kanbanRuntime.dragClientY)
+    );
     clearDropTargets();
     if (column?.dataset?.kanbanColumn) {
       column.classList.add("is-drop-target");
       placeKanbanPlaceholderInColumn(column);
     }
+    return column;
+  };
+
+  const startKanbanDragAutoScroll = () => {
+    if (kanbanRuntime.autoScrollFrame) {
+      return;
+    }
+
+    const tick = () => {
+      if (!kanbanRuntime.dragTaskId || !kanbanRuntime.dragSourceEl) {
+        stopKanbanDragAutoScroll();
+        return;
+      }
+
+      if (kanbanRuntime.autoScrollX) {
+        const maxScrollLeft = Math.max(0, board.scrollWidth - board.clientWidth);
+        const nextScrollLeft = Math.max(0, Math.min(maxScrollLeft, board.scrollLeft + kanbanRuntime.autoScrollX));
+        if (nextScrollLeft !== board.scrollLeft) {
+          board.scrollLeft = nextScrollLeft;
+          syncDropTargetAtPointer();
+        }
+      }
+
+      kanbanRuntime.autoScrollFrame = window.requestAnimationFrame(tick);
+    };
+
+    kanbanRuntime.autoScrollFrame = window.requestAnimationFrame(tick);
+  };
+
+  const updateKanbanDragAutoScroll = (event) => {
+    const rect = board.getBoundingClientRect();
+    const speedX = getKanbanAutoScrollSpeed(Number(event.clientX || 0), rect.left, rect.right);
+    const canScrollLeft = board.scrollLeft > 0;
+    const canScrollRight = board.scrollLeft < board.scrollWidth - board.clientWidth - 1;
+    kanbanRuntime.autoScrollX = (speedX < 0 && canScrollLeft) || (speedX > 0 && canScrollRight) ? speedX : 0;
+
+    if (kanbanRuntime.autoScrollX) {
+      startKanbanDragAutoScroll();
+      return;
+    }
+
+    stopKanbanDragAutoScroll();
+  };
+
+  const handlePointerMove = (event) => {
+    if (!kanbanRuntime.dragTaskId || event.pointerId !== kanbanRuntime.pointerId || !kanbanRuntime.dragSourceEl) {
+      return;
+    }
+
+    kanbanRuntime.dragClientX = Number(event.clientX || 0);
+    kanbanRuntime.dragClientY = Number(event.clientY || 0);
+
+    const left = Number(event.clientX || 0) - kanbanRuntime.dragOffsetX;
+    const top = Number(event.clientY || 0) - kanbanRuntime.dragOffsetY;
+    kanbanRuntime.dragSourceEl.style.left = `${left}px`;
+    kanbanRuntime.dragSourceEl.style.top = `${top}px`;
+    syncDropTargetAtPointer();
+    updateKanbanDragAutoScroll(event);
   };
 
   const handlePointerUp = (event) => {
@@ -6832,6 +6939,7 @@ function bindKanbanBoardInteractions() {
     const taskId = Number(kanbanRuntime.dragTaskId || 0);
     clearDropTargets();
     document.body.classList.remove("kanban-drag-active");
+    stopKanbanDragAutoScroll();
     document.removeEventListener("pointermove", handlePointerMove, true);
     document.removeEventListener("pointerup", handlePointerUp, true);
     document.removeEventListener("pointercancel", handlePointerUp, true);
@@ -6854,7 +6962,7 @@ function bindKanbanBoardInteractions() {
         return;
       }
 
-      if (event.target?.closest?.("button, a, input, select, textarea, [data-action]")) {
+      if (event.target?.closest?.("button, a, input, select, textarea, summary, details, [data-action]")) {
         return;
       }
 
@@ -6871,6 +6979,8 @@ function bindKanbanBoardInteractions() {
       kanbanRuntime.pointerId = event.pointerId;
       kanbanRuntime.dragOffsetX = Number(event.clientX) - rect.left;
       kanbanRuntime.dragOffsetY = Number(event.clientY) - rect.top;
+      kanbanRuntime.dragClientX = Number(event.clientX || 0);
+      kanbanRuntime.dragClientY = Number(event.clientY || 0);
 
       card.insertAdjacentElement("afterend", placeholder);
       card.classList.add("is-dragging", "is-pointer-dragging");
