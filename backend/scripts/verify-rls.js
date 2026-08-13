@@ -256,6 +256,23 @@ async function withTenant(pool, user, handler) {
   }
 }
 
+async function queryAsAdmin(pool, sql, params = []) {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+    await applyTenantContext(client, { role: "admin" });
+    const result = await client.query(sql, params);
+    await client.query("COMMIT");
+    return result;
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 async function countRows(client, tableName, whereClause = "", values = []) {
   const { rows } = await client.query(`SELECT COUNT(*)::int AS count FROM ${tableName} ${whereClause}`, values);
   return rows[0].count;
@@ -278,6 +295,11 @@ async function main() {
   const verifierRole = `one_rls_${suffix}`;
   const verifierPassword = `RlsCheck-${crypto.randomBytes(12).toString("hex")}!`;
   const verifierPool = new Pool(buildVerifierPoolConfig(basePoolConfig, verifierRole, verifierPassword));
+  const calendarEventTitles = [
+    `Evento interno ${suffix}`,
+    `Evento Cliente A ${suffix}`,
+    `Evento Cliente B ${suffix}`
+  ];
   const ids = {
     users: [],
     clients: [],
@@ -495,10 +517,10 @@ async function main() {
         await owner.query(
           `
             INSERT INTO calendar_events (title, starts_at, ends_at, client_id, visibility, created_by)
-            VALUES ($1, NOW(), NOW() + INTERVAL '1 hour', NULL, 'team', $2)
+            VALUES ($1, NOW() + INTERVAL '30 days', NOW() + INTERVAL '30 days 1 hour', NULL, 'team', $2)
             RETURNING id
           `,
-          [`Evento interno ${suffix}`, managerA.id]
+          [calendarEventTitles[0], managerA.id]
         )
       ).rows[0];
       ids.calendarEvents.push(teamEvent.id);
@@ -507,10 +529,10 @@ async function main() {
         await owner.query(
           `
             INSERT INTO calendar_events (title, starts_at, ends_at, client_id, visibility, created_by)
-            VALUES ($1, NOW(), NOW() + INTERVAL '1 hour', $2, 'client', $3)
+            VALUES ($1, NOW() + INTERVAL '30 days', NOW() + INTERVAL '30 days 1 hour', $2, 'client', $3)
             RETURNING id
           `,
-          [`Evento Cliente A ${suffix}`, clientA.id, managerA.id]
+          [calendarEventTitles[1], clientA.id, managerA.id]
         )
       ).rows[0];
       ids.calendarEvents.push(calendarEventA.id);
@@ -519,10 +541,10 @@ async function main() {
         await owner.query(
           `
             INSERT INTO calendar_events (title, starts_at, ends_at, client_id, visibility, created_by)
-            VALUES ($1, NOW(), NOW() + INTERVAL '1 hour', $2, 'client', $3)
+            VALUES ($1, NOW() + INTERVAL '30 days', NOW() + INTERVAL '30 days 1 hour', $2, 'client', $3)
             RETURNING id
           `,
-          [`Evento Cliente B ${suffix}`, clientB.id, managerB.id]
+          [calendarEventTitles[2], clientB.id, managerB.id]
         )
       ).rows[0];
       ids.calendarEvents.push(calendarEventB.id);
@@ -649,30 +671,56 @@ async function main() {
       await verifierPool.end().catch(() => {});
 
       if (ids.messages.length) {
-        await step("cleanup messages", () => cleanupPool.query("DELETE FROM messages WHERE id = ANY($1::int[])", [ids.messages]));
+        await step("cleanup messages", () => queryAsAdmin(cleanupPool, "DELETE FROM messages WHERE id = ANY($1::int[])", [ids.messages]));
       }
       if (ids.charges.length) {
-        await step("cleanup charges", () => cleanupPool.query("DELETE FROM charges WHERE id = ANY($1::int[])", [ids.charges]));
+        await step("cleanup charges", () => queryAsAdmin(cleanupPool, "DELETE FROM charges WHERE id = ANY($1::int[])", [ids.charges]));
       }
       if (ids.calendarEvents.length) {
-        await step("cleanup calendar_events", () =>
-          cleanupPool.query("DELETE FROM calendar_events WHERE id = ANY($1::int[])", [ids.calendarEvents])
+        await step("cleanup calendar_event_notifications", () =>
+          queryAsAdmin(
+            cleanupPool,
+            "DELETE FROM notifications WHERE entity_type = 'calendar_event' AND entity_id = ANY($1::int[])",
+            [ids.calendarEvents]
+          )
         );
       }
+      await step("cleanup calendar_event_notifications_by_title", () =>
+        queryAsAdmin(
+          cleanupPool,
+          `
+            DELETE FROM notifications
+            WHERE entity_type = 'calendar_event'
+              AND (
+                entity_id IN (SELECT id FROM calendar_events WHERE title = ANY($1::text[]))
+                OR body ~ $2
+              )
+          `,
+          [calendarEventTitles, `"Evento (interno|Cliente [AB]) ${suffix}"`]
+        )
+      );
+      if (ids.calendarEvents.length) {
+        await step("cleanup calendar_events", () =>
+          queryAsAdmin(cleanupPool, "DELETE FROM calendar_events WHERE id = ANY($1::int[])", [ids.calendarEvents])
+        );
+      }
+      await step("cleanup calendar_events_by_title", () =>
+        queryAsAdmin(cleanupPool, "DELETE FROM calendar_events WHERE title = ANY($1::text[])", [calendarEventTitles])
+      );
       if (ids.contacts.length) {
-        await step("cleanup contacts", () => cleanupPool.query("DELETE FROM contacts WHERE id = ANY($1::int[])", [ids.contacts]));
+        await step("cleanup contacts", () => queryAsAdmin(cleanupPool, "DELETE FROM contacts WHERE id = ANY($1::int[])", [ids.contacts]));
       }
       if (ids.invoices.length) {
-        await step("cleanup invoices", () => cleanupPool.query("DELETE FROM invoices WHERE id = ANY($1::int[])", [ids.invoices]));
+        await step("cleanup invoices", () => queryAsAdmin(cleanupPool, "DELETE FROM invoices WHERE id = ANY($1::int[])", [ids.invoices]));
       }
       if (ids.campaigns.length) {
-        await step("cleanup campaigns", () => cleanupPool.query("DELETE FROM campaigns WHERE id = ANY($1::int[])", [ids.campaigns]));
+        await step("cleanup campaigns", () => queryAsAdmin(cleanupPool, "DELETE FROM campaigns WHERE id = ANY($1::int[])", [ids.campaigns]));
       }
       if (ids.clients.length) {
-        await step("cleanup clients", () => cleanupPool.query("DELETE FROM clients WHERE id = ANY($1::int[])", [ids.clients]));
+        await step("cleanup clients", () => queryAsAdmin(cleanupPool, "DELETE FROM clients WHERE id = ANY($1::int[])", [ids.clients]));
       }
       if (ids.users.length) {
-        await step("cleanup users", () => cleanupPool.query("DELETE FROM users WHERE id = ANY($1::int[])", [ids.users]));
+        await step("cleanup users", () => queryAsAdmin(cleanupPool, "DELETE FROM users WHERE id = ANY($1::int[])", [ids.users]));
       }
       await step("cleanup revoke public schema", () => cleanupPool.query(`REVOKE USAGE ON SCHEMA public FROM "${verifierRole}"`));
       await step("cleanup revoke app schema", () => cleanupPool.query(`REVOKE USAGE ON SCHEMA app FROM "${verifierRole}"`));
