@@ -3,6 +3,7 @@ const { Pool } = require("pg");
 const env = require("../src/config/env");
 const { applyTenantContext } = require("../src/db/tenantContext");
 const { buildDatabaseSslConfig } = require("../src/utils/databaseSsl");
+const { withIpv4Stream } = require("../src/utils/pgNetwork");
 
 function assert(condition, message) {
   if (!condition) {
@@ -43,22 +44,22 @@ function buildBasePoolConfig() {
     config.ssl = sslConfig;
   }
 
-  return config;
+  return withIpv4Stream(config);
 }
 
 function buildVerifierPoolConfig(baseConfig, username, password) {
   if (baseConfig.connectionString) {
-    return {
+    return withIpv4Stream({
       ...baseConfig,
       connectionString: buildConnectionString(baseConfig.connectionString, username, password)
-    };
+    });
   }
 
-  return {
+  return withIpv4Stream({
     ...baseConfig,
     user: username,
     password
-  };
+  });
 }
 
 function getTargetHost(config) {

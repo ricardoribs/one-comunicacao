@@ -1,6 +1,7 @@
 const { Pool } = require('pg');
 const env = require('./env');
 const { buildDatabaseSslConfig } = require('../utils/databaseSsl');
+const { withIpv4Stream } = require('../utils/pgNetwork');
 
 function createPgMemPool() {
   const { newDb } = require('pg-mem');
@@ -460,7 +461,7 @@ function buildPoolConfig() {
     config.ssl = sslConfig;
   }
 
-  return config;
+  return withIpv4Stream(config);
 }
 
 module.exports = shouldUsePgMem
