@@ -231,7 +231,7 @@ const ROLE_DATA_ACCESS = {
     reports: true,
     materials: true,
     files: true,
-    integrations: true
+    integrations: false
   }
 };
 
@@ -9269,7 +9269,6 @@ async function initializeApp() {
   document.getElementById("home-date").textContent = new Intl.DateTimeFormat("pt-BR", {
     dateStyle: "full"
   }).format(new Date());
-  document.getElementById("login-screen").classList.add("hidden");
   syncNavigation();
   bindSidebarInteractions();
   bindLegacyInlineHandlers();
@@ -9277,12 +9276,15 @@ async function initializeApp() {
     state.activePage = "perfil";
     syncNavigation();
     await loadMyProfile({ force: true, silent: true });
+    renderAll();
+    document.getElementById("login-screen").classList.add("hidden");
     openModal("alterar-senha");
     showToast("Atualize sua senha antes de continuar.");
     return;
   }
   await refreshData();
   await refreshNotifications({ silent: true, suppressErrors: true });
+  document.getElementById("login-screen").classList.add("hidden");
   startNotificationPolling();
 }
 
@@ -10987,7 +10989,6 @@ async function boot() {
   const handoff = loadInternalHandoff();
 
   if (handoff?.requestedAt) {
-    document.getElementById("login-screen").classList.add("hidden");
     clearInternalHandoff();
     try {
       state.session = await APP.refreshSession();

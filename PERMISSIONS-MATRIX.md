@@ -10,7 +10,7 @@ O frontend pode ocultar telas e acoes, mas a decisao final de acesso sempre acon
 - `gestor`: gestao operacional e comercial do escopo; ve financeiro de campanhas/cobrancas, mas nao gerencia faturas.
 - `designer`: execucao de tarefas, producao, arquivos e relatorios; ve clientes de forma limitada; nao acessa CRM nem financeiro.
 - `comercial`: CRM, clientes, campanhas, tarefas e financeiro comercial; nao gerencia calendario nem arquivos/producao.
-- `dev`: suporte tecnico; ve dashboard, clientes limitados, calendario, tarefas, materiais, arquivos, relatorios e metricas; nao acessa CRM nem financeiro.
+- `dev`: suporte tecnico; ve dashboard, clientes limitados, calendario, tarefas, materiais, arquivos e relatorios; nao acessa CRM, analytics nem financeiro.
 
 ## Capacidades
 
@@ -37,7 +37,7 @@ O frontend pode ocultar telas e acoes, mas a decisao final de acesso sempre acon
 | `view_files` | sim | sim | sim | sim | sim |
 | `manage_files` | sim | sim | sim | nao | nao |
 | `view_reports` | sim | sim | sim | sim | sim |
-| `view_metrics` | sim | sim | nao | nao | sim |
+| `view_metrics` | sim | sim | nao | nao | nao |
 | `view_invoices` | sim | nao | nao | sim | nao |
 | `manage_invoices` | sim | nao | nao | sim | nao |
 | `view_charges` | sim | sim | nao | sim | nao |
