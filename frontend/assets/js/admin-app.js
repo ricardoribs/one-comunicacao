@@ -254,6 +254,9 @@ const kanbanRuntime = {
   dragOffsetY: 0,
   dragClientX: 0,
   dragClientY: 0,
+  dragStartX: 0,
+  dragStartY: 0,
+  dragMoved: false,
   autoScrollFrame: null,
   autoScrollX: 0,
   scrollSyncBound: false,
@@ -6747,6 +6750,9 @@ function clearKanbanDragArtifacts() {
   kanbanRuntime.dragOffsetY = 0;
   kanbanRuntime.dragClientX = 0;
   kanbanRuntime.dragClientY = 0;
+  kanbanRuntime.dragStartX = 0;
+  kanbanRuntime.dragStartY = 0;
+  kanbanRuntime.dragMoved = false;
 }
 
 function resolveKanbanColumnFromPoint(board, clientX, clientY) {
@@ -6921,6 +6927,12 @@ function bindKanbanBoardInteractions() {
 
     kanbanRuntime.dragClientX = Number(event.clientX || 0);
     kanbanRuntime.dragClientY = Number(event.clientY || 0);
+    if (
+      Math.abs(kanbanRuntime.dragClientX - kanbanRuntime.dragStartX) > 8 ||
+      Math.abs(kanbanRuntime.dragClientY - kanbanRuntime.dragStartY) > 8
+    ) {
+      kanbanRuntime.dragMoved = true;
+    }
 
     const left = Number(event.clientX || 0) - kanbanRuntime.dragOffsetX;
     const top = Number(event.clientY || 0) - kanbanRuntime.dragOffsetY;
@@ -6937,6 +6949,7 @@ function bindKanbanBoardInteractions() {
 
     const column = resolveKanbanColumnFromPoint(board, Number(event.clientX), Number(event.clientY));
     const taskId = Number(kanbanRuntime.dragTaskId || 0);
+    const shouldOpenTask = !kanbanRuntime.dragMoved;
     clearDropTargets();
     document.body.classList.remove("kanban-drag-active");
     stopKanbanDragAutoScroll();
@@ -6944,6 +6957,11 @@ function bindKanbanBoardInteractions() {
     document.removeEventListener("pointerup", handlePointerUp, true);
     document.removeEventListener("pointercancel", handlePointerUp, true);
     clearKanbanDragArtifacts();
+
+    if (shouldOpenTask && taskId) {
+      openModal("nova-tarefa", taskId);
+      return;
+    }
 
     if (!taskId || !column?.dataset.kanbanColumn) {
       return;
@@ -6981,6 +6999,9 @@ function bindKanbanBoardInteractions() {
       kanbanRuntime.dragOffsetY = Number(event.clientY) - rect.top;
       kanbanRuntime.dragClientX = Number(event.clientX || 0);
       kanbanRuntime.dragClientY = Number(event.clientY || 0);
+      kanbanRuntime.dragStartX = Number(event.clientX || 0);
+      kanbanRuntime.dragStartY = Number(event.clientY || 0);
+      kanbanRuntime.dragMoved = false;
 
       card.insertAdjacentElement("afterend", placeholder);
       card.classList.add("is-dragging", "is-pointer-dragging");
