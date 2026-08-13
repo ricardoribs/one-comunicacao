@@ -804,6 +804,10 @@ function hasRoleDataAccess(capability) {
   return Boolean(ROLE_DATA_ACCESS[state.session?.user?.role]?.[capability]);
 }
 
+function canAccessPage(page) {
+  return (PAGE_ACCESS[state.session?.user?.role] || []).includes(page);
+}
+
 function canManageTasks() {
   return hasRoleDataAccess("manageTasks");
 }
@@ -5438,40 +5442,46 @@ function renderHome() {
     const scopedClientsCount = hasRoleDataAccess("clients") && state.clients.length
       ? state.clients.length
       : Number(state.dashboard.summary.clients_count || 0);
-    const homeCards = [
-      {
+    const homeCards = [];
+    const hasCard = (label) => homeCards.some((card) => card.label === label);
+
+    if (hasRoleDataAccess("clients")) {
+      homeCards.push({
         label: "Clientes Ativos",
         value: scopedClientsCount,
         sub: hasRoleDataAccess("clients") ? `${scopedClientsCount} cadastrados` : "escopo atual do perfil",
-        page: "crm",
+        page: canAccessPage("crm") ? "crm" : "",
         tabGroup: "crm",
         tab: "clientes"
-      },
-      {
+      });
+    }
+
+    if (hasRoleDataAccess("campaigns")) {
+      homeCards.push({
         label: "Campanhas",
         value: Number(state.dashboard.summary.campaigns_count || activeCampaignCount),
         sub: activeCampaignCount
           ? `${formatNumber(campaignClientCount)} ${campaignClientCount === 1 ? "cliente em mídia" : "clientes em mídia"}`
           : "Nenhuma campanha em andamento",
-        page: "campanhas"
-      }
-    ];
+        page: canAccessPage("campanhas") ? "campanhas" : ""
+      });
+    }
 
     if (hasRoleDataAccess("contacts")) {
       homeCards.push({
         label: "Leads",
         value: state.dashboard.summary.leads,
         sub: state.contacts.length ? `${state.contacts.length} contatos capturados` : "Nenhum lead capturado",
-        page: "crm",
+        page: canAccessPage("crm") ? "crm" : "",
         tabGroup: "crm",
         tab: "pipeline"
       });
-    } else {
+    } else if (hasRoleDataAccess("tasks")) {
       homeCards.push({
         label: "Tarefas abertas",
         value: state.dashboard.summary.open_tasks || openTasks,
         sub: `${openTasks} em acompanhamento`,
-        page: "kanban"
+        page: canAccessPage("kanban") ? "kanban" : ""
       });
     }
 
@@ -5480,7 +5490,7 @@ function renderHome() {
         label: "Faturamento",
         value: formatCurrency(state.dashboard.summary.revenue),
         sub: state.invoices.length ? `${state.invoices.length} faturas no sistema` : "Sem faturas lançadas",
-        page: "financeiro",
+        page: canAccessPage("financeiro") ? "financeiro" : "",
         valueClass: " is-currency"
       });
     } else if (hasRoleDataAccess("materials")) {
@@ -5488,17 +5498,31 @@ function renderHome() {
         label: "Entregas",
         value: state.materials.length,
         sub: `${state.reports.length} relatórios disponíveis`,
-        page: "producao"
+        page: canAccessPage("producao") ? "producao" : ""
       });
     } else if (hasRoleDataAccess("metrics")) {
       homeCards.push({
         label: "Métricas",
         value: state.metrics.length,
         sub: `${state.metrics.filter((metric) => Number(metric.leads || 0) > 0).length} com leads`,
-        page: "analytics"
+        page: canAccessPage("analytics") ? "analytics" : ""
       });
     } else {
-      homeCards.push({ label: "Arquivos", value: state.files.length, sub: "base operacional do perfil" });
+      homeCards.push({
+        label: "Arquivos",
+        value: state.files.length,
+        sub: "base operacional do perfil",
+        page: canAccessPage("producao") ? "producao" : ""
+      });
+    }
+
+    if (homeCards.length < 4 && hasRoleDataAccess("files") && !hasCard("Arquivos")) {
+      homeCards.push({
+        label: "Arquivos",
+        value: state.files.length,
+        sub: "base operacional do perfil",
+        page: canAccessPage("producao") ? "producao" : ""
+      });
     }
 
     grid.innerHTML = homeCards
