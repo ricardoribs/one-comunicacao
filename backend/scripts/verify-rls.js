@@ -22,6 +22,30 @@ function buildConnectionString(databaseUrl, username, password) {
   return url.toString();
 }
 
+function getConnectionUsername(config) {
+  if (config.user) {
+    return String(config.user);
+  }
+
+  if (config.connectionString) {
+    return decodeURIComponent(new URL(config.connectionString).username);
+  }
+
+  return "";
+}
+
+function getTargetPort(config) {
+  if (config.port) {
+    return Number(config.port);
+  }
+
+  if (config.connectionString) {
+    return Number(new URL(config.connectionString).port || 5432);
+  }
+
+  return 5432;
+}
+
 function buildBasePoolConfig() {
   const config = {};
 
@@ -47,17 +71,51 @@ function buildBasePoolConfig() {
   return withIpv4Stream(config);
 }
 
+function getHostCandidates(config) {
+  const candidates = [getTargetHost(config)];
+
+  if (config.ssl && typeof config.ssl === "object" && config.ssl.servername) {
+    candidates.push(String(config.ssl.servername));
+  }
+
+  return candidates.filter(Boolean);
+}
+
+function isSupabasePoolerConfig(config) {
+  return getHostCandidates(config).some((host) => host.includes(".pooler.supabase.com"));
+}
+
+function buildSupabasePoolerUsername(baseConfig, username) {
+  if (!isSupabasePoolerConfig(baseConfig)) {
+    return username;
+  }
+
+  const baseUsername = getConnectionUsername(baseConfig);
+  const externalIdIndex = baseUsername.indexOf(".");
+  const externalId = externalIdIndex === -1 ? "" : baseUsername.slice(externalIdIndex + 1);
+
+  if (!externalId) {
+    throw new Error(
+      "verify:rls com Supabase pooler exige usuario no formato role.project-ref, por exemplo postgres.xxxxxxxxxxxxxxxxxxxx."
+    );
+  }
+
+  return `${username}.${externalId}`;
+}
+
 function buildVerifierPoolConfig(baseConfig, username, password) {
+  const verifierUsername = buildSupabasePoolerUsername(baseConfig, username);
+
   if (baseConfig.connectionString) {
     return withIpv4Stream({
       ...baseConfig,
-      connectionString: buildConnectionString(baseConfig.connectionString, username, password)
+      connectionString: buildConnectionString(baseConfig.connectionString, verifierUsername, password)
     });
   }
 
   return withIpv4Stream({
     ...baseConfig,
-    user: username,
+    user: verifierUsername,
     password
   });
 }
@@ -72,6 +130,47 @@ function getTargetHost(config) {
   }
 
   return "";
+}
+
+function isSupabaseDirectHost(host) {
+  return /^db\.[a-z0-9-]+\.supabase\.co$/i.test(host);
+}
+
+function validateVerificationConfig(config) {
+  if (!isSupabasePoolerConfig(config)) {
+    return;
+  }
+
+  if (getTargetPort(config) !== 5432) {
+    throw new Error(
+      "verify:rls com Supabase pooler deve usar Session pooler na porta 5432. Nao use Transaction pooler na porta 6543 para este gate."
+    );
+  }
+
+  buildSupabasePoolerUsername(config, "one_rls_check");
+}
+
+async function resolveVerificationPoolConfig(config) {
+  try {
+    const resolvedConfig = await resolvePgHostIpv4(config);
+    validateVerificationConfig(resolvedConfig);
+    return withIpv4Stream(resolvedConfig);
+  } catch (error) {
+    const targetHost = getTargetHost(config);
+    const fallbackConfig = buildBasePoolConfig();
+    const fallbackHost = getTargetHost(fallbackConfig);
+
+    if (isSupabaseDirectHost(targetHost) && isSupabasePoolerConfig(fallbackConfig)) {
+      console.warn(
+        `VERIFY_DATABASE_URL aponta para Supabase direct sem IPv4 acessivel (${targetHost}); usando ${fallbackHost} via Session pooler para verify:rls.`
+      );
+      const resolvedFallbackConfig = await resolvePgHostIpv4(fallbackConfig);
+      validateVerificationConfig(resolvedFallbackConfig);
+      return withIpv4Stream(resolvedFallbackConfig);
+    }
+
+    throw error;
+  }
 }
 
 async function buildVerificationBasePoolConfig() {
@@ -104,14 +203,7 @@ async function buildVerificationBasePoolConfig() {
     config.ssl = sslConfig;
   }
 
-  const targetHost = getTargetHost(config);
-  if (targetHost.includes(".pooler.supabase.com")) {
-    throw new Error(
-      "verify:rls requer conexao direta ao Postgres. O pooler do Supabase nao aceita o role temporario criado pelo teste. Defina VERIFY_DATABASE_URL com a Direct connection do Supabase."
-    );
-  }
-
-  return withIpv4Stream(await resolvePgHostIpv4(config));
+  return resolveVerificationPoolConfig(config);
 }
 
 async function withTenant(pool, user, handler) {

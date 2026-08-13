@@ -126,10 +126,10 @@ O smoke autenticado deve rodar no CI ou no pos-deploy, nao no build do Render. P
 SMOKE_BASE_URL=https://one-comunicacao-staging.onrender.com SMOKE_EMAIL=<usuario interno> SMOKE_PASSWORD=<senha> npm run postdeploy:smoke --prefix backend
 ```
 
-O `verify:rls` exige `VERIFY_DATABASE_URL` com permissao para criar um role temporario e testar isolamento. O build do Render executa esse gate via `predeploy:render`; se a conexao direta do Supabase nao for alcancavel a partir do Render, configure `VERIFY_DATABASE_URL` para um endpoint PostgreSQL alcancavel pelo Render ou bloqueie o deploy pelo CI antes do Render:
+O `verify:rls` exige `VERIFY_DATABASE_URL` com permissao para criar um role temporario e testar isolamento. O build do Render executa esse gate via `predeploy:render`; como a Direct connection do Supabase pode ser IPv6-only, no Render use a Session pooler connection string do Supabase, na porta `5432`, com usuario no formato `postgres.<project-ref>`.
 
 ```bash
-VERIFY_DATABASE_URL=<direct connection do Supabase> npm run verify:rls --prefix backend
+VERIFY_DATABASE_URL=<session pooler connection string do Supabase> npm run verify:rls --prefix backend
 ```
 
 Backlog operacional de servicos externos:

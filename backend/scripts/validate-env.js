@@ -189,10 +189,14 @@ Object.entries(CRITICAL_VARS).forEach(([name, description]) => validateVar(name,
 validateDatabaseConfig();
 
 if (isProductionTarget && requireRlsVerification) {
-  validateVar('VERIFY_DATABASE_URL', 'URL direta do banco para executar verify:rls no gate de deploy', 'critical');
+  validateVar(
+    'VERIFY_DATABASE_URL',
+    'URL do banco para executar verify:rls no gate de deploy; no Render use Supabase Session pooler',
+    'critical'
+  );
 } else if (isProductionTarget && !hasValue('VERIFY_DATABASE_URL')) {
   pushWarning(
-    'VERIFY_DATABASE_URL ausente; execute verify:rls no CI ou manualmente de um ambiente com acesso direto ao banco'
+    'VERIFY_DATABASE_URL ausente; execute verify:rls no CI ou manualmente de um ambiente com acesso ao banco'
   );
 }
 
