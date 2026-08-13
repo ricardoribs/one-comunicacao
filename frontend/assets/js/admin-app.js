@@ -5433,10 +5433,169 @@ function renderHomeQuickActions() {
   container.style.display = actions.length ? "flex" : "none";
 }
 
+function getRuntimeEnvironmentInfo() {
+  const host = window.location.hostname || "localhost";
+  const isLocal = host === "localhost" || host === "127.0.0.1";
+  const isStaging = /staging|onrender|dedyn/i.test(host);
+
+  if (isLocal) {
+    return { value: "LOCAL", sub: "ambiente de desenvolvimento" };
+  }
+
+  if (isStaging) {
+    return { value: "STG", sub: "ambiente de staging" };
+  }
+
+  return { value: "PRD", sub: "ambiente de produção" };
+}
+
+function renderHomeKpiCards(grid, cards) {
+  grid.innerHTML = cards
+    .map((item) => {
+      const value = item.displayValue ?? (item.label === "Faturamento" ? item.value : formatNumber(item.value));
+      return `
+        <button
+          type="button"
+          class="kpi-card${item.page ? " kpi-card-link" : ""}"
+          ${item.page ? `data-home-page="${item.page}"` : "disabled"}
+          ${item.tabGroup ? `data-home-group="${item.tabGroup}"` : ""}
+          ${item.tab ? `data-home-tab="${item.tab}"` : ""}
+          ${item.page ? `aria-label="Abrir ${item.label}"` : `aria-disabled="true" tabindex="-1"`}
+        >
+          <div class="kpi-label">${escapeHtml(item.label)}</div>
+          <div class="kpi-val${item.valueClass || ""}">${escapeHtml(value)}</div>
+          <div class="kpi-sub">${escapeHtml(item.sub)}</div>
+        </button>
+      `;
+    })
+    .join("");
+  bindHomeCardInteractions(grid);
+}
+
+function renderDevHomeSections() {
+  const failures = state.loadFailures instanceof Set ? state.loadFailures : new Set();
+  const moduleRows = [
+    ["Dashboard", "dashboard"],
+    ["Tarefas", "tarefas"],
+    ["Checklist", "checklist"],
+    ["Arquivos", "arquivos"],
+    ["Produção", "produção"],
+    ["Relatórios", "relatórios"]
+  ];
+  const environment = getRuntimeEnvironmentInfo();
+  const topCards = document.querySelectorAll("#page-home .two-col .card");
+  const lowerCards = document.querySelectorAll("#page-home .two-col")[1]?.querySelectorAll(".card") || [];
+
+  if (topCards[0]) {
+    topCards[0].innerHTML = `
+      <div class="section-header"><div><div class="section-title">Saúde dos módulos</div><div class="section-sub">Falhas de carga visíveis no painel</div></div></div>
+      ${moduleRows
+        .map(([label, key]) => {
+          const failed = failures.has(key);
+          return `
+            <div class="item-row">
+              <div>
+                <div class="block-title-sm">${escapeHtml(label)}</div>
+                <div class="block-text-xs">${failed ? "Requer nova tentativa" : "Carregado na sessão atual"}</div>
+              </div>
+              <span class="badge ${failed ? "badge-red" : "badge-green"}">${failed ? "Falha" : "OK"}</span>
+            </div>
+          `;
+        })
+        .join("")}
+    `;
+  }
+
+  if (topCards[1]) {
+    topCards[1].innerHTML = `
+      <div class="section-header"><div><div class="section-title">Ambiente técnico</div><div class="section-sub">Contexto detectado no navegador</div></div></div>
+      <div class="item-row"><div><div class="block-title-sm">Host</div><div class="block-text-xs">${escapeHtml(window.location.hostname || "-")}</div></div><span class="badge badge-gray">${escapeHtml(environment.value)}</span></div>
+      <div class="item-row"><div><div class="block-title-sm">API base</div><div class="block-text-xs">${escapeHtml(API_BASE)}</div></div><span class="badge badge-green">Ativa</span></div>
+      <div class="item-row"><div><div class="block-title-sm">Sessão</div><div class="block-text-xs">${escapeHtml(state.session?.user?.email || "usuário autenticado")}</div></div><span class="badge badge-blue">Dev</span></div>
+    `;
+  }
+
+  if (lowerCards[0]) {
+    const accessiblePages = (PAGE_ACCESS.dev || [])
+      .filter((page) => !["home", "perfil"].includes(page))
+      .map((page) => PAGE_LABELS[page])
+      .filter(Boolean);
+
+    lowerCards[0].innerHTML = `
+      <div class="section-header"><div><div class="section-title">Acessos técnicos</div><div class="section-sub">Módulos liberados para suporte</div></div></div>
+      ${accessiblePages
+        .map(
+          (label) => `
+            <div class="item-row">
+              <div>
+                <div class="block-title-sm">${escapeHtml(label)}</div>
+                <div class="block-text-xs">Acesso restrito ao perfil de desenvolvimento</div>
+              </div>
+              <span class="badge badge-gray">Leitura</span>
+            </div>
+          `
+        )
+        .join("")}
+    `;
+  }
+
+  if (lowerCards[1]) {
+    const checklistItems = getChecklistStore().activeItems || [];
+    const openChecklist = checklistItems.filter((item) => !item.done);
+
+    lowerCards[1].innerHTML = `
+      <div class="section-header"><div><div class="section-title">Checklist técnico</div><div class="section-sub">Foco diário do perfil dev</div></div></div>
+      ${
+        openChecklist.length
+          ? openChecklist
+              .slice(0, 4)
+              .map(
+                (item) => `
+                  <div class="item-row">
+                    <div>
+                      <div class="block-title-sm">${escapeHtml(item.label)}</div>
+                      <div class="block-text-xs">Pendente no checklist de hoje</div>
+                    </div>
+                    <span class="badge badge-yellow">Aberto</span>
+                  </div>
+                `
+              )
+              .join("")
+          : UI.empty("Sem checklist técnico", "Use o foco diário no Kanban para registrar pendências técnicas.")
+      }
+    `;
+  }
+}
+
 function renderHome() {
   const grid = document.querySelector("#page-home .kpi-grid");
   if (grid && state.dashboard) {
     const openTasks = state.tasks.filter((task) => normalizeTaskStatusLabel(task.status) !== "Concluido").length;
+    if (state.session?.user?.role === "dev") {
+      const environment = getRuntimeEnvironmentInfo();
+      const failureCount = state.loadFailures instanceof Set ? state.loadFailures.size : 0;
+      const openChecklist = getChecklistStore().activeItems.filter((item) => !item.done).length;
+
+      renderHomeKpiCards(grid, [
+        { label: "Ambiente", displayValue: environment.value, sub: environment.sub },
+        {
+          label: "API",
+          displayValue: failureCount ? "Falha" : "OK",
+          sub: failureCount ? `${failureCount} módulo(s) com falha` : "dados carregados"
+        },
+        { label: "Falhas", value: failureCount, sub: "módulos com erro na sessão" },
+        {
+          label: "Checklist",
+          value: openChecklist,
+          sub: `${openChecklist} ${openChecklist === 1 ? "pendência técnica" : "pendências técnicas"}`,
+          page: canAccessPage("kanban") ? "kanban" : ""
+        }
+      ]);
+      renderHomeQuickActions();
+      renderDevHomeSections();
+      return;
+    }
+
     const activeCampaignCount = getActiveCampaigns().length;
     const campaignClientCount = new Set(state.campaigns.map((campaign) => Number(campaign.client_id || 0)).filter(Boolean)).size;
     const scopedClientsCount = hasRoleDataAccess("clients") && state.clients.length
@@ -5525,25 +5684,7 @@ function renderHome() {
       });
     }
 
-    grid.innerHTML = homeCards
-      .map(
-        (item) => `
-          <button
-            type="button"
-            class="kpi-card${item.page ? " kpi-card-link" : ""}"
-            ${item.page ? `data-home-page="${item.page}"` : "disabled"}
-            ${item.tabGroup ? `data-home-group="${item.tabGroup}"` : ""}
-            ${item.tab ? `data-home-tab="${item.tab}"` : ""}
-            ${item.page ? `aria-label="Abrir ${item.label}"` : `aria-disabled="true" tabindex="-1"`}
-          >
-            <div class="kpi-label">${escapeHtml(item.label)}</div>
-            <div class="kpi-val${item.valueClass || ""}">${escapeHtml(item.label === "Faturamento" ? item.value : formatNumber(item.value))}</div>
-            <div class="kpi-sub">${escapeHtml(item.sub)}</div>
-          </button>
-        `
-      )
-      .join("");
-    bindHomeCardInteractions(grid);
+    renderHomeKpiCards(grid, homeCards);
   }
 
   renderHomeQuickActions();
