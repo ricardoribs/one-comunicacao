@@ -15,7 +15,8 @@ async function applyTenantContext(client, user) {
     `SELECT
       set_config('app.current_role', COALESCE($1, ''), true),
       set_config('app.current_user_id', COALESCE($2::text, ''), true),
-      set_config('app.current_client_id', COALESCE($3::text, ''), true)`,
+      set_config('app.current_client_id', COALESCE($3::text, ''), true),
+      set_config('app.current_tenant', COALESCE($3::text, ''), true)`,
     [context.role, context.userId, context.clientId]
   );
 

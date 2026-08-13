@@ -250,6 +250,24 @@ if (isProductionTarget && !hasValue('FINANCIAL_ENCRYPTION_KEY')) {
   pushError('FINANCIAL_ENCRYPTION_KEY obrigatorio em producao');
 }
 
+const googleCalendarConfigured = hasValue('GOOGLE_CLIENT_ID') || hasValue('GOOGLE_CLIENT_SECRET');
+if (isProductionTarget && googleCalendarConfigured) {
+  const missingGoogleConfig = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_REDIRECT_URI'].filter(
+    (name) => !hasValue(name)
+  );
+  if (missingGoogleConfig.length > 0) {
+    pushError(`Google Calendar incompleto: ${missingGoogleConfig.join(', ')}`);
+  }
+
+  if (!hasValue('GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY')) {
+    pushError('GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY obrigatorio quando Google Calendar esta configurado');
+  }
+}
+
+if (hasValue('GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY') && isProductionTarget) {
+  validateLength('GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY', 32, env.GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY);
+}
+
 if (isProductionTarget && env.UPLOAD_REQUIRE_MALWARE_SCAN !== 'true') {
   pushWarning(
     'UPLOAD_REQUIRE_MALWARE_SCAN=false em producao; ClamAV fica em backlog e tipos arriscados seguem bloqueados por mitigacao'

@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { runWithTenantContext } = require('../db/tenantDb');
 const { normalizePagination, paginationClause } = require('../utils/pagination');
 const isRecoverableSchemaError = require('../utils/isRecoverableSchemaError');
 
@@ -44,7 +45,18 @@ const NOTIFICATION_TYPE_PREFERENCE_MAP = Object.freeze({
   calendar_event_reminder_1h: 'calendar_1h',
 });
 
+const SERVICE_ACTOR = Object.freeze({ role: 'admin' });
+const serviceExecutor = {
+  query(sql, params = []) {
+    return runWithTenantContext(SERVICE_ACTOR, (client) => client.query(sql, params));
+  },
+};
+
 function getExecutor(executor = pool) {
+  if (!executor || executor === pool) {
+    return serviceExecutor;
+  }
+
   return executor;
 }
 
@@ -293,7 +305,7 @@ function extractNotificationPreferences(record = {}) {
 
 async function listActiveInternalTeam(actor = null) {
   if (actor?.role === 'client' && actor.client_id) {
-    const { rows } = await pool.query(
+    const { rows } = await getExecutor().query(
       `/* tenant-audit: allow-direct-query client team lookup scoped by actor.client_id */
        SELECT DISTINCT
          u.id,
@@ -325,7 +337,7 @@ async function listActiveInternalTeam(actor = null) {
   }
 
   if (actor?.role && actor.role !== 'admin') {
-    const { rows } = await pool.query(
+    const { rows } = await getExecutor().query(
       `SELECT
          u.id,
          u.name,
@@ -351,7 +363,7 @@ async function listActiveInternalTeam(actor = null) {
     return rows;
   }
 
-  const { rows } = await pool.query(
+  const { rows } = await getExecutor().query(
     `SELECT
        u.id,
        u.name,
@@ -437,7 +449,7 @@ async function update(id, data, executor = pool) {
 }
 
 async function remove(id) {
-  await pool.query('DELETE FROM users WHERE id = $1', [id]);
+  await getExecutor().query('DELETE FROM users WHERE id = $1', [id]);
 }
 
 async function findNotificationPreferencesById(id, executor = pool) {
@@ -501,7 +513,7 @@ async function findSecurityById(id, executor = pool) {
 }
 
 async function recordFailedLogin(id, lockThreshold, lockMinutes) {
-  const { rows } = await pool.query(
+  const { rows } = await getExecutor().query(
     `UPDATE users
      SET failed_login_attempts = failed_login_attempts + 1,
          locked_until = CASE
@@ -527,7 +539,7 @@ async function clearLoginFailures(id, executor = pool) {
 
 async function resetLoginFailures(id, metadata = {}) {
   try {
-    await pool.query(
+    await getExecutor().query(
       `UPDATE users
        SET failed_login_attempts = 0,
            locked_until = NULL,
@@ -543,7 +555,7 @@ async function resetLoginFailures(id, metadata = {}) {
       throw error;
     }
 
-    await pool.query(
+    await getExecutor().query(
       `UPDATE users
        SET failed_login_attempts = 0,
            locked_until = NULL,
@@ -556,7 +568,7 @@ async function resetLoginFailures(id, metadata = {}) {
 
 async function recordPresence(id, metadata = {}) {
   try {
-    await pool.query(
+    await getExecutor().query(
       `UPDATE users
        SET last_seen_at = NOW(),
            last_seen_ip = COALESCE(NULLIF($2::VARCHAR, ''), last_seen_ip),
@@ -695,7 +707,7 @@ async function findAnyAdmin(executor = pool) {
 }
 
 async function createEmailVerificationToken(data) {
-  const { rows } = await pool.query(
+  const { rows } = await getExecutor().query(
     `INSERT INTO email_verification_tokens (user_id, token_hash, expires_at)
      VALUES ($1, $2, $3)
      RETURNING id, user_id, token_hash, expires_at, used_at, created_at`,
@@ -705,7 +717,7 @@ async function createEmailVerificationToken(data) {
 }
 
 async function findEmailVerificationToken(tokenHash) {
-  const { rows } = await pool.query(
+  const { rows } = await getExecutor().query(
     `SELECT
        evt.id,
        evt.user_id,
@@ -723,7 +735,7 @@ async function findEmailVerificationToken(tokenHash) {
 }
 
 async function consumeEmailVerificationToken(tokenHash) {
-  const { rows } = await pool.query(
+  const { rows } = await getExecutor().query(
     `UPDATE email_verification_tokens
      SET used_at = NOW()
      WHERE token_hash = $1 AND used_at IS NULL
@@ -734,7 +746,7 @@ async function consumeEmailVerificationToken(tokenHash) {
 }
 
 async function markEmailVerified(userId) {
-  await pool.query(
+  await getExecutor().query(
     `UPDATE users
      SET email_verified_at = NOW()
      WHERE id = $1`,
@@ -743,7 +755,7 @@ async function markEmailVerified(userId) {
 }
 
 async function createPasswordResetToken(data) {
-  const { rows } = await pool.query(
+  const { rows } = await getExecutor().query(
     `INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
      VALUES ($1, $2, $3)
      RETURNING id, user_id, token_hash, expires_at, used_at, created_at`,
@@ -753,7 +765,7 @@ async function createPasswordResetToken(data) {
 }
 
 async function findPasswordResetToken(tokenHash) {
-  const { rows } = await pool.query(
+  const { rows } = await getExecutor().query(
     `SELECT
        prt.id,
        prt.user_id,
@@ -812,7 +824,7 @@ async function enableMfa(id, encryptedSecret, executor = pool) {
 
 async function anonymizeUser(id, hashedPassword) {
   const anonymizedEmail = `deleted-user-${id}-${Date.now()}@anon.invalid`;
-  await pool.query(
+  await getExecutor().query(
     `UPDATE users
      SET name = 'Conta removida',
          email = $2,

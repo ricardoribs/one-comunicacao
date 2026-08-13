@@ -1,0 +1,247 @@
+exports.up = (pgm) => {
+  pgm.sql(`
+    -- ============================================================
+    -- 1. users table - Most critical (contains password hashes)
+    -- ============================================================
+    ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE users FORCE ROW LEVEL SECURITY;
+
+    DROP POLICY IF EXISTS users_tenant_isolation ON users;
+    CREATE POLICY users_tenant_isolation ON users
+      FOR ALL
+      USING (
+        app.is_admin()
+        OR (
+          app.is_client()
+          AND client_id = app.current_client_id()
+        )
+        OR (
+          app.is_internal()
+          AND (
+            id = app.current_user_id()
+            OR client_id IN (
+              SELECT c.id FROM clients c
+              WHERE c.manager_id = app.current_user_id()
+            )
+          )
+        )
+      )
+      WITH CHECK (
+        app.is_admin()
+        OR (
+          app.is_client()
+          AND client_id = app.current_client_id()
+        )
+        OR (
+          app.is_internal()
+          AND (
+            id = app.current_user_id()
+            OR client_id IN (
+              SELECT c.id FROM clients c
+              WHERE c.manager_id = app.current_user_id()
+            )
+          )
+        )
+      );
+
+    -- ============================================================
+    -- 2. task_assignees - Follows task access pattern
+    -- ============================================================
+    ALTER TABLE task_assignees ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE task_assignees FORCE ROW LEVEL SECURITY;
+
+    DROP POLICY IF EXISTS task_assignees_tenant_isolation ON task_assignees;
+    CREATE POLICY task_assignees_tenant_isolation ON task_assignees
+      FOR ALL
+      USING (
+        app.is_admin()
+        OR EXISTS (
+          SELECT 1 FROM tasks t
+          WHERE t.id = task_assignees.task_id
+            AND app.can_access_task(t.id, t.client_id, t.assigned_to, t.created_by)
+        )
+      )
+      WITH CHECK (
+        app.is_admin()
+        OR EXISTS (
+          SELECT 1 FROM tasks t
+          WHERE t.id = task_assignees.task_id
+            AND app.can_access_task(t.id, t.client_id, t.assigned_to, t.created_by)
+        )
+      );
+
+    -- ============================================================
+    -- 3. notifications - User can only see their own
+    -- ============================================================
+    ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE notifications FORCE ROW LEVEL SECURITY;
+
+    DROP POLICY IF EXISTS notifications_tenant_isolation ON notifications;
+    CREATE POLICY notifications_tenant_isolation ON notifications
+      FOR ALL
+      USING (
+        app.is_admin()
+        OR user_id = app.current_user_id()
+      )
+      WITH CHECK (
+        app.is_admin()
+        OR user_id = app.current_user_id()
+      );
+
+    -- ============================================================
+    -- 4. calendar_event_reminders - Follows calendar_event access
+    -- ============================================================
+    ALTER TABLE calendar_event_reminders ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE calendar_event_reminders FORCE ROW LEVEL SECURITY;
+
+    DROP POLICY IF EXISTS calendar_event_reminders_tenant_isolation ON calendar_event_reminders;
+    CREATE POLICY calendar_event_reminders_tenant_isolation ON calendar_event_reminders
+      FOR ALL
+      USING (
+        app.is_admin()
+        OR EXISTS (
+          SELECT 1 FROM calendar_events ce
+          WHERE ce.id = calendar_event_reminders.event_id
+            AND app.can_read_calendar_event_row(ce.client_id, ce.visibility, ce.created_by)
+        )
+      )
+      WITH CHECK (
+        app.is_admin()
+        OR EXISTS (
+          SELECT 1 FROM calendar_events ce
+          WHERE ce.id = calendar_event_reminders.event_id
+            AND app.can_write_calendar_event_row(ce.client_id, ce.visibility)
+        )
+      );
+
+    -- ============================================================
+    -- 5. refresh_tokens - User can only see their own
+    -- ============================================================
+    ALTER TABLE refresh_tokens ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE refresh_tokens FORCE ROW LEVEL SECURITY;
+
+    DROP POLICY IF EXISTS refresh_tokens_tenant_isolation ON refresh_tokens;
+    CREATE POLICY refresh_tokens_tenant_isolation ON refresh_tokens
+      FOR ALL
+      USING (
+        app.is_admin()
+        OR user_id = app.current_user_id()
+      )
+      WITH CHECK (
+        app.is_admin()
+        OR user_id = app.current_user_id()
+      );
+
+    -- ============================================================
+    -- 6. revoked_access_tokens - User can only see their own
+    -- ============================================================
+    ALTER TABLE revoked_access_tokens ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE revoked_access_tokens FORCE ROW LEVEL SECURITY;
+
+    DROP POLICY IF EXISTS revoked_access_tokens_tenant_isolation ON revoked_access_tokens;
+    CREATE POLICY revoked_access_tokens_tenant_isolation ON revoked_access_tokens
+      FOR ALL
+      USING (
+        app.is_admin()
+        OR user_id = app.current_user_id()
+      )
+      WITH CHECK (
+        app.is_admin()
+        OR user_id = app.current_user_id()
+      );
+
+    -- ============================================================
+    -- 7. email_verification_tokens - User can only see their own
+    -- ============================================================
+    ALTER TABLE email_verification_tokens ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE email_verification_tokens FORCE ROW LEVEL SECURITY;
+
+    DROP POLICY IF EXISTS email_verification_tokens_tenant_isolation ON email_verification_tokens;
+    CREATE POLICY email_verification_tokens_tenant_isolation ON email_verification_tokens
+      FOR ALL
+      USING (
+        app.is_admin()
+        OR user_id = app.current_user_id()
+      )
+      WITH CHECK (
+        app.is_admin()
+        OR user_id = app.current_user_id()
+      );
+
+    -- ============================================================
+    -- 8. password_reset_tokens - User can only see their own
+    -- ============================================================
+    ALTER TABLE password_reset_tokens ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE password_reset_tokens FORCE ROW LEVEL SECURITY;
+
+    DROP POLICY IF EXISTS password_reset_tokens_tenant_isolation ON password_reset_tokens;
+    CREATE POLICY password_reset_tokens_tenant_isolation ON password_reset_tokens
+      FOR ALL
+      USING (
+        app.is_admin()
+        OR user_id = app.current_user_id()
+      )
+      WITH CHECK (
+        app.is_admin()
+        OR user_id = app.current_user_id()
+      );
+
+    -- ============================================================
+    -- 9. user_daily_checklists - User can only see their own
+    -- ============================================================
+    ALTER TABLE user_daily_checklists ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE user_daily_checklists FORCE ROW LEVEL SECURITY;
+
+    DROP POLICY IF EXISTS user_daily_checklists_tenant_isolation ON user_daily_checklists;
+    CREATE POLICY user_daily_checklists_tenant_isolation ON user_daily_checklists
+      FOR ALL
+      USING (
+        app.is_admin()
+        OR user_id = app.current_user_id()
+      )
+      WITH CHECK (
+        app.is_admin()
+        OR user_id = app.current_user_id()
+      );
+  `);
+};
+
+exports.down = (pgm) => {
+  pgm.sql(`
+    DROP POLICY IF EXISTS user_daily_checklists_tenant_isolation ON user_daily_checklists;
+    ALTER TABLE user_daily_checklists NO FORCE ROW LEVEL SECURITY;
+    ALTER TABLE user_daily_checklists DISABLE ROW LEVEL SECURITY;
+
+    DROP POLICY IF EXISTS password_reset_tokens_tenant_isolation ON password_reset_tokens;
+    ALTER TABLE password_reset_tokens NO FORCE ROW LEVEL SECURITY;
+    ALTER TABLE password_reset_tokens DISABLE ROW LEVEL SECURITY;
+
+    DROP POLICY IF EXISTS email_verification_tokens_tenant_isolation ON email_verification_tokens;
+    ALTER TABLE email_verification_tokens NO FORCE ROW LEVEL SECURITY;
+    ALTER TABLE email_verification_tokens DISABLE ROW LEVEL SECURITY;
+
+    DROP POLICY IF EXISTS revoked_access_tokens_tenant_isolation ON revoked_access_tokens;
+    ALTER TABLE revoked_access_tokens NO FORCE ROW LEVEL SECURITY;
+    ALTER TABLE revoked_access_tokens DISABLE ROW LEVEL SECURITY;
+
+    DROP POLICY IF EXISTS refresh_tokens_tenant_isolation ON refresh_tokens;
+    ALTER TABLE refresh_tokens NO FORCE ROW LEVEL SECURITY;
+    ALTER TABLE refresh_tokens DISABLE ROW LEVEL SECURITY;
+
+    DROP POLICY IF EXISTS calendar_event_reminders_tenant_isolation ON calendar_event_reminders;
+    ALTER TABLE calendar_event_reminders NO FORCE ROW LEVEL SECURITY;
+    ALTER TABLE calendar_event_reminders DISABLE ROW LEVEL SECURITY;
+
+    DROP POLICY IF EXISTS notifications_tenant_isolation ON notifications;
+    ALTER TABLE notifications NO FORCE ROW LEVEL SECURITY;
+    ALTER TABLE notifications DISABLE ROW LEVEL SECURITY;
+
+    DROP POLICY IF EXISTS task_assignees_tenant_isolation ON task_assignees;
+    ALTER TABLE task_assignees NO FORCE ROW LEVEL SECURITY;
+    ALTER TABLE task_assignees DISABLE ROW LEVEL SECURITY;
+
+    DROP POLICY IF EXISTS users_tenant_isolation ON users;
+    ALTER TABLE users NO FORCE ROW LEVEL SECURITY;
+    ALTER TABLE users DISABLE ROW LEVEL SECURITY;
+  `);
+};

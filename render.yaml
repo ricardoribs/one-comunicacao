@@ -58,6 +58,8 @@ services:
         sync: false
       - key: FINANCIAL_ENCRYPTION_KEY
         sync: false
+      - key: GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY
+        sync: false
       - key: UPLOAD_PROVIDER
         value: cloudinary
       - key: UPLOAD_MAX_FILE_SIZE_MB

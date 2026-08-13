@@ -7,32 +7,61 @@ const logger = require('../config/logger');
 /**
  * Criptografa tokens sensíveis antes de armazenar no banco
  */
+function getTokenEncryptionKey() {
+  const secret = env.googleCalendarTokenEncryptionKey;
+  if (!secret || String(secret).length < 32) {
+    throw new AppError('Chave de criptografia do Google Calendar ausente ou fraca', 500);
+  }
+
+  return crypto.createHash('sha256').update(secret).digest();
+}
+
 function encryptToken(token) {
-  const algorithm = 'aes-256-cbc';
-  const key = crypto.scryptSync(env.jwtSecret, 'salt', 32);
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv(algorithm, key, iv);
-  
+  const key = getTokenEncryptionKey();
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+
   let encrypted = cipher.update(token, 'utf8', 'hex');
   encrypted += cipher.final('hex');
-  
-  return `${iv.toString('hex')}:${encrypted}`;
+  const tag = cipher.getAuthTag();
+
+  return `gcm:${iv.toString('hex')}:${tag.toString('hex')}:${encrypted}`;
 }
 
 /**
  * Descriptografa tokens do banco
  */
-function decryptToken(encryptedToken) {
-  const algorithm = 'aes-256-cbc';
+function decryptLegacyToken(encryptedToken) {
   const key = crypto.scryptSync(env.jwtSecret, 'salt', 32);
   const [ivHex, encrypted] = encryptedToken.split(':');
-  
   const iv = Buffer.from(ivHex, 'hex');
-  const decipher = crypto.createDecipheriv(algorithm, key, iv);
-  
+  const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+
   let decrypted = decipher.update(encrypted, 'hex', 'utf8');
   decrypted += decipher.final('utf8');
-  
+
+  return decrypted;
+}
+
+function decryptToken(encryptedToken) {
+  if (!encryptedToken) {
+    throw new AppError('Token do Google Calendar ausente', 500);
+  }
+
+  if (!encryptedToken.startsWith('gcm:')) {
+    return decryptLegacyToken(encryptedToken);
+  }
+
+  const key = getTokenEncryptionKey();
+  const [, ivHex, tagHex, encrypted] = encryptedToken.split(':');
+  const iv = Buffer.from(ivHex, 'hex');
+  const tag = Buffer.from(tagHex, 'hex');
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+  decipher.setAuthTag(tag);
+
+  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+
   return decrypted;
 }
 
@@ -62,12 +91,10 @@ function setOAuth2Credentials(oauth2Client, integration) {
 
 /**
  * Gera URL de autorização para o usuário
- * Inclui state com userId para identificar o usuário no callback
+ * Recebe state opaco de uso unico gerado e persistido pelo backend.
  */
-function getAuthUrl(userId) {
+function getAuthUrl(state) {
   const oauth2Client = createOAuth2Client();
-  
-  const state = Buffer.from(JSON.stringify({ userId })).toString('base64');
 
   return oauth2Client.generateAuthUrl({
     access_type: 'offline',

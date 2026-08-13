@@ -4,9 +4,10 @@ const dotenv = require('dotenv');
 
 const nodeEnv = process.env.NODE_ENV || 'development';
 const defaultEnvPath = path.resolve(__dirname, '../../../.env');
-const explicitEnvPath = process.env.ENV_FILE ? path.resolve(process.cwd(), process.env.ENV_FILE) : defaultEnvPath;
+const hasExplicitEnvFile = Boolean(process.env.ENV_FILE);
+const explicitEnvPath = hasExplicitEnvFile ? path.resolve(process.cwd(), process.env.ENV_FILE) : defaultEnvPath;
 
-if (nodeEnv !== 'production' && fs.existsSync(explicitEnvPath)) {
+if (nodeEnv !== 'production' && (nodeEnv !== 'test' || hasExplicitEnvFile) && fs.existsSync(explicitEnvPath)) {
   dotenv.config({ path: explicitEnvPath });
 }
 
@@ -123,6 +124,9 @@ module.exports = {
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
   googleRedirectUri: process.env.GOOGLE_REDIRECT_URI || `${appBaseUrl || 'http://localhost:3000'}/api/calendar-integrations/google/callback`,
   googleCalendarSyncIntervalMs: Number(process.env.GOOGLE_CALENDAR_SYNC_INTERVAL_MS || 30 * 60 * 1000),
+  googleCalendarTokenEncryptionKey:
+    process.env.GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY
+    || (!isProduction ? process.env.FINANCIAL_ENCRYPTION_KEY || defaultTestFinancialEncryptionKey : ''),
   robotsNoindex: parseBooleanEnv(process.env.ROBOTS_NOINDEX, defaultRobotsNoindex),
   geoLookupEnabled: process.env.GEO_LOOKUP_ENABLED !== 'false',
   geoLookupTimeoutMs: Number(process.env.GEO_LOOKUP_TIMEOUT_MS || 1200),

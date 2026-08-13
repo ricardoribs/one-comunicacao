@@ -277,6 +277,31 @@ function createPgMemPool() {
     CREATE INDEX idx_calendar_event_reminders_user_id
       ON calendar_event_reminders(user_id, created_at DESC);
 
+    CREATE TABLE calendar_integrations (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      provider VARCHAR(50) NOT NULL DEFAULT 'google_calendar',
+      access_token TEXT NOT NULL,
+      refresh_token TEXT NOT NULL,
+      token_expires_at TIMESTAMP NOT NULL,
+      calendar_id VARCHAR(255) DEFAULT 'primary',
+      sync_enabled BOOLEAN NOT NULL DEFAULT true,
+      last_sync_at TIMESTAMP,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      UNIQUE (user_id, provider)
+    );
+
+    CREATE TABLE oauth_states (
+      id SERIAL PRIMARY KEY,
+      state_hash TEXT NOT NULL UNIQUE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      provider VARCHAR(50) NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      consumed_at TIMESTAMP,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+
     CREATE TABLE reports (
       id SERIAL PRIMARY KEY,
       client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,

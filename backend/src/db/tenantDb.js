@@ -17,6 +17,7 @@ const TENANT_TABLES = new Set([
   'reports',
   'client_integrations',
   'calendar_events',
+  'calendar_integrations',
 ]);
 
 async function runWithTenantContext(user, handler) {
@@ -81,6 +82,13 @@ function buildScopedStatement(
 
   const scope = createScopedQuery(user).build(scopeConfig, { prefix, startIndex });
   const isInsertStatement = /^\s*INSERT\b/i.test(sql);
+
+  if (isInsertStatement) {
+    return {
+      sql: sql.replaceAll('__TENANT_SCOPE__', ''),
+      params: [...params, ...suffixParams],
+    };
+  }
 
   if (scope.clause && !sql.includes('__TENANT_SCOPE__') && !isInsertStatement) {
     throw new Error(`[TENANT GUARD] Placeholder __TENANT_SCOPE__ ausente na query de ${table}.`);

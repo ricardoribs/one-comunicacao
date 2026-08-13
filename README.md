@@ -97,6 +97,7 @@ JWT_EXPIRES_IN=15m
 BCRYPT_ROUNDS=12
 MFA_ENCRYPTION_KEY=<32+ caracteres>
 FINANCIAL_ENCRYPTION_KEY=<32+ caracteres>
+GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY=<32+ caracteres, se Google Calendar estiver ativo>
 
 UPLOAD_PROVIDER=cloudinary
 UPLOAD_REQUIRE_MALWARE_SCAN=false
@@ -117,13 +118,15 @@ SENTRY_TRACES_SAMPLE_RATE=0.1
 MAINTENANCE_MODE=false
 ```
 
+Se `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` estiverem configuradas, defina tambem `GOOGLE_REDIRECT_URI` e `GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY`. A chave do Google Calendar e separada do `JWT_SECRET` e do `FINANCIAL_ENCRYPTION_KEY`.
+
 O smoke autenticado deve rodar no CI ou no pos-deploy, nao no build do Render. Para executar manualmente:
 
 ```bash
 SMOKE_BASE_URL=https://one-comunicacao-staging.onrender.com SMOKE_EMAIL=<usuario interno> SMOKE_PASSWORD=<senha> npm run postdeploy:smoke --prefix backend
 ```
 
-O `verify:rls` exige uma conexao direta ao Postgres porque cria um role temporario para testar isolamento. Quando a Direct Connection do Supabase resolver apenas por IPv6, o build do Render pode falhar com `ENETUNREACH`; por isso esse gate roda no CI ou manualmente de um ambiente com acesso direto ao banco:
+O `verify:rls` exige `VERIFY_DATABASE_URL` com permissao para criar um role temporario e testar isolamento. O build do Render executa esse gate via `predeploy:render`; se a conexao direta do Supabase nao for alcancavel a partir do Render, configure `VERIFY_DATABASE_URL` para um endpoint PostgreSQL alcancavel pelo Render ou bloqueie o deploy pelo CI antes do Render:
 
 ```bash
 VERIFY_DATABASE_URL=<direct connection do Supabase> npm run verify:rls --prefix backend

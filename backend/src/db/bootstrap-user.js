@@ -1,9 +1,15 @@
 const bcrypt = require('bcryptjs');
 const pool = require('../config/db');
 const env = require('../config/env');
+const { runWithTenantContext } = require('./tenantDb');
 const { assertStrongPassword } = require('../utils/passwordPolicy');
 
 const ALLOWED_ROLES = new Set(['admin', 'gestor', 'designer', 'comercial', 'dev']);
+const SERVICE_ACTOR = Object.freeze({ role: 'admin' });
+
+function serviceQuery(sql, params = []) {
+  return runWithTenantContext(SERVICE_ACTOR, (client) => client.query(sql, params));
+}
 
 function required(name) {
   const value = process.env[name];
@@ -40,13 +46,13 @@ async function run() {
 
   assertStrongPassword(password, 'BOOTSTRAP_USER_PASSWORD');
 
-  const existing = await pool.query('SELECT id FROM users WHERE email = $1 LIMIT 1', [email]);
+  const existing = await serviceQuery('SELECT id FROM users WHERE email = $1 LIMIT 1', [email]);
   if (existing.rowCount > 0) {
     throw new Error('Ja existe um usuario com este email.');
   }
 
   const hash = await bcrypt.hash(password, env.bcryptRounds);
-  const result = await pool.query(
+  const result = await serviceQuery(
     `INSERT INTO users (client_id, name, email, password, role, is_active, email_verified_at, must_change_password)
      VALUES ($1, $2, $3, $4, $5, true, NOW(), true)
      RETURNING id, email, role`,

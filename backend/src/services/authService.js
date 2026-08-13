@@ -456,8 +456,9 @@ async function refreshAccessToken(rawRefreshToken, metadata = {}) {
   }
 
   const tokenHash = hashToken(rawRefreshToken);
+  let replayDetection = null;
 
-  return withTransaction(async (dbClient) => {
+  const refreshedSession = await withTransaction(async (dbClient) => {
     const tokenRecord = await userModel.findRefreshTokenForUpdate(tokenHash, dbClient);
 
     if (!tokenRecord) {
@@ -467,26 +468,11 @@ async function refreshAccessToken(rawRefreshToken, metadata = {}) {
     if (tokenRecord.revoked_at || tokenRecord.replaced_by_token_hash) {
       await userModel.revokeAllRefreshTokensForUser(tokenRecord.user_id, metadata.ip, dbClient);
       await userModel.incrementSessionVersion(tokenRecord.user_id, dbClient);
-      logger.warn(
-        {
-          user_id: tokenRecord.user_id,
-          token_hash: tokenHash,
-          event: 'refresh_token_replay_detected',
-        },
-        'Replay de refresh token detectado. Todas as sessoes foram revogadas.'
-      );
-      await securityAlertService.notify(
-        'refresh_token_replay_detected',
-        {
-          user_id: tokenRecord.user_id,
-          ip: metadata.ip || null,
-        },
-        {
-          severity: 'critical',
-          dedupeKey: `refresh-replay:${tokenRecord.user_id}`,
-        }
-      );
-      throw new AppError('Sessao invalida. Faca login novamente.', 401);
+      replayDetection = {
+        userId: tokenRecord.user_id,
+        tokenHash,
+      };
+      return null;
     }
 
     if (!tokenRecord.is_active) {
@@ -537,6 +523,31 @@ async function refreshAccessToken(rawRefreshToken, metadata = {}) {
       cookieOptions: buildCookieOptions(),
     };
   });
+
+  if (replayDetection) {
+    logger.warn(
+      {
+        user_id: replayDetection.userId,
+        token_hash: replayDetection.tokenHash,
+        event: 'refresh_token_replay_detected',
+      },
+      'Replay de refresh token detectado. Todas as sessoes foram revogadas.'
+    );
+    await securityAlertService.notify(
+      'refresh_token_replay_detected',
+      {
+        user_id: replayDetection.userId,
+        ip: metadata.ip || null,
+      },
+      {
+        severity: 'critical',
+        dedupeKey: `refresh-replay:${replayDetection.userId}`,
+      }
+    );
+    throw new AppError('Sessao invalida. Faca login novamente.', 401);
+  }
+
+  return refreshedSession;
 }
 
 async function logout(rawRefreshToken, metadata = {}, rawAccessToken = null) {

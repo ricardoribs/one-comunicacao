@@ -4,14 +4,13 @@ const { authenticate, authorizeCapability } = require('../middlewares/authMiddle
 
 const router = express.Router();
 
-// OAuth flow - usa token via query param e state do Google (redirect do browser não envia headers)
-router.get('/google/auth', controller.initiateAuth);
+// Public provider callback. Access is authorized by the one-time OAuth state.
 router.get('/google/callback', controller.handleCallback);
 
-// Endpoints protegidos
 router.use(authenticate);
 router.use(authorizeCapability('manage_calendar_events'));
 
+router.post('/google/auth', controller.initiateAuth);
 router.get('/status', controller.getStatus);
 router.post('/sync', controller.syncFromGoogle);
 router.post('/toggle-sync', controller.toggleSync);

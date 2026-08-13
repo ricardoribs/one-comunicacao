@@ -513,7 +513,7 @@ app.use((req, res) => {
 sentry.setupExpressErrorHandler(app);
 app.use(errorMiddleware);
 
-if (env.googleClientId && env.googleClientSecret) {
+if (env.nodeEnv !== 'test' && env.googleClientId && env.googleClientSecret) {
   calendarSyncService.startScheduledSync();
 }
 

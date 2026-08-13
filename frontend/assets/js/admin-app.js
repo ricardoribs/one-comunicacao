@@ -2724,10 +2724,16 @@ function renderGoogleCalendarStatus() {
   }
 }
 
-function connectGoogleCalendar() {
-  const session = APP.loadSession();
-  const token = session?.accessToken || session?.token || "";
-  window.location.href = `${API_BASE}/calendar-integrations/google/auth?token=${encodeURIComponent(token)}`;
+async function connectGoogleCalendar() {
+  try {
+    const response = await apiFetch("/calendar-integrations/google/auth", { method: "POST" });
+    if (!response?.auth_url) {
+      throw new Error("URL de autorização não retornada.");
+    }
+    window.location.href = response.auth_url;
+  } catch (err) {
+    showToast(err.message || "Erro ao conectar Google Agenda");
+  }
 }
 
 async function syncGoogleCalendar() {

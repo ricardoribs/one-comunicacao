@@ -5,6 +5,9 @@ const os = require('node:os');
 const path = require('node:path');
 const bcrypt = require('bcryptjs');
 const request = require('supertest');
+
+process.env.MFA_REQUIRED_ROLES = process.env.MFA_REQUIRED_ROLES || 'admin,gestor,comercial';
+
 const app = require('../src/app');
 const userModel = require('../src/models/userModel');
 const env = require('../src/config/env');

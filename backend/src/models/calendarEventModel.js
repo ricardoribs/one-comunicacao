@@ -1,6 +1,7 @@
-const pool = require('../config/db');
 const tenantDb = require('../db/tenantDb');
 const { getInternalClientAccessScope } = require('../utils/internalClientScope');
+
+const SERVICE_ACTOR = Object.freeze({ role: 'admin' });
 
 function calendarScopeConfig(alias = 'e') {
   return {
@@ -217,12 +218,15 @@ async function listDueReminderCandidates(user, { from, to, reminderType, limit =
 }
 
 async function registerReminderDelivery({ eventId, userId, reminderType }) {
-  const { rows } = await pool.query(
-    `INSERT INTO calendar_event_reminders (event_id, user_id, reminder_type)
-     VALUES ($1, $2, $3)
-     ON CONFLICT (event_id, user_id, reminder_type) DO NOTHING
-     RETURNING id`,
-    [eventId, userId, reminderType]
+  const { rows } = await tenantDb.runWithTenantContext(
+    SERVICE_ACTOR,
+    (client) => client.query(
+      `INSERT INTO calendar_event_reminders (event_id, user_id, reminder_type)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (event_id, user_id, reminder_type) DO NOTHING
+       RETURNING id`,
+      [eventId, userId, reminderType]
+    )
   );
 
   return rows[0] || null;

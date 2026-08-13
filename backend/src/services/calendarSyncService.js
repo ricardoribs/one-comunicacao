@@ -1,4 +1,4 @@
-const pool = require('../config/db');
+const { runWithTenantContext } = require('../db/tenantDb');
 const calendarIntegrationModel = require('../models/calendarIntegrationModel');
 const calendarEventModel = require('../models/calendarEventModel');
 const googleCalendarService = require('./googleCalendarService');
@@ -6,6 +6,7 @@ const logger = require('../config/logger');
 const env = require('../config/env');
 
 let syncIntervalHandle = null;
+const SERVICE_ACTOR = Object.freeze({ role: 'admin' });
 
 /**
  * Busca todas as integrações ativas diretamente do pool (sem RLS)
@@ -23,6 +24,7 @@ async function listActiveIntegrations() {
       ci.sync_enabled,
       ci.last_sync_at,
       ci.created_at,
+      u.client_id AS user_client_id,
       u.role AS user_role,
       u.name AS user_name,
       u.email AS user_email
@@ -32,7 +34,7 @@ async function listActiveIntegrations() {
     ORDER BY ci.created_at DESC
   `;
 
-  const result = await pool.query(query);
+  const result = await runWithTenantContext(SERVICE_ACTOR, (client) => client.query(query));
   return result.rows;
 }
 
@@ -40,7 +42,11 @@ async function listActiveIntegrations() {
  * Sincroniza eventos do Google Calendar para um usuário específico
  */
 async function syncForUser(integration) {
-  const userContext = { id: integration.user_id, role: integration.user_role };
+  const userContext = {
+    id: integration.user_id,
+    role: integration.user_role,
+    client_id: integration.user_client_id || null,
+  };
 
   try {
     let activeIntegration = {

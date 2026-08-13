@@ -2,8 +2,15 @@ DROP TABLE IF EXISTS files CASCADE;
 DROP TABLE IF EXISTS contacts CASCADE;
 DROP TABLE IF EXISTS materials CASCADE;
 DROP TABLE IF EXISTS reports CASCADE;
+DROP TABLE IF EXISTS oauth_states CASCADE;
+DROP TABLE IF EXISTS calendar_integrations CASCADE;
+DROP TABLE IF EXISTS calendar_event_reminders CASCADE;
+DROP TABLE IF EXISTS calendar_events CASCADE;
 DROP TABLE IF EXISTS tasks CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
+DROP TABLE IF EXISTS password_reset_tokens CASCADE;
+DROP TABLE IF EXISTS email_verification_tokens CASCADE;
+DROP TABLE IF EXISTS refresh_tokens CASCADE;
 DROP TABLE IF EXISTS invoices CASCADE;
 DROP TABLE IF EXISTS cost_entries CASCADE;
 DROP TABLE IF EXISTS messages CASCADE;
@@ -38,6 +45,16 @@ CREATE TABLE users (
   is_active BOOLEAN DEFAULT TRUE,
   session_version INTEGER NOT NULL DEFAULT 0,
   must_change_password BOOLEAN NOT NULL DEFAULT FALSE,
+  email_verified_at TIMESTAMP,
+  mfa_totp_secret_encrypted TEXT,
+  mfa_totp_pending_secret_encrypted TEXT,
+  mfa_enabled_at TIMESTAMP,
+  failed_login_attempts INTEGER NOT NULL DEFAULT 0,
+  locked_until TIMESTAMP,
+  last_login_at TIMESTAMP,
+  last_seen_at TIMESTAMP,
+  last_seen_ip VARCHAR(64),
+  last_seen_location VARCHAR(160),
   notify_task_assigned BOOLEAN NOT NULL DEFAULT TRUE,
   notify_task_completed BOOLEAN NOT NULL DEFAULT TRUE,
   notify_calendar_24h BOOLEAN NOT NULL DEFAULT TRUE,
@@ -56,6 +73,37 @@ CREATE TABLE revoked_access_tokens (
 
 CREATE INDEX idx_revoked_access_tokens_user_id ON revoked_access_tokens(user_id);
 CREATE INDEX idx_revoked_access_tokens_expires_at ON revoked_access_tokens(expires_at);
+
+CREATE TABLE refresh_tokens (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  revoked_at TIMESTAMP,
+  replaced_by_token_hash TEXT,
+  created_by_ip VARCHAR(64),
+  revoked_by_ip VARCHAR(64),
+  user_agent TEXT
+);
+
+CREATE TABLE email_verification_tokens (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMP NOT NULL,
+  used_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE password_reset_tokens (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMP NOT NULL,
+  used_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
 
 ALTER TABLE clients
   ADD CONSTRAINT fk_clients_manager
@@ -151,6 +199,63 @@ CREATE TABLE notifications (
   entity_id INTEGER,
   read_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE calendar_events (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(160) NOT NULL,
+  description TEXT,
+  starts_at TIMESTAMP NOT NULL,
+  ends_at TIMESTAMP NOT NULL,
+  location VARCHAR(160),
+  color VARCHAR(24) NOT NULL DEFAULT 'pink',
+  client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
+  visibility VARCHAR(20) NOT NULL DEFAULT 'team',
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  google_event_id VARCHAR(255),
+  synced_from_google BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  CONSTRAINT calendar_events_visibility_check CHECK (visibility IN ('team', 'client')),
+  CONSTRAINT calendar_events_visibility_client_check CHECK (
+    (visibility = 'team' AND client_id IS NULL)
+    OR (visibility = 'client' AND client_id IS NOT NULL)
+  )
+);
+
+CREATE TABLE calendar_event_reminders (
+  id SERIAL PRIMARY KEY,
+  event_id INTEGER NOT NULL REFERENCES calendar_events(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  reminder_type VARCHAR(40) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  UNIQUE (event_id, user_id, reminder_type)
+);
+
+CREATE TABLE calendar_integrations (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  provider VARCHAR(50) NOT NULL DEFAULT 'google_calendar',
+  access_token TEXT NOT NULL,
+  refresh_token TEXT NOT NULL,
+  token_expires_at TIMESTAMP NOT NULL,
+  calendar_id VARCHAR(255) DEFAULT 'primary',
+  sync_enabled BOOLEAN NOT NULL DEFAULT true,
+  last_sync_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id, provider)
+);
+
+CREATE TABLE oauth_states (
+  id SERIAL PRIMARY KEY,
+  state_hash TEXT NOT NULL UNIQUE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  provider VARCHAR(50) NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  consumed_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE reports (
