@@ -261,6 +261,7 @@ const kanbanRuntime = {
   autoScrollX: 0,
   scrollSyncBound: false,
   scrollResizeObserver: null,
+  dragStarted: false,
   overdueDrawerOpen: false,
   checklistExpanded: false,
 };
@@ -6596,8 +6597,8 @@ function getKanbanCardMenuButton(task, canEditTasks, canRemoveTasks) {
   }
 
   return `
-    <details class="action-menu kanban-card-menu">
-      <summary class="k-card-menu-btn" aria-label="Ações da tarefa" title="Ações da tarefa">
+    <details class="action-menu kanban-card-menu" data-kanban-card-control="1">
+      <summary class="k-card-menu-btn" aria-label="Ações da tarefa" title="Ações da tarefa" data-kanban-card-control="1">
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/></svg>
       </summary>
       <div class="action-menu-panel" data-floating-menu-panel="1">
@@ -6813,6 +6814,7 @@ function clearKanbanDragArtifacts() {
   kanbanRuntime.dragStartX = 0;
   kanbanRuntime.dragStartY = 0;
   kanbanRuntime.dragMoved = false;
+  kanbanRuntime.dragStarted = false;
 }
 
 function resolveKanbanColumnFromPoint(board, clientX, clientY) {
@@ -6980,6 +6982,36 @@ function bindKanbanBoardInteractions() {
     stopKanbanDragAutoScroll();
   };
 
+  const startKanbanPointerDrag = (event) => {
+    const card = kanbanRuntime.dragSourceEl;
+    if (!card || kanbanRuntime.dragStarted) {
+      return;
+    }
+
+    const rect = card.getBoundingClientRect();
+    const placeholder = document.createElement("div");
+    placeholder.className = "k-card k-card-placeholder";
+    placeholder.style.height = `${Math.ceil(rect.height)}px`;
+    placeholder.style.width = "100%";
+    placeholder.setAttribute("aria-hidden", "true");
+
+    kanbanRuntime.dragPlaceholderEl = placeholder;
+    kanbanRuntime.dragStarted = true;
+    closeFloatingActionMenus();
+
+    card.insertAdjacentElement("afterend", placeholder);
+    card.classList.add("is-dragging", "is-pointer-dragging");
+    card.style.width = `${Math.ceil(rect.width)}px`;
+    card.style.height = `${Math.ceil(rect.height)}px`;
+    card.style.left = `${Number(event.clientX || 0) - kanbanRuntime.dragOffsetX}px`;
+    card.style.top = `${Number(event.clientY || 0) - kanbanRuntime.dragOffsetY}px`;
+    card.style.position = "fixed";
+    card.style.zIndex = "1200";
+    card.style.pointerEvents = "none";
+    document.body.appendChild(card);
+    document.body.classList.add("kanban-drag-active");
+  };
+
   const handlePointerMove = (event) => {
     if (!kanbanRuntime.dragTaskId || event.pointerId !== kanbanRuntime.pointerId || !kanbanRuntime.dragSourceEl) {
       return;
@@ -6993,6 +7025,12 @@ function bindKanbanBoardInteractions() {
     ) {
       kanbanRuntime.dragMoved = true;
     }
+
+    if (!kanbanRuntime.dragMoved) {
+      return;
+    }
+
+    startKanbanPointerDrag(event);
 
     const left = Number(event.clientX || 0) - kanbanRuntime.dragOffsetX;
     const top = Number(event.clientY || 0) - kanbanRuntime.dragOffsetY;
@@ -7040,20 +7078,14 @@ function bindKanbanBoardInteractions() {
         return;
       }
 
-      if (event.target?.closest?.("button, a, input, select, textarea, summary, details, [data-action]")) {
+      if (event.target?.closest?.("button, a, input, select, textarea, summary, details, [data-action], [data-kanban-card-control]")) {
         return;
       }
 
       const rect = card.getBoundingClientRect();
-      const placeholder = document.createElement("div");
-      placeholder.className = "k-card k-card-placeholder";
-      placeholder.style.height = `${Math.ceil(rect.height)}px`;
-      placeholder.style.width = "100%";
-      placeholder.setAttribute("aria-hidden", "true");
-
       kanbanRuntime.dragTaskId = Number(card.dataset.taskId);
       kanbanRuntime.dragSourceEl = card;
-      kanbanRuntime.dragPlaceholderEl = placeholder;
+      kanbanRuntime.dragPlaceholderEl = null;
       kanbanRuntime.pointerId = event.pointerId;
       kanbanRuntime.dragOffsetX = Number(event.clientX) - rect.left;
       kanbanRuntime.dragOffsetY = Number(event.clientY) - rect.top;
@@ -7062,18 +7094,7 @@ function bindKanbanBoardInteractions() {
       kanbanRuntime.dragStartX = Number(event.clientX || 0);
       kanbanRuntime.dragStartY = Number(event.clientY || 0);
       kanbanRuntime.dragMoved = false;
-
-      card.insertAdjacentElement("afterend", placeholder);
-      card.classList.add("is-dragging", "is-pointer-dragging");
-      card.style.width = `${Math.ceil(rect.width)}px`;
-      card.style.height = `${Math.ceil(rect.height)}px`;
-      card.style.left = `${rect.left}px`;
-      card.style.top = `${rect.top}px`;
-      card.style.position = "fixed";
-      card.style.zIndex = "1200";
-      card.style.pointerEvents = "none";
-      document.body.appendChild(card);
-      document.body.classList.add("kanban-drag-active");
+      kanbanRuntime.dragStarted = false;
 
       document.addEventListener("pointermove", handlePointerMove, true);
       document.addEventListener("pointerup", handlePointerUp, true);
