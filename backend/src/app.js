@@ -51,6 +51,7 @@ const calendarSyncService = require('./services/calendarSyncService');
 const app = express();
 const htmlCache = new Map();
 const assetVersionCache = new Map();
+const MUTABLE_FRONTEND_ASSET_EXTENSIONS = new Set(['.css', '.js', '.json', '.map']);
 
 sentry.initSentry();
 
@@ -355,6 +356,14 @@ function sendHtmlPage(res, fileName, status = 200) {
   res.send(injectAssetVersions(injectNonce(loadHtmlTemplate(fileName), res.locals.cspNonce)));
 }
 
+function setFrontendAssetHeaders(res, assetPath) {
+  const extension = path.extname(assetPath).toLowerCase();
+
+  if (MUTABLE_FRONTEND_ASSET_EXTENSIONS.has(extension)) {
+    res.setHeader('Cache-Control', 'no-cache, max-age=0, must-revalidate');
+  }
+}
+
 app.use((req, res, next) => {
   const isOperationalRoute =
     req.path.startsWith('/health') ||
@@ -369,7 +378,13 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/assets', express.static(path.join(env.frontendDir, 'assets'), { maxAge: env.isProduction ? '7d' : 0 }));
+app.use(
+  '/assets',
+  express.static(path.join(env.frontendDir, 'assets'), {
+    maxAge: env.isProduction ? '7d' : 0,
+    setHeaders: setFrontendAssetHeaders,
+  })
+);
 
 async function resolveLocalUploadAccess(fileName, user) {
   const relativePath = `/uploads/${fileName}`;

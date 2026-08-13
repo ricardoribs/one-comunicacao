@@ -4179,6 +4179,48 @@ function closeFloatingActionMenus(exceptMenu = null) {
 function bindFloatingActionMenus() {
   if (document.body.dataset.boundFloatingActionMenus !== "1") {
     document.addEventListener(
+      "pointerdown",
+      (event) => {
+        if (event.target.closest?.("details.kanban-card-menu > summary")) {
+          event.stopPropagation();
+        }
+      },
+      true
+    );
+
+    document.addEventListener(
+      "click",
+      (event) => {
+        const summary = event.target.closest?.("details.kanban-card-menu > summary");
+        if (!summary) {
+          return;
+        }
+
+        const menu = summary.closest("details.kanban-card-menu");
+        if (!menu) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const shouldOpen = !menu.open;
+        if (shouldOpen) {
+          closeFloatingActionMenus(menu);
+        }
+
+        menu.open = shouldOpen;
+        if (shouldOpen) {
+          requestAnimationFrame(() => positionFloatingActionMenu(menu));
+          return;
+        }
+
+        clearFloatingActionMenuPosition(menu);
+      },
+      true
+    );
+
+    document.addEventListener(
       "toggle",
       (event) => {
         const menu = event.target;
