@@ -3,7 +3,7 @@ const { Pool } = require("pg");
 const env = require("../src/config/env");
 const { applyTenantContext } = require("../src/db/tenantContext");
 const { buildDatabaseSslConfig } = require("../src/utils/databaseSsl");
-const { withIpv4Stream } = require("../src/utils/pgNetwork");
+const { resolvePgHostIpv4, withIpv4Stream } = require("../src/utils/pgNetwork");
 
 function assert(condition, message) {
   if (!condition) {
@@ -74,7 +74,7 @@ function getTargetHost(config) {
   return "";
 }
 
-function buildVerificationBasePoolConfig() {
+async function buildVerificationBasePoolConfig() {
   const verifyCaFile = process.env.VERIFY_DATABASE_SSL_CA_FILE || env.databaseSslCaFile;
   const verifyCaPem = process.env.VERIFY_DATABASE_SSL_CA_PEM || env.databaseSslCaPem;
 
@@ -111,7 +111,7 @@ function buildVerificationBasePoolConfig() {
     );
   }
 
-  return config;
+  return withIpv4Stream(await resolvePgHostIpv4(config));
 }
 
 async function withTenant(pool, user, handler) {
@@ -180,7 +180,7 @@ async function expectRlsFailure(action, message) {
 }
 
 async function main() {
-  const basePoolConfig = buildVerificationBasePoolConfig();
+  const basePoolConfig = await buildVerificationBasePoolConfig();
   const ownerPool = new Pool(basePoolConfig);
   const suffix = crypto.randomBytes(4).toString("hex");
   const verifierRole = `one_rls_${suffix}`;
