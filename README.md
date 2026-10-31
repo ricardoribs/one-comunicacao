@@ -26,21 +26,24 @@ O site público e o painel interno são servidos pela mesma aplicação. A plata
 ## Estrutura do repositório
 
 ```text
-backend/
-  src/                  API, rotas, modelos, serviços e migrações
-  scripts/              testes rápidos, validação de ambiente, backup e RLS
-  test/                 testes automatizados
-frontend/
-  assets/               JavaScript, CSS, SVGs, imagens e mídia
-  index.html            site público
-  painel-interno.html   painel da equipe
-docs/
-  openapi.yaml          contrato da API HTTP
-scripts/
-  audit-tenant.js       verifica o escopo de tenant nas consultas
-  check-frontend.js     verifica a sintaxe dos arquivos JavaScript
-render.yaml             configuração do serviço no Render
+.
+├── backend/
+│   ├── src/
+│   ├── scripts/
+│   └── test/
+├── frontend/
+│   ├── assets/
+│   ├── index.html
+│   └── painel-interno.html
+├── docs/
+│   └── openapi.yaml
+├── scripts/
+│   ├── audit-tenant.js
+│   └── check-frontend.js
+└── render.yaml
 ```
+
+O código da API e do banco fica em `backend/`; o site e o painel, em `frontend/`. O contrato da API fica em `docs/`, e os scripts auxiliares, em `scripts/`.
 
 ## Executar localmente
 
