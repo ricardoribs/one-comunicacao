@@ -23,7 +23,7 @@ const strongPassword = z
   .superRefine((value, ctx) => {
     for (const message of validateStrongPassword(value)) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         message,
       });
     }

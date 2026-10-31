@@ -36,14 +36,19 @@ O site público e o painel interno são servidos pela mesma aplicação. A plata
 │   ├── index.html
 │   └── painel-interno.html
 ├── docs/
-│   └── openapi.yaml
+│   ├── api/
+│   ├── architecture/
+│   ├── guides/
+│   ├── operations/
+│   ├── security/
+│   └── README.md
 ├── scripts/
 │   ├── audit-tenant.js
 │   └── check-frontend.js
 └── render.yaml
 ```
 
-O código da API e do banco fica em `backend/`; o site e o painel, em `frontend/`. O contrato da API fica em `docs/`, e os scripts auxiliares, em `scripts/`.
+O código da API e do banco fica em `backend/`; o site e o painel, em `frontend/`. O contrato da API fica em `docs/api/`, e os scripts auxiliares, em `scripts/`.
 
 ## Executar localmente
 
@@ -204,14 +209,5 @@ Após a publicação, verifique:
 
 ## Documentação
 
-- [Arquitetura](ARCHITECTURE.md)
+- [Índice da documentação](docs/README.md)
 - [Changelog](CHANGELOG.md)
-- [Runbook operacional](RUNBOOK.md)
-- [Backup e restauração](RUNBOOK-BACKUP-RESTORE.md)
-- [Checklist de auditoria de produção](AUDITORIA-CHECKLIST-PRODUCAO.md)
-- [Guia da plataforma](GUIA-DA-PLATAFORMA.md)
-- [Guia operacional da equipe](GUIA-OPERACIONAL-EQUIPE.md)
-- [Playbook de onboarding](PLAYBOOK-ONBOARDING.md)
-- [Matriz de permissões](PERMISSIONS-MATRIX.md)
-- [Mapeamento de equipe e acessos](MAPEAMENTO-EQUIPE-ACESSOS.md)
-- [Contrato da API](docs/openapi.yaml)

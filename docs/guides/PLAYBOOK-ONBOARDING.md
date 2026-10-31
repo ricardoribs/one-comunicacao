@@ -243,4 +243,4 @@ Se você completar estes cinco passos, o onboarding mínimo já aconteceu:
 
 - [GUIA-OPERACIONAL-EQUIPE.md](GUIA-OPERACIONAL-EQUIPE.md)
 - [GUIA-DA-PLATAFORMA.md](GUIA-DA-PLATAFORMA.md)
-- [PERMISSIONS-MATRIX.md](PERMISSIONS-MATRIX.md)
+- [PERMISSIONS-MATRIX.md](../security/PERMISSIONS-MATRIX.md)

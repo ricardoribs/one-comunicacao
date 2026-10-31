@@ -44,7 +44,7 @@ Mantenha os nomes, telefones e canais reais fora do Git. Registre-os no gerencia
 1. Confirme se o erro e autenticacao, rede, limite de conexoes ou schema.
 2. Valide as envs `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USER`, `DATABASE_SSL_REQUIRED` e CA SSL no Render sem imprimir valores sensiveis.
 3. Se o banco estiver fora, pausar deploys e comunicar SEV1.
-4. Para restore, siga `RUNBOOK-BACKUP-RESTORE.md` e execute drill em banco separado.
+4. Para restore, siga [RUNBOOK-BACKUP-RESTORE.md](RUNBOOK-BACKUP-RESTORE.md) e execute drill em banco separado.
 
 ## Deploy Com Falha
 

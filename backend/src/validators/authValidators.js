@@ -6,7 +6,7 @@ const strongPassword = z
   .superRefine((value, ctx) => {
     for (const message of validateStrongPassword(value)) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         message,
       });
     }
@@ -20,7 +20,7 @@ exports.loginSchema = z
   .superRefine((data, ctx) => {
     if (!String(data.email || '').trim() || !String(data.password || '').trim()) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         path: ['email'],
         message: 'Digite um e-mail e uma senha.',
       });

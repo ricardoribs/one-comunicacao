@@ -97,7 +97,7 @@ Hoje a base interna trabalha principalmente com estes perfis:
 - `comercial`
 - `dev`
 
-Para o mapeamento nominal da equipe atual, consulte [MAPEAMENTO-EQUIPE-ACESSOS.md](./MAPEAMENTO-EQUIPE-ACESSOS.md).
+Para o mapeamento nominal da equipe atual, consulte [MAPEAMENTO-EQUIPE-ACESSOS.md](../security/MAPEAMENTO-EQUIPE-ACESSOS.md).
 
 ### 4.1 Admin
 
@@ -1208,9 +1208,9 @@ Use estes documentos junto com este guia:
 
 - [GUIA-DA-PLATAFORMA.md](./GUIA-DA-PLATAFORMA.md)
 - [PLAYBOOK-ONBOARDING.md](./PLAYBOOK-ONBOARDING.md)
-- [MAPEAMENTO-EQUIPE-ACESSOS.md](./MAPEAMENTO-EQUIPE-ACESSOS.md)
-- [PERMISSIONS-MATRIX.md](./PERMISSIONS-MATRIX.md)
-- [README.md](./README.md)
+- [MAPEAMENTO-EQUIPE-ACESSOS.md](../security/MAPEAMENTO-EQUIPE-ACESSOS.md)
+- [PERMISSIONS-MATRIX.md](../security/PERMISSIONS-MATRIX.md)
+- [README do repositório](../../README.md)
 
 Se a ONE quiser, o proximo passo natural e dividir este material em tres camadas:
 
