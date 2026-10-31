@@ -79,7 +79,7 @@ async function login(email) {
 }
 
 test('Google Calendar OAuth nao aceita token em query e consome state uma unica vez', async (t) => {
-  const email = `calendar.oauth.${Date.now()}@one.com`;
+  const email = `calendar.oauth.${Date.now()}@example.test`;
   const user = await createVerifiedUser(email);
   const accessToken = await login(email);
 

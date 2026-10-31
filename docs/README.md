@@ -22,7 +22,7 @@ Os documentos estão agrupados por finalidade para facilitar a consulta e a manu
 
 - [Checklist de auditoria de produção](security/AUDITORIA-CHECKLIST-PRODUCAO.md)
 - [Matriz de permissões](security/PERMISSIONS-MATRIX.md)
-- [Mapeamento de equipe e acessos](security/MAPEAMENTO-EQUIPE-ACESSOS.md)
+- [Matriz de perfis e acessos](security/MATRIZ-PERFIS-ACESSO.md)
 
 ## Histórico
 

@@ -72,7 +72,7 @@ async function completeLoginWithMfa(email, initialResponse, ipAddress) {
 }
 
 test('login valido retorna access token e cookie de refresh', async () => {
-  const email = `auth.valid.${Date.now()}@one.com`;
+  const email = `auth.valid.${Date.now()}@example.test`;
   const user = await createVerifiedUser(email);
 
   const response = await request(app).post('/api/auth/login').send({
@@ -88,7 +88,7 @@ test('login valido retorna access token e cookie de refresh', async () => {
 });
 
 test('logout revoga access token imediatamente', async () => {
-  const email = `auth.logout.${Date.now()}@one.com`;
+  const email = `auth.logout.${Date.now()}@example.test`;
   const user = await createVerifiedUser(email);
 
   const login = await request(app)
@@ -121,7 +121,7 @@ test('logout revoga access token imediatamente', async () => {
 });
 
 test('admin recebe challenge MFA e conclui o login com TOTP', async () => {
-  const email = `auth.admin.mfa.${Date.now()}@one.com`;
+  const email = `auth.admin.mfa.${Date.now()}@example.test`;
   const user = await userModel.create({
     name: 'Admin MFA',
     email,
@@ -152,7 +152,7 @@ test('admin recebe challenge MFA e conclui o login com TOTP', async () => {
 });
 
 test('senha errada retorna 401', async () => {
-  const email = `auth.invalid.${Date.now()}@one.com`;
+  const email = `auth.invalid.${Date.now()}@example.test`;
   const user = await createVerifiedUser(email);
 
   const response = await request(app).post('/api/auth/login').send({
@@ -165,7 +165,7 @@ test('senha errada retorna 401', async () => {
 });
 
 test('hash de senha invalido nao derruba login com 500', async () => {
-  const email = `auth.bad-hash.${Date.now()}@one.com`;
+  const email = `auth.bad-hash.${Date.now()}@example.test`;
   const user = await userModel.create({
     name: 'Broken Hash',
     email,
@@ -190,7 +190,7 @@ test('token adulterado em /auth/me retorna 401', async () => {
 });
 
 test('perfil interno sem admin nao acessa rota de admin', async () => {
-  const email = `auth.designer.${Date.now()}@one.com`;
+  const email = `auth.designer.${Date.now()}@example.test`;
   const user = await createVerifiedUser(email);
   const login = await request(app).post('/api/auth/login').send({
     email,
@@ -204,7 +204,7 @@ test('perfil interno sem admin nao acessa rota de admin', async () => {
 });
 
 test('cliente legado nao autentica no painel interno', async () => {
-  const email = `auth.legacy-client.${Date.now()}@one.com`;
+  const email = `auth.legacy-client.${Date.now()}@example.test`;
   const user = await userModel.create({
     name: 'Cliente Legado',
     email,
@@ -229,7 +229,7 @@ test('cliente legado nao autentica no painel interno', async () => {
 });
 
 test('usuario autenticado consulta e atualiza o proprio perfil', async () => {
-  const email = `auth.profile.${Date.now()}@one.com`;
+  const email = `auth.profile.${Date.now()}@example.test`;
   const user = await userModel.create({
     name: 'Perfil Atual',
     email,
@@ -281,7 +281,7 @@ test('usuario autenticado consulta e atualiza o proprio perfil', async () => {
 });
 
 test('usuario autenticado habilita MFA no perfil e passa a receber challenge no login', async () => {
-  const email = `auth.profile.mfa.${Date.now()}@one.com`;
+  const email = `auth.profile.mfa.${Date.now()}@example.test`;
   const user = await userModel.create({
     name: 'Perfil MFA',
     email,
@@ -341,7 +341,7 @@ test('usuario autenticado habilita MFA no perfil e passa a receber challenge no 
 });
 
 test('usuario autenticado ajusta preferencias de notificacao e envia avatar real', async () => {
-  const email = `auth.profile-assets.${Date.now()}@one.com`;
+  const email = `auth.profile-assets.${Date.now()}@example.test`;
   const user = await userModel.create({
     name: 'Perfil Midia',
     email,
@@ -413,7 +413,7 @@ test('usuario autenticado ajusta preferencias de notificacao e envia avatar real
 });
 
 test('usuario autenticado altera a propria senha', async () => {
-  const email = `auth.password.${Date.now()}@one.com`;
+  const email = `auth.password.${Date.now()}@example.test`;
   const user = await userModel.create({
     name: 'Senha Atual',
     email,
@@ -467,7 +467,7 @@ test('usuario autenticado altera a propria senha', async () => {
 });
 
 test('refresh token rotativo invalida o token anterior e revoga todas as sessoes ao detectar replay', async () => {
-  const email = `auth.refresh.${Date.now()}@one.com`;
+  const email = `auth.refresh.${Date.now()}@example.test`;
   const user = await createVerifiedUser(email);
 
   const login = await request(app).post('/api/auth/login').send({

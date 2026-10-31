@@ -131,7 +131,7 @@ test('health interno exige admin e expõe checks detalhados apenas autenticado',
   const suffix = Date.now() + 200;
   const admin = await createUser({
     name: `Admin Health ${suffix}`,
-    email: `admin.health.${suffix}@one.test`,
+    email: `admin.health.${suffix}@example.test`,
     role: 'admin',
   });
 
@@ -153,7 +153,7 @@ test('listagem de usuarios omite metadados sensiveis no endpoint principal', { c
   const suffix = Date.now() + 201;
   const admin = await createUser({
     name: `Admin Users ${suffix}`,
-    email: `admin.users.${suffix}@one.test`,
+    email: `admin.users.${suffix}@example.test`,
     role: 'admin',
   });
 
@@ -178,7 +178,7 @@ test('financeiro interno permite lançar e listar custos por cliente', { concurr
   const suffix = Date.now() + 210;
   const admin = await createUser({
     name: `Admin Cost ${suffix}`,
-    email: `admin.cost.${suffix}@one.test`,
+    email: `admin.cost.${suffix}@example.test`,
     role: 'admin',
   });
   const clientId = await createClient(`Cliente Cost ${suffix}`, `Empresa Cost ${suffix}`, admin.id);
@@ -217,12 +217,12 @@ test('calendario interno permite leitura para a equipe e escrita apenas para adm
   const suffix = Date.now() + 205;
   const admin = await createUser({
     name: `Admin Calendar ${suffix}`,
-    email: `admin.calendar.${suffix}@one.test`,
+    email: `admin.calendar.${suffix}@example.test`,
     role: 'admin',
   });
   const designer = await createUser({
     name: `Designer Calendar ${suffix}`,
-    email: `designer.calendar.${suffix}@one.test`,
+    email: `designer.calendar.${suffix}@example.test`,
     role: 'designer',
   });
 
@@ -282,12 +282,12 @@ test('calendario nao expõe evento vinculado a cliente para usuario sem acesso a
   const suffix = Date.now() + 2051;
   const gestor = await createUser({
     name: `Gestor Calendar Scope ${suffix}`,
-    email: `gestor.calendar.scope.${suffix}@one.test`,
+    email: `gestor.calendar.scope.${suffix}@example.test`,
     role: 'gestor',
   });
   const designer = await createUser({
     name: `Designer Calendar Scope ${suffix}`,
-    email: `designer.calendar.scope.${suffix}@one.test`,
+    email: `designer.calendar.scope.${suffix}@example.test`,
     role: 'designer',
   });
   const clientId = await createClient(`Cliente Calendar ${suffix}`, `Cliente Calendar ${suffix}`, gestor.id);
@@ -341,12 +341,12 @@ test('notificacoes criam lembrete de evento quando a agenda entra na janela de a
   const suffix = Date.now() + 206;
   const admin = await createUser({
     name: `Admin Reminder ${suffix}`,
-    email: `admin.reminder.${suffix}@one.test`,
+    email: `admin.reminder.${suffix}@example.test`,
     role: 'admin',
   });
   const designer = await createUser({
     name: `Designer Reminder ${suffix}`,
-    email: `designer.reminder.${suffix}@one.test`,
+    email: `designer.reminder.${suffix}@example.test`,
     role: 'designer',
   });
 
@@ -396,7 +396,7 @@ test('dashboard interno do gestor aplica widgets e sanitizacao por capacidade', 
   const suffix = Date.now() + 1;
   const gestor = await createUser({
     name: `Gestor Interno ${suffix}`,
-    email: `gestor.interno.${suffix}@one.test`,
+    email: `gestor.interno.${suffix}@example.test`,
     role: 'gestor',
   });
 
@@ -445,22 +445,22 @@ test('equipe interna lista apenas usuarios internos ativos em /users/team e /use
   const suffix = Date.now() + 11;
   const gestor = await createUser({
     name: `Gestor Time ${suffix}`,
-    email: `gestor.time.${suffix}@one.test`,
+    email: `gestor.time.${suffix}@example.test`,
     role: 'gestor',
   });
   const designerAtivo = await createUser({
     name: `Designer Ativo ${suffix}`,
-    email: `designer.ativo.${suffix}@one.test`,
+    email: `designer.ativo.${suffix}@example.test`,
     role: 'designer',
   });
   const designerInativo = await createUser({
     name: `Designer Inativo ${suffix}`,
-    email: `designer.inativo.${suffix}@one.test`,
+    email: `designer.inativo.${suffix}@example.test`,
     role: 'designer',
   });
   const legacyClientUser = await createUser({
     name: `Cliente Legado ${suffix}`,
-    email: `cliente.legado.${suffix}@one.test`,
+    email: `cliente.legado.${suffix}@example.test`,
     role: 'client',
   });
 
@@ -494,7 +494,7 @@ test('gestor cria tarefa para cliente do proprio escopo sem erro interno', { con
   const suffix = Date.now() + 13;
   const gestor = await createUser({
     name: `Gestor Tarefa ${suffix}`,
-    email: `gestor.tarefa.${suffix}@one.test`,
+    email: `gestor.tarefa.${suffix}@example.test`,
     role: 'gestor',
   });
 
@@ -528,17 +528,17 @@ test('gestor consegue atribuir a mesma tarefa para mais de uma pessoa', { concur
   const suffix = Date.now() + 131;
   const gestor = await createUser({
     name: `Gestor Multi ${suffix}`,
-    email: `gestor.multi.${suffix}@one.test`,
+    email: `gestor.multi.${suffix}@example.test`,
     role: 'gestor',
   });
   const designerA = await createUser({
     name: `Designer A ${suffix}`,
-    email: `designer.a.${suffix}@one.test`,
+    email: `designer.a.${suffix}@example.test`,
     role: 'designer',
   });
   const designerB = await createUser({
     name: `Designer B ${suffix}`,
-    email: `designer.b.${suffix}@one.test`,
+    email: `designer.b.${suffix}@example.test`,
     role: 'designer',
   });
 
@@ -592,7 +592,7 @@ test('usuario interno limpa o historico do checklist sem afetar os itens ativos 
   const suffix = Date.now() + 132;
   const gestor = await createUser({
     name: `Gestor Checklist ${suffix}`,
-    email: `gestor.checklist.${suffix}@one.test`,
+    email: `gestor.checklist.${suffix}@example.test`,
     role: 'gestor',
   });
 
@@ -626,12 +626,12 @@ test('tarefa compartilhada fica visivel para equipe interna', { concurrency: fal
   const suffix = Date.now() + 14;
   const gestor = await createUser({
     name: `Gestor Compartilhada ${suffix}`,
-    email: `gestor.compartilhada.${suffix}@one.test`,
+    email: `gestor.compartilhada.${suffix}@example.test`,
     role: 'gestor',
   });
   const designer = await createUser({
     name: `Designer Compartilhada ${suffix}`,
-    email: `designer.compartilhada.${suffix}@one.test`,
+    email: `designer.compartilhada.${suffix}@example.test`,
     role: 'designer',
   });
 
@@ -686,12 +686,12 @@ test('gestor atualiza manual da marca e designer relacionado visualiza o cliente
   const suffix = Date.now() + 12;
   const gestor = await createUser({
     name: `Gestor Manual ${suffix}`,
-    email: `gestor.manual.${suffix}@one.test`,
+    email: `gestor.manual.${suffix}@example.test`,
     role: 'gestor',
   });
   const designer = await createUser({
     name: `Designer Manual ${suffix}`,
-    email: `designer.manual.${suffix}@one.test`,
+    email: `designer.manual.${suffix}@example.test`,
     role: 'designer',
   });
 
@@ -747,7 +747,7 @@ test('dev nao acessa lista geral de clientes', { concurrency: false }, async () 
   const suffix = Date.now() + 9;
   const dev = await createUser({
     name: `Dev Clientes ${suffix}`,
-    email: `dev.clients.${suffix}@one.test`,
+    email: `dev.clients.${suffix}@example.test`,
     role: 'dev',
   });
   const clientId = await createClient(`Cliente Restrito ${suffix}`, `Empresa Restrita ${suffix}`);
@@ -767,12 +767,12 @@ test('gestor nao cria cobranca para lead fora do proprio tenant operacional', { 
   const suffix = Date.now() + 2;
   const gestorA = await createUser({
     name: `Gestor A ${suffix}`,
-    email: `gestor.a.${suffix}@one.test`,
+    email: `gestor.a.${suffix}@example.test`,
     role: 'gestor',
   });
   const gestorB = await createUser({
     name: `Gestor B ${suffix}`,
-    email: `gestor.b.${suffix}@one.test`,
+    email: `gestor.b.${suffix}@example.test`,
     role: 'gestor',
   });
 
@@ -790,7 +790,7 @@ test('gestor nao cria cobranca para lead fora do proprio tenant operacional', { 
       `Lead Bloqueado ${suffix}`,
       '11999999999',
       '11999999999',
-      `lead.bloqueado.${suffix}@one.test`,
+      `lead.bloqueado.${suffix}@example.test`,
       'Empresa Restrita',
       'Midia',
       'Indicacao',
@@ -824,7 +824,7 @@ test('cadastro de cliente aceita os novos planos da One e servicos sob demanda',
   const suffix = Date.now() + 21;
   const gestor = await createUser({
     name: `Gestor Plano ${suffix}`,
-    email: `gestor.plano.${suffix}@one.test`,
+    email: `gestor.plano.${suffix}@example.test`,
     role: 'gestor',
   });
 
@@ -861,12 +861,12 @@ test('atribuicao e conclusao de tarefa geram notificacoes para os envolvidos', {
   const suffix = Date.now() + 20;
   const gestor = await createUser({
     name: `Gestor Notificacao ${suffix}`,
-    email: `gestor.notificacao.${suffix}@one.test`,
+    email: `gestor.notificacao.${suffix}@example.test`,
     role: 'gestor',
   });
-  const thalisson = await createUser({
-    name: `Demo Motion Designer ${suffix}`,
-    email: `thalisson.${suffix}@one.test`,
+  const demoDesigner = await createUser({
+    name: `Demo User ${suffix}`,
+    email: `demoDesigner.${suffix}@example.test`,
     role: 'designer',
   });
 
@@ -878,7 +878,7 @@ test('atribuicao e conclusao de tarefa geram notificacoes para os envolvidos', {
     .set('Authorization', `Bearer ${gestorAuth.body.accessToken}`)
     .send({
       client_id: clientId,
-      assigned_to: thalisson.id,
+      assigned_to: demoDesigner.id,
       status: 'Backlog',
       type: 'design',
       column_name: 'todo',
@@ -888,21 +888,21 @@ test('atribuicao e conclusao de tarefa geram notificacoes para os envolvidos', {
 
   assert.equal(createTaskResponse.status, 201);
 
-  const thalissonAuth = await login(thalisson.email);
+  const demoDesignerAuth = await login(demoDesigner.email);
   const unreadCountResponse = await request(app)
     .get('/api/notifications/unread-count')
-    .set('Authorization', `Bearer ${thalissonAuth.body.accessToken}`);
+    .set('Authorization', `Bearer ${demoDesignerAuth.body.accessToken}`);
 
   assert.equal(unreadCountResponse.status, 200);
   assert.equal(unreadCountResponse.body.total, 1);
 
   const notificationsResponse = await request(app)
     .get('/api/notifications')
-    .set('Authorization', `Bearer ${thalissonAuth.body.accessToken}`);
+    .set('Authorization', `Bearer ${demoDesignerAuth.body.accessToken}`);
 
   assert.equal(notificationsResponse.status, 200);
   assert.equal(notificationsResponse.body.length, 1);
-  assert.equal(notificationsResponse.body[0].user_id, thalisson.id);
+  assert.equal(notificationsResponse.body[0].user_id, demoDesigner.id);
   assert.equal(notificationsResponse.body[0].entity_type, 'task');
   assert.equal(notificationsResponse.body[0].entity_id, createTaskResponse.body.id);
   assert.equal(notificationsResponse.body[0].type, 'task_assigned');
@@ -912,21 +912,21 @@ test('atribuicao e conclusao de tarefa geram notificacoes para os envolvidos', {
 
   const markReadResponse = await request(app)
     .patch(`/api/notifications/${notificationsResponse.body[0].id}/read`)
-    .set('Authorization', `Bearer ${thalissonAuth.body.accessToken}`)
+    .set('Authorization', `Bearer ${demoDesignerAuth.body.accessToken}`)
     .send();
 
   assert.equal(markReadResponse.status, 204);
 
   const readBackResponse = await request(app)
     .get('/api/notifications')
-    .set('Authorization', `Bearer ${thalissonAuth.body.accessToken}`);
+    .set('Authorization', `Bearer ${demoDesignerAuth.body.accessToken}`);
 
   assert.equal(readBackResponse.status, 200);
   assert.ok(readBackResponse.body[0].read_at);
 
   const completionResponse = await request(app)
     .put(`/api/tasks/${createTaskResponse.body.id}`)
-    .set('Authorization', `Bearer ${thalissonAuth.body.accessToken}`)
+    .set('Authorization', `Bearer ${demoDesignerAuth.body.accessToken}`)
     .send({
       status: 'Concluido',
       column_name: 'done',
@@ -949,7 +949,7 @@ test('atribuicao e conclusao de tarefa geram notificacoes para os envolvidos', {
 
   await pool.query('DELETE FROM notifications');
   await pool.query('DELETE FROM tasks');
-  await userModel.remove(thalisson.id);
+  await userModel.remove(demoDesigner.id);
   await userModel.remove(gestor.id);
   await pool.query('DELETE FROM clients');
 });
@@ -958,12 +958,12 @@ test('tarefas antigas ja atribuidas fazem backfill de notificacao ao abrir o pai
   const suffix = Date.now() + 21;
   const gestor = await createUser({
     name: `Gabriel ${suffix}`,
-    email: `gabriel.backfill.${suffix}@one.test`,
+    email: `gabriel.backfill.${suffix}@example.test`,
     role: 'gestor',
   });
-  const thalisson = await createUser({
-    name: `Demo Motion Designer Backfill ${suffix}`,
-    email: `thalisson.backfill.${suffix}@one.test`,
+  const demoDesigner = await createUser({
+    name: `Demo User Backfill ${suffix}`,
+    email: `demoDesigner.backfill.${suffix}@example.test`,
     role: 'designer',
   });
 
@@ -973,20 +973,20 @@ test('tarefas antigas ja atribuidas fazem backfill de notificacao ao abrir o pai
     `INSERT INTO tasks (client_id, created_by, assigned_to, status, type, column_name, title, description, deadline)
      VALUES ($1, $2, $3, 'Backlog', 'copywriting', 'todo', $4, $5, CURRENT_DATE)
      RETURNING id`,
-    [clientId, gestor.id, thalisson.id, 'Ajustar copies da campanha', 'Tarefa sem notificacao previa']
+    [clientId, gestor.id, demoDesigner.id, 'Ajustar copies da campanha', 'Tarefa sem notificacao previa']
   );
 
-  const thalissonAuth = await login(thalisson.email);
+  const demoDesignerAuth = await login(demoDesigner.email);
   const unreadCountResponse = await request(app)
     .get('/api/notifications/unread-count')
-    .set('Authorization', `Bearer ${thalissonAuth.body.accessToken}`);
+    .set('Authorization', `Bearer ${demoDesignerAuth.body.accessToken}`);
 
   assert.equal(unreadCountResponse.status, 200);
   assert.equal(unreadCountResponse.body.total, 1);
 
   const notificationsResponse = await request(app)
     .get('/api/notifications')
-    .set('Authorization', `Bearer ${thalissonAuth.body.accessToken}`);
+    .set('Authorization', `Bearer ${demoDesignerAuth.body.accessToken}`);
 
   assert.equal(notificationsResponse.status, 200);
   assert.equal(notificationsResponse.body.length, 1);
@@ -997,7 +997,7 @@ test('tarefas antigas ja atribuidas fazem backfill de notificacao ao abrir o pai
 
   await pool.query('DELETE FROM notifications');
   await pool.query('DELETE FROM tasks');
-  await userModel.remove(thalisson.id);
+  await userModel.remove(demoDesigner.id);
   await userModel.remove(gestor.id);
   await pool.query('DELETE FROM clients');
 });
@@ -1008,7 +1008,7 @@ test('POST /api/contacts exige autenticacao', { concurrency: false }, async () =
     .send({
       name: 'Lead Publico',
       phone: '11999999999',
-      email: 'lead.publico@one.test',
+      email: 'lead.publico@example.test',
     });
 
   assert.equal(response.status, 401);
@@ -1018,12 +1018,12 @@ test('exportacao da conta inclui mais de 100 registros por colecao', { concurren
   const suffix = Date.now() + 301;
   const user = await createUser({
     name: `Admin Export ${suffix}`,
-    email: `admin.export.${suffix}@one.test`,
+    email: `admin.export.${suffix}@example.test`,
     role: 'admin',
   });
   const peer = await createUser({
     name: `Designer Export Peer ${suffix}`,
-    email: `designer.export.peer.${suffix}@one.test`,
+    email: `designer.export.peer.${suffix}@example.test`,
     role: 'designer',
   });
 
@@ -1054,13 +1054,13 @@ test('exclusao da conta anonimiza o usuario e remove residuos diretos', { concur
   const clientId = await createClient(`Cliente Delete ${suffix}`, `Empresa Delete ${suffix}`);
   const user = await createUser({
     name: `Designer Delete ${suffix}`,
-    email: `designer.delete.${suffix}@one.test`,
+    email: `designer.delete.${suffix}@example.test`,
     role: 'designer',
     clientId,
   });
   const peer = await createUser({
     name: `Peer Delete ${suffix}`,
-    email: `peer.delete.${suffix}@one.test`,
+    email: `peer.delete.${suffix}@example.test`,
     role: 'designer',
     clientId,
   });
@@ -1076,7 +1076,7 @@ test('exclusao da conta anonimiza o usuario e remove residuos diretos', { concur
     `INSERT INTO contacts (name, phone, email, owner_id, assigned_to)
      VALUES ($1, $2, $3, $4, $4)
      RETURNING id`,
-    [`Lead Delete ${suffix}`, '11999999999', `lead.delete.${suffix}@one.test`, user.id]
+    [`Lead Delete ${suffix}`, '11999999999', `lead.delete.${suffix}@example.test`, user.id]
   );
   const material = await pool.query(
     `INSERT INTO materials (client_id, uploaded_by, title, status, url)
@@ -1150,12 +1150,12 @@ test('comercial nao atualiza invoice de outro tenant por ID', { concurrency: fal
   const suffix = Date.now() + 303;
   const comercialA = await createUser({
     name: `Comercial Invoice A ${suffix}`,
-    email: `comercial.invoice.a.${suffix}@one.test`,
+    email: `comercial.invoice.a.${suffix}@example.test`,
     role: 'comercial',
   });
   const comercialB = await createUser({
     name: `Comercial Invoice B ${suffix}`,
-    email: `comercial.invoice.b.${suffix}@one.test`,
+    email: `comercial.invoice.b.${suffix}@example.test`,
     role: 'comercial',
   });
   const clientAId = await createClient(`Cliente Invoice A ${suffix}`, `Empresa Invoice A ${suffix}`, comercialA.id);
@@ -1190,13 +1190,13 @@ test('usuario interno nao obtem stream de arquivo de outro tenant', { concurrenc
   const clientBId = await createClient(`Cliente File B ${suffix}`, `Empresa File B ${suffix}`);
   const designerA = await createUser({
     name: `Designer File A ${suffix}`,
-    email: `designer.file.a.${suffix}@one.test`,
+    email: `designer.file.a.${suffix}@example.test`,
     role: 'designer',
     clientId: clientAId,
   });
   const designerB = await createUser({
     name: `Designer File B ${suffix}`,
-    email: `designer.file.b.${suffix}@one.test`,
+    email: `designer.file.b.${suffix}@example.test`,
     role: 'designer',
     clientId: clientBId,
   });
@@ -1226,7 +1226,7 @@ test('access-url legado devolve URL interna protegida e o stream exige bearer to
   const clientId = await createClient(`Cliente File Stream ${suffix}`, `Empresa File Stream ${suffix}`);
   const designer = await createUser({
     name: `Designer File Stream ${suffix}`,
-    email: `designer.file.stream.${suffix}@one.test`,
+    email: `designer.file.stream.${suffix}@example.test`,
     role: 'designer',
     clientId,
   });
@@ -1282,12 +1282,12 @@ test('gestor nao atualiza cobranca de outro tenant por ID', { concurrency: false
   const suffix = Date.now() + 305;
   const gestorA = await createUser({
     name: `Gestor Charge A ${suffix}`,
-    email: `gestor.charge.a.${suffix}@one.test`,
+    email: `gestor.charge.a.${suffix}@example.test`,
     role: 'gestor',
   });
   const gestorB = await createUser({
     name: `Gestor Charge B ${suffix}`,
-    email: `gestor.charge.b.${suffix}@one.test`,
+    email: `gestor.charge.b.${suffix}@example.test`,
     role: 'gestor',
   });
   const clientAId = await createClient(`Cliente Charge A ${suffix}`, `Empresa Charge A ${suffix}`, gestorA.id);
@@ -1320,7 +1320,7 @@ test('dados sensiveis de cobranca sao criptografados em repouso e mascarados por
   const suffix = Date.now() + 3051;
   const admin = await createUser({
     name: `Admin Charge Sensitive ${suffix}`,
-    email: `admin.charge.sensitive.${suffix}@one.test`,
+    email: `admin.charge.sensitive.${suffix}@example.test`,
     role: 'admin',
   });
   const clientId = await createClient(`Cliente Charge Sensitive ${suffix}`, `Empresa Charge Sensitive ${suffix}`, admin.id);

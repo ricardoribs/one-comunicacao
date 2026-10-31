@@ -88,13 +88,13 @@ async function run() {
         `INSERT INTO clients (name, company, plan, mrr, segment, manager_id, started_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-        ['Demo Health Clinic', 'Demo Health Clinic LTDA', 'growth', 7200, 'Saúde', gestorUser.id, '2025-11-01']
+        ['Demo Health Clinic', 'Demo Health Clinic Ltda', 'growth', 7200, 'Saúde', gestorUser.id, '2025-11-01']
       ),
       pool.query(
         `INSERT INTO clients (name, company, plan, mrr, segment, manager_id, started_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-        ['Demo Retail Store', 'Demo Retail Store Boutique', 'starter', 3500, 'Varejo', comercialUser.id, '2026-01-15']
+        ['Demo Retail Store', 'Demo Retail Store Ltda', 'starter', 3500, 'Varejo', comercialUser.id, '2026-01-15']
       ),
       pool.query(
         `INSERT INTO clients (name, company, plan, mrr, segment, manager_id, started_at)

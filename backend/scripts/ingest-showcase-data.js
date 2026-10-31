@@ -178,59 +178,59 @@ function createUploadAssets(baseDate) {
   const todayLabel = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(baseDate);
 
   const assets = {
-    'avatar-demo-marketing-admin.svg': buildAvatarSvg('GJ', '#ED3B72'),
-    'avatar-demo-operations-manager.svg': buildAvatarSvg('JS', '#4AB889'),
-    'avatar-demo-motion-designer.svg': buildAvatarSvg('TH', '#5E87E5'),
-    'avatar-demo-graphic-designer.svg': buildAvatarSvg('CA', '#E98AB1'),
-    'avatar-demo-social-media.svg': buildAvatarSvg('VL', '#F0A34A'),
-    'avatar-demo-executive-admin.svg': buildAvatarSvg('RA', '#C95F7D'),
-    'avatar-demo-client-manager.svg': buildAvatarSvg('LS', '#A67EE5'),
-    'avatar-demo-sales-specialist.svg': buildAvatarSvg('EL', '#EC6C6C'),
-    'avatar-demo-sales-lead.svg': buildAvatarSvg('PH', '#4787B8'),
-    'avatar-demo-integration-developer.svg': buildAvatarSvg('RB', '#6E6E6E'),
-    'material-expobusiness-cobertura.svg': buildCreativeSvg('Demo Events Expo', 'Cobertura principal e captacao de expositores', '#ED3B72'),
-    'material-belavida-harmonizacao.svg': buildCreativeSvg('Demo Wellness', 'Campanha de harmonizacao facial e captacao local', '#E86D8D'),
-    'material-techmaranhao-dashboard.svg': buildCreativeSvg('Demo Technology', 'Landing page e dashboard de conversoes', '#568AE7'),
-    'material-saborebrasa-festival.svg': buildCreativeSvg('Demo Restaurant', 'Festival Parrilla e reforco de agenda semanal', '#D57A43'),
-    'material-horizonte-matriculas.svg': buildCreativeSvg('Demo Learning Institute', 'Matriculas abertas e leads qualificados', '#4AB889'),
-    'relatorio-expobusiness-marco.txt': buildReportText('Demo Events Expo', todayLabel, [
+    'avatar-demo-marketing-admin.svg': buildAvatarSvg('MA', '#ED3B72'),
+    'avatar-demo-operations-manager.svg': buildAvatarSvg('OM', '#4AB889'),
+    'avatar-demo-motion-designer.svg': buildAvatarSvg('MD', '#5E87E5'),
+    'avatar-demo-graphic-designer.svg': buildAvatarSvg('GD', '#E98AB1'),
+    'avatar-demo-social-media.svg': buildAvatarSvg('SM', '#F0A34A'),
+    'avatar-demo-executive-admin.svg': buildAvatarSvg('EA', '#C95F7D'),
+    'avatar-demo-client-manager.svg': buildAvatarSvg('CM', '#A67EE5'),
+    'avatar-demo-sales-specialist.svg': buildAvatarSvg('SS', '#EC6C6C'),
+    'avatar-demo-sales-lead.svg': buildAvatarSvg('SL', '#4787B8'),
+    'avatar-demo-integration-developer.svg': buildAvatarSvg('ID', '#6E6E6E'),
+    'material-demo-events-cobertura.svg': buildCreativeSvg('Demo Events Expo', 'Cobertura principal e captacao de expositores', '#ED3B72'),
+    'material-demo-wellness-harmonizacao.svg': buildCreativeSvg('Demo Wellness', 'Campanha de harmonizacao facial e captacao local', '#E86D8D'),
+    'material-demo-technology-dashboard.svg': buildCreativeSvg('Demo Technology', 'Landing page e dashboard de conversoes', '#568AE7'),
+    'material-demo-restaurant-festival.svg': buildCreativeSvg('Demo Restaurant', 'Festival Parrilla e reforco de agenda semanal', '#D57A43'),
+    'material-education-enrollment.svg': buildCreativeSvg('Demo Learning Institute', 'Matriculas abertas e leads qualificados', '#4AB889'),
+    'relatorio-demo-events-marco.txt': buildReportText('Demo Events Expo', todayLabel, [
       'Captação de expositores com aumento consistente de leads qualificados.',
       'Cobertura ao vivo com engajamento acima da media do setor.',
       'Fluxo comercial integrado com CRM para conversao de patrocinadores.',
     ]),
-    'relatorio-belavida-marco.txt': buildReportText('Demo Wellness Clinic', todayLabel, [
+    'relatorio-demo-wellness-marco.txt': buildReportText('Demo Wellness Clinic', todayLabel, [
       'Campanhas de Meta Ads e Google Ads com ganho de escala controlado.',
       'Melhoras em CTR e aproveitamento de leads por whatsapp.',
       'Ajuste de mensagens para procedimentos premium e recorrencia.',
     ]),
-    'relatorio-techmaranhao-marco.txt': buildReportText('Demo Technology Co', todayLabel, [
+    'relatorio-demo-technology-marco.txt': buildReportText('Demo Technology Co', todayLabel, [
       'Ganho de previsibilidade em funil B2B com landing page dedicada.',
       'Eventos de conversao padronizados entre GA4 e Looker Studio.',
       'Pipeline comercial mais limpo para reunioes de demonstracao.',
     ]),
-    'relatorio-saborebrasa-marco.txt': buildReportText('Demo Restaurant', todayLabel, [
+    'relatorio-demo-restaurant-marco.txt': buildReportText('Demo Restaurant', todayLabel, [
       'Conteudo organico e impulsionamento local sustentaram as reservas.',
       'Criativos de cardapio tiveram maior resposta aos fins de semana.',
       'Campanha sazonal preparada para calendario de abril.',
     ]),
-    'relatorio-horizonte-marco.txt': buildReportText('Demo Learning Institute', todayLabel, [
+    'relatorio-demo-learning-marco.txt': buildReportText('Demo Learning Institute', todayLabel, [
       'Campanhas de matriculas com ganho de volume e melhor custo por lead.',
       'Sequencia de nutricao por e-mail elevou a taxa de resposta.',
       'Painel comercial consolidado para acompanhamento diario.',
     ]),
-    'arquivo-briefing-expobusiness.txt': [
+    'arquivo-briefing-demo-events.txt': [
       'Briefing Demo Events Expo',
       '',
       'Objetivo: acelerar patrocinio, expositores e visitantes qualificados.',
       'Foco: tom executivo, senso de urgencia e prova social do evento.',
     ].join('\n'),
-    'arquivo-manual-belavida.txt': buildBrandManual(
+    'arquivo-manual-demo-wellness.txt': buildBrandManual(
       'Demo Wellness Clinic',
       'seguro, premium e acolhedor',
       'evitar promessas milagrosas e claims absolutos',
       'Agendar avaliacao'
     ),
-    'arquivo-dashboard-techmaranhao.csv': buildCsv(
+    'arquivo-dashboard-demo-technology.csv': buildCsv(
       ['cliente', 'campanha', 'leads', 'receita', 'observacao'],
       [
         ['Demo Technology Co', 'Leads ERP B2B', 64, 92000, 'Mes com melhor taxa de demonstracao do trimestre'],
@@ -1066,16 +1066,16 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
   const currentMonthLabel = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(now);
 
   const internalUsers = [
-    ['marketing-admin', 'Demo Marketing Admin', 'marketing-admin@example.test', 'admin', +55 (00) 00000-0001', 'Diretor de Marketing', 'avatar-demo-marketing-admin.svg', 0, 13, 40, 14, 5, 'Demo location'],
-    ['operations-manager', 'Demo Operations Manager', 'operations-manager@example.test', 'gestor', +55 (00) 00000-0002', 'Gestora de Operacoes', 'avatar-demo-operations-manager.svg', -1, 16, 10, 16, 12, 'Demo location'],
-    ['motion-designer', 'Demo Motion Designer', 'motion-designer@example.test', 'designer', +55 (00) 00000-0003', 'Designer Motion', 'avatar-demo-motion-designer.svg', -1, 9, 0, 9, 5, 'Demo location'],
-    ['graphic-designer', 'Demo Graphic Designer', 'graphic-designer@example.test', 'designer', +55 (00) 00000-0004', 'Designer Grafica', 'avatar-demo-graphic-designer.svg', -2, 11, 30, 11, 45, 'Demo location'],
-    ['social-media', 'Demo Social Media Specialist', 'social-media@example.test', 'designer', +55 (00) 00000-0005', 'Social Media', 'avatar-demo-social-media.svg', -3, 15, 55, 16, 0, 'Demo location'],
-    ['sales-lead', 'Demo Sales Lead', 'sales-lead@example.test', 'comercial', +55 (00) 00000-0006', 'Executivo Comercial', 'avatar-demo-sales-lead.svg', -1, 18, 20, 18, 40, 'Demo location'],
-    ['sales-specialist', 'Demo Sales Specialist', 'sales-specialist@example.test', 'comercial', +55 (00) 00000-0007', 'Atendimento Comercial', 'avatar-demo-sales-specialist.svg', -4, 14, 30, 14, 38, 'Demo location'],
-    ['client-manager', 'Demo Client Manager', 'client-manager@example.test', 'gestor', +55 (00) 00000-0008', 'Gestora de Relacionamento', 'avatar-demo-client-manager.svg', -2, 10, 15, 10, 18, 'Demo location'],
-    ['executive-admin', 'Demo Executive Admin', 'executive-admin@example.test', 'admin', +55 (00) 00000-0009', 'Diretor Executivo', 'avatar-demo-executive-admin.svg', -5, 12, 45, 12, 50, 'Demo location'],
-    ['integration-developer', 'Demo Integration Developer', 'integration-developer@example.test', 'dev', +55 (00) 00000-0010', 'Desenvolvedor e Integracoes', 'avatar-demo-integration-developer.svg', -1, 20, 15, 20, 25, 'Demo location'],
+    ['marketing-admin', 'Demo Marketing Admin', 'marketing-admin@example.test', 'admin', '+55 (00) 00000-0001', 'Diretor de Marketing', 'avatar-demo-marketing-admin.svg', 0, 13, 40, 14, 5, 'Demo location'],
+    ['operations-manager', 'Demo Operations Manager', 'operations-manager@example.test', 'gestor', '+55 (00) 00000-0002', 'Gestora de Operacoes', 'avatar-demo-operations-manager.svg', -1, 16, 10, 16, 12, 'Demo location'],
+    ['motion-designer', 'Demo Motion Designer', 'motion-designer@example.test', 'designer', '+55 (00) 00000-0003', 'Designer Motion', 'avatar-demo-motion-designer.svg', -1, 9, 0, 9, 5, 'Demo location'],
+    ['graphic-designer', 'Demo Graphic Designer', 'graphic-designer@example.test', 'designer', '+55 (00) 00000-0004', 'Designer Grafica', 'avatar-demo-graphic-designer.svg', -2, 11, 30, 11, 45, 'Demo location'],
+    ['social-media', 'Demo Social Media Specialist', 'social-media@example.test', 'designer', '+55 (00) 00000-0005', 'Social Media', 'avatar-demo-social-media.svg', -3, 15, 55, 16, 0, 'Demo location'],
+    ['sales-lead', 'Demo Sales Lead', 'sales-lead@example.test', 'comercial', '+55 (00) 00000-0006', 'Executivo Comercial', 'avatar-demo-sales-lead.svg', -1, 18, 20, 18, 40, 'Demo location'],
+    ['sales-specialist', 'Demo Sales Specialist', 'sales-specialist@example.test', 'comercial', '+55 (00) 00000-0007', 'Atendimento Comercial', 'avatar-demo-sales-specialist.svg', -4, 14, 30, 14, 38, 'Demo location'],
+    ['client-manager', 'Demo Client Manager', 'client-manager@example.test', 'gestor', '+55 (00) 00000-0008', 'Gestora de Relacionamento', 'avatar-demo-client-manager.svg', -2, 10, 15, 10, 18, 'Demo location'],
+    ['executive-admin', 'Demo Executive Admin', 'executive-admin@example.test', 'admin', '+55 (00) 00000-0009', 'Diretor Executivo', 'avatar-demo-executive-admin.svg', -5, 12, 45, 12, 50, 'Demo location'],
+    ['integration-developer', 'Demo Integration Developer', 'integration-developer@example.test', 'dev', '+55 (00) 00000-0010', 'Desenvolvedor e Integracoes', 'avatar-demo-integration-developer.svg', -1, 20, 15, 20, 25, 'Demo location'],
   ].map(([key, name, email, role, phone, job_title, avatar, offset, loginHour, loginMinute, seenHour, seenMinute, location], index) => ({
     key,
     name,
@@ -1095,7 +1095,7 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
 
   const clients = [
     {
-      key: 'expo',
+      key: 'events',
       name: 'Demo Events Expo',
       company: 'Demo Events Ltda',
       plan: 'Sob demanda · Cobertura de Eventos',
@@ -1106,19 +1106,19 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
       legal_document: '00.000.000/0000-00',
       contact_name: 'Demo Contact 01',
       contact_email: 'contact01@example.test',
-      contact_phone: +55 (00) 00000-0011',
+      contact_phone: '+55 (00) 00000-0011',
       billing_email: 'billing01@example.test',
       address_line1: 'Demo Avenue, 1',
-      neighborhood: 'Calhau',
-      city: 'Sao Luis',
-      state: 'MA',
+      neighborhood: 'Demo District',
+      city: 'Demo City',
+      state: 'EX',
       zip_code: '00000-000',
       country: 'Brasil',
       notes: 'Conta focada em patrocinio, expositores e cobertura institucional do evento.',
       brand_manual: buildBrandManual('Demo Events Expo', 'executivo, direto e orientado a oportunidade', 'evitar gírias e excesso de informalidade', 'Solicitar proposta e reservar cota'),
     },
     {
-      key: 'belavida',
+      key: 'wellness',
       name: 'Demo Wellness Clinic',
       company: 'Demo Wellness Ltda',
       plan: 'One Start',
@@ -1129,19 +1129,19 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
       legal_document: '00.000.000/0000-00',
       contact_name: 'Demo Contact 02',
       contact_email: 'contact02@example.test',
-      contact_phone: +55 (00) 00000-0012',
+      contact_phone: '+55 (00) 00000-0012',
       billing_email: 'billing02@example.test',
       address_line1: 'Demo Street, 2',
-      neighborhood: 'Renascenca',
-      city: 'Sao Luis',
-      state: 'MA',
+      neighborhood: 'Demo District',
+      city: 'Demo City',
+      state: 'EX',
       zip_code: '00000-000',
       country: 'Brasil',
       notes: 'Conta com foco em agendamentos locais, autoridade medica e recorrencia.',
       brand_manual: buildBrandManual('Demo Wellness Clinic', 'seguro, premium e acolhedor', 'evitar promessas milagrosas e claims absolutos', 'Agendar avaliacao'),
     },
     {
-      key: 'tech',
+      key: 'technology',
       name: 'Demo Technology Co',
       company: 'Demo Technology Ltda',
       plan: 'One Master',
@@ -1152,19 +1152,19 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
       legal_document: '00.000.000/0000-00',
       contact_name: 'Demo Contact 03',
       contact_email: 'contact03@example.test',
-      contact_phone: +55 (00) 00000-0013',
+      contact_phone: '+55 (00) 00000-0013',
       billing_email: 'billing03@example.test',
       address_line1: 'Demo Avenue, 3',
-      neighborhood: 'Cohama',
-      city: 'Sao Luis',
-      state: 'MA',
+      neighborhood: 'Demo District',
+      city: 'Demo City',
+      state: 'EX',
       zip_code: '00000-000',
       country: 'Brasil',
       notes: 'Conta B2B com funil consultivo, demonstracao e nutricao por conteudo.',
       brand_manual: buildBrandManual('Demo Technology Co', 'consultivo, tecnico sem ser frio, orientado a eficiencia', 'evitar buzzwords sem contexto e exagero comercial', 'Agendar demonstracao'),
     },
     {
-      key: 'sabor',
+      key: 'restaurant',
       name: 'Demo Restaurant',
       company: 'Demo Restaurant Ltda',
       plan: 'One Ideal',
@@ -1175,19 +1175,19 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
       legal_document: '00.000.000/0000-00',
       contact_name: 'Demo Contact 04',
       contact_email: 'contact04@example.test',
-      contact_phone: +55 (00) 00000-0014',
+      contact_phone: '+55 (00) 00000-0014',
       billing_email: 'billing04@example.test',
       address_line1: 'Demo Avenue, 4',
-      neighborhood: 'Olho dAgua',
-      city: 'Sao Luis',
-      state: 'MA',
+      neighborhood: 'Demo District',
+      city: 'Demo City',
+      state: 'EX',
       zip_code: '00000-000',
       country: 'Brasil',
       notes: 'Conta local com foco em reserva, cardapio semanal e sazonalidade de datas especiais.',
       brand_manual: buildBrandManual('Demo Restaurant', 'quente, convidativo e apetitoso', 'evitar textos longos em criativos e excesso de informacao em cardapio', 'Reservar mesa'),
     },
     {
-      key: 'horizonte',
+      key: 'education',
       name: 'Demo Learning Institute',
       company: 'Demo Learning Institute Ltda',
       plan: 'One Master',
@@ -1198,12 +1198,12 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
       legal_document: '00.000.000/0000-00',
       contact_name: 'Demo Contact 05',
       contact_email: 'contact05@example.test',
-      contact_phone: +55 (00) 00000-0015',
+      contact_phone: '+55 (00) 00000-0015',
       billing_email: 'billing05@example.test',
       address_line1: 'Demo Street, 5',
-      neighborhood: 'Cohafuma',
-      city: 'Sao Luis',
-      state: 'MA',
+      neighborhood: 'Demo District',
+      city: 'Demo City',
+      state: 'EX',
       zip_code: '00000-000',
       country: 'Brasil',
       notes: 'Conta com meta de matriculas, reforco institucional e calendario academico.',
@@ -1212,11 +1212,11 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
   ];
 
   const campaigns = [
-    ['expo-captacao', 'expo', 'Captação de expositores 2026', 'Meta Ads', 'Empresas de servicos, industria e patrocinadores regionais', 'Gerar conversas qualificadas para patrocinio e espaco de estande', 'execucao', 20000, -28, 18, 'Ativa'],
-    ['belavida-meta', 'belavida', 'Harmonizacao facial premium', 'Instagram + Meta', 'Mulheres e homens de 27 a 48 anos na Grande Ilha', 'Agendamentos de avaliacao e preenchimento do CRM', 'otimizacao', 7000, -24, 10, 'Ativa'],
-    ['tech-google', 'tech', 'Leads ERP B2B', 'Google Ads', 'Diretores operacionais e gestores financeiros de medias empresas', 'Gerar pedidos de demonstracao do ERP', 'escala', 12000, -40, 25, 'Ativa'],
-    ['sabor-festival', 'sabor', 'Festival Parrilla de Abril', 'Instagram', 'Publico local com interesse em gastronomia e experiencias', 'Reservas de mesa e fortalecimento de agenda de fim de semana', 'execucao', 3500, -15, 20, 'Ativa'],
-    ['horizonte-matriculas', 'horizonte', 'Matriculas 2026.2', 'Google Ads', 'Pais e responsaveis de alunos da educacao basica', 'Leads para secretaria e visitas guiadas', 'otimizacao', 15000, -35, 35, 'Ativa'],
+    ['events-leads', 'events', 'Captação de expositores 2026', 'Meta Ads', 'Empresas de servicos, industria e patrocinadores regionais', 'Gerar conversas qualificadas para patrocinio e espaco de estande', 'execucao', 20000, -28, 18, 'Ativa'],
+    ['wellness-paid-media', 'wellness', 'Harmonizacao facial premium', 'Instagram + Meta', 'Mulheres e homens de 27 a 48 anos na Grande Ilha', 'Agendamentos de avaliacao e preenchimento do CRM', 'otimizacao', 7000, -24, 10, 'Ativa'],
+    ['technology-search', 'technology', 'Leads ERP B2B', 'Google Ads', 'Diretores operacionais e gestores financeiros de medias empresas', 'Gerar pedidos de demonstracao do ERP', 'escala', 12000, -40, 25, 'Ativa'],
+    ['restaurant-seasonal', 'restaurant', 'Festival Parrilla de Abril', 'Instagram', 'Publico local com interesse em gastronomia e experiencias', 'Reservas de mesa e fortalecimento de agenda de fim de semana', 'execucao', 3500, -15, 20, 'Ativa'],
+    ['education-enrollment', 'education', 'Matriculas 2026.2', 'Google Ads', 'Pais e responsaveis de alunos da educacao basica', 'Leads para secretaria e visitas guiadas', 'otimizacao', 15000, -35, 35, 'Ativa'],
   ].map(([key, client_key, name, channel, audience, objective, pipeline_stage, budget, startOffset, endOffset, status]) => ({
     key,
     client_key,
@@ -1253,11 +1253,11 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
 
   const reportMonth = toDateOnly(monthStart(now, 0));
   const reports = [
-    ['expo', 'Relatorio Demo Events Expo - panorama de patrocinio', 'Captação de expositores acelerada, cobertura aquecida e patrocinio com funil bem definido.', 'relatorio-expobusiness-marco.txt'],
-    ['belavida', 'Relatorio Demo Wellness - consolidado de campanhas', 'Meta Ads e Google Ads com ganho de escala e leads mais qualificados para a recepcao.', 'relatorio-belavida-marco.txt'],
-    ['tech', 'Relatorio Demo Technology - funil e analytics', 'Dashboard de conversoes consolidado e ganho de previsibilidade em demonstracoes.', 'relatorio-techmaranhao-marco.txt'],
-    ['sabor', 'Relatorio Demo Restaurant - reservas e conteudo', 'Reserva de mesas evoluindo com calendario sazonal e criativos de maior resposta.', 'relatorio-saborebrasa-marco.txt'],
-    ['horizonte', 'Relatorio Demo Learning Institute - matriculas', 'Fluxo de matriculas mais organizado entre campanha, CRM e agenda comercial.', 'relatorio-horizonte-marco.txt'],
+    ['events', 'Relatorio Demo Events Expo - panorama de patrocinio', 'Captação de expositores acelerada, cobertura aquecida e patrocinio com funil bem definido.', 'relatorio-demo-events-marco.txt'],
+    ['wellness', 'Relatorio Demo Wellness - consolidado de campanhas', 'Meta Ads e Google Ads com ganho de escala e leads mais qualificados para a recepcao.', 'relatorio-demo-wellness-marco.txt'],
+    ['technology', 'Relatorio Demo Technology - funil e analytics', 'Dashboard de conversoes consolidado e ganho de previsibilidade em demonstracoes.', 'relatorio-demo-technology-marco.txt'],
+    ['restaurant', 'Relatorio Demo Restaurant - reservas e conteudo', 'Reserva de mesas evoluindo com calendario sazonal e criativos de maior resposta.', 'relatorio-demo-restaurant-marco.txt'],
+    ['education', 'Relatorio Demo Learning Institute - matriculas', 'Fluxo de matriculas mais organizado entre campanha, CRM e agenda comercial.', 'relatorio-demo-learning-marco.txt'],
   ].map(([client_key, title, summary, file_name]) => ({
     client_key,
     title,
@@ -1267,11 +1267,11 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
   }));
 
   const materials = [
-    ['expo', 'expo-captacao', 'graphic-designer', 'Criativo principal da Demo Events Expo', 'material-expobusiness-cobertura.svg', 'Aprovado', 'Aprovado para patrocinio e captacao de expositores.'],
-    ['belavida', 'belavida-meta', 'graphic-designer', 'Carrossel Demo Wellness - harmonizacao', 'material-belavida-harmonizacao.svg', 'Revisao', 'Ajustar a chamada final para agendamento.'],
-    ['tech', 'tech-google', 'integration-developer', 'Layout dashboard Demo Technology', 'material-techmaranhao-dashboard.svg', 'Pendente', null],
-    ['sabor', 'sabor-festival', 'social-media', 'Card do Festival Parrilla', 'material-saborebrasa-festival.svg', 'Aprovado', 'Liberado para impulsionamento local.'],
-    ['horizonte', 'horizonte-matriculas', 'motion-designer', 'Peca de matriculas 2026.2', 'material-horizonte-matriculas.svg', 'Pendente', null],
+    ['events', 'events-leads', 'graphic-designer', 'Criativo principal da Demo Events Expo', 'material-demo-events-cobertura.svg', 'Aprovado', 'Aprovado para patrocinio e captacao de expositores.'],
+    ['wellness', 'wellness-paid-media', 'graphic-designer', 'Carrossel Demo Wellness - harmonizacao', 'material-demo-wellness-harmonizacao.svg', 'Revisao', 'Ajustar a chamada final para agendamento.'],
+    ['technology', 'technology-search', 'integration-developer', 'Layout dashboard Demo Technology', 'material-demo-technology-dashboard.svg', 'Pendente', null],
+    ['restaurant', 'restaurant-seasonal', 'social-media', 'Card do Festival Parrilla', 'material-demo-restaurant-festival.svg', 'Aprovado', 'Liberado para impulsionamento local.'],
+    ['education', 'education-enrollment', 'motion-designer', 'Peca de matriculas 2026.2', 'material-education-enrollment.svg', 'Pendente', null],
   ].map(([client_key, campaign_key, uploaded_by_key, title, filename, status, feedback]) => ({
     client_key,
     campaign_key,
@@ -1284,9 +1284,9 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
   }));
 
   const files = [
-    ['expo', 'marketing-admin', 'briefing-expobusiness.txt', 'arquivo-briefing-expobusiness.txt', 'text/plain'],
-    ['belavida', 'operations-manager', 'manual-belavida.txt', 'arquivo-manual-belavida.txt', 'text/plain'],
-    ['tech', 'integration-developer', 'dashboard-techmaranhao.csv', 'arquivo-dashboard-techmaranhao.csv', 'text/csv'],
+    ['events', 'marketing-admin', 'briefing-demo-events.txt', 'arquivo-briefing-demo-events.txt', 'text/plain'],
+    ['wellness', 'operations-manager', 'manual-demo-wellness.txt', 'arquivo-manual-demo-wellness.txt', 'text/plain'],
+    ['technology', 'integration-developer', 'dashboard-demo-technology.csv', 'arquivo-dashboard-demo-technology.csv', 'text/csv'],
   ].map(([client_key, uploaded_by_key, original_name, stored_name, mime_type]) => ({
     client_key,
     uploaded_by_key,
@@ -1297,11 +1297,11 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
   }));
 
   const contacts = [
-    ['Demo Lead 01', 'lead01@example.test', +55 (00) 00000-0021', 'Demo Events Group', 'Cobertura de Eventos', 'Instagram', 'Proposta', 18000, 'sales-lead', 'operations-manager', -14, -2, 'Contato quente, ja pediu proposta comercial.'],
-    ['Demo Lead 02', 'lead02@example.test', +55 (00) 00000-0022', 'Demo Wellness Clinic', 'Tráfego Pago', 'Site', 'Prospeccao', 6200, 'sales-specialist', 'sales-lead', -6, -1, 'Primeiro contato entrou pelo site.'],
-    ['Demo Lead 03', 'lead03@example.test', +55 (00) 00000-0023', 'Demo Learning Center', 'Campanha de matriculas', 'Indicacao', 'Negociacao', 24000, 'sales-lead', 'client-manager', -20, -1, 'Aguardando aprovacao de diretoria financeira.'],
-    ['Demo Lead 04', 'lead04@example.test', +55 (00) 00000-0024', 'Demo Event Venue', 'Conteudo e cobertura', 'WhatsApp', 'Contato feito', 9800, 'sales-specialist', 'operations-manager', -9, -3, 'Pediu referencias de coberturas recentes.'],
-    ['Demo Lead 05', 'lead05@example.test', +55 (00) 00000-0025', 'Demo Dental Clinic', 'CRM e performance', 'Evento', 'Fechado', 12500, 'sales-lead', 'marketing-admin', -27, -4, 'Contrato assinado; onboarding em abril.'],
+    ['Demo Lead 01', 'lead01@example.test', '+55 (00) 00000-0021', 'Demo Events Group', 'Cobertura de Eventos', 'Instagram', 'Proposta', 18000, 'sales-lead', 'operations-manager', -14, -2, 'Contato quente, ja pediu proposta comercial.'],
+    ['Demo Lead 02', 'lead02@example.test', '+55 (00) 00000-0022', 'Demo Wellness Clinic', 'Tráfego Pago', 'Site', 'Prospeccao', 6200, 'sales-specialist', 'sales-lead', -6, -1, 'Primeiro contato entrou pelo site.'],
+    ['Demo Lead 03', 'lead03@example.test', '+55 (00) 00000-0023', 'Demo Learning Center', 'Campanha de matriculas', 'Indicacao', 'Negociacao', 24000, 'sales-lead', 'client-manager', -20, -1, 'Aguardando aprovacao de diretoria financeira.'],
+    ['Demo Lead 04', 'lead04@example.test', '+55 (00) 00000-0024', 'Demo Event Venue', 'Conteudo e cobertura', 'WhatsApp', 'Contato feito', 9800, 'sales-specialist', 'operations-manager', -9, -3, 'Pediu referencias de coberturas recentes.'],
+    ['Demo Lead 05', 'lead05@example.test', '+55 (00) 00000-0025', 'Demo Dental Clinic', 'CRM e performance', 'Evento', 'Fechado', 12500, 'sales-lead', 'marketing-admin', -27, -4, 'Contrato assinado; onboarding em abril.'],
   ].map(([name, email, phone, company, service, source, lead_stage, estimated_value, owner_key, assigned_to_key, createdOffset, updatedOffset, notes]) => ({
     name,
     email,
@@ -1320,27 +1320,27 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
     last_contact_at: atTime(addDays(now, updatedOffset), 16, 10).toISOString(),
     created_at: atTime(addDays(now, createdOffset), 10, 0).toISOString(),
     updated_at: atTime(addDays(now, updatedOffset), 16, 10).toISOString(),
-    address_line1: 'Endereco comercial principal',
-    neighborhood: 'Centro',
-    city: 'Sao Luis',
-    state: 'MA',
+    address_line1: 'Demo Street, 0',
+    neighborhood: 'Demo District',
+    city: 'Demo City',
+    state: 'EX',
     zip_code: '00000-000',
     country: 'Brasil',
   }));
 
   const tasks = [
-    ['expo', 'Redacao de release da abertura da Demo Events Expo', 'Escrever o texto oficial para imprensa local e portais parceiros, alinhando patrocinio e credenciamento.', 'Backlog', 'releases', 'backlog', 'marketing-admin', ['sales-lead', 'social-media'], 2, -4, 9, 10],
-    ['expo', 'Visita de captacao para gravacao de reels', 'Registrar bastidores da montagem e gerar takes para social media e cobertura do evento.', 'A Fazer', 'captacao', 'todo', 'operations-manager', ['motion-designer', 'graphic-designer'], 1, -3, 14, 20],
-    ['expo', 'Alinhamento de cobertura com cerimonial', 'Fechar cronograma de palco, janelas de imprensa e prioridades do patrocinio master.', 'Em progresso', 'reuniao', 'doing', 'marketing-admin', ['marketing-admin', 'operations-manager'], 0, -2, 10, 5],
-    ['belavida', 'Campanha Google Ads para abril', 'Subir novo grupo de anuncios para harmonizacao e depilacao, com extensoes de chamada e formulario.', 'A Fazer', 'trafego_pago', 'todo', 'marketing-admin', ['sales-lead', 'integration-developer'], 3, -3, 11, 35],
-    ['belavida', 'Design de banners de harmonizacao', 'Criar pecas para feed, stories e landing page com foco em autoridade e agendamento.', 'Em progresso', 'design_grafico', 'doing', 'marketing-admin', ['graphic-designer'], -1, -5, 16, 15],
-    ['tech', 'Configuracao do GA4 e eventos de conversao', 'Padronizar eventos, UTMs e dashboards para demonstracoes e formularios de contato.', 'Em progresso', 'planejamento', 'doing', 'executive-admin', ['integration-developer'], 2, -6, 10, 0],
-    ['tech', 'Landing page do ERP para captacao', 'Estruturar pagina com proposta de valor, provas e CTA de demonstracao comercial.', 'Backlog', 'copywriting', 'backlog', 'marketing-admin', ['motion-designer', 'integration-developer'], 5, -7, 15, 0],
-    ['sabor', 'Calendario editorial do Festival Parrilla', 'Definir pauta semanal, reforco dos cortes especiais e CTA de reserva para sexta e sabado.', 'A Fazer', 'social_media', 'todo', 'operations-manager', ['social-media', 'client-manager'], 4, -2, 9, 45],
-    ['sabor', 'Sessao de fotos do novo cardapio', 'Captar pratos, sobremesas e bastidores para reforcar o lancamento de abril.', 'Backlog', 'fotografia', 'backlog', 'operations-manager', ['graphic-designer', 'motion-designer'], 6, -4, 17, 0],
-    ['horizonte', 'Sequencia de e-mails de matricula', 'Construir nutricao com prova social, diferenciais pedagogicos e urgencia de vagas.', 'Em progresso', 'newsletter', 'doing', 'client-manager', ['social-media', 'sales-lead'], 1, -3, 8, 20],
-    ['horizonte', 'Apresentacao de resultados de marco', 'Organizar os aprendizados do mes e recomendar ajustes para a campanha de matriculas.', 'Concluído', 'planejamento', 'done', 'marketing-admin', ['marketing-admin', 'client-manager'], -2, -8, 13, 15],
-    ['expo', 'Publicacao do pos-evento no blog', 'Subir resumo do evento com fotos, parceiros e CTA para lista de espera da proxima edicao.', 'Concluído', 'copywriting', 'done', 'marketing-admin', ['social-media'], -5, -12, 16, 45],
+    ['events', 'Redacao de release da abertura da Demo Events Expo', 'Escrever o texto oficial para imprensa local e portais parceiros, alinhando patrocinio e credenciamento.', 'Backlog', 'releases', 'backlog', 'marketing-admin', ['sales-lead', 'social-media'], 2, -4, 9, 10],
+    ['events', 'Visita de captacao para gravacao de reels', 'Registrar bastidores da montagem e gerar takes para social media e cobertura do evento.', 'A Fazer', 'captacao', 'todo', 'operations-manager', ['motion-designer', 'graphic-designer'], 1, -3, 14, 20],
+    ['events', 'Alinhamento de cobertura com cerimonial', 'Fechar cronograma de palco, janelas de imprensa e prioridades do patrocinio master.', 'Em progresso', 'reuniao', 'doing', 'marketing-admin', ['marketing-admin', 'operations-manager'], 0, -2, 10, 5],
+    ['wellness', 'Campanha Google Ads para abril', 'Subir novo grupo de anuncios para harmonizacao e depilacao, com extensoes de chamada e formulario.', 'A Fazer', 'trafego_pago', 'todo', 'marketing-admin', ['sales-lead', 'integration-developer'], 3, -3, 11, 35],
+    ['wellness', 'Design de banners de harmonizacao', 'Criar pecas para feed, stories e landing page com foco em autoridade e agendamento.', 'Em progresso', 'design_grafico', 'doing', 'marketing-admin', ['graphic-designer'], -1, -5, 16, 15],
+    ['technology', 'Configuracao do GA4 e eventos de conversao', 'Padronizar eventos, UTMs e dashboards para demonstracoes e formularios de contato.', 'Em progresso', 'planejamento', 'doing', 'executive-admin', ['integration-developer'], 2, -6, 10, 0],
+    ['technology', 'Landing page do ERP para captacao', 'Estruturar pagina com proposta de valor, provas e CTA de demonstracao comercial.', 'Backlog', 'copywriting', 'backlog', 'marketing-admin', ['motion-designer', 'integration-developer'], 5, -7, 15, 0],
+    ['restaurant', 'Calendario editorial do Festival Parrilla', 'Definir pauta semanal, reforco dos cortes especiais e CTA de reserva para sexta e sabado.', 'A Fazer', 'social_media', 'todo', 'operations-manager', ['social-media', 'client-manager'], 4, -2, 9, 45],
+    ['restaurant', 'Sessao de fotos do novo cardapio', 'Captar pratos, sobremesas e bastidores para reforcar o lancamento de abril.', 'Backlog', 'fotografia', 'backlog', 'operations-manager', ['graphic-designer', 'motion-designer'], 6, -4, 17, 0],
+    ['education', 'Sequencia de e-mails de matricula', 'Construir nutricao com prova social, diferenciais pedagogicos e urgencia de vagas.', 'Em progresso', 'newsletter', 'doing', 'client-manager', ['social-media', 'sales-lead'], 1, -3, 8, 20],
+    ['education', 'Apresentacao de resultados de marco', 'Organizar os aprendizados do mes e recomendar ajustes para a campanha de matriculas.', 'Concluído', 'planejamento', 'done', 'marketing-admin', ['marketing-admin', 'client-manager'], -2, -8, 13, 15],
+    ['events', 'Publicacao do pos-evento no blog', 'Subir resumo do evento com fotos, parceiros e CTA para lista de espera da proxima edicao.', 'Concluído', 'copywriting', 'done', 'marketing-admin', ['social-media'], -5, -12, 16, 45],
   ].map(([client_key, title, description, status, type, column_name, created_by_key, assigned_keys, deadlineOffset, createdOffset, hour, minute]) => ({
     client_key,
     title,
@@ -1355,21 +1355,21 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
   }));
 
   const currentMonthInvoices = [
-    ['belavida', 6500, 'Pago', toDateOnly(monthDueDate(now, 0, 5)), atTime(monthDueDate(now, 0, 1), 9, 0).toISOString()],
-    ['tech', 8200, 'Pago', toDateOnly(monthDueDate(now, 0, 10)), atTime(monthDueDate(now, 0, 1), 10, 0).toISOString()],
-    ['sabor', 4800, 'Em aberto', toDateOnly(addDays(now, 5)), atTime(monthDueDate(now, 0, 2), 11, 0).toISOString()],
-    ['horizonte', 9100, 'Em aberto', toDateOnly(addDays(now, -7)), atTime(monthDueDate(now, 0, 3), 11, 30).toISOString()],
+    ['wellness', 6500, 'Pago', toDateOnly(monthDueDate(now, 0, 5)), atTime(monthDueDate(now, 0, 1), 9, 0).toISOString()],
+    ['technology', 8200, 'Pago', toDateOnly(monthDueDate(now, 0, 10)), atTime(monthDueDate(now, 0, 1), 10, 0).toISOString()],
+    ['restaurant', 4800, 'Em aberto', toDateOnly(addDays(now, 5)), atTime(monthDueDate(now, 0, 2), 11, 0).toISOString()],
+    ['education', 9100, 'Em aberto', toDateOnly(addDays(now, -7)), atTime(monthDueDate(now, 0, 3), 11, 30).toISOString()],
   ].map(([client_key, amount, status, due_date, created_at]) => ({ client_key, amount, status, due_date, created_at }));
 
   const recurringInvoices = [];
-  ['belavida', 'tech', 'sabor', 'horizonte'].forEach((clientKey) => {
+  ['wellness', 'technology', 'restaurant', 'education'].forEach((clientKey) => {
     const amount = clients.find((client) => client.key === clientKey).mrr;
     [-5, -4, -3, -2, -1].forEach((offset) => {
       recurringInvoices.push({
         client_key: clientKey,
         amount,
         status: 'Pago',
-        due_date: toDateOnly(monthDueDate(now, offset, 5 + (clientKey === 'tech' ? 3 : 0))),
+        due_date: toDateOnly(monthDueDate(now, offset, 5 + (clientKey === 'technology' ? 3 : 0))),
         created_at: atTime(monthDueDate(now, offset, 1), 9, 0).toISOString(),
       });
     });
@@ -1377,21 +1377,21 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
 
   const charges = [
     {
-      client_key: 'expo',
+      client_key: 'events',
       created_by_key: 'marketing-admin',
       payment_method: 'PIX',
       description: 'Cobrança Demo Events Expo · cobertura principal',
       amount: 120000,
       due_date: toDateOnly(addDays(now, -1)),
       status: 'RECEIVED',
-      external_reference: 'showcase-expobusiness-cobertura-principal',
-      payment_link: 'https://pay.one.local/expobusiness-principal',
+      external_reference: 'showcase-demo-events-cobertura-principal',
+      payment_link: 'https://pay.one.local/demo-events-principal',
       pix_copy_paste: '00020126580014BR.GOV.BCB.PIX0114showcaseexpo5204000053039865406120000.005802BR5909ONE LTDA6008SAOLUIS62070503***6304ABCD',
       external_payload: { source: 'manual-showcase', kind: 'pix' },
       created_at: atTime(addDays(now, -12), 9, 20).toISOString(),
     },
     {
-      client_key: 'tech',
+      client_key: 'technology',
       created_by_key: 'sales-lead',
       payment_method: 'BOLETO',
       description: 'Cobrança Demo Technology · setup analytics',
@@ -1405,21 +1405,21 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
       created_at: atTime(addDays(now, -5), 14, 15).toISOString(),
     },
     {
-      client_key: 'belavida',
+      client_key: 'wellness',
       created_by_key: 'sales-lead',
       payment_method: 'PIX',
       description: 'Cobrança Demo Wellness · pacote de abril',
       amount: 7500,
       due_date: toDateOnly(addDays(now, 4)),
       status: 'PENDING',
-      external_reference: 'showcase-belavida-pacote-abril',
-      payment_link: 'https://pay.one.local/belavida-abril',
+      external_reference: 'showcase-demo-wellness-pacote-abril',
+      payment_link: 'https://pay.one.local/demo-wellness-abril',
       pix_copy_paste: '00020126580014BR.GOV.BCB.PIX0114showcasebella52040000530398654067500.005802BR5909ONE LTDA6008SAOLUIS62070503***6304BCDE',
       external_payload: { source: 'manual-showcase', kind: 'pix' },
       created_at: atTime(addDays(now, -2), 10, 40).toISOString(),
     },
     {
-      client_key: 'sabor',
+      client_key: 'restaurant',
       created_by_key: 'sales-lead',
       payment_method: 'BOLETO',
       description: 'Cobrança Demo Restaurant · campanha especial',
@@ -1435,15 +1435,15 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
   ];
 
   const costEntries = [
-    ['expo', 'marketing-admin', 'media', 'Midia principal Demo Events Expo', 20000, -24, 10, 0],
-    ['expo', 'operations-manager', 'producao', 'Equipe de cobertura e ilha de edicao', 6500, -10, 15, 0],
-    ['belavida', 'marketing-admin', 'media', 'Investimento Meta Ads Demo Wellness', 7000, -25, 9, 0],
-    ['belavida', 'graphic-designer', 'producao', 'Pecas e adaptacoes de campanha Demo Wellness', 1500, -8, 11, 30],
-    ['tech', 'integration-developer', 'operacao', 'Instrumentacao GA4 e ajustes da landing page', 2500, -12, 18, 0],
-    ['tech', 'integration-developer', 'outro', 'Ferramenta adicional de dashboard', 1200, -9, 10, 40],
-    ['sabor', 'operations-manager', 'producao', 'Captacao fotografica do cardapio sazonal', 1800, -6, 16, 20],
-    ['horizonte', 'client-manager', 'media', 'Google Ads matriculas 2026.2', 15000, -20, 9, 20],
-    ['horizonte', 'client-manager', 'operacao', 'Operacao de nutricao comercial', 3200, -7, 14, 45],
+    ['events', 'marketing-admin', 'media', 'Midia principal Demo Events Expo', 20000, -24, 10, 0],
+    ['events', 'operations-manager', 'producao', 'Equipe de cobertura e ilha de edicao', 6500, -10, 15, 0],
+    ['wellness', 'marketing-admin', 'media', 'Investimento Meta Ads Demo Wellness', 7000, -25, 9, 0],
+    ['wellness', 'graphic-designer', 'producao', 'Pecas e adaptacoes de campanha Demo Wellness', 1500, -8, 11, 30],
+    ['technology', 'integration-developer', 'operacao', 'Instrumentacao GA4 e ajustes da landing page', 2500, -12, 18, 0],
+    ['technology', 'integration-developer', 'outro', 'Ferramenta adicional de dashboard', 1200, -9, 10, 40],
+    ['restaurant', 'operations-manager', 'producao', 'Captacao fotografica do cardapio sazonal', 1800, -6, 16, 20],
+    ['education', 'client-manager', 'media', 'Google Ads matriculas 2026.2', 15000, -20, 9, 20],
+    ['education', 'client-manager', 'operacao', 'Operacao de nutricao comercial', 3200, -7, 14, 45],
     [null, 'executive-admin', 'operacao', 'Aluguel do estudio', 4500, -5, 9, 30],
     [null, 'executive-admin', 'outro', 'Adobe Creative Cloud', 780, -5, 9, 35],
     [null, 'executive-admin', 'outro', 'Google Workspace', 240, -5, 9, 36],
@@ -1459,19 +1459,19 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
   }));
 
   const integrations = [
-    ['expo', 'ga4', 'connected', 'GA4-EXP-001', 'property-72001', null],
-    ['expo', 'meta_business', 'connected', 'BM-EXP-201', 'ad-account-9981', null],
-    ['expo', 'looker_studio', 'connected', 'studio-expobusiness', 'dashboard-expo-live', null],
-    ['belavida', 'ga4', 'connected', 'GA4-BELA-101', 'property-22110', null],
-    ['belavida', 'meta_business', 'connected', 'BM-BELA-221', 'ad-account-7710', null],
-    ['belavida', 'search_console', 'configuring', 'search-wellness.example.test', 'https://wellness.example.test', 'Validando propriedade de dominio'],
-    ['tech', 'ga4', 'connected', 'GA4-TECH-007', 'property-65421', null],
-    ['tech', 'power_bi', 'connected', 'workspace-tech', 'dataset-receita', null],
-    ['tech', 'search_console', 'error', 'gsc-techmaranhao', 'https://technology.example.test', 'Aguardando permissao do dominio principal'],
-    ['sabor', 'meta_business', 'connected', 'BM-SABOR-501', 'ad-account-9921', null],
-    ['sabor', 'ga4', 'disconnected', 'GA4-SABOR-002', 'property-41001', null],
-    ['horizonte', 'ga4', 'connected', 'GA4-HORI-100', 'property-81000', null],
-    ['horizonte', 'looker_studio', 'connected', 'studio-horizonte', 'dashboard-matriculas', null],
+    ['events', 'ga4', 'connected', 'GA4-EXP-001', 'property-72001', null],
+    ['events', 'meta_business', 'connected', 'BM-EXP-201', 'ad-account-9981', null],
+    ['events', 'looker_studio', 'connected', 'studio-demo-events', 'dashboard-expo-live', null],
+    ['wellness', 'ga4', 'connected', 'GA4-BELA-101', 'property-22110', null],
+    ['wellness', 'meta_business', 'connected', 'BM-BELA-221', 'ad-account-7710', null],
+    ['wellness', 'search_console', 'configuring', 'search-demo-wellness.example.test', 'https://wellness.example.test', 'Validando propriedade de dominio'],
+    ['technology', 'ga4', 'connected', 'GA4-TECH-007', 'property-65421', null],
+    ['technology', 'power_bi', 'connected', 'workspace-tech', 'dataset-receita', null],
+    ['technology', 'search_console', 'error', 'gsc-demo-technology', 'https://technology.example.test', 'Aguardando permissao do dominio principal'],
+    ['restaurant', 'meta_business', 'connected', 'BM-SABOR-501', 'ad-account-9921', null],
+    ['restaurant', 'ga4', 'disconnected', 'GA4-SABOR-002', 'property-41001', null],
+    ['education', 'ga4', 'connected', 'GA4-HORI-100', 'property-81000', null],
+    ['education', 'looker_studio', 'connected', 'studio-demo-learning', 'dashboard-matriculas', null],
   ].map(([client_key, provider_key, status, external_account_id, external_property_id, last_error]) => ({
     client_key,
     provider_key,
@@ -1507,7 +1507,7 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
     today: [
       { id: 'financas-marco', label: 'Revisar inadimplencia e recebidos do financeiro', done: false, createdAt: atTime(now, 8, 0).toISOString() },
       { id: 'expo-pauta', label: 'Aprovar pauta da Demo Events Expo com Operations Lead', done: true, createdAt: atTime(now, 8, 10).toISOString() },
-      { id: 'horizonte-cronograma', label: 'Fechar cronograma comercial do Demo Learning Institute', done: false, createdAt: atTime(now, 8, 20).toISOString() },
+      { id: 'demo-learning-cronograma', label: 'Fechar cronograma comercial do Demo Learning Institute', done: false, createdAt: atTime(now, 8, 20).toISOString() },
     ],
     history: [
       {
@@ -1551,7 +1551,7 @@ function buildShowcaseDataset(baseDate, assets, passwordHash) {
   }));
 
   const messages = [
-    ['sales-lead', 'marketing-admin', 'client', 'expo', 'O lead da Demo Events Group pediu a proposta final ainda hoje.', -1, 16, 0, atTime(addDays(now, -1), 16, 12).toISOString()],
+    ['sales-lead', 'marketing-admin', 'client', 'events', 'O lead da Demo Events Group pediu a proposta final ainda hoje.', -1, 16, 0, atTime(addDays(now, -1), 16, 12).toISOString()],
     ['operations-manager', 'motion-designer', 'task', 'Visita de captacao para gravacao de reels', 'Priorize takes verticais para social e depoimentos curtos.', -1, 17, 5, null],
   ].map(([sender_key, receiver_key, context_type, context_key, content, offset, hour, minute, read_at]) => ({
     sender_key,
