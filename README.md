@@ -1,44 +1,58 @@
-# ONE Comunicacao Integrada
+# ONE Comunicação Integrada
 
-Plataforma interna da ONE para CRM, campanhas, producao, calendario, analytics, financeiro e controle de acesso.
+Plataforma web interna da ONE para organizar o relacionamento com clientes e a operação da equipe. Reúne CRM, campanhas, produção, calendário, análises, financeiro e controle de acesso.
 
-## Stack
+## Visão geral
 
-- Backend: Node.js, Express, PostgreSQL e `node-pg-migrate`.
-- Frontend: HTML, CSS e JavaScript vanilla servido pelo proprio Express.
-- Autenticacao: JWT, refresh token em cookie HttpOnly e MFA/TOTP para perfis criticos.
-- Uploads: Cloudinary em producao, local em desenvolvimento.
-- Observabilidade: logs estruturados com Pino e Sentry opcional/obrigatorio por ambiente.
-- Deploy atual: Render Web Service via `render.yaml`.
+O site público e o painel interno são servidos pela mesma aplicação. A plataforma usa uma API Node.js, banco PostgreSQL e uma interface web em HTML, CSS e JavaScript.
 
-## Estrutura
+### Principais módulos
+
+- CRM e gestão de clientes;
+- campanhas, tarefas e produção;
+- calendário e integração com o Google Calendar;
+- análises e financeiro;
+- autenticação, perfis e controle de acesso.
+
+### Stack
+
+- **Backend:** Node.js, Express, PostgreSQL e `node-pg-migrate`.
+- **Frontend:** HTML, CSS e JavaScript, servido pelo Express.
+- **Autenticação:** JWT, refresh token em cookie `HttpOnly` e MFA/TOTP para perfis críticos.
+- **Uploads:** Cloudinary em produção e armazenamento local em desenvolvimento.
+- **Observabilidade:** logs estruturados com Pino e monitoramento com Sentry, conforme o ambiente.
+- **Publicação:** serviço web no Render, definido em [`render.yaml`](render.yaml).
+
+## Estrutura do repositório
 
 ```text
 backend/
-  src/                  API, rotas, modelos, servicos e migrations
-  scripts/              smoke test, validacao de env, backup e RLS
+  src/                  API, rotas, modelos, serviços e migrações
+  scripts/              testes rápidos, validação de ambiente, backup e RLS
   test/                 testes automatizados
 frontend/
-  assets/               JS, CSS, SVGs, imagens e midia
-  index.html            site publico
+  assets/               JavaScript, CSS, SVGs, imagens e mídia
+  index.html            site público
   painel-interno.html   painel da equipe
 docs/
-  openapi.yaml          contrato HTTP
+  openapi.yaml          contrato da API HTTP
 scripts/
-  audit-tenant.js       guarda contra queries fora do escopo tenant
-  check-frontend.js     validacao sintatica dos JS do frontend
-render.yaml             blueprint Render
+  audit-tenant.js       verifica o escopo de tenant nas consultas
+  check-frontend.js     verifica a sintaxe dos arquivos JavaScript
+render.yaml             configuração do serviço no Render
 ```
 
-## Rodar Localmente
+## Executar localmente
 
-Prerequisitos:
+### Pré-requisitos
 
-- Node.js 24 recomendado.
-- PostgreSQL 16+.
+- Node.js 24 (versão recomendada);
+- PostgreSQL 16 ou superior;
 - npm.
 
-Passos:
+### Instalação
+
+Na raiz do repositório, execute:
 
 ```bash
 cp .env.example .env
@@ -48,96 +62,128 @@ npm run bootstrap:admin --prefix backend
 npm run dev --prefix backend
 ```
 
-Acesse:
+Configure no arquivo `.env` as credenciais do PostgreSQL e os demais valores necessários ao ambiente local antes de iniciar a aplicação.
 
-- Site: `http://localhost:3000/`
-- Painel interno: `http://localhost:3000/app/io`
+Depois que o servidor iniciar, acesse:
 
-## Comandos
+- **Site público:** <http://localhost:3000/>
+- **Painel interno:** <http://localhost:3000/app/io>
 
-```bash
-npm run check:frontend
-npm run lint --prefix backend
-npm test --prefix backend
-npm run db:migrate --prefix backend
-npm run verify:rls --prefix backend
-npm run validate:env --prefix backend
-npm run smoke --prefix backend
-```
+## Comandos úteis
 
-## Deploy no Render
+Execute os comandos a partir da raiz do repositório:
 
-O deploy atual usa `render.yaml` com runtime Node nativo. O frontend e a API sobem no mesmo servico Render.
+| Objetivo | Comando |
+| --- | --- |
+| Verificar o JavaScript do frontend | `npm run check:frontend` |
+| Executar o lint do backend | `npm run lint --prefix backend` |
+| Executar os testes do backend | `npm test --prefix backend` |
+| Aplicar migrações do banco | `npm run db:migrate --prefix backend` |
+| Verificar o isolamento por tenant (RLS) | `npm run verify:rls --prefix backend` |
+| Validar as variáveis de ambiente | `npm run validate:env --prefix backend` |
+| Executar o smoke test | `npm run smoke --prefix backend` |
 
-Configuracao principal:
+## Publicação no Render
 
-- Build Command: `npm run install:backend:prod && npm run predeploy:render --prefix backend`
-- Start Command: `npm run start`
-- Health Check Path: `/api/health`
-- Auto deploy: commits na branch conectada
+O serviço é configurado pelo blueprint [`render.yaml`](render.yaml), com ambiente de execução Node.js. O frontend e a API são publicados juntos no mesmo serviço.
 
-Variaveis obrigatorias no Render:
+- **Comando de build:** `npm run install:backend:prod && npm run predeploy:render --prefix backend`
+- **Comando de inicialização:** `npm run start`
+- **Verificação de saúde:** `/api/health`
+- **Publicação automática:** commits na branch conectada ao serviço.
+
+### Variáveis de ambiente
+
+Configure os valores e segredos no painel do Render. Não coloque credenciais reais no repositório.
+
+**Aplicação:**
 
 ```env
 NODE_ENV=production
 APP_BASE_URL=https://one-comunicacao-staging.onrender.com
 CORS_ORIGINS=https://one-comunicacao-staging.onrender.com
 TRUST_PROXY=1
+```
 
+**PostgreSQL:**
+
+```env
 DATABASE_HOST=aws-1-us-east-1.pooler.supabase.com
 DATABASE_PORT=5432
 DATABASE_NAME=postgres
-DATABASE_USER=<valor no Render>
-DATABASE_PASSWORD=<valor no Render>
+DATABASE_USER=<configurado no Render>
+DATABASE_PASSWORD=<configurado no Render>
 DATABASE_SSL_REQUIRED=true
 DATABASE_SSL_CA_FILE=/etc/secrets/prod-ca-2021.crt
+```
 
-JWT_SECRET=<64+ caracteres>
+**Autenticação e criptografia:**
+
+```env
+JWT_SECRET=<segredo com pelo menos 64 caracteres>
 JWT_EXPIRES_IN=15m
 BCRYPT_ROUNDS=12
-MFA_ENCRYPTION_KEY=<32+ caracteres>
-FINANCIAL_ENCRYPTION_KEY=<32+ caracteres>
-GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY=<32+ caracteres, se Google Calendar estiver ativo>
+MFA_ENCRYPTION_KEY=<chave com pelo menos 32 caracteres>
+FINANCIAL_ENCRYPTION_KEY=<chave com pelo menos 32 caracteres>
+GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY=<chave com pelo menos 32 caracteres, se o Google Calendar estiver ativo>
+```
 
+A chave de criptografia do Google Calendar deve ser diferente de `JWT_SECRET` e `FINANCIAL_ENCRYPTION_KEY`. Se `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` estiverem configurados, configure também `GOOGLE_REDIRECT_URI`.
+
+**Uploads:**
+
+```env
 UPLOAD_PROVIDER=cloudinary
 UPLOAD_REQUIRE_MALWARE_SCAN=false
 MALWARE_SCAN_PROVIDER=none
-CLOUDINARY_CLOUD_NAME=<valor no Render>
-CLOUDINARY_API_KEY=<valor no Render>
-CLOUDINARY_API_SECRET=<valor no Render>
+CLOUDINARY_CLOUD_NAME=<configurado no Render>
+CLOUDINARY_API_KEY=<configurado no Render>
+CLOUDINARY_API_SECRET=<configurado no Render>
 CLOUDINARY_REQUIRE_PRIVATE_UPLOAD=true
+```
 
+**E-mail e observabilidade:**
+
+```env
 EMAIL_PROVIDER=resend
-EMAIL_FROM=<valor no Render>
-RESEND_API_KEY=<valor no Render>
+EMAIL_FROM=<configurado no Render>
+RESEND_API_KEY=<configurado no Render>
 
-SENTRY_DSN=<valor no Render>
+SENTRY_DSN=<configurado no Render>
 SENTRY_REQUIRED=true
 SENTRY_ENVIRONMENT=production
 SENTRY_TRACES_SAMPLE_RATE=0.1
 MAINTENANCE_MODE=false
 ```
 
-Se `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` estiverem configuradas, defina tambem `GOOGLE_REDIRECT_URI` e `GOOGLE_CALENDAR_TOKEN_ENCRYPTION_KEY`. A chave do Google Calendar e separada do `JWT_SECRET` e do `FINANCIAL_ENCRYPTION_KEY`.
+### Verificações da publicação
 
-O smoke autenticado deve rodar no CI ou no pos-deploy, nao no build do Render. Para executar manualmente:
+O teste autenticado de verificação rápida deve ser executado no CI ou após a publicação, não durante o build do Render. Para executá-lo manualmente no PowerShell:
 
-```bash
-SMOKE_BASE_URL=https://one-comunicacao-staging.onrender.com SMOKE_EMAIL=<usuario interno> SMOKE_PASSWORD=<senha> npm run postdeploy:smoke --prefix backend
+```powershell
+$env:SMOKE_BASE_URL = "https://one-comunicacao-staging.onrender.com"
+$env:SMOKE_EMAIL = "<usuário interno>"
+$env:SMOKE_PASSWORD = "<senha>"
+npm run postdeploy:smoke --prefix backend
 ```
 
-O `verify:rls` exige `VERIFY_DATABASE_URL` com permissao para criar um role temporario e testar isolamento. O build do Render executa esse gate via `predeploy:render`; como a Direct connection do Supabase pode ser IPv6-only, no Render use a Session pooler connection string do Supabase, na porta `5432`, com usuario no formato `postgres.<project-ref>`.
+A verificação de RLS precisa de `VERIFY_DATABASE_URL` com permissão para criar um papel temporário e testar o isolamento. Configure essa variável no Render para que a verificação executada durante o build funcione. Use a string de conexão do **Session Pooler** do Supabase, na porta `5432`, com usuário no formato `postgres.<project-ref>`. A conexão direta do Supabase pode aceitar apenas IPv6 e não estar acessível pelo Render.
 
-```bash
-VERIFY_DATABASE_URL=<session pooler connection string do Supabase> npm run verify:rls --prefix backend
+Para executar a verificação manualmente no PowerShell:
+
+```powershell
+$env:VERIFY_DATABASE_URL = "<string de conexão do Session Pooler do Supabase>"
+npm run verify:rls --prefix backend
 ```
 
-Backlog operacional de servicos externos:
+### Serviços externos pendentes
 
-- ClamAV: quando houver scanner real, trocar `UPLOAD_REQUIRE_MALWARE_SCAN=true`, `MALWARE_SCAN_PROVIDER=clamav`, `CLAMAV_HOST=<host>` e `CLAMAV_PORT=3310`. Ate la, o app bloqueia tipos de upload arriscados quando o scan esta inativo.
-- Webhook de alerta: quando houver endpoint real, configurar `SECURITY_ALERT_WEBHOOK_URL`. Ate la, os alertas de seguranca seguem em log estruturado.
+- **Verificação de malware:** quando um scanner real estiver disponível, configure `UPLOAD_REQUIRE_MALWARE_SCAN=true`, `MALWARE_SCAN_PROVIDER=clamav`, `CLAMAV_HOST=<host>` e `CLAMAV_PORT=3310`. Enquanto isso, o aplicativo bloqueia tipos de arquivo arriscados quando a verificação está desativada.
+- **Webhook de alertas:** quando houver um endpoint disponível, configure `SECURITY_ALERT_WEBHOOK_URL`. Até lá, os alertas de segurança são registrados nos logs estruturados.
 
-Antes de publicar:
+## Antes e depois da publicação
+
+Antes de publicar, execute:
 
 ```bash
 npm run validate:env --prefix backend
@@ -146,23 +192,23 @@ npm test --prefix backend
 npm run check:frontend
 ```
 
-Depois do deploy:
+Após a publicação, verifique:
 
-- `GET /api/health`
-- `GET /api/ready`
-- login no painel interno
-- fluxo basico de cliente, campanha, tarefa e calendario
+- `GET /api/health`;
+- `GET /api/ready`;
+- login no painel interno;
+- fluxos básicos de clientes, campanhas, tarefas e calendário.
 
-## Documentacao Mantida
+## Documentação
 
-- `ARCHITECTURE.md`
-- `CHANGELOG.md`
-- `RUNBOOK.md`
-- `RUNBOOK-BACKUP-RESTORE.md`
-- `AUDITORIA-CHECKLIST-PRODUCAO.md`
-- `GUIA-DA-PLATAFORMA.md`
-- `GUIA-OPERACIONAL-EQUIPE.md`
-- `PLAYBOOK-ONBOARDING.md`
-- `PERMISSIONS-MATRIX.md`
-- `MAPEAMENTO-EQUIPE-ACESSOS.md`
-- `docs/openapi.yaml`
+- [Arquitetura](ARCHITECTURE.md)
+- [Changelog](CHANGELOG.md)
+- [Runbook operacional](RUNBOOK.md)
+- [Backup e restauração](RUNBOOK-BACKUP-RESTORE.md)
+- [Checklist de auditoria de produção](AUDITORIA-CHECKLIST-PRODUCAO.md)
+- [Guia da plataforma](GUIA-DA-PLATAFORMA.md)
+- [Guia operacional da equipe](GUIA-OPERACIONAL-EQUIPE.md)
+- [Playbook de onboarding](PLAYBOOK-ONBOARDING.md)
+- [Matriz de permissões](PERMISSIONS-MATRIX.md)
+- [Mapeamento de equipe e acessos](MAPEAMENTO-EQUIPE-ACESSOS.md)
+- [Contrato da API](docs/openapi.yaml)
