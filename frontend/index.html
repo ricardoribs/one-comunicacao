@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/assets/svg/one-favicon.svg?v=20260806" />
+    <title>ONE | Comunicação Integrada</title>
+    <meta name="description" content="ONE Comunicação Integrada. Estratégias de comunicação empresarial, marketing, publicidade, jornalismo e relações públicas para conectar marcas e pessoas com propósito." />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/tailwind.generated.css" />
+
+    <style>
+        /* Restore the small subset of Tailwind preflight this page relies on. */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd {
+            margin: 0;
+        }
+        ul, ol {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+        img, svg, video {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+        button, input, select, textarea {
+            font: inherit;
+        }
+        button {
+            border: 0;
+            background: transparent;
+        }
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7; /* Soft Cloud */
+            color: #222222; /* Ink Black */
+            -webkit-font-smoothing: antialiased;
+        }
+        .ink-black { color: #222222; }
+        .ash-gray { color: #6a6a6a; }
+        .hairline-border { border: 1px solid #dddddd; }
+        .rausch-bg { background-color: #ff385c; }
+        .rausch-text { color: #ff385c; }
+
+        /* Animação do Carrossel de Marcas */
+        .marquee-wrapper {
+            overflow: hidden;
+            white-space: nowrap;
+            display: flex;
+            width: 100%;
+            cursor: grab;
+            user-select: none;
+            touch-action: pan-y;
+        }
+        .marquee-wrapper.is-dragging { cursor: grabbing; }
+        .marquee-track {
+            display: flex;
+            gap: 4rem;
+            flex-shrink: 0;
+            will-change: transform;
+            transform: translate3d(0, 0, 0);
+        }
+        .marquee-track img {
+            pointer-events: none;
+            -webkit-user-drag: none;
+        }
+
+        /* FAQ Accordion Nativo Limpo */
+        details > summary {
+            list-style: none;
+        }
+        details > summary::-webkit-details-marker {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-white">
+
+    <header class="bg-[#222222] border-b border-gray-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-8 h-20 flex items-center justify-between relative">
+
+            <div class="flex items-center">
+                <img src="/assets/svg/one-logo-dark.svg" alt="ONE" class="h-10 w-auto" />
+            </div>
+
+            <nav class="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-8 text-[14px] font-medium text-gray-300">
+                <a href="#about" class="hover:text-white transition-colors">Sobre</a>
+                <a href="#services" class="hover:text-white transition-colors">Serviços</a>
+                <a href="#process" class="hover:text-white transition-colors">Como Trabalhamos</a>
+                <a href="#faq" class="hover:text-white transition-colors">FAQ</a>
+            </nav>
+
+            <div class="flex items-center gap-6">
+                <a href="/app/io" class="hidden md:block text-[14px] font-medium text-gray-300 hover:text-white transition-colors">Acesso Restrito</a>
+                <a href="https://wa.me/5599985480961" target="_blank" class="px-5 py-2.5 text-[14px] font-semibold text-white rausch-bg rounded-[8px] hover:scale-[0.98] transition-transform shadow-sm">
+                    Solicitar proposta
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <section class="bg-[#222222] text-white pt-20 pb-28 px-4 text-center">
+        <div class="max-w-4xl mx-auto mb-14">
+            <span class="inline-block px-3 py-1 mb-6 text-[11px] font-bold uppercase tracking-widest border border-gray-700 text-gray-300 rounded-full">
+                Comunicação Empresarial Integrada
+            </span>
+            <h1 class="text-5xl md:text-7xl font-bold tracking-tight leading-[1.05] mb-6">
+                Conectando marcas a pessoas com <span class="text-[#ff385c]">propósito.</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-400 font-medium max-w-2xl mx-auto leading-relaxed mb-10">
+                Transformamos ideias em conexões reais. Marketing, Publicidade, Jornalismo e Relações Públicas trabalhando no mesmo fluxo para acelerar o seu negócio.
+            </p>
+
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="#contact" class="w-full sm:w-auto px-8 py-3.5 text-[15px] font-semibold text-white rausch-bg rounded-[8px] hover:scale-[0.98] transition-transform">
+                    Começar meu projeto
+                </a>
+                <a href="#process" class="w-full sm:w-auto px-8 py-3.5 text-[15px] font-semibold text-white border border-gray-600 rounded-[8px] hover:bg-gray-800 transition-colors">
+                    Ver como trabalhamos
+                </a>
+            </div>
+        </div>
+
+    </section>
+
+    <section class="py-12 bg-white border-b border-[#dddddd] overflow-hidden">
+        <div class="max-w-7xl mx-auto px-8 mb-8 text-center">
+            <p class="text-[12px] font-bold text-gray-400 uppercase tracking-widest">Marcas que confiam na ONE</p>
+        </div>
+        <div class="marquee-wrapper">
+            <div class="marquee-track items-center opacity-60 grayscale">
+                <img src="/assets/svg/shopcar.png" alt="Shop Car" class="h-10 object-contain" />
+                <img src="/assets/svg/uniao-do-brasil.svg" alt="União" class="h-10 object-contain" />
+                <img src="/assets/svg/cdl-mulher.svg" alt="CDL" class="h-10 object-contain" />
+                <img src="/assets/svg/sorriso-facil.svg" alt="Sorriso Fácil" class="h-10 object-contain" />
+                <img src="/assets/svg/rural-pecas.svg" alt="Rural Peças" class="h-10 object-contain" />
+                <img src="/assets/svg/radical-fitness-clean.png" alt="Radical" class="h-10 object-contain" />
+                <img src="/assets/svg/shopcar.png" alt="Shop Car" class="h-10 object-contain" />
+                <img src="/assets/svg/uniao-do-brasil.svg" alt="União" class="h-10 object-contain" />
+                <img src="/assets/svg/cdl-mulher.svg" alt="CDL" class="h-10 object-contain" />
+                <img src="/assets/svg/sorriso-facil.svg" alt="Sorriso Fácil" class="h-10 object-contain" />
+                <img src="/assets/svg/rural-pecas.svg" alt="Rural Peças" class="h-10 object-contain" />
+                <img src="/assets/svg/radical-fitness-clean.png" alt="Radical" class="h-10 object-contain" />
+            </div>
+        </div>
+    </section>
+
+    <section id="services" class="py-24 bg-[#f7f7f7]">
+        <div class="max-w-6xl mx-auto px-8">
+            <div class="text-center mb-16 max-w-2xl mx-auto">
+                <span class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3 block">Nossos Serviços</span>
+                <h2 class="text-3xl md:text-4xl font-bold ink-black tracking-tight mb-4">Tudo o que sua marca precisa para decolar</h2>
+                <p class="text-[15px] ash-gray font-medium leading-relaxed">
+                    Atuamos com frentes complementares para organizar a rotina de comunicação, aproximar a marca do público certo e sustentar resultados.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white hairline-border rounded-[14px] p-8 hover:shadow-[rgba(0,0,0,0.04)_0_8px_24px] transition-shadow">
+                    <div class="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-[#ff385c] mb-6">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <h3 class="text-[18px] font-bold ink-black mb-3">Cronograma de Conteúdo</h3>
+                    <p class="text-[14px] ash-gray font-medium leading-relaxed">Elaboramos um planejamento mensal com base nos objetivos do negócio, sem achismos e com direção clara.</p>
+                </div>
+
+                <div class="bg-white hairline-border rounded-[14px] p-8 hover:shadow-[rgba(0,0,0,0.04)_0_8px_24px] transition-shadow">
+                    <div class="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-[#ff385c] mb-6">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <h3 class="text-[18px] font-bold ink-black mb-3">Design Gráfico</h3>
+                    <p class="text-[14px] ash-gray font-medium leading-relaxed">Artes visuais de alto padrão: banners, flyers, identidades visuais, outdoors e materiais impressos/digitais.</p>
+                </div>
+
+                <div class="bg-white hairline-border rounded-[14px] p-8 hover:shadow-[rgba(0,0,0,0.04)_0_8px_24px] transition-shadow">
+                    <div class="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-[#ff385c] mb-6">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path></svg>
+                    </div>
+                    <h3 class="text-[18px] font-bold ink-black mb-3">Social Media</h3>
+                    <p class="text-[14px] ash-gray font-medium leading-relaxed">Gestão de redes com 1 a 2 visitas semanais in loco para captação de conteúdo humano e rotina real da empresa.</p>
+                </div>
+
+                <div class="bg-white hairline-border rounded-[14px] p-8 hover:shadow-[rgba(0,0,0,0.04)_0_8px_24px] transition-shadow">
+                    <div class="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-[#ff385c] mb-6">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                    </div>
+                    <h3 class="text-[18px] font-bold ink-black mb-3">Copywriting</h3>
+                    <p class="text-[14px] ash-gray font-medium leading-relaxed">Textos persuasivos focados no seu objetivo: vendas diretas, engajamento, retenção ou fortalecimento de marca.</p>
+                </div>
+
+                <div class="bg-white hairline-border rounded-[14px] p-8 hover:shadow-[rgba(0,0,0,0.04)_0_8px_24px] transition-shadow">
+                    <div class="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-[#ff385c] mb-6">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <h3 class="text-[18px] font-bold ink-black mb-3">Cobertura de Eventos</h3>
+                    <p class="text-[14px] ash-gray font-medium leading-relaxed">Captação em tempo real, assessoria de imprensa no local e alimentação de stories e feeds instantâneos.</p>
+                </div>
+
+                <div class="bg-white hairline-border rounded-[14px] p-8 hover:shadow-[rgba(0,0,0,0.04)_0_8px_24px] transition-shadow">
+                    <div class="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-[#ff385c] mb-6">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                    </div>
+                    <h3 class="text-[18px] font-bold ink-black mb-3">Tráfego Pago</h3>
+                    <p class="text-[14px] ash-gray font-medium leading-relaxed">Campanhas patrocinadas no Google e Meta Ads para acelerar captação de leads e vendas com ROI mensurável.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="process" class="py-24 bg-white">
+        <div class="max-w-6xl mx-auto px-8">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+                <div class="max-w-2xl">
+                    <span class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3 block">Formatos de Atuação</span>
+                    <h2 class="text-3xl md:text-4xl font-bold ink-black tracking-tight">Combos gradativos para acompanhar o momento da empresa</h2>
+                </div>
+                <p class="text-[15px] ash-gray font-medium max-w-md">
+                    Base recorrente com escopo claro. A operação expande gradualmente ou adiciona serviços avulsos apenas quando o projeto exigir.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="hairline-border rounded-[14px] p-8 flex flex-col">
+                    <span class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Plano Inicial</span>
+                    <h3 class="text-[22px] font-bold ink-black mb-6">Combo ONE</h3>
+                    <ul class="space-y-4 mb-8 flex-1 text-[14px] font-medium ink-black">
+                        <li class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-[#dddddd] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Elaboração de cronograma
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-[#dddddd] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Tráfego Pago
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="hairline-border rounded-[14px] p-8 flex flex-col relative overflow-hidden shadow-[rgba(0,0,0,0.06)_0_12px_32px]">
+                    <div class="absolute top-0 left-0 w-full h-1 rausch-bg"></div>
+                    <span class="text-[11px] font-bold rausch-text uppercase tracking-widest mb-2">Mais Escolhido</span>
+                    <h3 class="text-[22px] font-bold ink-black mb-6">Combo ONE Start</h3>
+                    <ul class="space-y-4 mb-8 flex-1 text-[14px] font-medium ink-black">
+                        <li class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-[#ff385c] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Tudo do plano anterior
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-[#ff385c] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Social Media
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-[#ff385c] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Design Gráfico
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-[#ff385c] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Edição de conteúdos
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="hairline-border rounded-[14px] p-8 flex flex-col bg-[#fcfcfc]">
+                    <span class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Operação Total</span>
+                    <h3 class="text-[22px] font-bold ink-black mb-6">Combo Master</h3>
+                    <ul class="space-y-4 mb-8 flex-1 text-[14px] font-medium ink-black">
+                        <li class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-[#dddddd] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Tudo do plano Start
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-[#dddddd] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Publicação agendada nas redes
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-[#dddddd] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Acompanhamento e resposta aos clientes nas mídias
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="faq" class="py-24 bg-[#f7f7f7]">
+        <div class="max-w-3xl mx-auto px-8">
+            <div class="text-center mb-12">
+                <span class="text-[11px] font-bold text-[#ff385c] uppercase tracking-widest mb-3 block">Dúvidas</span>
+                <h2 class="text-3xl font-bold ink-black tracking-tight">Perguntas frequentes</h2>
+                <p class="text-[14px] ash-gray font-medium mt-2">Tudo que você precisa saber antes de iniciar o projeto.</p>
+            </div>
+
+            <div class="space-y-2">
+                <details class="border-b border-[#dddddd] pb-6 pt-4 cursor-pointer group">
+                    <summary class="text-[18px] font-semibold ink-black outline-none flex justify-between items-center">
+                        Posso ter flexibilidade de serviços entre os combos?
+                        <span class="text-gray-400 group-open:rotate-45 transition-transform text-2xl font-light">+</span>
+                    </summary>
+                    <p class="text-[15px] ash-gray font-medium mt-4 leading-relaxed pr-8">
+                        Sim, sabemos que existem serviços que muitas vezes não são necessários para a realidade da sua empresa, com isso trabalhamos de forma flexível adaptando os módulos ao seu negócio.
+                    </p>
+                </details>
+
+                <details class="border-b border-[#dddddd] pb-6 pt-4 cursor-pointer group">
+                    <summary class="text-[18px] font-semibold ink-black outline-none flex justify-between items-center">
+                        Qual o prazo de contratos?
+                        <span class="text-gray-400 group-open:rotate-45 transition-transform text-2xl font-light">+</span>
+                    </summary>
+                    <p class="text-[15px] ash-gray font-medium mt-4 leading-relaxed pr-8">
+                        Nossos contratos são válidos entre 6 meses a 1 ano, podendo ser renovados. Acreditamos que esse prazo é o ideal, pois serviços de marketing e posicionamento precisam de constância para gerar crescimento real.
+                    </p>
+                </details>
+
+                <details class="border-b border-[#dddddd] pb-6 pt-4 cursor-pointer group">
+                    <summary class="text-[18px] font-semibold ink-black outline-none flex justify-between items-center">
+                        Quais serviços são cobrados à parte?
+                        <span class="text-gray-400 group-open:rotate-45 transition-transform text-2xl font-light">+</span>
+                    </summary>
+                    <p class="text-[15px] ash-gray font-medium mt-4 leading-relaxed pr-8">
+                        Cobertura de eventos extras, disparos de Releases para imprensa, Newsletters e Sessões Fotográficas estruturadas de produto não fazem parte do plano base. Eles entram como serviços avulsos sob demanda.
+                    </p>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="py-24 bg-white">
+        <div class="max-w-6xl mx-auto px-8 grid grid-cols-1 lg:grid-cols-2 gap-16">
+            <div>
+                <span class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3 block">Vamos Conversar</span>
+                <h2 class="text-3xl md:text-4xl font-bold ink-black tracking-tight mb-6">Pronto para acelerar a comunicação da sua marca?</h2>
+                <p class="text-[15px] ash-gray font-medium leading-relaxed mb-10">
+                    Conte o momento atual do negócio e o que precisa sair do papel. Nossa equipe montará uma proposta técnica e comercial alinhada aos seus objetivos.
+                </p>
+
+                <div class="space-y-6">
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 flex-shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                        </div>
+                        <div>
+                            <p class="text-[13px] font-bold text-gray-500 uppercase tracking-widest">WhatsApp Direto</p>
+                            <a href="https://wa.me/5599985480961" target="_blank" class="text-[16px] font-semibold ink-black hover:text-[#ff385c]">(99) 98548-0961</a>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 flex-shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        </div>
+                        <div>
+                            <p class="text-[13px] font-bold text-gray-500 uppercase tracking-widest">Sede</p>
+                            <p class="text-[16px] font-semibold ink-black">Aprimore Hub de Negócios</p>
+                            <p class="text-[14px] ash-gray">Av. Pedro Neiva de Santana, 4414 - Imperatriz, MA</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white hairline-border rounded-[14px] p-8 shadow-[rgba(0,0,0,0.04)_0_8px_24px]">
+                <form class="space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-[13px] font-semibold ink-black mb-2">Nome</label>
+                            <input type="text" placeholder="Seu nome" class="w-full px-4 py-3 rounded-[8px] hairline-border text-[14px] focus:outline-none focus:ring-2 focus:ring-[#222222]" required>
+                        </div>
+                        <div>
+                            <label class="block text-[13px] font-semibold ink-black mb-2">WhatsApp</label>
+                            <input type="tel" placeholder="(99) 90000-0000" class="w-full px-4 py-3 rounded-[8px] hairline-border text-[14px] focus:outline-none focus:ring-2 focus:ring-[#222222]" required>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[13px] font-semibold ink-black mb-2">Empresa</label>
+                        <input type="text" placeholder="Nome do seu negócio" class="w-full px-4 py-3 rounded-[8px] hairline-border text-[14px] focus:outline-none focus:ring-2 focus:ring-[#222222]">
+                    </div>
+
+                    <div>
+                        <label class="block text-[13px] font-semibold ink-black mb-2">Momento atual</label>
+                        <textarea placeholder="Como podemos ajudar a sua marca hoje?" rows="4" class="w-full px-4 py-3 rounded-[8px] hairline-border text-[14px] focus:outline-none focus:ring-2 focus:ring-[#222222] resize-none"></textarea>
+                    </div>
+
+                    <button type="submit" class="w-full py-4 text-[15px] font-semibold text-white rausch-bg rounded-[8px] hover:scale-[0.98] transition-transform mt-2">
+                        Enviar solicitação
+                    </button>
+                    <p class="text-center text-[12px] ash-gray mt-4">Nossa equipe responderá em até 24h úteis.</p>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-[#f7f7f7] border-t border-[#dddddd] py-12 px-8">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center">
+                <img src="/assets/svg/one-logo-soft.svg" alt="ONE Comunicação" class="h-8 w-auto" />
+            </div>
+
+            <div class="text-[13px] font-medium ash-gray">
+                © 2026 ONE Comunicação Integrada.
+            </div>
+
+            <div class="flex items-center gap-6 text-[13px] font-medium">
+                <a href="https://instagram.com/onecomunicintegrada" target="_blank" aria-label="Instagram da ONE" class="ash-gray hover:text-[#222222] transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="3" y="3" width="18" height="18" rx="5" ry="5" stroke-width="1.8"></rect>
+                        <circle cx="12" cy="12" r="4" stroke-width="1.8"></circle>
+                        <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"></circle>
+                    </svg>
+                </a>
+                <a href="/app/io" class="ash-gray hover:text-[#222222]">Login Equipe</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Interactive marquee
+        document.addEventListener('DOMContentLoaded', () => {
+            const marqueeWrappers = document.querySelectorAll('.marquee-wrapper');
+
+            marqueeWrappers.forEach((wrapper) => {
+                const track = wrapper.querySelector('.marquee-track');
+                if (!track) return;
+
+                let loopWidth = 0;
+                let offset = 0;
+                let isDragging = false;
+                let isHovering = false;
+                let activePointerId = null;
+                let lastPointerX = 0;
+                let lastFrameTime = performance.now();
+                let resumeAutoAt = 0;
+                const autoSpeed = 40;
+                const resumeDelay = 900;
+
+                const normalizeOffset = () => {
+                    if (!loopWidth) return;
+                    while (offset <= -loopWidth) offset += loopWidth;
+                    while (offset > 0) offset -= loopWidth;
+                };
+
+                const renderOffset = () => {
+                    normalizeOffset();
+                    track.style.transform = `translate3d(${offset}px, 0, 0)`;
+                };
+
+                const measureLoop = () => {
+                    loopWidth = track.scrollWidth / 2;
+                    renderOffset();
+                };
+
+                const startDrag = (event) => {
+                    if (event.pointerType === 'mouse' && event.button !== 0) return;
+                    isDragging = true;
+                    activePointerId = event.pointerId;
+                    lastPointerX = event.clientX;
+                    resumeAutoAt = Number.POSITIVE_INFINITY;
+                    wrapper.classList.add('is-dragging');
+                    wrapper.setPointerCapture?.(event.pointerId);
+                    event.preventDefault();
+                };
+
+                const moveDrag = (event) => {
+                    if (!isDragging || event.pointerId !== activePointerId) return;
+                    const deltaX = event.clientX - lastPointerX;
+                    lastPointerX = event.clientX;
+                    offset += deltaX;
+                    renderOffset();
+                };
+
+                const endDrag = (event) => {
+                    if (!isDragging || event.pointerId !== activePointerId) return;
+                    isDragging = false;
+                    activePointerId = null;
+                    resumeAutoAt = performance.now() + resumeDelay;
+                    wrapper.classList.remove('is-dragging');
+                    wrapper.releasePointerCapture?.(event.pointerId);
+                };
+
+                const tick = (now) => {
+                    const delta = now - lastFrameTime;
+                    lastFrameTime = now;
+
+                    if (!isDragging && !isHovering && now >= resumeAutoAt && loopWidth > 0) {
+                        offset -= (delta / 1000) * autoSpeed;
+                        renderOffset();
+                    }
+
+                    window.requestAnimationFrame(tick);
+                };
+
+                wrapper.addEventListener('pointerdown', startDrag);
+                wrapper.addEventListener('pointermove', moveDrag);
+                wrapper.addEventListener('pointerup', endDrag);
+                wrapper.addEventListener('pointercancel', endDrag);
+                wrapper.addEventListener('mouseenter', () => {
+                    isHovering = true;
+                });
+                wrapper.addEventListener('mouseleave', () => {
+                    isHovering = false;
+                    if (!isDragging) {
+                        resumeAutoAt = performance.now() + resumeDelay;
+                    }
+                });
+                wrapper.addEventListener('lostpointercapture', () => {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    activePointerId = null;
+                    resumeAutoAt = performance.now() + resumeDelay;
+                    wrapper.classList.remove('is-dragging');
+                });
+
+                if ('ResizeObserver' in window) {
+                    new ResizeObserver(measureLoop).observe(track);
+                } else {
+                    window.addEventListener('resize', measureLoop);
+                }
+
+                window.addEventListener('load', measureLoop, { once: true });
+                measureLoop();
+                window.requestAnimationFrame(tick);
+            });
+        });
+    </script>
+</body>
+</html>

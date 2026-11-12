@@ -1,0 +1,46 @@
+<svg width="520" height="170" viewBox="0 0 520 170" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="radicalSilver" x1="52" y1="42" x2="346" y2="136" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FAFAFA"/>
+      <stop offset="0.34" stop-color="#E5E5E5"/>
+      <stop offset="0.68" stop-color="#C9CDD3"/>
+      <stop offset="1" stop-color="#F6F7F8"/>
+    </linearGradient>
+    <linearGradient id="fitnessYellow" x1="252" y1="112" x2="469" y2="152" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF76B"/>
+      <stop offset="0.5" stop-color="#FFE81D"/>
+      <stop offset="1" stop-color="#FFC800"/>
+    </linearGradient>
+    <linearGradient id="helmetBlue" x1="330" y1="20" x2="446" y2="96" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#325DFF"/>
+      <stop offset="1" stop-color="#0E2C8C"/>
+    </linearGradient>
+    <filter id="radicalShadow" x="0" y="0" width="520" height="170" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dx="0" dy="10"/>
+      <feGaussianBlur stdDeviation="9"/>
+      <feComposite in2="hardAlpha" operator="out"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.02 0 0 0 0 0.04 0 0 0 0 0.12 0 0 0 0.35 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_1"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_1" result="shape"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#radicalShadow)">
+    <path d="M333 28C343 24 356 25 367 26H438L426 44L437 67L431 80V94H322V86C322 72 317 60 309 49C303 42 300 34 300 26C306 18 315 15 333 28Z" fill="url(#helmetBlue)"/>
+    <path d="M332 22H445L434 42L446 67L439 81V95H432C423 95 414 92 406 88L392 80C382 75 371 72 360 72H353C344 72 335 68 329 62C318 50 311 37 311 24" stroke="#111111" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M332 22H445L434 42L446 67L439 81V95H432C423 95 414 92 406 88L392 80C382 75 371 72 360 72H353C344 72 335 68 329 62C318 50 311 37 311 24" stroke="white" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M345 46H387L379 56H345C342 56 340 54 340 51C340 48 342 46 345 46Z" fill="#FF2D2D" stroke="#111111" stroke-width="3" stroke-linejoin="round"/>
+
+    <g aria-hidden="true">
+      <text x="35" y="105" font-family="Arial Black, Impact, sans-serif" font-size="110" font-style="italic" font-weight="900" letter-spacing="-4" fill="none" stroke="#111111" stroke-width="18" stroke-linejoin="round" paint-order="stroke fill">Radical</text>
+      <text x="35" y="105" font-family="Arial Black, Impact, sans-serif" font-size="110" font-style="italic" font-weight="900" letter-spacing="-4" fill="none" stroke="white" stroke-width="10" stroke-linejoin="round" paint-order="stroke fill">Radical</text>
+      <text x="35" y="105" font-family="Arial Black, Impact, sans-serif" font-size="110" font-style="italic" font-weight="900" letter-spacing="-4" fill="url(#radicalSilver)">Radical</text>
+
+      <text x="241" y="146" font-family="Arial Black, Impact, sans-serif" font-size="64" font-style="italic" font-weight="900" letter-spacing="-2" fill="none" stroke="#111111" stroke-width="14" stroke-linejoin="round" paint-order="stroke fill">Fitness</text>
+      <text x="241" y="146" font-family="Arial Black, Impact, sans-serif" font-size="64" font-style="italic" font-weight="900" letter-spacing="-2" fill="none" stroke="white" stroke-width="8" stroke-linejoin="round" paint-order="stroke fill">Fitness</text>
+      <text x="241" y="146" font-family="Arial Black, Impact, sans-serif" font-size="64" font-style="italic" font-weight="900" letter-spacing="-2" fill="url(#fitnessYellow)">Fitness</text>
+    </g>
+  </g>
+</svg>

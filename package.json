@@ -1,0 +1,106 @@
+{
+  "name": "one-comunicacao-platform",
+  "version": "1.0.0",
+  "description": "Full-stack communications operations platform for client relationships, campaigns, workflows, analytics, and finance.",
+  "private": true,
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ricardoribs/one-comunicacao.git"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "main": "backend/src/server.js",
+  "scripts": {
+    "build:tailwind": "tailwindcss -c tailwind.config.js -i frontend/assets/css/tailwind.input.css -o frontend/assets/css/tailwind.generated.css --minify",
+    "dev": "nodemon backend/src/server.js",
+    "prestart": "npm run db:migrate && npm run audit:tenant",
+    "start": "node backend/src/server.js",
+    "db:init": "npm run db:migrate",
+    "db:migrate": "node backend/src/db/migrate.js up",
+    "db:migrate:down": "node backend/src/db/migrate.js down 1",
+    "db:seed": "node backend/src/db/seed.js",
+    "db:showcase": "node backend/scripts/ingest-showcase-data.js",
+    "bootstrap:admin": "node backend/src/db/bootstrap-admin.js",
+    "bootstrap:user": "node backend/src/db/bootstrap-user.js",
+    "test": "cross-env NODE_ENV=test node --test \"backend/test/**/*.test.js\"",
+    "lint": "eslint \"backend/src/**/*.js\" \"backend/test/**/*.js\"",
+    "format": "prettier --write \"backend/src/**/*.js\" \"backend/test/**/*.js\"",
+    "format:check": "prettier --check \"backend/src/**/*.js\" \"backend/test/**/*.js\"",
+    "audit:deps": "npm audit --omit=dev",
+    "audit:tenant": "node scripts/audit-tenant.js",
+    "check:frontend": "node scripts/check-frontend.js",
+    "smoke": "node backend/scripts/smoke-test.js",
+    "verify:rls": "node backend/scripts/verify-rls.js",
+    "validate:env": "node backend/scripts/validate-env.js",
+    "backup:db": "node backend/scripts/backup-database.js",
+    "restore:drill": "node backend/scripts/restore-drill.js",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{js,json,md,html,yml,yaml}": "prettier --write",
+    "backend/src/**/*.js": "eslint"
+  },
+  "dependencies": {
+    "@sentry/node": "^10.54.0",
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.10.0",
+    "compression": "^1.8.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.2",
+    "express-rate-limit": "^7.4.1",
+    "file-type": "^21.3.3",
+    "googleapis": "^174.0.1",
+    "helmet": "^8.0.0",
+    "hpp": "^0.2.3",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.2",
+    "multer": "^2.5.0",
+    "node-pg-migrate": "^8.0.4",
+    "otplib": "^13.4.0",
+    "pg": "^8.16.3",
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
+    "postcss": "^8.5.26",
+    "qrcode": "^1.5.4",
+    "sharp": "^0.35.3",
+    "validator": "^13.15.26",
+    "zod": "^4.6.7"
+  },
+  "overrides": {
+    "lodash": "4.18.1",
+    "path-to-regexp": "0.1.13",
+    "brace-expansion": "5.0.12",
+    "glob": "14.0.3",
+    "minimatch": "11.0.3",
+    "form-data": "4.0.6",
+    "body-parser": "1.20.9",
+    "qs": "6.17.1",
+    "immutable": "4.3.9",
+    "@opentelemetry/core": "2.8.0",
+    "lint-staged": {
+      "picomatch": "4.0.4",
+      "yaml": "2.8.3"
+    },
+    "anymatch": {
+      "picomatch": "2.3.2"
+    },
+    "readdirp": {
+      "picomatch": "2.3.2"
+    }
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0",
+    "eslint": "^10.1.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "nodemon": "^3.1.10",
+    "pg-mem": "^3.0.14",
+    "prettier": "^3.8.1",
+    "supertest": "^7.2.2",
+    "tailwindcss": "^3.4.17"
+  }
+}

@@ -1,0 +1,1829 @@
+const fs = require('fs');
+const path = require('path');
+const { execFileSync } = require('child_process');
+const bcrypt = require('bcryptjs');
+const { Client } = require('pg');
+
+const env = require('../src/config/env');
+const { assertStrongPassword } = require('../src/utils/passwordPolicy');
+
+const BACKEND_ROOT = path.resolve(__dirname, '..');
+const SHOWCASE_PASSWORD = process.env.SHOWCASE_PASSWORD;
+const SHOWCASE_IPS = [
+  '192.0.2.10',
+  '192.0.2.11',
+  '192.0.2.12',
+  '192.0.2.13',
+  '192.0.2.14',
+  '192.0.2.15',
+];
+
+function pad(number) {
+  return String(number).padStart(2, '0');
+}
+
+function slugify(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase();
+}
+
+function toDateOnly(value) {
+  const date = new Date(value);
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function atTime(value, hours, minutes = 0) {
+  const date = new Date(value);
+  date.setHours(hours, minutes, 0, 0);
+  return date;
+}
+
+function addDays(value, days) {
+  const date = new Date(value);
+  date.setDate(date.getDate() + days);
+  return date;
+}
+
+function monthStart(baseDate, offset) {
+  const date = new Date(baseDate);
+  date.setDate(1);
+  date.setMonth(date.getMonth() + offset);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function monthDueDate(baseDate, offset, day) {
+  const date = monthStart(baseDate, offset);
+  date.setDate(day);
+  return date;
+}
+
+function buildAvatarSvg(initials, accent) {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="240" height="240" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="240" height="240" rx="40" fill="#F4F0EA"/>
+  <rect x="18" y="18" width="204" height="204" rx="32" fill="${accent}"/>
+  <circle cx="120" cy="120" r="72" fill="#20161B" fill-opacity="0.12"/>
+  <text x="120" y="136" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="64" fill="#FFFFFF">${initials}</text>
+</svg>
+`;
+}
+
+function buildCreativeSvg(title, subtitle, accent) {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="900" rx="40" fill="#1C171A"/>
+  <rect x="60" y="60" width="1480" height="780" rx="28" fill="#2B2025"/>
+  <rect x="100" y="120" width="420" height="8" rx="4" fill="${accent}"/>
+  <text x="100" y="210" font-family="Arial, sans-serif" font-size="72" font-weight="700" fill="#FFFFFF">${title}</text>
+  <text x="100" y="300" font-family="Arial, sans-serif" font-size="34" font-weight="500" fill="#E7DCE1">${subtitle}</text>
+  <rect x="100" y="380" width="360" height="180" rx="24" fill="${accent}" fill-opacity="0.18"/>
+  <rect x="500" y="380" width="420" height="180" rx="24" fill="#FFFFFF" fill-opacity="0.08"/>
+  <rect x="960" y="380" width="480" height="180" rx="24" fill="#FFFFFF" fill-opacity="0.08"/>
+  <text x="100" y="720" font-family="Arial, sans-serif" font-size="28" font-weight="600" fill="#FFFFFF">ONE Comunicacao Integrada</text>
+</svg>
+`;
+}
+
+function buildReportText(clientName, monthLabel, highlights) {
+  return [
+    `Relatorio operacional - ${clientName}`,
+    `Competencia: ${monthLabel}`,
+    '',
+    'Resumo executivo:',
+    ...highlights.map((item, index) => `${index + 1}. ${item}`),
+    '',
+    'Proximo passo:',
+    'Manter cadencia de campanha, revisar funil comercial e acompanhar a margem por cliente no financeiro.',
+  ].join('\n');
+}
+
+function buildCsv(headers, rows) {
+  const escape = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+  return [headers.map(escape).join(','), ...rows.map((row) => row.map(escape).join(','))].join('\n');
+}
+
+function buildBrandManual(clientName, tone, restrictions, cta) {
+  return [
+    `Manual de marca - ${clientName}`,
+    '',
+    `Tom de voz: ${tone}.`,
+    `Restricoes: ${restrictions}.`,
+    `CTA principal: ${cta}.`,
+    '',
+    'Orientacoes operacionais:',
+    '- Priorizar clareza, prova social e oferta objetiva.',
+    '- Evitar excesso de texto em artes de social media.',
+    '- Revisar ortografia e datas antes de qualquer aprovacao final.',
+  ].join('\n');
+}
+
+async function ensureDatabaseExists() {
+  const resolvedHost = env.databaseHost || new URL(env.databaseUrl).hostname;
+  const resolvedPort = env.databaseHost ? env.databasePort : new URL(env.databaseUrl).port;
+  const resolvedName = env.databaseHost
+    ? env.databaseName
+    : decodeURIComponent(new URL(env.databaseUrl).pathname.replace(/^\//, ''));
+  const isLocalDatabase = ['localhost', '127.0.0.1', '::1'].includes(resolvedHost);
+
+  if (!isLocalDatabase) {
+    console.log('[showcase] Banco remoto detectado; pulando criacao/verificacao administrativa.');
+    return;
+  }
+
+  const clientConfig = env.databaseHost && env.databaseUser && env.databaseName
+    ? {
+        host: env.databaseHost,
+        port: resolvedPort,
+        database: 'postgres',
+        user: env.databaseUser,
+        password: env.databasePassword,
+      }
+    : (() => {
+        const adminUrl = new URL(env.databaseUrl);
+        adminUrl.pathname = '/postgres';
+        return { connectionString: adminUrl.toString() };
+      })();
+
+  const client = new Client(clientConfig);
+  await client.connect();
+  try {
+    const { rows } = await client.query('SELECT 1 FROM pg_database WHERE datname = $1', [resolvedName]);
+    if (!rows.length) {
+      const safeName = `"${resolvedName.replace(/"/g, '""')}"`;
+      await client.query(`CREATE DATABASE ${safeName}`);
+      console.log(`[showcase] Banco criado: ${resolvedName}`);
+    } else {
+      console.log(`[showcase] Banco encontrado: ${resolvedName}`);
+    }
+  } finally {
+    await client.end();
+  }
+}
+
+function runMigrations() {
+  console.log('[showcase] Rodando migrations...');
+  execFileSync(process.execPath, [path.join('src', 'db', 'migrate.js'), 'up'], {
+    cwd: BACKEND_ROOT,
+    stdio: 'inherit',
+  });
+}
+
+function createUploadAssets(baseDate) {
+  fs.mkdirSync(env.uploadsDir, { recursive: true });
+  const todayLabel = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(baseDate);
+
+  const assets = {
+    'avatar-demo-marketing-admin.svg': buildAvatarSvg('MA', '#ED3B72'),
+    'avatar-demo-operations-manager.svg': buildAvatarSvg('OM', '#4AB889'),
+    'avatar-demo-motion-designer.svg': buildAvatarSvg('MD', '#5E87E5'),
+    'avatar-demo-graphic-designer.svg': buildAvatarSvg('GD', '#E98AB1'),
+    'avatar-demo-social-media.svg': buildAvatarSvg('SM', '#F0A34A'),
+    'avatar-demo-executive-admin.svg': buildAvatarSvg('EA', '#C95F7D'),
+    'avatar-demo-client-manager.svg': buildAvatarSvg('CM', '#A67EE5'),
+    'avatar-demo-sales-specialist.svg': buildAvatarSvg('SS', '#EC6C6C'),
+    'avatar-demo-sales-lead.svg': buildAvatarSvg('SL', '#4787B8'),
+    'avatar-demo-integration-developer.svg': buildAvatarSvg('ID', '#6E6E6E'),
+    'material-demo-events-cobertura.svg': buildCreativeSvg('Demo Events Expo', 'Cobertura principal e captacao de expositores', '#ED3B72'),
+    'material-demo-wellness-harmonizacao.svg': buildCreativeSvg('Demo Wellness', 'Campanha de harmonizacao facial e captacao local', '#E86D8D'),
+    'material-demo-technology-dashboard.svg': buildCreativeSvg('Demo Technology', 'Landing page e dashboard de conversoes', '#568AE7'),
+    'material-demo-restaurant-festival.svg': buildCreativeSvg('Demo Restaurant', 'Festival Parrilla e reforco de agenda semanal', '#D57A43'),
+    'material-education-enrollment.svg': buildCreativeSvg('Demo Learning Institute', 'Matriculas abertas e leads qualificados', '#4AB889'),
+    'relatorio-demo-events-marco.txt': buildReportText('Demo Events Expo', todayLabel, [
+      'Captação de expositores com aumento consistente de leads qualificados.',
+      'Cobertura ao vivo com engajamento acima da media do setor.',
+      'Fluxo comercial integrado com CRM para conversao de patrocinadores.',
+    ]),
+    'relatorio-demo-wellness-marco.txt': buildReportText('Demo Wellness Clinic', todayLabel, [
+      'Campanhas de Meta Ads e Google Ads com ganho de escala controlado.',
+      'Melhoras em CTR e aproveitamento de leads por whatsapp.',
+      'Ajuste de mensagens para procedimentos premium e recorrencia.',
+    ]),
+    'relatorio-demo-technology-marco.txt': buildReportText('Demo Technology Co', todayLabel, [
+      'Ganho de previsibilidade em funil B2B com landing page dedicada.',
+      'Eventos de conversao padronizados entre GA4 e Looker Studio.',
+      'Pipeline comercial mais limpo para reunioes de demonstracao.',
+    ]),
+    'relatorio-demo-restaurant-marco.txt': buildReportText('Demo Restaurant', todayLabel, [
+      'Conteudo organico e impulsionamento local sustentaram as reservas.',
+      'Criativos de cardapio tiveram maior resposta aos fins de semana.',
+      'Campanha sazonal preparada para calendario de abril.',
+    ]),
+    'relatorio-demo-learning-marco.txt': buildReportText('Demo Learning Institute', todayLabel, [
+      'Campanhas de matriculas com ganho de volume e melhor custo por lead.',
+      'Sequencia de nutricao por e-mail elevou a taxa de resposta.',
+      'Painel comercial consolidado para acompanhamento diario.',
+    ]),
+    'arquivo-briefing-demo-events.txt': [
+      'Briefing Demo Events Expo',
+      '',
+      'Objetivo: acelerar patrocinio, expositores e visitantes qualificados.',
+      'Foco: tom executivo, senso de urgencia e prova social do evento.',
+    ].join('\n'),
+    'arquivo-manual-demo-wellness.txt': buildBrandManual(
+      'Demo Wellness Clinic',
+      'seguro, premium e acolhedor',
+      'evitar promessas milagrosas e claims absolutos',
+      'Agendar avaliacao'
+    ),
+    'arquivo-dashboard-demo-technology.csv': buildCsv(
+      ['cliente', 'campanha', 'leads', 'receita', 'observacao'],
+      [
+        ['Demo Technology Co', 'Leads ERP B2B', 64, 92000, 'Mes com melhor taxa de demonstracao do trimestre'],
+        ['Demo Events Expo', 'Captação de expositores', 112, 180000, 'Aceleracao na ultima quinzena'],
+      ]
+    ),
+  };
+
+  Object.entries(assets).forEach(([fileName, content]) => {
+    fs.writeFileSync(path.join(env.uploadsDir, fileName), content, 'utf8');
+  });
+
+  return Object.fromEntries(
+    Object.keys(assets).map((fileName) => [fileName, `/uploads/${fileName}`])
+  );
+}
+
+async function upsertUser(client, data) {
+  const existing = await client.query('SELECT id FROM users WHERE LOWER(email) = LOWER($1)', [data.email]);
+  if (existing.rows[0]) {
+    const userId = existing.rows[0].id;
+    await client.query(
+      `UPDATE users
+          SET client_id = $2,
+              name = $3,
+              phone = $4,
+              job_title = $5,
+              avatar_url = $6,
+              password = $7,
+              role = $8,
+              is_active = $9,
+              email_verified_at = $10,
+              notify_task_assigned = $11,
+              notify_task_completed = $12,
+              notify_calendar_24h = $13,
+              notify_calendar_1h = $14,
+              last_login_at = $15,
+              last_seen_at = $16,
+              last_seen_ip = $17,
+              last_seen_location = $18
+        WHERE id = $1`,
+      [
+        userId,
+        data.client_id ?? null,
+        data.name,
+        data.phone || null,
+        data.job_title || null,
+        data.avatar_url || null,
+        data.password,
+        data.role,
+        data.is_active !== false,
+        data.email_verified_at || null,
+        data.notify_task_assigned !== false,
+        data.notify_task_completed !== false,
+        data.notify_calendar_24h !== false,
+        data.notify_calendar_1h !== false,
+        data.last_login_at || null,
+        data.last_seen_at || null,
+        data.last_seen_ip || null,
+        data.last_seen_location || null,
+      ]
+    );
+    return userId;
+  }
+
+  const { rows } = await client.query(
+    `INSERT INTO users (
+       client_id, name, email, phone, job_title, avatar_url, password, role, is_active,
+       email_verified_at, notify_task_assigned, notify_task_completed, notify_calendar_24h, notify_calendar_1h,
+       last_login_at, last_seen_at, last_seen_ip, last_seen_location
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+     RETURNING id`,
+    [
+      data.client_id ?? null,
+      data.name,
+      data.email,
+      data.phone || null,
+      data.job_title || null,
+      data.avatar_url || null,
+      data.password,
+      data.role,
+      data.is_active !== false,
+      data.email_verified_at || null,
+      data.notify_task_assigned !== false,
+      data.notify_task_completed !== false,
+      data.notify_calendar_24h !== false,
+      data.notify_calendar_1h !== false,
+      data.last_login_at || null,
+      data.last_seen_at || null,
+      data.last_seen_ip || null,
+      data.last_seen_location || null,
+    ]
+  );
+
+  return rows[0].id;
+}
+
+async function upsertClient(client, data) {
+  const existing = await client.query('SELECT id FROM clients WHERE name = $1', [data.name]);
+  if (existing.rows[0]) {
+    const clientId = existing.rows[0].id;
+    await client.query(
+      `UPDATE clients
+          SET company = $2,
+              plan = $3,
+              mrr = $4,
+              segment = $5,
+              manager_id = $6,
+              started_at = $7,
+              legal_document = $8,
+              contact_name = $9,
+              contact_email = $10,
+              contact_phone = $11,
+              billing_email = $12,
+              address_line1 = $13,
+              address_line2 = $14,
+              neighborhood = $15,
+              city = $16,
+              state = $17,
+              zip_code = $18,
+              country = $19,
+              notes = $20,
+              brand_manual = $21
+        WHERE id = $1`,
+      [
+        clientId,
+        data.company,
+        data.plan,
+        data.mrr,
+        data.segment,
+        data.manager_id || null,
+        data.started_at || null,
+        data.legal_document || null,
+        data.contact_name || null,
+        data.contact_email || null,
+        data.contact_phone || null,
+        data.billing_email || null,
+        data.address_line1 || null,
+        data.address_line2 || null,
+        data.neighborhood || null,
+        data.city || null,
+        data.state || null,
+        data.zip_code || null,
+        data.country || null,
+        data.notes || null,
+        data.brand_manual || null,
+      ]
+    );
+    return clientId;
+  }
+
+  const { rows } = await client.query(
+    `INSERT INTO clients (
+       name, company, plan, mrr, segment, manager_id, started_at, legal_document, contact_name, contact_email,
+       contact_phone, billing_email, address_line1, address_line2, neighborhood, city, state, zip_code, country, notes, brand_manual
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+     RETURNING id`,
+    [
+      data.name,
+      data.company,
+      data.plan,
+      data.mrr,
+      data.segment || null,
+      data.manager_id || null,
+      data.started_at || null,
+      data.legal_document || null,
+      data.contact_name || null,
+      data.contact_email || null,
+      data.contact_phone || null,
+      data.billing_email || null,
+      data.address_line1 || null,
+      data.address_line2 || null,
+      data.neighborhood || null,
+      data.city || null,
+      data.state || null,
+      data.zip_code || null,
+      data.country || null,
+      data.notes || null,
+      data.brand_manual || null,
+    ]
+  );
+
+  return rows[0].id;
+}
+
+async function upsertCampaign(client, data) {
+  const existing = await client.query('SELECT id FROM campaigns WHERE client_id = $1 AND name = $2', [data.client_id, data.name]);
+  if (existing.rows[0]) {
+    const campaignId = existing.rows[0].id;
+    await client.query(
+      `UPDATE campaigns
+          SET channel = $2,
+              audience = $3,
+              objective = $4,
+              pipeline_stage = $5,
+              budget = $6,
+              start_date = $7,
+              end_date = $8,
+              status = $9
+        WHERE id = $1`,
+      [
+        campaignId,
+        data.channel,
+        data.audience || null,
+        data.objective || null,
+        data.pipeline_stage,
+        data.budget,
+        data.start_date || null,
+        data.end_date || null,
+        data.status,
+      ]
+    );
+    return campaignId;
+  }
+
+  const { rows } = await client.query(
+    `INSERT INTO campaigns (
+       client_id, name, channel, audience, objective, pipeline_stage, budget, start_date, end_date, status
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+     RETURNING id`,
+    [
+      data.client_id,
+      data.name,
+      data.channel,
+      data.audience || null,
+      data.objective || null,
+      data.pipeline_stage,
+      data.budget,
+      data.start_date || null,
+      data.end_date || null,
+      data.status,
+    ]
+  );
+
+  return rows[0].id;
+}
+
+async function upsertMetric(client, data) {
+  await client.query(
+    `INSERT INTO metrics (campaign_id, period, leads, revenue, impressions, clicks)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT (campaign_id, period)
+     DO UPDATE SET
+       leads = EXCLUDED.leads,
+       revenue = EXCLUDED.revenue,
+       impressions = EXCLUDED.impressions,
+       clicks = EXCLUDED.clicks`,
+    [data.campaign_id, data.period, data.leads, data.revenue, data.impressions, data.clicks]
+  );
+}
+
+async function upsertReport(client, data) {
+  const existing = await client.query(
+    'SELECT id FROM reports WHERE client_id = $1 AND title = $2 AND report_month = $3',
+    [data.client_id, data.title, data.report_month]
+  );
+
+  if (existing.rows[0]) {
+    await client.query(
+      `UPDATE reports
+          SET summary = $2,
+              file_url = $3
+        WHERE id = $1`,
+      [existing.rows[0].id, data.summary, data.file_url || null]
+    );
+    return existing.rows[0].id;
+  }
+
+  const { rows } = await client.query(
+    `INSERT INTO reports (client_id, title, report_month, summary, file_url)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING id`,
+    [data.client_id, data.title, data.report_month, data.summary, data.file_url || null]
+  );
+  return rows[0].id;
+}
+
+async function upsertMaterial(client, data) {
+  const existing = await client.query('SELECT id FROM materials WHERE client_id = $1 AND title = $2', [data.client_id, data.title]);
+  if (existing.rows[0]) {
+    await client.query(
+      `UPDATE materials
+          SET campaign_id = $2,
+              uploaded_by = $3,
+              filename = $4,
+              url = $5,
+              status = $6,
+              feedback = $7
+        WHERE id = $1`,
+      [
+        existing.rows[0].id,
+        data.campaign_id || null,
+        data.uploaded_by || null,
+        data.filename || null,
+        data.url || null,
+        data.status,
+        data.feedback || null,
+      ]
+    );
+    return existing.rows[0].id;
+  }
+
+  const { rows } = await client.query(
+    `INSERT INTO materials (client_id, campaign_id, uploaded_by, title, filename, url, status, feedback)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+     RETURNING id`,
+    [
+      data.client_id,
+      data.campaign_id || null,
+      data.uploaded_by || null,
+      data.title,
+      data.filename || null,
+      data.url || null,
+      data.status,
+      data.feedback || null,
+    ]
+  );
+  return rows[0].id;
+}
+
+async function upsertFile(client, data) {
+  const existing = await client.query('SELECT id FROM files WHERE stored_name = $1', [data.stored_name]);
+  if (existing.rows[0]) {
+    await client.query(
+      `UPDATE files
+          SET client_id = $2,
+              uploaded_by = $3,
+              original_name = $4,
+              mime_type = $5,
+              size = $6,
+              url = $7
+        WHERE id = $1`,
+      [
+        existing.rows[0].id,
+        data.client_id ?? null,
+        data.uploaded_by || null,
+        data.original_name,
+        data.mime_type || null,
+        data.size,
+        data.url,
+      ]
+    );
+    return existing.rows[0].id;
+  }
+
+  const { rows } = await client.query(
+    `INSERT INTO files (client_id, uploaded_by, original_name, stored_name, mime_type, size, url)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING id`,
+    [
+      data.client_id ?? null,
+      data.uploaded_by || null,
+      data.original_name,
+      data.stored_name,
+      data.mime_type || null,
+      data.size,
+      data.url,
+    ]
+  );
+  return rows[0].id;
+}
+
+async function upsertContact(client, data) {
+  const existing = await client.query('SELECT id FROM contacts WHERE LOWER(email) = LOWER($1)', [data.email]);
+  if (existing.rows[0]) {
+    const contactId = existing.rows[0].id;
+    await client.query(
+      `UPDATE contacts
+          SET name = $2,
+              phone = $3,
+              whatsapp = $4,
+              company = $5,
+              service = $6,
+              source = $7,
+              document = $8,
+              lead_stage = $9,
+              estimated_value = $10,
+              message = $11,
+              notes = $12,
+              owner_id = $13,
+              assigned_to = $14,
+              last_contact_at = $15,
+              converted_client_id = $16,
+              address_line1 = $17,
+              neighborhood = $18,
+              city = $19,
+              state = $20,
+              zip_code = $21,
+              country = $22,
+              created_at = $23,
+              updated_at = $24
+        WHERE id = $1`,
+      [
+        contactId,
+        data.name,
+        data.phone,
+        data.whatsapp || null,
+        data.company || null,
+        data.service || null,
+        data.source || null,
+        data.document || null,
+        data.lead_stage,
+        data.estimated_value || 0,
+        data.message || null,
+        data.notes || null,
+        data.owner_id || null,
+        data.assigned_to || null,
+        data.last_contact_at || null,
+        data.converted_client_id || null,
+        data.address_line1 || null,
+        data.neighborhood || null,
+        data.city || null,
+        data.state || null,
+        data.zip_code || null,
+        data.country || null,
+        data.created_at,
+        data.updated_at,
+      ]
+    );
+    return contactId;
+  }
+
+  const { rows } = await client.query(
+    `INSERT INTO contacts (
+       name, phone, whatsapp, email, company, service, source, document, lead_stage, estimated_value,
+       message, notes, owner_id, assigned_to, last_contact_at, converted_client_id,
+       address_line1, neighborhood, city, state, zip_code, country, created_at, updated_at
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
+     RETURNING id`,
+    [
+      data.name,
+      data.phone,
+      data.whatsapp || null,
+      data.email,
+      data.company || null,
+      data.service || null,
+      data.source || null,
+      data.document || null,
+      data.lead_stage,
+      data.estimated_value || 0,
+      data.message || null,
+      data.notes || null,
+      data.owner_id || null,
+      data.assigned_to || null,
+      data.last_contact_at || null,
+      data.converted_client_id || null,
+      data.address_line1 || null,
+      data.neighborhood || null,
+      data.city || null,
+      data.state || null,
+      data.zip_code || null,
+      data.country || null,
+      data.created_at,
+      data.updated_at,
+    ]
+  );
+  return rows[0].id;
+}
+
+async function upsertInvoice(client, data) {
+  const existing = await client.query(
+    'SELECT id FROM invoices WHERE client_id = $1 AND due_date = $2 AND amount = $3',
+    [data.client_id, data.due_date, data.amount]
+  );
+  if (existing.rows[0]) {
+    await client.query(
+      `UPDATE invoices
+          SET status = $2,
+              created_at = $3
+        WHERE id = $1`,
+      [existing.rows[0].id, data.status, data.created_at]
+    );
+    return existing.rows[0].id;
+  }
+
+  const { rows } = await client.query(
+    `INSERT INTO invoices (client_id, amount, status, due_date, created_at)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING id`,
+    [data.client_id, data.amount, data.status, data.due_date, data.created_at]
+  );
+  return rows[0].id;
+}
+
+async function upsertCharge(client, data) {
+  const provider = data.provider || 'manual';
+  const existing = await client.query('SELECT id FROM charges WHERE external_reference = $1', [data.external_reference]);
+  if (existing.rows[0]) {
+    await client.query(
+      `UPDATE charges
+          SET client_id = $2,
+              contact_id = $3,
+              created_by = $4,
+              provider = $5,
+              payment_method = $6,
+              description = $7,
+              amount = $8,
+              due_date = $9,
+              status = $10,
+              payment_link = $11,
+              boleto_url = $12,
+              boleto_barcode = $13,
+              pix_copy_paste = $14,
+              pix_qr_base64 = $15,
+              external_payload = $16,
+              updated_at = $17
+        WHERE id = $1`,
+      [
+        existing.rows[0].id,
+        data.client_id || null,
+        data.contact_id || null,
+        data.created_by || null,
+        provider,
+        data.payment_method,
+        data.description,
+        data.amount,
+        data.due_date || null,
+        data.status,
+        data.payment_link || null,
+        data.boleto_url || null,
+        data.boleto_barcode || null,
+        data.pix_copy_paste || null,
+        data.pix_qr_base64 || null,
+        data.external_payload ? JSON.stringify(data.external_payload) : null,
+        data.created_at,
+      ]
+    );
+    return existing.rows[0].id;
+  }
+
+  const { rows } = await client.query(
+    `INSERT INTO charges (
+       client_id, contact_id, created_by, provider, payment_method, description, amount, due_date, status,
+       payment_link, boleto_url, boleto_barcode, pix_copy_paste, pix_qr_base64, external_reference, external_payload, created_at, updated_at
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $17)
+     RETURNING id`,
+    [
+      data.client_id || null,
+      data.contact_id || null,
+      data.created_by || null,
+      provider,
+      data.payment_method,
+      data.description,
+      data.amount,
+      data.due_date || null,
+      data.status,
+      data.payment_link || null,
+      data.boleto_url || null,
+      data.boleto_barcode || null,
+      data.pix_copy_paste || null,
+      data.pix_qr_base64 || null,
+      data.external_reference,
+      data.external_payload ? JSON.stringify(data.external_payload) : null,
+      data.created_at,
+    ]
+  );
+  return rows[0].id;
+}
+
+async function upsertCostEntry(client, data) {
+  const existing = await client.query(
+    'SELECT id FROM cost_entries WHERE client_id IS NOT DISTINCT FROM $1 AND description = $2 AND incurred_on = $3',
+    [data.client_id ?? null, data.description, data.incurred_on]
+  );
+  if (existing.rows[0]) {
+    await client.query(
+      `UPDATE cost_entries
+          SET created_by = $2,
+              category = $3,
+              amount = $4,
+              created_at = $5
+        WHERE id = $1`,
+      [existing.rows[0].id, data.created_by, data.category, data.amount, data.created_at]
+    );
+    return existing.rows[0].id;
+  }
+
+  const { rows } = await client.query(
+    `INSERT INTO cost_entries (client_id, created_by, category, description, amount, incurred_on, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING id`,
+    [data.client_id ?? null, data.created_by, data.category, data.description, data.amount, data.incurred_on, data.created_at]
+  );
+  return rows[0].id;
+}
+
+async function upsertTask(client, data) {
+  const existing = await client.query(
+    'SELECT id FROM tasks WHERE client_id IS NOT DISTINCT FROM $1 AND title = $2',
+    [data.client_id ?? null, data.title]
+  );
+  let taskId;
+
+  if (existing.rows[0]) {
+    taskId = existing.rows[0].id;
+    await client.query(
+      `UPDATE tasks
+          SET created_by = $2,
+              assigned_to = $3,
+              status = $4,
+              type = $5,
+              column_name = $6,
+              description = $7,
+              deadline = $8,
+              created_at = $9
+        WHERE id = $1`,
+      [
+        taskId,
+        data.created_by || null,
+        data.assigned_to || null,
+        data.status,
+        data.type,
+        data.column_name,
+        data.description,
+        data.deadline || null,
+        data.created_at,
+      ]
+    );
+  } else {
+    const { rows } = await client.query(
+      `INSERT INTO tasks (
+         client_id, created_by, assigned_to, status, type, column_name, title, description, deadline, created_at
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       RETURNING id`,
+      [
+        data.client_id ?? null,
+        data.created_by || null,
+        data.assigned_to || null,
+        data.status,
+        data.type,
+        data.column_name,
+        data.title,
+        data.description,
+        data.deadline || null,
+        data.created_at,
+      ]
+    );
+    taskId = rows[0].id;
+  }
+
+  await client.query('DELETE FROM task_assignees WHERE task_id = $1', [taskId]);
+  for (const userId of data.assigned_user_ids) {
+    await client.query(
+      `INSERT INTO task_assignees (task_id, user_id)
+       VALUES ($1, $2)
+       ON CONFLICT (task_id, user_id) DO NOTHING`,
+      [taskId, userId]
+    );
+  }
+
+  return taskId;
+}
+
+async function upsertIntegration(client, data) {
+  const { rows } = await client.query(
+    `INSERT INTO client_integrations (
+       client_id, provider_key, status, external_account_id, external_property_id,
+       connected_at, last_sync_at, last_success_at, last_error, metadata, created_by, updated_by
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10, '{}'::jsonb), $11, $11)
+     ON CONFLICT (client_id, provider_key)
+     DO UPDATE SET
+       status = EXCLUDED.status,
+       external_account_id = EXCLUDED.external_account_id,
+       external_property_id = EXCLUDED.external_property_id,
+       connected_at = EXCLUDED.connected_at,
+       last_sync_at = EXCLUDED.last_sync_at,
+       last_success_at = EXCLUDED.last_success_at,
+       last_error = EXCLUDED.last_error,
+       metadata = EXCLUDED.metadata,
+       updated_by = EXCLUDED.updated_by,
+       updated_at = NOW()
+     RETURNING id`,
+    [
+      data.client_id,
+      data.provider_key,
+      data.status,
+      data.external_account_id || null,
+      data.external_property_id || null,
+      data.connected_at || null,
+      data.last_sync_at || null,
+      data.last_success_at || null,
+      data.last_error || null,
+      data.metadata ? JSON.stringify(data.metadata) : null,
+      data.created_by || null,
+    ]
+  );
+
+  return rows[0].id;
+}
+
+async function upsertCalendarEvent(client, data) {
+  const existing = await client.query('SELECT id FROM calendar_events WHERE title = $1 AND starts_at = $2', [data.title, data.starts_at]);
+  if (existing.rows[0]) {
+    await client.query(
+      `UPDATE calendar_events
+          SET description = $2,
+              ends_at = $3,
+              location = $4,
+              color = $5,
+              created_by = $6,
+              updated_by = $7
+        WHERE id = $1`,
+      [
+        existing.rows[0].id,
+        data.description || null,
+        data.ends_at,
+        data.location || null,
+        data.color || 'pink',
+        data.created_by || null,
+        data.updated_by || data.created_by || null,
+      ]
+    );
+    return existing.rows[0].id;
+  }
+
+  const { rows } = await client.query(
+    `INSERT INTO calendar_events (title, description, starts_at, ends_at, location, color, created_by, updated_by)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+     RETURNING id`,
+    [
+      data.title,
+      data.description || null,
+      data.starts_at,
+      data.ends_at,
+      data.location || null,
+      data.color || 'pink',
+      data.created_by || null,
+      data.updated_by || data.created_by || null,
+    ]
+  );
+  return rows[0].id;
+}
+
+async function upsertNotification(client, data) {
+  const existing = await client.query(
+    'SELECT id FROM notifications WHERE user_id = $1 AND type = $2 AND title = $3 AND entity_type IS NOT DISTINCT FROM $4 AND entity_id IS NOT DISTINCT FROM $5',
+    [data.user_id, data.type, data.title, data.entity_type || null, data.entity_id || null]
+  );
+  if (existing.rows[0]) {
+    await client.query(
+      `UPDATE notifications
+          SET body = $2,
+              read_at = $3,
+              created_at = $4
+        WHERE id = $1`,
+      [existing.rows[0].id, data.body || null, data.read_at || null, data.created_at]
+    );
+    return existing.rows[0].id;
+  }
+
+  const { rows } = await client.query(
+    `INSERT INTO notifications (user_id, type, title, body, entity_type, entity_id, read_at, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+     RETURNING id`,
+    [
+      data.user_id,
+      data.type,
+      data.title,
+      data.body || null,
+      data.entity_type || null,
+      data.entity_id || null,
+      data.read_at || null,
+      data.created_at,
+    ]
+  );
+  return rows[0].id;
+}
+
+async function upsertChecklistEntry(client, data) {
+  await client.query(
+    `INSERT INTO user_daily_checklists (user_id, checklist_date, items, completed_at, created_at, updated_at)
+     VALUES ($1, $2::date, $3::jsonb, $4, $5, $6)
+     ON CONFLICT (user_id, checklist_date)
+     DO UPDATE SET
+       items = EXCLUDED.items,
+       completed_at = EXCLUDED.completed_at,
+       created_at = EXCLUDED.created_at,
+       updated_at = EXCLUDED.updated_at`,
+    [
+      data.user_id,
+      data.checklist_date,
+      JSON.stringify(data.items),
+      data.completed_at || null,
+      data.created_at,
+      data.updated_at,
+    ]
+  );
+}
+
+async function upsertMessage(client, data) {
+  const existing = await client.query(
+    'SELECT id FROM messages WHERE sender_id = $1 AND receiver_id = $2 AND context_type = $3 AND context_id IS NOT DISTINCT FROM $4 AND content = $5',
+    [data.sender_id, data.receiver_id, data.context_type, data.context_id || null, data.content]
+  );
+  if (existing.rows[0]) {
+    await client.query(
+      `UPDATE messages
+          SET read_at = $2,
+              created_at = $3
+        WHERE id = $1`,
+      [existing.rows[0].id, data.read_at || null, data.created_at]
+    );
+    return existing.rows[0].id;
+  }
+
+  const { rows } = await client.query(
+    `INSERT INTO messages (sender_id, receiver_id, context_type, context_id, content, read_at, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING id`,
+    [
+      data.sender_id,
+      data.receiver_id,
+      data.context_type || 'general',
+      data.context_id || null,
+      data.content,
+      data.read_at || null,
+      data.created_at,
+    ]
+  );
+  return rows[0].id;
+}
+
+function buildShowcaseDataset(baseDate, assets, passwordHash) {
+  const now = new Date(baseDate);
+  const sixMonthPeriods = Array.from({ length: 6 }, (_, index) => monthStart(now, index - 5));
+  const currentMonthLabel = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(now);
+
+  const internalUsers = [
+    ['marketing-admin', 'Demo Marketing Admin', 'marketing-admin@example.test', 'admin', '+55 (00) 00000-0001', 'Diretor de Marketing', 'avatar-demo-marketing-admin.svg', 0, 13, 40, 14, 5, 'Demo location'],
+    ['operations-manager', 'Demo Operations Manager', 'operations-manager@example.test', 'gestor', '+55 (00) 00000-0002', 'Gestora de Operacoes', 'avatar-demo-operations-manager.svg', -1, 16, 10, 16, 12, 'Demo location'],
+    ['motion-designer', 'Demo Motion Designer', 'motion-designer@example.test', 'designer', '+55 (00) 00000-0003', 'Designer Motion', 'avatar-demo-motion-designer.svg', -1, 9, 0, 9, 5, 'Demo location'],
+    ['graphic-designer', 'Demo Graphic Designer', 'graphic-designer@example.test', 'designer', '+55 (00) 00000-0004', 'Designer Grafica', 'avatar-demo-graphic-designer.svg', -2, 11, 30, 11, 45, 'Demo location'],
+    ['social-media', 'Demo Social Media Specialist', 'social-media@example.test', 'designer', '+55 (00) 00000-0005', 'Social Media', 'avatar-demo-social-media.svg', -3, 15, 55, 16, 0, 'Demo location'],
+    ['sales-lead', 'Demo Sales Lead', 'sales-lead@example.test', 'comercial', '+55 (00) 00000-0006', 'Executivo Comercial', 'avatar-demo-sales-lead.svg', -1, 18, 20, 18, 40, 'Demo location'],
+    ['sales-specialist', 'Demo Sales Specialist', 'sales-specialist@example.test', 'comercial', '+55 (00) 00000-0007', 'Atendimento Comercial', 'avatar-demo-sales-specialist.svg', -4, 14, 30, 14, 38, 'Demo location'],
+    ['client-manager', 'Demo Client Manager', 'client-manager@example.test', 'gestor', '+55 (00) 00000-0008', 'Gestora de Relacionamento', 'avatar-demo-client-manager.svg', -2, 10, 15, 10, 18, 'Demo location'],
+    ['executive-admin', 'Demo Executive Admin', 'executive-admin@example.test', 'admin', '+55 (00) 00000-0009', 'Diretor Executivo', 'avatar-demo-executive-admin.svg', -5, 12, 45, 12, 50, 'Demo location'],
+    ['integration-developer', 'Demo Integration Developer', 'integration-developer@example.test', 'dev', '+55 (00) 00000-0010', 'Desenvolvedor e Integracoes', 'avatar-demo-integration-developer.svg', -1, 20, 15, 20, 25, 'Demo location'],
+  ].map(([key, name, email, role, phone, job_title, avatar, offset, loginHour, loginMinute, seenHour, seenMinute, location], index) => ({
+    key,
+    name,
+    email,
+    role,
+    phone,
+    job_title,
+    avatar_url: assets[avatar],
+    password: passwordHash,
+    is_active: true,
+    email_verified_at: atTime(addDays(now, -20), 10, 0).toISOString(),
+    last_login_at: atTime(addDays(now, offset), loginHour, loginMinute).toISOString(),
+    last_seen_at: atTime(addDays(now, offset), seenHour, seenMinute).toISOString(),
+    last_seen_ip: SHOWCASE_IPS[index % SHOWCASE_IPS.length],
+    last_seen_location: location,
+  }));
+
+  const clients = [
+    {
+      key: 'events',
+      name: 'Demo Events Expo',
+      company: 'Demo Events Ltda',
+      plan: 'Sob demanda · Cobertura de Eventos',
+      mrr: 0,
+      segment: 'Eventos e feiras',
+      manager_key: 'operations-manager',
+      started_at: toDateOnly(addDays(now, -80)),
+      legal_document: '00.000.000/0000-00',
+      contact_name: 'Demo Contact 01',
+      contact_email: 'contact01@example.test',
+      contact_phone: '+55 (00) 00000-0011',
+      billing_email: 'billing01@example.test',
+      address_line1: 'Demo Avenue, 1',
+      neighborhood: 'Demo District',
+      city: 'Demo City',
+      state: 'EX',
+      zip_code: '00000-000',
+      country: 'Brasil',
+      notes: 'Conta focada em patrocinio, expositores e cobertura institucional do evento.',
+      brand_manual: buildBrandManual('Demo Events Expo', 'executivo, direto e orientado a oportunidade', 'evitar gírias e excesso de informalidade', 'Solicitar proposta e reservar cota'),
+    },
+    {
+      key: 'wellness',
+      name: 'Demo Wellness Clinic',
+      company: 'Demo Wellness Ltda',
+      plan: 'One Start',
+      mrr: 6500,
+      segment: 'Saude e estetica',
+      manager_key: 'marketing-admin',
+      started_at: toDateOnly(addDays(now, -220)),
+      legal_document: '00.000.000/0000-00',
+      contact_name: 'Demo Contact 02',
+      contact_email: 'contact02@example.test',
+      contact_phone: '+55 (00) 00000-0012',
+      billing_email: 'billing02@example.test',
+      address_line1: 'Demo Street, 2',
+      neighborhood: 'Demo District',
+      city: 'Demo City',
+      state: 'EX',
+      zip_code: '00000-000',
+      country: 'Brasil',
+      notes: 'Conta com foco em agendamentos locais, autoridade medica e recorrencia.',
+      brand_manual: buildBrandManual('Demo Wellness Clinic', 'seguro, premium e acolhedor', 'evitar promessas milagrosas e claims absolutos', 'Agendar avaliacao'),
+    },
+    {
+      key: 'technology',
+      name: 'Demo Technology Co',
+      company: 'Demo Technology Ltda',
+      plan: 'One Master',
+      mrr: 8200,
+      segment: 'Tecnologia B2B',
+      manager_key: 'marketing-admin',
+      started_at: toDateOnly(addDays(now, -180)),
+      legal_document: '00.000.000/0000-00',
+      contact_name: 'Demo Contact 03',
+      contact_email: 'contact03@example.test',
+      contact_phone: '+55 (00) 00000-0013',
+      billing_email: 'billing03@example.test',
+      address_line1: 'Demo Avenue, 3',
+      neighborhood: 'Demo District',
+      city: 'Demo City',
+      state: 'EX',
+      zip_code: '00000-000',
+      country: 'Brasil',
+      notes: 'Conta B2B com funil consultivo, demonstracao e nutricao por conteudo.',
+      brand_manual: buildBrandManual('Demo Technology Co', 'consultivo, tecnico sem ser frio, orientado a eficiencia', 'evitar buzzwords sem contexto e exagero comercial', 'Agendar demonstracao'),
+    },
+    {
+      key: 'restaurant',
+      name: 'Demo Restaurant',
+      company: 'Demo Restaurant Ltda',
+      plan: 'One Ideal',
+      mrr: 4800,
+      segment: 'Alimentacao',
+      manager_key: 'operations-manager',
+      started_at: toDateOnly(addDays(now, -140)),
+      legal_document: '00.000.000/0000-00',
+      contact_name: 'Demo Contact 04',
+      contact_email: 'contact04@example.test',
+      contact_phone: '+55 (00) 00000-0014',
+      billing_email: 'billing04@example.test',
+      address_line1: 'Demo Avenue, 4',
+      neighborhood: 'Demo District',
+      city: 'Demo City',
+      state: 'EX',
+      zip_code: '00000-000',
+      country: 'Brasil',
+      notes: 'Conta local com foco em reserva, cardapio semanal e sazonalidade de datas especiais.',
+      brand_manual: buildBrandManual('Demo Restaurant', 'quente, convidativo e apetitoso', 'evitar textos longos em criativos e excesso de informacao em cardapio', 'Reservar mesa'),
+    },
+    {
+      key: 'education',
+      name: 'Demo Learning Institute',
+      company: 'Demo Learning Institute Ltda',
+      plan: 'One Master',
+      mrr: 9100,
+      segment: 'Educacao',
+      manager_key: 'client-manager',
+      started_at: toDateOnly(addDays(now, -260)),
+      legal_document: '00.000.000/0000-00',
+      contact_name: 'Demo Contact 05',
+      contact_email: 'contact05@example.test',
+      contact_phone: '+55 (00) 00000-0015',
+      billing_email: 'billing05@example.test',
+      address_line1: 'Demo Street, 5',
+      neighborhood: 'Demo District',
+      city: 'Demo City',
+      state: 'EX',
+      zip_code: '00000-000',
+      country: 'Brasil',
+      notes: 'Conta com meta de matriculas, reforco institucional e calendario academico.',
+      brand_manual: buildBrandManual('Demo Learning Institute', 'didatico, confiavel e acolhedor', 'evitar excesso de promessas e tecnicismos pedagogicos no feed', 'Falar com a secretaria'),
+    },
+  ];
+
+  const campaigns = [
+    ['events-leads', 'events', 'Captação de expositores 2026', 'Meta Ads', 'Empresas de servicos, industria e patrocinadores regionais', 'Gerar conversas qualificadas para patrocinio e espaco de estande', 'execucao', 20000, -28, 18, 'Ativa'],
+    ['wellness-paid-media', 'wellness', 'Harmonizacao facial premium', 'Instagram + Meta', 'Mulheres e homens de 27 a 48 anos na Grande Ilha', 'Agendamentos de avaliacao e preenchimento do CRM', 'otimizacao', 7000, -24, 10, 'Ativa'],
+    ['technology-search', 'technology', 'Leads ERP B2B', 'Google Ads', 'Diretores operacionais e gestores financeiros de medias empresas', 'Gerar pedidos de demonstracao do ERP', 'escala', 12000, -40, 25, 'Ativa'],
+    ['restaurant-seasonal', 'restaurant', 'Festival Parrilla de Abril', 'Instagram', 'Publico local com interesse em gastronomia e experiencias', 'Reservas de mesa e fortalecimento de agenda de fim de semana', 'execucao', 3500, -15, 20, 'Ativa'],
+    ['education-enrollment', 'education', 'Matriculas 2026.2', 'Google Ads', 'Pais e responsaveis de alunos da educacao basica', 'Leads para secretaria e visitas guiadas', 'otimizacao', 15000, -35, 35, 'Ativa'],
+  ].map(([key, client_key, name, channel, audience, objective, pipeline_stage, budget, startOffset, endOffset, status]) => ({
+    key,
+    client_key,
+    name,
+    channel,
+    audience,
+    objective,
+    pipeline_stage,
+    budget,
+    start_date: toDateOnly(addDays(now, startOffset)),
+    end_date: toDateOnly(addDays(now, endOffset)),
+    status,
+  }));
+
+  const metrics = [];
+  campaigns.forEach((campaign, campaignIndex) => {
+    sixMonthPeriods.forEach((period, periodIndex) => {
+      const monthFactor = periodIndex + 1;
+      const baseLeads = [32, 24, 28, 18, 26][campaignIndex];
+      const leads = baseLeads * monthFactor + campaignIndex * 3;
+      const clicks = leads * (18 + campaignIndex);
+      const impressions = clicks * (14 + periodIndex);
+      const revenuePerLead = [1200, 540, 2200, 180, 760][campaignIndex];
+      metrics.push({
+        campaign_key: campaign.key,
+        period: toDateOnly(period),
+        leads,
+        revenue: leads * revenuePerLead,
+        impressions,
+        clicks,
+      });
+    });
+  });
+
+  const reportMonth = toDateOnly(monthStart(now, 0));
+  const reports = [
+    ['events', 'Relatorio Demo Events Expo - panorama de patrocinio', 'Captação de expositores acelerada, cobertura aquecida e patrocinio com funil bem definido.', 'relatorio-demo-events-marco.txt'],
+    ['wellness', 'Relatorio Demo Wellness - consolidado de campanhas', 'Meta Ads e Google Ads com ganho de escala e leads mais qualificados para a recepcao.', 'relatorio-demo-wellness-marco.txt'],
+    ['technology', 'Relatorio Demo Technology - funil e analytics', 'Dashboard de conversoes consolidado e ganho de previsibilidade em demonstracoes.', 'relatorio-demo-technology-marco.txt'],
+    ['restaurant', 'Relatorio Demo Restaurant - reservas e conteudo', 'Reserva de mesas evoluindo com calendario sazonal e criativos de maior resposta.', 'relatorio-demo-restaurant-marco.txt'],
+    ['education', 'Relatorio Demo Learning Institute - matriculas', 'Fluxo de matriculas mais organizado entre campanha, CRM e agenda comercial.', 'relatorio-demo-learning-marco.txt'],
+  ].map(([client_key, title, summary, file_name]) => ({
+    client_key,
+    title,
+    summary,
+    file_name,
+    report_month: reportMonth,
+  }));
+
+  const materials = [
+    ['events', 'events-leads', 'graphic-designer', 'Criativo principal da Demo Events Expo', 'material-demo-events-cobertura.svg', 'Aprovado', 'Aprovado para patrocinio e captacao de expositores.'],
+    ['wellness', 'wellness-paid-media', 'graphic-designer', 'Carrossel Demo Wellness - harmonizacao', 'material-demo-wellness-harmonizacao.svg', 'Revisao', 'Ajustar a chamada final para agendamento.'],
+    ['technology', 'technology-search', 'integration-developer', 'Layout dashboard Demo Technology', 'material-demo-technology-dashboard.svg', 'Pendente', null],
+    ['restaurant', 'restaurant-seasonal', 'social-media', 'Card do Festival Parrilla', 'material-demo-restaurant-festival.svg', 'Aprovado', 'Liberado para impulsionamento local.'],
+    ['education', 'education-enrollment', 'motion-designer', 'Peca de matriculas 2026.2', 'material-education-enrollment.svg', 'Pendente', null],
+  ].map(([client_key, campaign_key, uploaded_by_key, title, filename, status, feedback]) => ({
+    client_key,
+    campaign_key,
+    uploaded_by_key,
+    title,
+    filename,
+    status,
+    feedback,
+    url: assets[filename],
+  }));
+
+  const files = [
+    ['events', 'marketing-admin', 'briefing-demo-events.txt', 'arquivo-briefing-demo-events.txt', 'text/plain'],
+    ['wellness', 'operations-manager', 'manual-demo-wellness.txt', 'arquivo-manual-demo-wellness.txt', 'text/plain'],
+    ['technology', 'integration-developer', 'dashboard-demo-technology.csv', 'arquivo-dashboard-demo-technology.csv', 'text/csv'],
+  ].map(([client_key, uploaded_by_key, original_name, stored_name, mime_type]) => ({
+    client_key,
+    uploaded_by_key,
+    original_name,
+    stored_name,
+    mime_type,
+    url: assets[stored_name],
+  }));
+
+  const contacts = [
+    ['Demo Lead 01', 'lead01@example.test', '+55 (00) 00000-0021', 'Demo Events Group', 'Cobertura de Eventos', 'Instagram', 'Proposta', 18000, 'sales-lead', 'operations-manager', -14, -2, 'Contato quente, ja pediu proposta comercial.'],
+    ['Demo Lead 02', 'lead02@example.test', '+55 (00) 00000-0022', 'Demo Wellness Clinic', 'Tráfego Pago', 'Site', 'Prospeccao', 6200, 'sales-specialist', 'sales-lead', -6, -1, 'Primeiro contato entrou pelo site.'],
+    ['Demo Lead 03', 'lead03@example.test', '+55 (00) 00000-0023', 'Demo Learning Center', 'Campanha de matriculas', 'Indicacao', 'Negociacao', 24000, 'sales-lead', 'client-manager', -20, -1, 'Aguardando aprovacao de diretoria financeira.'],
+    ['Demo Lead 04', 'lead04@example.test', '+55 (00) 00000-0024', 'Demo Event Venue', 'Conteudo e cobertura', 'WhatsApp', 'Contato feito', 9800, 'sales-specialist', 'operations-manager', -9, -3, 'Pediu referencias de coberturas recentes.'],
+    ['Demo Lead 05', 'lead05@example.test', '+55 (00) 00000-0025', 'Demo Dental Clinic', 'CRM e performance', 'Evento', 'Fechado', 12500, 'sales-lead', 'marketing-admin', -27, -4, 'Contrato assinado; onboarding em abril.'],
+  ].map(([name, email, phone, company, service, source, lead_stage, estimated_value, owner_key, assigned_to_key, createdOffset, updatedOffset, notes]) => ({
+    name,
+    email,
+    phone,
+    whatsapp: phone,
+    company,
+    service,
+    source,
+    document: '000.000.000-00',
+    lead_stage,
+    estimated_value,
+    message: `Contato iniciado para ${service.toLowerCase()}.`,
+    notes,
+    owner_key,
+    assigned_to_key,
+    last_contact_at: atTime(addDays(now, updatedOffset), 16, 10).toISOString(),
+    created_at: atTime(addDays(now, createdOffset), 10, 0).toISOString(),
+    updated_at: atTime(addDays(now, updatedOffset), 16, 10).toISOString(),
+    address_line1: 'Demo Street, 0',
+    neighborhood: 'Demo District',
+    city: 'Demo City',
+    state: 'EX',
+    zip_code: '00000-000',
+    country: 'Brasil',
+  }));
+
+  const tasks = [
+    ['events', 'Redacao de release da abertura da Demo Events Expo', 'Escrever o texto oficial para imprensa local e portais parceiros, alinhando patrocinio e credenciamento.', 'Backlog', 'releases', 'backlog', 'marketing-admin', ['sales-lead', 'social-media'], 2, -4, 9, 10],
+    ['events', 'Visita de captacao para gravacao de reels', 'Registrar bastidores da montagem e gerar takes para social media e cobertura do evento.', 'A Fazer', 'captacao', 'todo', 'operations-manager', ['motion-designer', 'graphic-designer'], 1, -3, 14, 20],
+    ['events', 'Alinhamento de cobertura com cerimonial', 'Fechar cronograma de palco, janelas de imprensa e prioridades do patrocinio master.', 'Em progresso', 'reuniao', 'doing', 'marketing-admin', ['marketing-admin', 'operations-manager'], 0, -2, 10, 5],
+    ['wellness', 'Campanha Google Ads para abril', 'Subir novo grupo de anuncios para harmonizacao e depilacao, com extensoes de chamada e formulario.', 'A Fazer', 'trafego_pago', 'todo', 'marketing-admin', ['sales-lead', 'integration-developer'], 3, -3, 11, 35],
+    ['wellness', 'Design de banners de harmonizacao', 'Criar pecas para feed, stories e landing page com foco em autoridade e agendamento.', 'Em progresso', 'design_grafico', 'doing', 'marketing-admin', ['graphic-designer'], -1, -5, 16, 15],
+    ['technology', 'Configuracao do GA4 e eventos de conversao', 'Padronizar eventos, UTMs e dashboards para demonstracoes e formularios de contato.', 'Em progresso', 'planejamento', 'doing', 'executive-admin', ['integration-developer'], 2, -6, 10, 0],
+    ['technology', 'Landing page do ERP para captacao', 'Estruturar pagina com proposta de valor, provas e CTA de demonstracao comercial.', 'Backlog', 'copywriting', 'backlog', 'marketing-admin', ['motion-designer', 'integration-developer'], 5, -7, 15, 0],
+    ['restaurant', 'Calendario editorial do Festival Parrilla', 'Definir pauta semanal, reforco dos cortes especiais e CTA de reserva para sexta e sabado.', 'A Fazer', 'social_media', 'todo', 'operations-manager', ['social-media', 'client-manager'], 4, -2, 9, 45],
+    ['restaurant', 'Sessao de fotos do novo cardapio', 'Captar pratos, sobremesas e bastidores para reforcar o lancamento de abril.', 'Backlog', 'fotografia', 'backlog', 'operations-manager', ['graphic-designer', 'motion-designer'], 6, -4, 17, 0],
+    ['education', 'Sequencia de e-mails de matricula', 'Construir nutricao com prova social, diferenciais pedagogicos e urgencia de vagas.', 'Em progresso', 'newsletter', 'doing', 'client-manager', ['social-media', 'sales-lead'], 1, -3, 8, 20],
+    ['education', 'Apresentacao de resultados de marco', 'Organizar os aprendizados do mes e recomendar ajustes para a campanha de matriculas.', 'Concluído', 'planejamento', 'done', 'marketing-admin', ['marketing-admin', 'client-manager'], -2, -8, 13, 15],
+    ['events', 'Publicacao do pos-evento no blog', 'Subir resumo do evento com fotos, parceiros e CTA para lista de espera da proxima edicao.', 'Concluído', 'copywriting', 'done', 'marketing-admin', ['social-media'], -5, -12, 16, 45],
+  ].map(([client_key, title, description, status, type, column_name, created_by_key, assigned_keys, deadlineOffset, createdOffset, hour, minute]) => ({
+    client_key,
+    title,
+    description,
+    status,
+    type,
+    column_name,
+    created_by_key,
+    assigned_keys,
+    deadline: toDateOnly(addDays(now, deadlineOffset)),
+    created_at: atTime(addDays(now, createdOffset), hour, minute).toISOString(),
+  }));
+
+  const currentMonthInvoices = [
+    ['wellness', 6500, 'Pago', toDateOnly(monthDueDate(now, 0, 5)), atTime(monthDueDate(now, 0, 1), 9, 0).toISOString()],
+    ['technology', 8200, 'Pago', toDateOnly(monthDueDate(now, 0, 10)), atTime(monthDueDate(now, 0, 1), 10, 0).toISOString()],
+    ['restaurant', 4800, 'Em aberto', toDateOnly(addDays(now, 5)), atTime(monthDueDate(now, 0, 2), 11, 0).toISOString()],
+    ['education', 9100, 'Em aberto', toDateOnly(addDays(now, -7)), atTime(monthDueDate(now, 0, 3), 11, 30).toISOString()],
+  ].map(([client_key, amount, status, due_date, created_at]) => ({ client_key, amount, status, due_date, created_at }));
+
+  const recurringInvoices = [];
+  ['wellness', 'technology', 'restaurant', 'education'].forEach((clientKey) => {
+    const amount = clients.find((client) => client.key === clientKey).mrr;
+    [-5, -4, -3, -2, -1].forEach((offset) => {
+      recurringInvoices.push({
+        client_key: clientKey,
+        amount,
+        status: 'Pago',
+        due_date: toDateOnly(monthDueDate(now, offset, 5 + (clientKey === 'technology' ? 3 : 0))),
+        created_at: atTime(monthDueDate(now, offset, 1), 9, 0).toISOString(),
+      });
+    });
+  });
+
+  const charges = [
+    {
+      client_key: 'events',
+      created_by_key: 'marketing-admin',
+      payment_method: 'PIX',
+      description: 'Cobrança Demo Events Expo · cobertura principal',
+      amount: 120000,
+      due_date: toDateOnly(addDays(now, -1)),
+      status: 'RECEIVED',
+      external_reference: 'showcase-demo-events-cobertura-principal',
+      payment_link: 'https://pay.one.local/demo-events-principal',
+      pix_copy_paste: '00020126580014BR.GOV.BCB.PIX0114showcaseexpo5204000053039865406120000.005802BR5909ONE LTDA6008SAOLUIS62070503***6304ABCD',
+      external_payload: { source: 'manual-showcase', kind: 'pix' },
+      created_at: atTime(addDays(now, -12), 9, 20).toISOString(),
+    },
+    {
+      client_key: 'technology',
+      created_by_key: 'sales-lead',
+      payment_method: 'BOLETO',
+      description: 'Cobrança Demo Technology · setup analytics',
+      amount: 5000,
+      due_date: toDateOnly(now),
+      status: 'RECEIVED',
+      external_reference: 'showcase-tech-setup-analytics',
+      boleto_url: 'https://pay.one.local/tech-analytics-boleto',
+      boleto_barcode: '34191.79001 01043.510047 91020.150008 4 12340000500000',
+      external_payload: { source: 'manual-showcase', kind: 'boleto' },
+      created_at: atTime(addDays(now, -5), 14, 15).toISOString(),
+    },
+    {
+      client_key: 'wellness',
+      created_by_key: 'sales-lead',
+      payment_method: 'PIX',
+      description: 'Cobrança Demo Wellness · pacote de abril',
+      amount: 7500,
+      due_date: toDateOnly(addDays(now, 4)),
+      status: 'PENDING',
+      external_reference: 'showcase-demo-wellness-pacote-abril',
+      payment_link: 'https://pay.one.local/demo-wellness-abril',
+      pix_copy_paste: '00020126580014BR.GOV.BCB.PIX0114showcasebella52040000530398654067500.005802BR5909ONE LTDA6008SAOLUIS62070503***6304BCDE',
+      external_payload: { source: 'manual-showcase', kind: 'pix' },
+      created_at: atTime(addDays(now, -2), 10, 40).toISOString(),
+    },
+    {
+      client_key: 'restaurant',
+      created_by_key: 'sales-lead',
+      payment_method: 'BOLETO',
+      description: 'Cobrança Demo Restaurant · campanha especial',
+      amount: 3200,
+      due_date: toDateOnly(addDays(now, -13)),
+      status: 'OVERDUE',
+      external_reference: 'showcase-sabor-campanha-especial',
+      boleto_url: 'https://pay.one.local/sabor-parrilla-boleto',
+      boleto_barcode: '34191.79001 01043.510047 91020.150008 4 12340000320000',
+      external_payload: { source: 'manual-showcase', kind: 'boleto' },
+      created_at: atTime(addDays(now, -15), 9, 10).toISOString(),
+    },
+  ];
+
+  const costEntries = [
+    ['events', 'marketing-admin', 'media', 'Midia principal Demo Events Expo', 20000, -24, 10, 0],
+    ['events', 'operations-manager', 'producao', 'Equipe de cobertura e ilha de edicao', 6500, -10, 15, 0],
+    ['wellness', 'marketing-admin', 'media', 'Investimento Meta Ads Demo Wellness', 7000, -25, 9, 0],
+    ['wellness', 'graphic-designer', 'producao', 'Pecas e adaptacoes de campanha Demo Wellness', 1500, -8, 11, 30],
+    ['technology', 'integration-developer', 'operacao', 'Instrumentacao GA4 e ajustes da landing page', 2500, -12, 18, 0],
+    ['technology', 'integration-developer', 'outro', 'Ferramenta adicional de dashboard', 1200, -9, 10, 40],
+    ['restaurant', 'operations-manager', 'producao', 'Captacao fotografica do cardapio sazonal', 1800, -6, 16, 20],
+    ['education', 'client-manager', 'media', 'Google Ads matriculas 2026.2', 15000, -20, 9, 20],
+    ['education', 'client-manager', 'operacao', 'Operacao de nutricao comercial', 3200, -7, 14, 45],
+    [null, 'executive-admin', 'operacao', 'Aluguel do estudio', 4500, -5, 9, 30],
+    [null, 'executive-admin', 'outro', 'Adobe Creative Cloud', 780, -5, 9, 35],
+    [null, 'executive-admin', 'outro', 'Google Workspace', 240, -5, 9, 36],
+    [null, 'executive-admin', 'outro', 'Internet e ferramentas operacionais', 390, -5, 9, 38],
+  ].map(([client_key, created_by_key, category, description, amount, offset, hour, minute]) => ({
+    client_key,
+    created_by_key,
+    category,
+    description,
+    amount,
+    incurred_on: toDateOnly(addDays(now, offset)),
+    created_at: atTime(addDays(now, offset), hour, minute).toISOString(),
+  }));
+
+  const integrations = [
+    ['events', 'ga4', 'connected', 'GA4-EXP-001', 'property-72001', null],
+    ['events', 'meta_business', 'connected', 'BM-EXP-201', 'ad-account-9981', null],
+    ['events', 'looker_studio', 'connected', 'studio-demo-events', 'dashboard-expo-live', null],
+    ['wellness', 'ga4', 'connected', 'GA4-BELA-101', 'property-22110', null],
+    ['wellness', 'meta_business', 'connected', 'BM-BELA-221', 'ad-account-7710', null],
+    ['wellness', 'search_console', 'configuring', 'search-demo-wellness.example.test', 'https://wellness.example.test', 'Validando propriedade de dominio'],
+    ['technology', 'ga4', 'connected', 'GA4-TECH-007', 'property-65421', null],
+    ['technology', 'power_bi', 'connected', 'workspace-tech', 'dataset-receita', null],
+    ['technology', 'search_console', 'error', 'gsc-demo-technology', 'https://technology.example.test', 'Aguardando permissao do dominio principal'],
+    ['restaurant', 'meta_business', 'connected', 'BM-SABOR-501', 'ad-account-9921', null],
+    ['restaurant', 'ga4', 'disconnected', 'GA4-SABOR-002', 'property-41001', null],
+    ['education', 'ga4', 'connected', 'GA4-HORI-100', 'property-81000', null],
+    ['education', 'looker_studio', 'connected', 'studio-demo-learning', 'dashboard-matriculas', null],
+  ].map(([client_key, provider_key, status, external_account_id, external_property_id, last_error]) => ({
+    client_key,
+    provider_key,
+    status,
+    external_account_id,
+    external_property_id,
+    connected_at: status === 'connected' ? atTime(addDays(now, -18), 10, 0).toISOString() : null,
+    last_sync_at: status === 'disconnected' ? null : atTime(addDays(now, -1), 7, 45).toISOString(),
+    last_success_at: status === 'connected' ? atTime(addDays(now, -1), 7, 45).toISOString() : null,
+    last_error,
+    metadata: status === 'connected' ? { source: 'showcase', sync_mode: 'manual' } : { source: 'showcase' },
+    created_by_key: 'integration-developer',
+  }));
+
+  const calendarEvents = [
+    ['Kickoff Demo Wellness - abril', 'Revisao de pauta, midia, criativos e aprovacoes da primeira semana.', 0, 9, 0, 10, 0, 'Google Meet', 'blue', 'marketing-admin'],
+    ['Captação Demo Events Expo no Multicenter', 'Registro de bastidores, patrocinio e credenciamento em video curto.', 1, 14, 0, 17, 0, 'Centro de Convencoes Multicenter', 'pink', 'operations-manager'],
+    ['Aprovacao final do dashboard Demo Technology', 'Fechamento da primeira leitura comercial e alinhamento de conversoes.', 2, 16, 0, 17, 0, 'Google Meet', 'gold', 'integration-developer'],
+    ['Sessao de fotos do Demo Restaurant', 'Cardapio, drinks e cenas de atendimento para campanha de abril.', 3, 10, 0, 12, 0, 'Demo Restaurant', 'blue', 'operations-manager'],
+    ['Comite de matriculas Demo Learning Institute', 'Revisar leads, pauta de secretaria e cronograma de visitas guiadas.', 4, 8, 30, 9, 30, 'Demo Learning Institute', 'green', 'client-manager'],
+  ].map(([title, description, offset, startHour, startMinute, endHour, endMinute, location, color, created_by_key]) => ({
+    title,
+    description,
+    starts_at: atTime(addDays(now, offset), startHour, startMinute).toISOString(),
+    ends_at: atTime(addDays(now, offset), endHour, endMinute).toISOString(),
+    location,
+    color,
+    created_by_key,
+  }));
+
+  const checklist = {
+    user_key: 'marketing-admin',
+    today: [
+      { id: 'financas-marco', label: 'Revisar inadimplencia e recebidos do financeiro', done: false, createdAt: atTime(now, 8, 0).toISOString() },
+      { id: 'expo-pauta', label: 'Aprovar pauta da Demo Events Expo com Operations Lead', done: true, createdAt: atTime(now, 8, 10).toISOString() },
+      { id: 'demo-learning-cronograma', label: 'Fechar cronograma comercial do Demo Learning Institute', done: false, createdAt: atTime(now, 8, 20).toISOString() },
+    ],
+    history: [
+      {
+        checklist_date: toDateOnly(addDays(now, -1)),
+        items: [
+          { id: 'h1', label: 'Validar verba da Demo Wellness', done: true, createdAt: atTime(addDays(now, -1), 8, 0).toISOString() },
+          { id: 'h2', label: 'Revisar materiais do Demo Restaurant', done: true, createdAt: atTime(addDays(now, -1), 8, 15).toISOString() },
+          { id: 'h3', label: 'Responder pendencias do Demo Technology', done: true, createdAt: atTime(addDays(now, -1), 8, 30).toISOString() },
+        ],
+        completed_at: atTime(addDays(now, -1), 18, 10).toISOString(),
+        created_at: atTime(addDays(now, -1), 8, 0).toISOString(),
+        updated_at: atTime(addDays(now, -1), 18, 10).toISOString(),
+      },
+      {
+        checklist_date: toDateOnly(addDays(now, -3)),
+        items: [
+          { id: 'h4', label: 'Aprovar roteiro de captacao da Expo', done: true, createdAt: atTime(addDays(now, -3), 8, 5).toISOString() },
+          { id: 'h5', label: 'Checar agenda do calendario da equipe', done: true, createdAt: atTime(addDays(now, -3), 8, 20).toISOString() },
+        ],
+        completed_at: atTime(addDays(now, -3), 17, 40).toISOString(),
+        created_at: atTime(addDays(now, -3), 8, 0).toISOString(),
+        updated_at: atTime(addDays(now, -3), 17, 40).toISOString(),
+      },
+    ],
+  };
+
+  const notifications = [
+    ['motion-designer', 'task_assigned', 'Nova tarefa para voce', 'Visita de captacao para gravacao de reels foi atribuida ao seu fluxo.', 'task', 'Visita de captacao para gravacao de reels', -1, 9, 10, null],
+    ['marketing-admin', 'calendar_event_reminder_24h', 'Evento se aproximando', 'Kickoff Demo Wellness - abril acontece nas proximas 24 horas.', 'calendar_event', 'Kickoff Demo Wellness - abril', -1, 11, 0, null],
+    ['marketing-admin', 'charge_overdue', 'Cobranca em atraso', 'Demo Restaurant possui titulo em atraso e precisa de acompanhamento.', 'charge', 'showcase-sabor-campanha-especial', -1, 12, 30, atTime(addDays(now, -1), 13, 15).toISOString()],
+    ['operations-manager', 'task_completed', 'Entrega concluida', 'Publicacao do pos-evento no blog foi concluida.', 'task', 'Publicacao do pos-evento no blog', -2, 18, 10, null],
+  ].map(([user_key, type, title, body, entity_type, entity_key, offset, hour, minute, read_at]) => ({
+    user_key,
+    type,
+    title,
+    body,
+    entity_type,
+    entity_key,
+    created_at: atTime(addDays(now, offset), hour, minute).toISOString(),
+    read_at,
+  }));
+
+  const messages = [
+    ['sales-lead', 'marketing-admin', 'client', 'events', 'O lead da Demo Events Group pediu a proposta final ainda hoje.', -1, 16, 0, atTime(addDays(now, -1), 16, 12).toISOString()],
+    ['operations-manager', 'motion-designer', 'task', 'Visita de captacao para gravacao de reels', 'Priorize takes verticais para social e depoimentos curtos.', -1, 17, 5, null],
+  ].map(([sender_key, receiver_key, context_type, context_key, content, offset, hour, minute, read_at]) => ({
+    sender_key,
+    receiver_key,
+    context_type,
+    context_key,
+    content,
+    created_at: atTime(addDays(now, offset), hour, minute).toISOString(),
+    read_at,
+  }));
+
+  return {
+    currentMonthLabel,
+    internalUsers,
+    clients,
+    campaigns,
+    metrics,
+    reports,
+    materials,
+    files,
+    contacts,
+    invoices: [...recurringInvoices, ...currentMonthInvoices],
+    charges,
+    costEntries,
+    integrations,
+    tasks,
+    calendarEvents,
+    checklist,
+    notifications,
+    messages,
+  };
+}
+
+async function ingest() {
+  if (!SHOWCASE_PASSWORD) {
+    throw new Error('Defina SHOWCASE_PASSWORD para gerar dados de demonstracao.');
+  }
+  assertStrongPassword(SHOWCASE_PASSWORD, 'SHOWCASE_PASSWORD');
+
+  await ensureDatabaseExists();
+  runMigrations();
+
+  const pool = require('../src/config/db');
+  const passwordHash = await bcrypt.hash(SHOWCASE_PASSWORD, Number(env.bcryptRounds || 12));
+  const baseDate = new Date();
+  const assets = createUploadAssets(baseDate);
+  const dataset = buildShowcaseDataset(baseDate, assets, passwordHash);
+
+  const client = await pool.connect();
+  const ids = {
+    users: new Map(),
+    clients: new Map(),
+    campaigns: new Map(),
+    contacts: new Map(),
+    tasks: new Map(),
+    events: new Map(),
+    charges: new Map(),
+  };
+
+  try {
+    await client.query('BEGIN');
+
+    for (const user of dataset.internalUsers) {
+      const userId = await upsertUser(client, user);
+      ids.users.set(user.key, userId);
+    }
+
+    for (const clientData of dataset.clients) {
+      const clientId = await upsertClient(client, {
+        ...clientData,
+        manager_id: ids.users.get(clientData.manager_key),
+      });
+      ids.clients.set(clientData.key, clientId);
+    }
+
+    for (const campaign of dataset.campaigns) {
+      const campaignId = await upsertCampaign(client, {
+        ...campaign,
+        client_id: ids.clients.get(campaign.client_key),
+      });
+      ids.campaigns.set(campaign.key, campaignId);
+    }
+
+    for (const metric of dataset.metrics) {
+      await upsertMetric(client, {
+        ...metric,
+        campaign_id: ids.campaigns.get(metric.campaign_key),
+      });
+    }
+
+    for (const report of dataset.reports) {
+      await upsertReport(client, {
+        ...report,
+        client_id: ids.clients.get(report.client_key),
+        file_url: assets[report.file_name],
+      });
+    }
+
+    for (const material of dataset.materials) {
+      await upsertMaterial(client, {
+        ...material,
+        client_id: ids.clients.get(material.client_key),
+        campaign_id: ids.campaigns.get(material.campaign_key),
+        uploaded_by: ids.users.get(material.uploaded_by_key),
+      });
+    }
+
+    for (const file of dataset.files) {
+      const absolutePath = path.join(env.uploadsDir, file.stored_name);
+      await upsertFile(client, {
+        ...file,
+        client_id: ids.clients.get(file.client_key),
+        uploaded_by: ids.users.get(file.uploaded_by_key),
+        size: fs.statSync(absolutePath).size,
+      });
+    }
+
+    for (const contact of dataset.contacts) {
+      const contactId = await upsertContact(client, {
+        ...contact,
+        owner_id: ids.users.get(contact.owner_key),
+        assigned_to: ids.users.get(contact.assigned_to_key),
+      });
+      ids.contacts.set(contact.email.toLowerCase(), contactId);
+    }
+
+    for (const invoice of dataset.invoices) {
+      await upsertInvoice(client, {
+        ...invoice,
+        client_id: ids.clients.get(invoice.client_key),
+      });
+    }
+
+    for (const charge of dataset.charges) {
+      const chargeId = await upsertCharge(client, {
+        ...charge,
+        client_id: ids.clients.get(charge.client_key),
+        created_by: ids.users.get(charge.created_by_key),
+      });
+      ids.charges.set(charge.external_reference, chargeId);
+    }
+
+    for (const entry of dataset.costEntries) {
+      await upsertCostEntry(client, {
+        ...entry,
+        client_id: entry.client_key ? ids.clients.get(entry.client_key) : null,
+        created_by: ids.users.get(entry.created_by_key),
+      });
+    }
+
+    for (const integration of dataset.integrations) {
+      await upsertIntegration(client, {
+        ...integration,
+        client_id: ids.clients.get(integration.client_key),
+        created_by: ids.users.get(integration.created_by_key),
+      });
+    }
+
+    for (const task of dataset.tasks) {
+      const taskId = await upsertTask(client, {
+        ...task,
+        client_id: ids.clients.get(task.client_key),
+        created_by: ids.users.get(task.created_by_key),
+        assigned_to: ids.users.get(task.assigned_keys[0]),
+        assigned_user_ids: task.assigned_keys.map((key) => ids.users.get(key)).filter(Boolean),
+      });
+      ids.tasks.set(task.title, taskId);
+    }
+
+    for (const event of dataset.calendarEvents) {
+      const eventId = await upsertCalendarEvent(client, {
+        ...event,
+        created_by: ids.users.get(event.created_by_key),
+        updated_by: ids.users.get(event.created_by_key),
+      });
+      ids.events.set(event.title, eventId);
+    }
+
+    await upsertChecklistEntry(client, {
+      user_id: ids.users.get(dataset.checklist.user_key),
+      checklist_date: toDateOnly(baseDate),
+      items: dataset.checklist.today,
+      completed_at: null,
+      created_at: atTime(baseDate, 8, 0).toISOString(),
+      updated_at: atTime(baseDate, 8, 30).toISOString(),
+    });
+
+    for (const historyRow of dataset.checklist.history) {
+      await upsertChecklistEntry(client, {
+        ...historyRow,
+        user_id: ids.users.get(dataset.checklist.user_key),
+      });
+    }
+
+    for (const message of dataset.messages) {
+      await upsertMessage(client, {
+        ...message,
+        sender_id: ids.users.get(message.sender_key),
+        receiver_id: ids.users.get(message.receiver_key),
+        context_id:
+          message.context_type === 'task'
+            ? ids.tasks.get(message.context_key)
+            : message.context_type === 'client'
+              ? ids.clients.get(message.context_key)
+              : null,
+      });
+    }
+
+    for (const notification of dataset.notifications) {
+      await upsertNotification(client, {
+        ...notification,
+        user_id: ids.users.get(notification.user_key),
+        entity_id:
+          notification.entity_type === 'task'
+            ? ids.tasks.get(notification.entity_key)
+            : notification.entity_type === 'calendar_event'
+              ? ids.events.get(notification.entity_key)
+              : notification.entity_type === 'charge'
+                ? ids.charges.get(notification.entity_key)
+                : null,
+      });
+    }
+
+    await client.query('COMMIT');
+
+    const summaryStatements = [
+      'SELECT COUNT(*)::int AS total FROM users',
+      'SELECT COUNT(*)::int AS total FROM clients',
+      'SELECT COUNT(*)::int AS total FROM campaigns',
+      'SELECT COUNT(*)::int AS total FROM metrics',
+      'SELECT COUNT(*)::int AS total FROM tasks',
+      'SELECT COUNT(*)::int AS total FROM contacts',
+      'SELECT COUNT(*)::int AS total FROM calendar_events',
+      'SELECT COUNT(*)::int AS total FROM invoices',
+      'SELECT COUNT(*)::int AS total FROM charges',
+      'SELECT COUNT(*)::int AS total FROM cost_entries',
+      'SELECT COUNT(*)::int AS total FROM notifications',
+    ];
+    const summaryCounts = [];
+    for (const statement of summaryStatements) {
+      const result = await client.query(statement);
+      summaryCounts.push(result.rows[0].total);
+    }
+
+    const [usersCount, clientsCount, campaignsCount, metricsCount, tasksCount, contactsCount, eventsCount, invoicesCount, chargesCount, costsCount, notificationsCount] =
+      summaryCounts;
+
+    console.log('');
+    console.log('[showcase] Ingestao concluida com sucesso.');
+    console.log(`- usuarios: ${usersCount}`);
+    console.log(`- clientes: ${clientsCount}`);
+    console.log(`- campanhas: ${campaignsCount}`);
+    console.log(`- metricas: ${metricsCount}`);
+    console.log(`- tarefas: ${tasksCount}`);
+    console.log(`- leads/contatos: ${contactsCount}`);
+    console.log(`- eventos: ${eventsCount}`);
+    console.log(`- faturas: ${invoicesCount}`);
+    console.log(`- cobrancas: ${chargesCount}`);
+    console.log(`- custos: ${costsCount}`);
+    console.log(`- notificacoes: ${notificationsCount}`);
+    console.log('');
+    console.log('[showcase] Usuarios internos criados com a senha definida em SHOWCASE_PASSWORD.');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+    await pool.end();
+  }
+}
+
+ingest().catch((error) => {
+  console.error('[showcase] Falha na ingestao:', error);
+  process.exitCode = 1;
+});
